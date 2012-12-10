@@ -1,23 +1,5 @@
 #include "MultiplierBlock.hpp"
-#include <iostream>
-#include <fstream>
-#include <sstream>
-#include <math.h>	
-#include <cstdlib>
-#include <math.h>
-#include <gmp.h>
-#include <mpfr.h>
-#include <gmpxx.h>
-#include "utils.hpp"
-#include "../Operator.hpp"
-#include "IntMultiplier.hpp"
-#include "IntAdder.hpp"
-#include "IntMultiAdder.hpp"
-#include "IntAddition/NewCompressorTree.hpp"
-#include "IntAddition/PopCount.hpp"
-#include "utils.hpp"
-#include<vector>
-#include<list>
+
 using namespace std;
 
 
@@ -181,14 +163,6 @@ namespace flopoco{
 			else
 				return false;
 
-		}
-
-
-
-	
-
-
-
-     
+		}    
 
 }

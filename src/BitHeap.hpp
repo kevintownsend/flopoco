@@ -125,6 +125,13 @@ namespace flopoco{
 
 		/**  generates the VHDL code for the supertiles*/
 		void generateSupertileVHDL();
+		
+		/**
+		 * Generate the code VHDL for the process which implements the supertile,
+		 * in order to have the addition inferred inside the DSP block for Altera 
+		 * architectures.
+		 */
+		void generateAlteraSupertileVHDL(MultiplierBlock* x, MultiplierBlock* y, string resultName);
 
 
 		/** returns the maximum weight of the bit heap */

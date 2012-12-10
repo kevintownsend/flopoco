@@ -2,19 +2,13 @@
 #define MultiplierBlock_HPP
 
 #include <stdio.h>
+#include <string>
 #include <stdlib.h>
-#include "../Operator.hpp"
-#include <vector>
-#include <sstream>
-#include <gmp.h>
-#include <gmpxx.h>
-#include "utils.hpp"
-#include "Table.hpp"
+
+using namespace std;
 
 
 namespace flopoco {
-
-	//FIXME: please comment your code!
 
 	class MultiplierBlock 
 	{

@@ -267,9 +267,9 @@ namespace flopoco {
 
 		// Set up the VHDL library style
 		if(signedIO)
-			useStdLogicSigned();
+			useNumericStd_Signed();
 		else
-			useStdLogicUnsigned();
+			useNumericStd_Unsigned();
 
 		// The bit heap
 		bitHeap = new BitHeap(this, wOut+g, enableSuperTiles);
@@ -1122,12 +1122,18 @@ namespace flopoco {
 		
 		REPORT(DEBUG, "-----------Call to buildAlteraTiling, at dspSizeX=" << dspSizeX << " and dspSizeY=" << dspSizeY << " with parameters  - blockTopX=" << blockTopX << " blockTopY=" << blockTopY << " blockBottomX=" << blockBottomX << " blockBottomY=" << blockBottomY << (signedX ? " signed" : " unsigned") << " by " << (signedY ? "signed" : "unsigned"));
 		
-		//if the whole DSP is outside the range of interest, skip over it altogether 
+		//if the whole DSP is outside the range of interest, skip over it altogether
 		if((blockTopX+blockTopY<wFull-wOut-g) && (blockBottomX+blockBottomY<wFull-wOut-g))
 		{
 			REPORT(DEBUG, "" << tab << tab << "adding DSP skipped (out of range of interest) at coordinates topX=" << blockTopX << " topY=" << blockTopY << " botX=" << blockBottomX << " botY=" << blockBottomY << " dspSizeX=" << dspSizeX << " dspSizeY=" << dspSizeY);
 			return;
 		}
+		
+		//if the block is of width/height zero, then end this function call, as there is nothing to do
+		widthX = (blockBottomX-blockTopX+1)/dspSizeX;
+		widthY = (blockBottomY-blockTopY+1)/dspSizeY;
+		if(((widthX==0) && (blockTopX==blockBottomX)) || ((widthY==0) && (blockTopY==blockBottomY)))
+			return;
 		
 		REPORT(DEBUG, "" << tab << "Testing the best DSP size");
 		//search for the largest DSP size that corresponds to the ratio

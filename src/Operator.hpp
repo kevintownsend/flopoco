@@ -224,6 +224,22 @@ public:
 	void useNumericStd() {
 		stdLibType_ = 1;
 	};
+	
+	/** 
+	 * use the real IEEE standard ieee.numeric_std for this entity, also 
+	 * with support for signed operations on bit vectors
+	 */
+	void useNumericStd_Signed() {
+		stdLibType_ = 2;
+	};
+	
+	/** 
+	 * use the real IEEE standard ieee.numeric_std for this entity, also 
+	 * with support for unsigned operations on bit vectors
+	 */
+	void useNumericStd_Unsigned() {
+		stdLibType_ = 3;
+	};
 
 	int getStdLibType() {
 		return stdLibType_; 

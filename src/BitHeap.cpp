@@ -262,8 +262,65 @@ namespace flopoco
 				}
 			}
 	}
+	
+	
+	void BitHeap::generateAlteraSupertileVHDL(MultiplierBlock* x, MultiplierBlock* y, string resultName)
+	{
+		bool x1Signed, y1Signed, x2Signed, y2Signed, rSigned;
+		int length;
+		
+		REPORT(DEBUG, "generating Altera supertile");
+		
+		//test to see if the sizes match those of a DSP
+		//TODO: should be replaced with a test on the array of DSP configurations
+		x1Signed = (signedIO) && ((x->getwX()==9) || (x->getwX()==12) || (x->getwX()==16) || (x->getwX()==18) || (x->getwX()==27) || (x->getwX()==36));
+		y1Signed = (signedIO) && ((x->getwY()==9) || (x->getwY()==12) || (x->getwY()==16) || (x->getwY()==18) || (x->getwY()==27) || (x->getwY()==36));
+		x2Signed = (signedIO) && ((y->getwX()==9) || (y->getwX()==12) || (y->getwX()==16) || (y->getwX()==18) || (y->getwX()==27) || (y->getwX()==36));
+		y2Signed = (signedIO) && ((y->getwY()==9) || (y->getwY()==12) || (y->getwY()==16) || (y->getwY()==18) || (y->getwY()==27) || (y->getwY()==36));
+		rSigned = x1Signed || y1Signed || x2Signed || y2Signed;
+		
+		//set the length
+		//	all blocks must have the same size
+		length = x->getwX() + (x1Signed ? 0 : 1);
+		
+		op->vhdl << endl << tab << "-- code generated for supertile" << endl << endl;
+		
+		op->vhdl << tab << "process(clk, rst)" << endl
+				<< tab << tab << "variable x1_d: " << (rSigned ? "" : "un") << "signed(" << length-1 << " downto 0) := (others => '0');" << endl
+				<< tab << tab << "variable y1_d: " << (rSigned ? "" : "un") << "signed(" << length-1 << " downto 0) := (others => '0');" << endl
+				<< tab << tab << "variable x2_d: " << (rSigned ? "" : "un") << "signed(" << length-1 << " downto 0) := (others => '0');" << endl
+				<< tab << tab << "variable y2_d: " << (rSigned ? "" : "un") << "signed(" << length-1 << " downto 0) := (others => '0');" << endl
+				<< tab << tab << "variable p1: " << (rSigned ? "" : "un") << "signed(" << 2*length-1 << " downto 0) := (others => '0');" << endl
+				<< tab << tab << "variable p2: " << (rSigned ? "" : "un") << "signed(" << 2*length-1 << " downto 0) := (others => '0');" << endl
+				<< tab << tab << "variable result: " << (rSigned ? "" : "un") << "signed(" << 2*length << " downto 0) := (others => '0');" << endl
+				<< tab << "begin" << endl
+				<< tab << tab << "if (clk'event) and (clk='1') then" << endl
+				<< tab << tab << tab << "x1_d := " << (rSigned ? "" : "un") << "signed(" << ((rSigned && x1Signed) ? "" : "\"0\" & ") << x->getInputName1() << range(x->gettopX()+x->getwX()-1,(x->gettopX()>0?x->gettopX():0)) << " & " << zg((x->gettopX()<0?-x->gettopX():0)) << ");" << endl
+				<< tab << tab << tab << "y1_d := " << (rSigned ? "" : "un") << "signed(" << ((rSigned && y1Signed) ? "" : "\"0\" & ") << x->getInputName2() << range(x->gettopY()+x->getwY()-1,(x->gettopY()>0?x->gettopY():0)) << " & " << zg((x->gettopY()<0?-x->gettopY():0)) << ");" << endl
+				<< tab << tab << tab << "x2_d := " << (rSigned ? "" : "un") << "signed(" << ((rSigned && x2Signed) ? "" : "\"0\" & ") << y->getInputName1() << range(y->gettopX()+y->getwX()-1,(y->gettopX()>0?y->gettopX():0)) << " & " << zg((y->gettopX()<0?-y->gettopX():0)) << ");" << endl
+				<< tab << tab << tab << "y2_d := " << (rSigned ? "" : "un") << "signed(" << ((rSigned && y2Signed) ? "" : "\"0\" & ") << y->getInputName2() << range(y->gettopY()+y->getwY()-1,(y->gettopY()>0?y->gettopY():0)) << " & " << zg((y->gettopY()<0?-y->gettopY():0)) << ");" << endl
+				<< endl
+				<< tab << tab << tab << "p1 := x1_d * y1_d;" << endl
+				<< tab << tab << tab << "p2 := x2_d * y2_d;" << endl
+				<< endl
+				<< tab << tab << tab << "result := resize(p1, " << 2*length+1 << ") + resize(p2, " << 2*length+1 << ");" << endl
+				<< endl
+				<< tab << tab << tab << resultName << " <= std_logic_vector(result);" << endl
+				<< tab << tab << "end if;" << endl
+				<< endl
+				<< tab << "end process;" << endl
+				<< endl;
+		
+		op->vhdl << tab << "-- end of code generated for supertile" << endl << endl;
+		
+		x->setSignalLength(x->getwX() + x->getwY() + ((rSigned && x1Signed) ? 0 : 1) + ((rSigned && y1Signed) ? 0 : 1));
+		y->setSignalLength(y->getwX() + y->getwY() + ((rSigned && x2Signed) ? 0 : 1) + ((rSigned && y2Signed) ? 0 : 1));
+		
+		REPORT(DEBUG, "generating Altera supertile completed");
+	}
 
 
+	//TODO: make sure it works for the combinatorial version
 	void BitHeap::generateSupertileVHDL()
 	{
 		//making all the possible supertiles
@@ -293,38 +350,142 @@ namespace flopoco
 				op->setCriticalPath(0);
 
 				//the first DSP from the supertile(it has the smallest weight in the supertile)
-				generateVHDLforDSP(current, DSPuid, i);
-				
-				//manage critical path
-				op->getTarget()->delayForDSP(current, op->getCriticalPath(), addedCycles, addedCriticalPath);
-				for(int j=0; j<addedCycles; j++)
-					op->nextCycle();
-				op->setCriticalPath(addedCriticalPath);
-
-				//iterate on the other blocks of the supertile
-				while(current->getNext()!=NULL)
+				if(op->getTarget()->getVendor() == "Xilinx")
 				{
-					DSPuid++;
-					next=current->getNext();
-
-					generateVHDLforDSP(next, DSPuid, i);
-					//TODO ! replace 17 with multiplierblock->getshift~ something like that
-
+					generateVHDLforDSP(current, DSPuid, i);
+					
 					//manage critical path
-					op->getTarget()->delayForDSP(next, op->getCriticalPath(), addedCycles, addedCriticalPath);
+					op->getTarget()->delayForDSP(current, op->getCriticalPath(), addedCycles, addedCriticalPath);
 					for(int j=0; j<addedCycles; j++)
 						op->nextCycle();
 					op->setCriticalPath(addedCriticalPath);
-
-					if(current->getSigLength() > next->getSigLength())
-						newLength=current->getSigLength();
-					else
-						newLength=next->getSigLength();
-
-					//addition, the 17lsb-s from the first block will go directly to bitheap
-					if(op->getTarget()->getVendor()=="Xilinx")
+				}
+				
+				if(op->getTarget()->getVendor() == "Altera")
+				{
+					stringstream sumName;
+					int length, weightBase;
+					
+					next = current->getNext();
+					
+					if(next == NULL)
 					{
-						if(signedIO)	{
+						sumName << join("DSP_bh", guid, "_ch", i, "_", DSPuid);
+						
+						generateVHDLforDSP(current, DSPuid, i);
+					
+						//manage critical path
+						op->getTarget()->delayForDSP(current, op->getCriticalPath(), addedCycles, addedCriticalPath);
+						for(int j=0; j<addedCycles; j++)
+							op->nextCycle();
+						op->setCriticalPath(addedCriticalPath);
+					}else
+					{
+						DSPuid++;
+						sumName << join("DSP_bh", guid, "_ch", i, "_", DSPuid);
+						
+						//manage critical path
+						op->getTarget()->delayForDSP(current, op->getCriticalPath(), addedCycles, addedCriticalPath);
+						for(int j=0; j<addedCycles; j++)
+							op->nextCycle();
+						op->setCriticalPath(addedCriticalPath);
+						if(!op->getTarget()->isPipelined())
+							op->manageCriticalPath( op->getTarget()->adderDelay(next->getSigLength()+1) );
+						
+						//the combinatorial case
+						if(!op->getTarget()->isPipelined())
+						{
+							stringstream zeros;
+														
+							DSPuid--;
+							generateVHDLforDSP(current, DSPuid, i);
+							DSPuid++;
+							generateVHDLforDSP(next, DSPuid, i);
+							
+							op->declare(sumName.str(), 2*(current->getwX()+((signedIO) && ((current->getwX()==9) || (current->getwX()==12) || (current->getwX()==16) || (current->getwX()==18) || (current->getwX()==27) || (current->getwX()==36)) ? 0 :1)) + 1);
+							
+							for(int j=0; j<current->getSigLength()-next->getSigLength()+1; j++)
+								zeros << next->getSigName() << "(" << next->getSigLength()-1 << ") & ";
+							
+							op->vhdl << tab << sumName.str()
+						         << "<= (" << current->getSigName() << "(" << current->getSigLength()-1 << ") & " << current->getSigName()
+						         << ") +  ( " << zeros.str() << next->getSigName() << " );" <<endl;
+						}else
+						{
+							op->declare(sumName.str(), 2*(current->getwX()+((signedIO) && ((current->getwX()==9) || (current->getwX()==12) || (current->getwX()==16) || (current->getwX()==18) || (current->getwX()==27) || (current->getwX()==36)) ? 0 :1)) + 1);
+							
+							//reset timing
+							op->setCycle(0);
+							op->setCriticalPath(0);
+							
+							generateAlteraSupertileVHDL(current, next, sumName.str());
+							
+							//manage critical path once again
+							for(int j=0; j<addedCycles; j++)
+								op->nextCycle();
+							op->setCriticalPath(addedCriticalPath);
+							op->manageCriticalPath( op->getTarget()->adderDelay(next->getSigLength()+1) );
+						}
+					}
+					
+					length = current->getSigLength();
+					if(next != NULL)
+					{
+						length = ((next->getSigLength() > current->getSigLength()) ? next->getSigLength() : current->getSigLength()) + 1;
+						weightBase = next->getWeight();
+					}else
+					{
+						weightBase = current->getWeight();
+					}
+						
+					for(int k=length-1;k>=0;k--)
+					{
+						int weight = weightBase +k;
+						
+						if(weight>=0)
+						{
+							stringstream s;
+		
+							if((k==length-1)&&(signedIO))
+							{
+								s << "not( " << sumName.str() << "(" << k << ") )";
+								addBit(weight, s.str(), "", 5);
+								for(int j=maxWeight; j>=weight; j--)
+									addConstantOneBit(j);
+							}
+							else
+							{
+								s << sumName.str() << "(" << k << ")";
+								addBit(weight, s.str(), "", 1);
+							}
+						}
+					}
+					
+				}else
+				{
+					//iterate on the other blocks of the supertile
+					while(current->getNext()!=NULL)
+					{
+						DSPuid++;
+						next=current->getNext();
+
+						generateVHDLforDSP(next, DSPuid, i);
+						//TODO ! replace 17 with multiplierblock->getshift~ something like that
+
+						//manage critical path
+						op->getTarget()->delayForDSP(next, op->getCriticalPath(), addedCycles, addedCriticalPath);
+						for(int j=0; j<addedCycles; j++)
+							op->nextCycle();
+						op->setCriticalPath(addedCriticalPath);
+
+						if(current->getSigLength() > next->getSigLength())
+							newLength=current->getSigLength();
+						else
+							newLength=next->getSigLength();
+
+						//addition, the 17lsb-s from the first block will go directly to bitheap
+						if(signedIO)
+						{
 							stringstream s;
 							for(int j=0;j<17;j++)
 								s<<current->getSigName()<<"("<<current->getSigLength()-1<<") & ";
@@ -333,16 +494,16 @@ namespace flopoco
 							newLength++;
 
 							op->vhdl << tab <<  op->declare(join("DSP_bh",guid,"_ch",i,"_",DSPuid),newLength)
-							         << "<= " <<next->getSigName()
-							         << " +  ( "<<  s.str() <<" & "<<"  "
-							         <<current->getSigName()
-							         <<range(current->getSigLength()-1,17)<<" );"<<endl ;
+									 << "<= " <<next->getSigName()
+									 << " +  ( "<<  s.str() <<" & "<<"  "
+									 <<current->getSigName()
+									 <<range(current->getSigLength()-1,17)<<" );"<<endl ;
 						}else
 						{
 							op->vhdl << tab <<  op->declare(join("DSP_bh",guid,"_ch",i,"_",DSPuid),newLength)
-							         << "<= " <<next->getSigName()
-							         << " +  ( "<<  zg(17) /* s.str()*/ <<" & "<<"  "
-							         <<current->getSigName()<<range(newLength-1,17)<<" );"<<endl ;
+									 << "<= " <<next->getSigName()
+									 << " +  ( "<<  zg(17) /* s.str()*/ <<" & "<<"  "
+									 <<current->getSigName()<<range(newLength-1,17)<<" );"<<endl ;
 						}
 
 						//sending the 17 lsb to the bitheap
@@ -357,59 +518,40 @@ namespace flopoco
 								addBit(weight,s.str(),"",1);
 							}
 						}
-					}
-					//Altera
-					else
-					{
-						newLength++;						
-						         
-						stringstream zeros;
-						for(int j=0; j<current->getSigLength()-next->getSigLength()+1; j++)
-							zeros << next->getSigName() << "(" << next->getSigLength()-1 << ") & ";
-						         
-						op->vhdl << tab << op->declare(join("DSP_bh",guid,"_ch",i,"_",DSPuid), newLength)
-						         << "<= (" << current->getSigName() << "(" << current->getSigLength()-1 << ") & " << current->getSigName()
-						         << ") +  ( " << zeros.str() << next->getSigName() << " );" <<endl;
-						         
-						//manage critical path
-						//	the delay theoretically should be the one of the adder 
-						//	inside the DSP, if the supertile is succesfully inferred
-						//op->manageCriticalPath( op->getTarget()->DSPAdderDelay() );
-						op->manageCriticalPath( op->getTarget()->adderDelay(next->getSigLength()) );
+						
+						//setting the name and length of the current block, to be used properly in the next iteration
+						stringstream q;
+						q << join("DSP_bh",guid,"_ch",i,"_",DSPuid);
+						next->setSignalName(q.str());
+						next->setSignalLength(newLength);
+						//next
+						current=next;
 					}
 
-					//setting the name and length of the current block, to be used properly in the next iteration
-					stringstream q;
-					q << join("DSP_bh",guid,"_ch",i,"_",DSPuid);
-					next->setSignalName(q.str());
-					next->setSignalLength(newLength);
-					//next
-					current=next;
-				}
-
-				// adding the result to the bitheap (in the last block from the supertile)
-				string name=current->getSigName();
-				int length=current->getSigLength();
-				REPORT(DEBUG,"sending bits to bitheap after chain adding");
-				for(int k=length-1;k>=0;k--)
-				{
-					int weight=current->getWeight()+k;
-					
-					if(weight>=0)
+					// adding the result to the bitheap (in the last block from the supertile)
+					string name=current->getSigName();
+					int length=current->getSigLength();
+					REPORT(DEBUG,"sending bits to bitheap after chain adding");
+					for(int k=length-1;k>=0;k--)
 					{
-						stringstream s;
-	
-						if((k==length-1)&&(signedIO))
+						int weight=current->getWeight()+k;
+						
+						if(weight>=0)
 						{
-							s<<"not( "<<name<<"("<<k<<") )";
-							addBit(weight,s.str(),"",5);
-							for(int i=maxWeight;i>=weight;i--)
-								addConstantOneBit(i);
-						}
-						else
-						{
-							s<<name<<"("<<k<<")";
-							addBit(weight,s.str(),"",1);
+							stringstream s;
+		
+							if((k==length-1)&&(signedIO))
+							{
+								s<<"not( "<<name<<"("<<k<<") )";
+								addBit(weight,s.str(),"",5);
+								for(int i=maxWeight;i>=weight;i--)
+									addConstantOneBit(i);
+							}
+							else
+							{
+								s<<name<<"("<<k<<")";
+								addBit(weight,s.str(),"",1);
+							}
 						}
 					}
 				}
