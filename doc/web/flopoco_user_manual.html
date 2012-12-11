@@ -345,8 +345,8 @@ reference.</p>
 	The <i>ratio</i> parameter is a user knob for targeting a more DSP-oriented 
 	architecture, or an architecture where some smaller 
 	multiplications are casted in logic. The <i>ratio</i> parameter takes values 
-	between 0 and 1, which shows how much of the DSP block's area can be left 
-	unutilized.</dd>
+	between 0 and 1, and shows how much of the DSP block's area can be left 
+	underutilized (as a percentage).</dd>
   <dt><code style="color: blue;">UnsignedIntMultiplier wInX wInY</code></dt>
      <dd>Generates a DSP-oriented multiplication architecture. Trades possible 
      DSP underutilization for logic and latency </dd>
@@ -379,7 +379,21 @@ reference.</p>
       <code>use limits</code> option but the recommended value is 1.
       </dd>
  	<dd></dd>
-
+	<h4><i> Complex Operators </i></h4>   
+<dl>
+   <dt><code style="color: blue;">FixComplexAdder wI wO</code></dt>
+    <dd>Complex adder for two's complement fix-point numbers. The operator is
+		pipelined (if needed) so as to produce a circuit running at the target frequency.
+     </dd>
+   <dt><code style="color: blue;">FixComplexMultiplier wI wO ratio</code></dt>
+    <dd>Complex multiplier for two's complement fixed-point numbers.
+	The <i>ratio</i> parameter is a user knob for targeting a more DSP-oriented 
+	architecture, or an architecture where some smaller multiplications are casted 
+	in logic, as in the case of IntMultiplier. The <i>ratio</i> parameter takes values 
+	between 0 and 1, and shows how much of the DSP block's area can be left 
+	underutilized (as a percentage).
+     </dd>
+</dl>
 
 </dl>
 
