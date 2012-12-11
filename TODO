@@ -1,20 +1,12 @@
-TODO before release:
-
-look for "Virtex4" in IntAddition and replace all these tests with Target stuff
-
-Performance in multipliers/bit heap compression.
-
-Set enableSuperTile to zero by default? Push this option to FPMult etc.
-
-
-
-
-
 TODO file for FloPoCo
 
 Here and there, fix VHDL style issues needed for whimsical simulators or synthesizers. See doc/VHDLStyle.txt
 
-BitHeapization (which means providing a bitheap-only constructor:
+
+
+
+BitHeapization 
+(and provide a bitheap-only constructor for all the following):
 * all the KCMs
 * PolyEval
 * FixSinCos
@@ -22,14 +14,15 @@ BitHeapization (which means providing a bitheap-only constructor:
 * HOTBM
 * IntAddition/*
 * Rework Guillaume Sergent's operators around the bit heap
-* Get rid of
+* define a policy for enableSuperTile: default to false or true?
+* Push this option to FPMult and other users of IntMult.
+* Replace tiling exploration with cached/classical tilings
+* More debogdanization: Get rid of
     IntAddition/IntCompressorTree
     IntAddition/NewIntCompressorTree
     IntAddition/PopCount
-  after checking the new bit heap compression is at least as good...
-
-
-
+    after checking the new bit heap compression is at least as good...
+* replace "Virtex4" tests in IntAddition  with Target calls
 
 
 Testbench
@@ -39,21 +32,14 @@ Testbench
 
 
 Pipeline framework, Operator and Targets:
+* global switch to ieee standard signed and unsigned libraries
 * add FPU object and remove all global variables, to enable library build
 * add semantic support of fixed-point to Signal
 * fix obvious memory leaks
-* fix the default getCycleFromSignal
+* fix the default getCycleFromSignal . 
+* define a Timing as a (Cycle, CriticalPath), and associate that cleanly to Signals with getTiming methods that set both cycle and critical path.
 * insert getNewUId and comb/freq info directly in setName(), and clean up
 
-
-Multipliers
-* bug with empty multipliers (see FPPow 11 52)
-* uniform interface for IntMultiplier (signed/unsigned, truncated)
-* IntCompressorTree for bit heaps of arbitrary shape
-* Remove tiling exploration, replace it with cached/classical tilings
-* add interface without bitheap compression
-
-* Use the new multipliers for constmults, hotbm etc
 
 Collision
 * manage infinities etc
