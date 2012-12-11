@@ -12,6 +12,10 @@
   All rights reserved.
 
 */
+
+// To enable SVG plotting, #define BITHEAP_GENERATE_SVG in BitHeap.hpp
+
+
 #include "BitHeap.hpp"
 #include "Plotter.hpp"
 #include <iostream>
@@ -1153,9 +1157,10 @@ namespace flopoco
 						plotter->heapSnapshot(true,  plottingCycle, plottingCP);
 						generateFinalAddVHDL(true);
 
-					}	
+					}
+#if BITHEAP_GENERATE_SVG
 				plotter->plotBitHeap();
-
+#endif
 
 			}
 

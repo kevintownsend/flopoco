@@ -23,8 +23,9 @@
 #include "IntAdder.hpp"
 #include "IntAddition/BasicCompressor.hpp"
 #include "IntMultipliers/MultiplierBlock.hpp"
-//#include "Plotter.hpp"
 
+// To enable SVG plotting, uncomment the following line
+ #define BITHEAP_GENERATE_SVG 0
 
 
 /* 

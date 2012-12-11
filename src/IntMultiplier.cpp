@@ -1,4 +1,3 @@
-
 /*
   An integer multiplier mess for FloPoCo
 
@@ -15,6 +14,7 @@
   All rights reserved.
 */
 
+// To enable SVG plotting, #define BITHEAP_GENERATE_SVG in BitHeap.hpp
 
 /* 
    Who calls whom
@@ -48,14 +48,6 @@
    Current situation is: if you don't like this you manage it from outside:
    An application that knows that it will not use the full range (e.g. signal processing, poly evaluation) can ignore the MSB bit, 
    but we produce it.
-
-
-
-   A big TODO ?
-
-   But for truncated signed multipliers, maybe we could hackingly round down this output to 2^n-1 to avoid carrying around a useless bit.
-   This would be a kind of saturated arithmetic I guess.
-
 
 */
 
@@ -438,8 +430,9 @@ namespace flopoco {
 				bitHeap->addConstantOneBit(weight);
 		}
 
-		
+#if GENERATE_SVG
 		plotter->plotMultiplierConfiguration(getName(), localSplitVector, wX, wY, wOut, g);
+#endif
 	}
 	
 
