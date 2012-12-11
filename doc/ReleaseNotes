@@ -7,6 +7,7 @@ New Cyclone, Virtex6, StratixV targets.
 New operators:  
     lut_sr_rng: David Thomas' random number generators
     FixComplexAdder, FixComplexMultiplier: complex operators
+    FPAddSub : fused adder+subtractor for e.g. butterfly structures
     FixSinCos, CordicSinCos, FixSinOrCos: variations on the trigs
 
 

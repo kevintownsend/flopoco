@@ -383,7 +383,7 @@ reference.</p>
 
 </dl>
 
-<h3>Classical floating-point operators</h3> 
+<h3>Floating-point operators</h3> 
 
 These operators are correctly rounded to the nearest, in a way
 compatible with IEEE-754, with the exception that subnormal numbers
@@ -399,7 +399,9 @@ are flushed to zero.
   <dt><code style="color: blue;">FPAdderDualPath wE wF</code></dt>
     <dd>A previous FPAdder architecture. Trades a larger circuit size for a smaller latency.</dd>
   <dt><code style="color: blue;">FPAdder3Input wE wF</code></dt>
-    <dd>A brand new 3-operand floating-point adder</dd>
+    <dd>A 3-operand floating-point adder</dd>
+  <dt><code style="color: blue;">FPAddSub wE wF</code></dt>
+    <dd>A fused floating-point adder and subtracter, computes both a+b and a-b</dd>
   <dt><code style="color: blue;">FPDiv wE wF</code></dt>
     <dd>A floating-point divider.</dd>
   <dt><code style="color: blue;">FPSqrt wE wF</code></dt>
