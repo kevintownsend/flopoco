@@ -78,8 +78,9 @@ C [^/*]
 [a-zA-Z_][a-zA-Z0-9_]*  {
 						
 						FlopocoExpressionlval.s_type = (char*) malloc( sizeof(char)*strlen(FlopocoExpressiontext) );
-						for (unsigned i=0;i<strlen(FlopocoExpressiontext);i++)
+						for (unsigned i=0;i<=strlen(FlopocoExpressiontext);i++) { /* <= to copy the ending NULL, too */
 							FlopocoExpressionlval.s_type[i] = FlopocoExpressiontext[i];
+            }
 						return FPEXPRESSION_VARIABLE;
 				  }
 

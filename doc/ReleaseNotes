@@ -3,7 +3,7 @@ This version mostly introduces a generic framework for bit heaps.
 In the process, the multiplier synthesis code has been overhauled. 
 Results are not always better, but they are more consistent.
 Experimental resource estimation and floorplanning framework
-New Cyclone targets. 
+New Cyclone, Virtex6, StratixV targets. 
 New operators:  
     lut_sr_rng: David Thomas' random number generators
     FixComplexAdder, FixComplexMultiplier: complex operators

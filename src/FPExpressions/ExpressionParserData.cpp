@@ -1,8 +1,9 @@
 #include "ExpressionParserData.h"
-//#define EXPRESSIONPARSER_DEBUG
+// #define EXPRESSIONPARSER_DEBUG
 using namespace std;
 
 node* createVariableNode(char* nodeName){
+
 	node* n;
 	n = (node*) malloc( sizeof(node) );
 	//set type as input
@@ -131,7 +132,7 @@ void makeComputationalTree(node* parent, nodeList* expressionList, nodeList* sta
 			//if this node is not a constant
 			if (h->n->name!=NULL){
 #ifdef EXPRESSIONPARSER_DEBUG
-				cout << "Linking node:" << h->n->name<<";"<<endl;
+				cout << endl << "Linking node:" << h->n->name<<";"<<endl;
 #endif			
 				//fetch the name;
 				char* c = h->n->name;

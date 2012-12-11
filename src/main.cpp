@@ -2388,7 +2388,6 @@ bool parseCommandLine(int argc, char* argv[]){
 			string filename = argv[i++];
 			int wE = checkStrictlyPositive(argv[i++], argv[0]);
 			int wF = checkStrictlyPositive(argv[i++], argv[0]);
-			
 			Operator* tg = new FPPipeline(target, filename, wE, wF);
 			addOperator(tg);
 		}
