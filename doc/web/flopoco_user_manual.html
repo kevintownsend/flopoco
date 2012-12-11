@@ -17,10 +17,12 @@
 <hr/>
 <h2>Installation</h2>
 
+We welcome other single-line installations!
+
 <h3>Single-line installation on Ubuntu 10.04LTS to 12.10</h3>
 Copy this in a dash/bash shell (and enter your password when prompted):
 
-<p><kbd>yes | sudo apt-get install g++ libgmp3-dev libmpfr-dev libxml2-dev bison libmpfi-dev flex cmake libgsl-dev libboost1.46-all-dev && wget http://perso.ens-lyon.fr/damien.stehle/downloads/libfplll-3.0.12.tar.gz && tar xzf libfplll-3.0.12.tar.gz && cd libfplll-3.0.12/ && ./configure && make -j2  && sudo make install && cd .. && wget https://gforge.inria.fr/frs/download.php/28248/sollya-2.9.tar.gz && tar xzf sollya-2.9.tar.gz && cd sollya-2.9/ && ./configure && make -j2  && sudo make install && cd .. && wget https://gforge.inria.fr/frs/download.php/30159/flopoco-2.3.1.tgz  && gunzip < flopoco-2.3.1.tgz    | tar xvf - && cd flopoco-2.3.1/ && cmake . && make -j2  && ./flopoco</kbd></p>
+<p><kbd>yes | sudo apt-get install g++ libgmp3-dev libmpfr-dev libxml2-dev bison libmpfi-dev flex cmake libgsl-dev libboost1.46-all-dev && wget http://perso.ens-lyon.fr/damien.stehle/downloads/libfplll-3.0.12.tar.gz && tar xzf libfplll-3.0.12.tar.gz && cd libfplll-3.0.12/ && ./configure && make -j2  && sudo make install && cd .. && wget https://gforge.inria.fr/frs/download.php/28571/sollya-3.0.tar.gz && tar xzf sollya-3.0.tar.gz && cd sollya-3.0/ && ./configure && make -j2  && sudo make install && cd .. && wget https://gforge.inria.fr/frs/download.php/31858/flopoco-2.4.0.tgz   && gunzip < flopoco-2.4.0.tgz    | tar xvf - && cd flopoco-2.4.0/ && cmake . && make -j2  && ./flopoco</kbd></p>
 
 <h3>Generic installation instructions</h3>
 
@@ -39,7 +41,7 @@ against <a href="http://sollya.gforge.inria.fr/">Sollya</a>. This
 enables more operators (HOTBM, FunctionEvaluator). For this purpose, you
 must download,
 compile and install <a href="http://sollya.gforge.inria.fr/">Sollya</a>.
-FloPoCo is demonstrated to work with version 2.0 of Sollya and should work with future releases.
+FloPoCo is demonstrated to work with version 3.0 of Sollya and will follow future releases.
 </p>
 
 <p>Compilation is a two-step process:</p>

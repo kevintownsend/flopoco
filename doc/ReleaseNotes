@@ -1,5 +1,5 @@
 Version 2.4.0
-This version mostly introduces a generic framework for bit heaps. 
+This version introduces a generic framework for bit heaps. 
 In the process, the multiplier synthesis code has been overhauled. 
 Results are not always better, but they are more consistent.
 Experimental resource estimation and floorplanning framework
