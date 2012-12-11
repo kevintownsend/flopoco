@@ -1,4 +1,8 @@
 #FPLog
 
-flopoco FPLog 8 23 16
-flopoco FPLog 11 28 8
+flopoco -target=StratixIV FPLog 8 23 0
+flopoco -target=StratixIV FPLog 11 28 0
+flopoco -target=StratixIV FPLog 11 52 0
+flopoco -target=Virtex5 FPLog 8 23 0
+flopoco -target=Virtex5 FPLog 11 28 0
+flopoco -target=Virtex5 FPLog 11 52 0
