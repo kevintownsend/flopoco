@@ -3,6 +3,7 @@ dnl Process this file with autoconf to produce a configure script.
 AC_INIT([FloPoCo], [svn-trunk], [BUG_REPORT_ADDRESS])
 AC_CONFIG_MACRO_DIR([m4])
 AM_INIT_AUTOMAKE([-Wall -Werror foreign])
+m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])])
 
 dnl Check for programs.
 AC_PROG_CXX
