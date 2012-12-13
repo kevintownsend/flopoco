@@ -17,12 +17,12 @@
 <hr/>
 <h2>Installation</h2>
 
-We welcome other single-line installations!
-
-<h3>Single-line installation on Ubuntu 10.04LTS to 12.10</h3>
+<h3>Single-line installation on Ubuntu 12.10</h3>
 Copy this in a dash/bash shell (and enter your password when prompted):
 
-<p><kbd>yes | sudo apt-get install g++ libgmp3-dev libmpfr-dev libxml2-dev bison libmpfi-dev flex cmake libgsl-dev libboost1.46-all-dev && wget http://perso.ens-lyon.fr/damien.stehle/downloads/libfplll-3.0.12.tar.gz && tar xzf libfplll-3.0.12.tar.gz && cd libfplll-3.0.12/ && ./configure && make -j2  && sudo make install && cd .. && wget https://gforge.inria.fr/frs/download.php/28571/sollya-3.0.tar.gz && tar xzf sollya-3.0.tar.gz && cd sollya-3.0/ && ./configure && make -j2  && sudo make install && cd .. && wget https://gforge.inria.fr/frs/download.php/31858/flopoco-2.4.0.tgz   && gunzip < flopoco-2.4.0.tgz    | tar xvf - && cd flopoco-2.4.0/ && cmake . && make -j2  && ./flopoco</kbd></p>
+<p><kbd>yes | sudo apt-get install g++ libgmp3-dev libmpfr-dev libxml2-dev bison libmpfi-dev flex cmake libboost-all-dev libgsl0-dev && wget http://perso.ens-lyon.fr/damien.stehle/downloads/libfplll-3.0.12.tar.gz && tar xzf libfplll-3.0.12.tar.gz && cd libfplll-3.0.12/ && ./configure && make -j2  && sudo make install && cd .. && wget https://gforge.inria.fr/frs/download.php/28571/sollya-3.0.tar.gz && tar xzf sollya-3.0.tar.gz && cd sollya-3.0/ && ./configure && make -j2  && sudo make install && cd .. && wget https://gforge.inria.fr/frs/download.php/31858/flopoco-2.4.0.tgz  && gunzip < flopoco-2.4.0.tgz    | tar xvf - && cd flopoco-2.4.0/ && cmake . && make -j2  && ./flopoco</kbd></p>
+
+<em>We would welcome similar installation scripts for other platforms.</em>
 
 <h3>Generic installation instructions</h3>
 
@@ -36,12 +36,12 @@ Linux distributions and for Windows. If you prefer to use the autotools read the
 all of which are probably available in your favourite Linux/Unix
 distribution. </p>
 
-<p>Optionally, you may want to link FloPoCo
+<p>You really want to link FloPoCo
 against <a href="http://sollya.gforge.inria.fr/">Sollya</a>. This
-enables more operators (HOTBM, FunctionEvaluator). For this purpose, you
+enables the more advanced operators (HOTBM, FunctionEvaluator). For this purpose, you
 must download,
 compile and install <a href="http://sollya.gforge.inria.fr/">Sollya</a>.
-FloPoCo is demonstrated to work with version 3.0 of Sollya and will follow future releases.
+FloPoCo is demonstrated to work with version 3.0 of Sollya and should work with future releases.
 </p>
 
 <p>Compilation is a two-step process:</p>
@@ -363,24 +363,8 @@ reference.</p>
     The TwoWaySplitting, ThreeWaySplitting and FourWaySplitting Karatsuba-Ofman algorithms are
     implemented. See this <a href="http://prunel.ccsd.cnrs.fr/docs/00/35/64/21/PDF/RR2009-03.pdf">article</a> for more details.</dd>
     <dd></dd>
-  <dt><code style="color: blue;">IntTilingMultiplier wInX wInY ratio maxTimeInMinutes</code>
-  <dd> Integer multiplier of two integers X and Y of sizes wInX and wInY
-      using the tiling technique presented in this <a href="http://prunel.ccsd.cnrs.fr/docs/00/47/57/81/PDF/RR-LIP-2010-15.pdf">article</a>
-      The <code>ratio</code> is a number in [0,1] and selects between DSP dominant architectures
-      (<code>ratio</code> closer to 1) and logic dominant architectures for <code>ratio</code> closer to 0.  
-      The algorithm uses an optimized backtracking approach in exploring the design space and 
-      could therefore take a long time to get an optimal solution. The option <code>maxTimeInMinutes</code>
-      is used to restrict the maximum amount of time that the algorithm can search for a solution. A value
-      of <code>-1</code> for this parameter will find the best solution.</dd>
- 	<dd></dd>
-  <dt><code style="color: blue;">IntTruncMultiplier wInX wInY ratio error useLimits maxTimeInMinutes</code>
-  <dd> Truncated integer multiplier of two integers X and Y of sizes wInX and wInY
-      using the tiling technique and the specific truncation theory presented in this <a href="http://prunel.ccsd.cnrs.fr/docs/00/47/57/81/PDF/RR-LIP-2010-15.pdf">article</a>
-      <code>error</code> gives the maximal allowed error produced by this operator. 
-      Two different soft-multiplier expansion techniques can be selected using the
-      <code>use limits</code> option but the recommended value is 1.
-      </dd>
- 	<dd></dd>
+</dl>
+
 	<h4><i> Complex Operators </i></h4>   
 <dl>
    <dt><code style="color: blue;">FixComplexAdder wI wO</code></dt>
@@ -397,7 +381,7 @@ reference.</p>
      </dd>
 </dl>
 
-</dl>
+
 
 <h3>Floating-point operators</h3> 
 
