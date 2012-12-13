@@ -340,20 +340,13 @@ reference.</p>
 </dl>
    <h4><i> Multipliers </i></h4>   
 <dl>     
-  <dt><code style="color: blue;">IntMultiplier wInX wInY signed ratio</code></dt>
-	<dd>The IntMultiplier operator now regroups in a transparent way multiple 
-	possible architectures. The <i>signed</i> parameter controls whether or not  
-	the inputs will be treated as 2's complement numbers for the signed case.
+  <dt><code style="color: blue;">IntMultiplier wInX wInY wOut signedIO ratio enableSupertiles</code></dt>
+	<dd>Integer multiplier, possibly truncated to wOut bits, possibly with signed I/Os (2's complement)
 	The <i>ratio</i> parameter is a user knob for targeting a more DSP-oriented 
 	architecture, or an architecture where some smaller 
 	multiplications are casted in logic. The <i>ratio</i> parameter takes values 
-	between 0 and 1, and shows how much of the DSP block's area can be left 
-	underutilized (as a percentage).</dd>
-  <dt><code style="color: blue;">UnsignedIntMultiplier wInX wInY</code></dt>
-     <dd>Generates a DSP-oriented multiplication architecture. Trades possible 
-     DSP underutilization for logic and latency </dd>
-  <dt><code style="color: blue;">SignedIntMultiplier wInX wInY</code></dt>
-     <dd>Same as above but signed and no real support for Altera targets.</dd>
+	between 0 and 1, and expresses how much of the DSP block's area can be left 
+	underutilized. The <i>enableSupertiles</i> parameter attempts to use the DSP adders to build large multipliers out of DSPs. When set to 0, a shorter latency architecture may be obtained for large multipliers, but at the expense of more logic. </dd>
   <dt><code style="color: blue;">IntSquarer wInX wInY</code></dt>
     <dd>Same for squaring. For large multiplications on some FPGAs, it
     saves DSP blocks (your mileage may vary).</dd>
