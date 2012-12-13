@@ -11,7 +11,7 @@
 <body>
 <h1>FloPoCo user manual</h1>
 
- <img src="FloPoCoLogoSmall.png">
+ <img src="FloPoCoSmall.png">
 
 
 <hr/>
@@ -344,9 +344,10 @@ reference.</p>
 	<dd>Integer multiplier, possibly truncated to wOut bits, possibly with signed I/Os (2's complement)
 	The <i>ratio</i> parameter is a user knob for targeting a more DSP-oriented 
 	architecture, or an architecture where some smaller 
-	multiplications are casted in logic. The <i>ratio</i> parameter takes values 
+	subproducts are implemented as logic. It takes values 
 	between 0 and 1, and expresses how much of the DSP block's area can be left 
 	underutilized. The <i>enableSupertiles</i> parameter attempts to use the DSP adders to build large multipliers out of DSPs. When set to 0, a shorter latency architecture may be obtained for large multipliers, but at the expense of more logic. </dd>
+
   <dt><code style="color: blue;">IntSquarer wInX wInY</code></dt>
     <dd>Same for squaring. For large multiplications on some FPGAs, it
     saves DSP blocks (your mileage may vary).</dd>
@@ -368,7 +369,7 @@ reference.</p>
     <dd>Complex multiplier for two's complement fixed-point numbers.
 	The <i>ratio</i> parameter is a user knob for targeting a more DSP-oriented 
 	architecture, or an architecture where some smaller multiplications are casted 
-	in logic, as in the case of IntMultiplier. The <i>ratio</i> parameter takes values 
+	in logic, as in the case of IntMultiplier. It takes values 
 	between 0 and 1, and shows how much of the DSP block's area can be left 
 	underutilized (as a percentage).
      </dd>
