@@ -27,7 +27,9 @@ namespace flopoco{
 	// the log is then smaller than 2^-p+1
 	//  outputPrecision is the weight of the last bit in the real domain
 	OtherLogTable::OtherLogTable(Target* target, int wIn, int outputPrecision, int which, int ai, int pi) : 
-		Table(target, wIn, outputPrecision),  which(which), ai(ai), pi(pi)
+		Table(target, wIn, outputPrecision, 0, -1, 1),  which(which), ai(ai), pi(pi)
+	 // TODO this forces a logic-based table
+
 	{
 		ostringstream name; 
 		name <<"LogTable_"<<which<<"_"<<wIn<<"_"<<wOut;
