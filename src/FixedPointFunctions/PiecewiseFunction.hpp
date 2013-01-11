@@ -5,7 +5,6 @@
 #include <iostream>
 #include <vector>
 #include "HOTBM/Util.hh"
-#include "../sollya.h"
 #include "Function.hpp"
 #include <stdlib.h>
 using namespace std;

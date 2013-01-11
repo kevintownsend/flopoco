@@ -5,7 +5,8 @@
 #include <iostream>
 
 #include "HOTBM/Util.hh"
-#include "../sollya.h"	
+
+#include "../sollya.h"
 
 using namespace std;
 

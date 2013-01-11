@@ -10,7 +10,6 @@
 #include "../Operator.hpp"
 #include "../Table.hpp"
 #include "PolynomialEvaluator.hpp"
-#include "../sollya.h"	
 
 #include "Function.hpp"
 #include "PiecewiseFunction.hpp"
