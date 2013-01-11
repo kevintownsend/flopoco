@@ -2524,7 +2524,7 @@ int main(int argc, char* argv[] )
 	initTool();
 	if (setjmp(recover)) {
 	/* If we are here, we have come back from an error in the library */
-		std::cerr << "An error occurred somewhere.\n";
+		std::cerr << "An error occurred somewhere in the Sollya library.\n";
 		exit(1);
 	}
 	setRecoverEnvironment(&recover);
