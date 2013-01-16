@@ -30,6 +30,9 @@ UserDefinedOperator::UserDefinedOperator(Target* target, int param0_, int param1
 */
   /* In this constructor we are going to generate an operator that takes as input three bit vectors X,Y,Z of lenght param0, treats them as unsigned integers, sums them and then output the last param1 bit of the sum adding the first bit of the sum (most significant) in front of this output, all the vhdl code needed by this operator has to be generated in this function */
 
+	// definition of the source file name, used for info and error reporting using REPORT 
+	srcFileName="UserDefinedOperator";
+
   // definition of the name of the operator
   ostringstream name;
   name << "UserDefinedOperator_" << param0 << "_" << param1;
