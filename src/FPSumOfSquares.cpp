@@ -33,7 +33,7 @@ namespace flopoco{
 		: Operator(target), wE(wE), wF(wF)
 	{
 		setCopyrightString("F. de Dinechin, Bogdan Pasca (2011)");
-
+		srcFileName="FPSumOfSquares";
 		ostringstream o;
 		o << "FPSumOfSquares_" << wE << "_" << wF;
 		if(!optimize)
@@ -43,7 +43,7 @@ namespace flopoco{
 		addFPInput("X", wE, wF);
 		addFPInput("Y", wE, wF);
 		addFPInput("Z", wE, wF);
-		addFPOutput("R", wE, wF, 2);
+		addFPOutput("R", wE, wF, 2); // This 2 means: we will allow two possible inputs (faithful rounding)
 
 		if(!optimize) {
 			//////////////////////////////////////////////////////////////////:
