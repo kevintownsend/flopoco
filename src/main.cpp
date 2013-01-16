@@ -851,7 +851,7 @@ bool parseCommandLine(int argc, char* argv[]){
 
 
 		else if(opname=="FPConstMultRational"){
-			int nargs = 4;
+			int nargs = 6;
 			if (i+nargs > argc)
 				usage(argv[0],opname);
 			else {
