@@ -56,8 +56,8 @@ namespace flopoco{
 
 
 
-	IntConstDiv::IntConstDiv(Target* target, int wIn_, int d_, int alpha_,  map<string, double> inputDelays)
-		: Operator(target), d(d_), wIn(wIn_), alpha(alpha_)
+	IntConstDiv::IntConstDiv(Target* target, int wIn_, int d_, int alpha_,  bool remainderOnly_, map<string, double> inputDelays)
+		: Operator(target), d(d_), wIn(wIn_), alpha(alpha_), remainderOnly(remainderOnly_)
 	{
 		setCopyrightString("F. de Dinechin (2011)");
 		srcFileName="IntConstDiv";
@@ -79,7 +79,11 @@ namespace flopoco{
 		/* Generate unique name */
 		
 		std::ostringstream o;
-		o << "IntConstDiv_" << d << "_" << wIn << "_"  << alpha << "_" ;
+		if(remainderOnly)
+			o << "IntConstRem_";
+		else
+			o << "IntConstDiv_";
+		o << d << "_" << wIn << "_"  << alpha << "_" ;
 		if(target->isPipelined()) 
 				o << target->frequencyMHz() ;
 		else
@@ -90,7 +94,9 @@ namespace flopoco{
 
 
 		addInput("X", wIn);
-		addOutput("Q", qSize);
+
+		if(!remainderOnly)
+			addOutput("Q", qSize);
 		addOutput("R", gamma);
 
 		int k = wIn/alpha;
@@ -136,13 +142,15 @@ namespace flopoco{
 			vhdl << tab << declare(ri, gamma) << " <= " << outi << range(gamma-1, 0) << ";" << endl; 
 		}
 
+
+		if(!remainderOnly) { // build the quotient output
 		vhdl << tab << declare("tempQ", k*alpha) << " <= " ;
 		for (unsigned int i=k-1; i>=1; i--) 
 			vhdl << "q" << i << " & ";
 		vhdl << "q0 ;" << endl; 
+			vhdl << tab << "Q <= tempQ" << range(qSize-1, 0)  << ";" << endl;
+		}		
 
-		vhdl << tab << "Q <= tempQ" << range(qSize-1, 0)  << ";" << endl;
-		
 		vhdl << tab << "R <= " << ri << ";" << endl; // This ri is r_0
 		
 	}	
@@ -160,7 +168,8 @@ namespace flopoco{
 		/* Compute correct value */
 		mpz_class Q = X/d;
 		mpz_class R = X-Q*d;
-		tc->addExpectedOutput("Q", Q);
+		if(!remainderOnly)
+			tc->addExpectedOutput("Q", Q);
 		tc->addExpectedOutput("R", R);
 	}
  

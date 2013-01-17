@@ -35,7 +35,6 @@ namespace flopoco{
 			int d;
 			int alpha;
 			int gamma;
-			
 			EuclideanDivTable(Target* target, int d_, int alpha_, int gamma_);
 			mpz_class function(int x);
 		};
@@ -49,7 +48,7 @@ namespace flopoco{
 		    * @param alpha The size of the chunk, or, use radix 2^alpha
 		    */
 
-		IntConstDiv(Target* target, int wIn, int d, int alpha=-1,  map<string, double> inputDelays = emptyDelayMap);
+		IntConstDiv(Target* target, int wIn, int d, int alpha=-1, bool remainderOnly=false, map<string, double> inputDelays = emptyDelayMap);
 		~IntConstDiv();
 		
 		// Overloading the virtual functions of Operator
@@ -65,6 +64,7 @@ namespace flopoco{
 		int d; /**<  Divisor*/
 		int wIn;  /**<  Size in bits of the input X */
 		int alpha; /**< Size of the chunk (should be between 1 and 16)*/
+		bool remainderOnly; /**< if true, only the remainder will be computed. If false, quotient will be computed */
 		int gamma;  /**< Size in bits of a remainder; gamma=ceil(log2(d-1)) */
 		int qSize;   /**< Size in bits of the quotient output */
 		

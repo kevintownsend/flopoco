@@ -147,7 +147,7 @@ namespace flopoco{
 			vhdl << tab << declare("divIn1", intDivSize) << " <= x_sig & '0' & CONV_STD_LOGIC_VECTOR(" << h << ", " << s <<");" << endl;
 			vhdl << tab << declare("divIn", intDivSize) << " <= divIn1 when mltd='1' else divIn0;" << endl;
 			
-			icd = new IntConstDiv(target, intDivSize, d,   alpha, inDelayMap("X",target->localWireDelay()+getCriticalPath()));
+			icd = new IntConstDiv(target, intDivSize, d,   alpha, false, inDelayMap("X",target->localWireDelay()+getCriticalPath()));
 			oplist.push_back(icd);
 			
 			inPortMap  (icd, "X", "divIn");

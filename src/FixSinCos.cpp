@@ -304,7 +304,7 @@ FixSinCos::FixSinCos(Target * target, int w_):Operator(target), w(w_)
 #endif
 		
 		IntConstDiv *cdiv_3;
-		cdiv_3 = new IntConstDiv (target, wZ3, 3, -1, cdiv_3_inputDelays);
+		cdiv_3 = new IntConstDiv (target, wZ3, 3, -1, false, cdiv_3_inputDelays);
 		oplist.push_back (cdiv_3);
 		outPortMap (cdiv_3, "Q", "Z3o6");
 		inPortMap (cdiv_3, "X", "Z3o2");
