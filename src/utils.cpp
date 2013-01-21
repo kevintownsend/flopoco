@@ -672,5 +672,21 @@ namespace flopoco{
 		return m;
 	}
 
+	mpz_class bitVectorToSigned(mpz_class x, int w){
+		mpz_class r;
+		if (x >= (mpz_class(1) << (w-1)))
+			r = x - (mpz_class(1) << w);
+		else
+			r = x;
+		return r;
+	}
 
+	mpz_class signedToBitVector(mpz_class x, int w){
+		mpz_class r;
+		if (x < 0)
+			r = x + (mpz_class(1) << w);
+		else
+			r = x;
+		return r;
+	}
 }

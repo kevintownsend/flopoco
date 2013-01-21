@@ -310,30 +310,18 @@ namespace flopoco{
 			// tc->addExpectedOutput("Zr", svZr);
 		}
 		else{
-			mpz_class big1I = (mpz_class(1) << (wI));
-			mpz_class big1PI = (mpz_class(1) << (wI-1));
-			mpz_class tmpSUB = (mpz_class(1) << (2*wI+1));
 
-			if ( svXi >= big1PI)
-				svXi = svXi - big1I;
-			if ( svXr >= big1PI)
-				svXr = svXr - big1I;
+			svXr = bitVectorToSigned(svXr, wI);
+			svXi = bitVectorToSigned(svXi, wI);
+			svYr = bitVectorToSigned(svYr, wI);
+			svYi = bitVectorToSigned(svYi, wI);
 
-			if ( svYi >= big1PI)
-				svYi = svYi - big1I;
-			if ( svYr >= big1PI)
-				svYr = svYr - big1I;
-			
 			mpz_class svZr = svXr*svYr - svXi*svYi;
 			mpz_class svZi = svXr*svYi + svXi*svYr;
 			
-			if ( svZr < 0){
-				svZr += tmpSUB; 
-			}
-			if ( svZi < 0){
-				svZi += tmpSUB; 
-			}
-			
+			svZr = signedToBitVector(svZr, 2*wI+1);
+			svZi = signedToBitVector(svZi, 2*wI+1);
+
 			// now truncate to wO bits
 			if (wO<2*wI+1){
 				svZr = svZr >> (2*wI+1-wO);
