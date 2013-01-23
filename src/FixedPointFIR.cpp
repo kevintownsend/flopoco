@@ -82,21 +82,30 @@ namespace flopoco{
 #endif		
 
 
-		int size = 1+ leadingBit + p + g ; // sign + overflow  bits on the left, guard bits on the right
+		int size = 1+ (leadingBit - (-p) +1) + g ; // sign + overflow  bits on the left, guard bits on the right
 		REPORT(INFO, "Sum size is: "<< size );
 		
 
 		vhdl << tab << declare("S0", size) << " <= " << zg(size) << ";" << endl;
 		for (int i=0; i< n; i++) {
-			// Multiplication: instantiating a KCM object
-			FixRealKCM* mult = new FixRealKCM(target, -p,  -1, true, -p-g, coeff[i]);			
+			// Multiplication: instantiating a KCM object. 
+			FixRealKCM* mult = new FixRealKCM(target, 
+			                                  -p, // input LSB weight
+			                                  -1, // input MSB, but one sign bit will be added
+			                                  true, // signed
+			                                  -p-g, // output LSB weight -- the output MSB is computed out of the constant
+			                                  coeff[i] // pass the string unmodified
+			                                  );			
 			addSubComponent(mult);
 			inPortMap(mult,"X", join("X",i));
 			outPortMap(mult, "R", join("P",i));
 			vhdl << instance(mult, join("mult",i));
 			// Addition
 			int pSize=getSignalByName(join("P",i))->width();
-			vhdl << tab << declare(join("S",i+1), size) << " <= " <<  join("S",i) << " + " << zg(size-pSize) << "&" << join("P",i) << ";" << endl;
+			vhdl << tab << declare(join("S",i+1), size) << " <= " <<  join("S",i) << " + (" ;
+			if(size>pSize) 
+				vhdl << "("<< size-1 << " downto " << pSize<< " => "<< join("P",i) << of(pSize-1) << ")" << " & " ;
+			vhdl << join("P",i) << ");" << endl;
 		}
 		
 		vhdl << tab << "R <= " <<  join("S", n) << range(size-1, size-wO) << ";" << endl;
@@ -119,13 +128,27 @@ namespace flopoco{
 		mpfr_set_d(s, 0.0, GMP_RNDN); // initialize s to 0
 
 		for (int i=0; i< n; i++) {
+			double d;
 			mpz_class sx = tc->getInputValue(join("X", i)); // get the input bit vector as an integer
 			sx = bitVectorToSigned(sx, 1+p); // convert it to a signed mpz_class
 			mpfr_set_z (x, sx.get_mpz_t(), GMP_RNDD); // convert this integer to an MPFR; this rounding is exact
 			mpfr_div_2si (x, x, p, GMP_RNDD); // multiply this integer by 2^-p to obtain a fixed-point value; this rounding is again exact
+
+			//d=mpfr_get_d(x,GMP_RNDN);
+			//cout << " x=" << d;
+
 			mpfr_mul(t, x, mpcoeff[i], GMP_RNDN); // Here rounding possible, but precision used is ridiculously high so it won't matter
+
+			//d=mpfr_get_d(t,GMP_RNDN);
+			//cout << "  ci.x=" << d;
+
 			mpfr_add(s, s, t, GMP_RNDN); // same comment as above
+
+			//d=mpfr_get_d(s,GMP_RNDN);
+			//cout << "  s=" << d;
+
 		}
+		//cout << endl;
 
 		// now we should have in s the (exact in most cases) sum
 		// round it up and down
@@ -148,6 +171,10 @@ namespace flopoco{
 	}
 
 
+
+
+
+
 	// please fill me with regression tests or corner case tests
 	void FixedPointFIR::buildStandardTestCases(TestCaseList * tcl) {
 		TestCase *tc;
@@ -157,6 +184,13 @@ namespace flopoco{
 		tc = new TestCase(this);
 		for(int i=0; i<n; i++)
 			tc->addInput(join("X",i), mpz_class(0) );
+		emulate(tc);
+		tcl->add(tc);
+
+		// All ones (0.11111)
+		tc = new TestCase(this);
+		for(int i=0; i<n; i++)
+			tc->addInput(join("X",i), (mpz_class(1)<<p)-1 );
 		emulate(tc);
 		tcl->add(tc);
 

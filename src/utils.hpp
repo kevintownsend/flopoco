@@ -330,7 +330,7 @@ namespace flopoco{
 	/** a function that converts a bit vector (an mpz input to emulate()) to its signed value */
 	mpz_class bitVectorToSigned(mpz_class x, int size);
 
-	/** a function that converts a signed mpz_class to the corresponding bit vector represented as two's complement on size bits, to be used in the output of emulate() */
+	/** a function that converts a signed mpz_class to the corresponding bit vector represented as two's complement on size bits (sign bit included), to be used in the output of emulate() */
 	mpz_class signedToBitVector(mpz_class x, int size);
 }
 

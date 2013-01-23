@@ -674,6 +674,18 @@ namespace flopoco{
 
 	mpz_class bitVectorToSigned(mpz_class x, int w){
 		mpz_class r;
+		// sanity checks
+ 		if (x >= (mpz_class(1) << w)){
+			ostringstream error;
+			error << "bitVectorToSigned: input " << x << " does not fit on " << w << " bits";
+			throw error.str();
+		}
+ 		if (x < mpz_class(0)){
+			ostringstream error;
+			error << "bitVectorToSigned: negative input " << x;
+			throw error.str();
+		}
+
 		if (x >= (mpz_class(1) << (w-1)))
 			r = x - (mpz_class(1) << w);
 		else
@@ -682,6 +694,12 @@ namespace flopoco{
 	}
 
 	mpz_class signedToBitVector(mpz_class x, int w){
+		// sanity checks
+		if (  (x > (mpz_class(1) << (w-1))) || (x <= -(mpz_class(1) << (w-1))) ){
+			ostringstream error;
+			error << "signedToBitVector: input " << x << " out of range for two's complement on " << w << " bits";
+			throw error.str();
+		}
 		mpz_class r;
 		if (x < 0)
 			r = x + (mpz_class(1) << w);
