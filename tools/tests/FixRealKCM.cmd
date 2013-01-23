@@ -1,6 +1,3 @@
-@
-@
-@
 flopoco FixRealKCM -4 0  0  -10   "log(2)"
 flopoco FixRealKCM -5 0  0  -10   "log(2)"
 flopoco FixRealKCM -6 0  0  -10   "log(2)"
@@ -17,3 +14,5 @@ flopoco FixRealKCM -16 0  0  -20   "log(2)"
 flopoco FixRealKCM -16 0  0  -20   "log(2)"
 flopoco FixRealKCM -16 0  0  -20   "4*log(2)"
 flopoco FixRealKCM -16 0  0  -20   "pi"
+
+flopoco -pipeline=no FixRealKCM -8 -1 0 -14 0.4 
