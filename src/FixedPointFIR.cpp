@@ -45,9 +45,19 @@ namespace flopoco{
 		for (int i=0; i< n; i++) {
 			// parse the coeffs from the string. TODO: replace with Sollya parsing
 			mpfr_init_set_str (mpcoeff[i], coeff[i].c_str(), 10, GMP_RNDN);
+			if (mpfr_get_d(mpcoeff[i], GMP_RNDN) <0) {
+				coeffsign[i] = 1;
+				ostringstream m;
+				m << "-(" << coeff[i] << ")";
+				coeff[i] = m.str();
+				cout << "AAAA  " <<coeff[i] << endl;
+			}
+			else
+				coeffsign[i] = 0;
+			mpfr_abs(mpcoeff[i], mpcoeff[i], GMP_RNDN);
+				
 			// Accumulate the absolute values
-			mpfr_abs(absCoeff, mpcoeff[i], GMP_RNDN);
-			mpfr_add(sumAbsCoeff, sumAbsCoeff, absCoeff, GMP_RNDU);
+			mpfr_add(sumAbsCoeff, sumAbsCoeff, mpcoeff[i], GMP_RNDU);
 		}
 		// now sumAbsCoeff is the max value that the filter can take.
 		double sumAbs = mpfr_get_d(sumAbsCoeff, GMP_RNDU); // just to make the following loop easier
@@ -102,7 +112,11 @@ namespace flopoco{
 			vhdl << instance(mult, join("mult",i));
 			// Addition
 			int pSize=getSignalByName(join("P",i))->width();
-			vhdl << tab << declare(join("S",i+1), size) << " <= " <<  join("S",i) << " + (" ;
+			vhdl << tab << declare(join("S",i+1), size) << " <= " <<  join("S",i);
+			if(coeffsign[i]==1)
+				vhdl << " - (" ;
+			else
+				vhdl << " + (" ;
 			if(size>pSize) 
 				vhdl << "("<< size-1 << " downto " << pSize<< " => "<< join("P",i) << of(pSize-1) << ")" << " & " ;
 			vhdl << join("P",i) << ");" << endl;
@@ -138,6 +152,9 @@ namespace flopoco{
 			//cout << " x=" << d;
 
 			mpfr_mul(t, x, mpcoeff[i], GMP_RNDN); // Here rounding possible, but precision used is ridiculously high so it won't matter
+
+			if(coeffsign[i]==1)
+				mpfr_neg(t, t, GMP_RNDN); 
 
 			//d=mpfr_get_d(t,GMP_RNDN);
 			//cout << "  ci.x=" << d;

@@ -15,7 +15,8 @@ namespace flopoco{
 		int p;  /**< The precision of inputs and outputs */ 
 		int n;  /**< number of taps */
 		vector<string> coeff;  /**< the coefficients as strings */
-		mpfr_t mpcoeff[10000];  /**< the coefficients as MPFR numbers */
+		mpfr_t mpcoeff[10000];  /**< the absolute values of the coefficients as MPFR numbers */
+		bool coeffsign[10000];  /**< the signs of the coefficients */
 
 		int wO;  /**< output size, will be computed out of the constants */
 
