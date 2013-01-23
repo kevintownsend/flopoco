@@ -5,9 +5,13 @@
 
 namespace flopoco{
 
+
+
 	class FixRealKCM : public Operator
 	{
 	public:
+
+		/** Input size will be msbIn-lsbIn+1 if unsigned, msbIn-lsbIn+2 if signed */
 		FixRealKCM(Target* target, int lsbIn, int msbIn, bool signedInput, int lsbOut, string constant, 
 							 double targetUlpError = 1.0, map<string, double> inputDelays = emptyDelayMap);
 		~FixRealKCM();
