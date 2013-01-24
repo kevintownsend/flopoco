@@ -1,3 +1,6 @@
+trunk: 
+added clock enable support to the pipeline framework.
+
 Version 2.4.0
 This version introduces a generic framework for bit heaps. 
 In the process, the multiplier synthesis code has been overhauled. 
