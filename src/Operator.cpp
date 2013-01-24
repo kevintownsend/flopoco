@@ -36,6 +36,7 @@ namespace flopoco{
 		hasRegistersWithoutReset_   = false;
 		hasRegistersWithAsyncReset_ = false;
 		hasRegistersWithSyncReset_  = false;
+		hasClockEnable_             = false;
 		pipelineDepth_              = 0;
 		currentCycle_               = 0;
 		criticalPath_               = 0;
@@ -46,11 +47,19 @@ namespace flopoco{
 		indirectOperator_           = NULL;
 		hasDelay1Feedbacks_         = false;
 		
+
+		// Currently we set the pipeline and clockenable from the global target. 
+		// This is relatively safe from command line, in the sense that they can only be changed by the command-line,
+		// so each sub-component of an operator will share the same target.
+		// Il also makes the subcomponent calls easier: pass clock and ce without thinking about it.
+		// It is not very elegant because if the operator is eventually combinatorial, it will nevertheless have a clock and rst signal.
 		if (target_->isPipelined())
 			setSequential();
 		else
 			setCombinatorial();	
 		
+		setClockEnable(target_->useClockEnable());
+
 		vhdl.disableParsing(!target_->isPipelined());	
 
 		//------- Resource estimation and floorplanning ----------------
@@ -76,6 +85,7 @@ namespace flopoco{
 
 
 	void Operator::addSubComponent(Operator* op) {
+		op->changeName(getName()+op->getName());
 		oplist.push_back(op);
 	}
 
@@ -84,6 +94,7 @@ namespace flopoco{
 
 	void Operator::addToGlobalOpList() {
 		bool alreadyPresent=false;
+		// We assume all the operators added to GlobalOpList are unpipelined.
 
 		vector<Operator*> * globalOpListRef=target_->getGlobalOpListRef();
 			for (unsigned i=0; i<globalOpListRef->size(); i++){
@@ -260,74 +271,6 @@ namespace flopoco{
 		
 	}
 	
-	void  Operator::outputVHDLRegisters(std::ostream& o) {
-		unsigned int i;
-		// execute only if the operator is sequential, otherwise output nothing
-		if (isSequential()){
-			// First registers without a reset
-			if (hasRegistersWithoutReset_) {
-				o << tab << "process(clk)  begin\n"
-				<< tab << tab << "if clk'event and clk = '1' then\n";
-				for(i=0; i<signalList_.size(); i++) {
-					Signal *s = signalList_[i];
-					if((s->type()==Signal::registeredWithoutReset) || (s->type()==Signal::registeredWithZeroInitialiser)) 
-						o << tab <<tab << tab << s->getName() <<"_d <=  " << s->getName() <<";\n";
-				}
-				o << tab << tab << "end if;\n";
-				o << tab << "end process;\n"; 
-			}
-			
-			// then registers with a reset
-			if (hasRegistersWithAsyncReset_) {
-				o << tab << "process(clk, rst)" << endl;
-				o << tab << tab << "begin" << endl;
-				o << tab << tab << tab << "if rst = '1' then" << endl;
-				for(i=0; i<signalList_.size(); i++) {
-					Signal *s = signalList_[i];
-					if(s->type()==Signal::registeredWithAsyncReset) {
-						if ((s->width()>1)||(s->isBus())) 
-							o << tab <<tab << tab << s->getName() <<"_d <=  (" << s->width()-1 <<" downto 0 => '0');\n";
-						else
-							o << tab <<tab << tab << s->getName() <<"_d <=  '0';\n";
-					}
-				}
-				o << tab << tab << tab << "elsif clk'event and clk = '1' then" << endl;
-				for(i=0; i<signalList_.size(); i++) {
-					Signal *s = signalList_[i];
-					if(s->type()==Signal::registeredWithAsyncReset) 
-						o << tab <<tab << tab << s->getName() <<"_d <=  " << s->getName() <<";\n";
-				}
-				o << tab << tab << tab << "end if;" << endl;
-				o << tab << tab << "end process;" << endl;
-			}
-			
-			// then registers with synchronous reset
-			if (hasRegistersWithSyncReset_) {
-				o << tab << "process(clk, rst)" << endl;
-				o << tab << tab << "begin" << endl;
-				o<<  "    if clk'event and clk = '1' then" << endl;
-				o << tab << tab << tab << "if rst = '1' then" << endl;
-				for(i=0; i<signalList_.size(); i++) {
-					Signal *s = signalList_[i];
-					if(s->type()==Signal::registeredWithSyncReset) {
-						if ((s->width()>1)||(s->isBus())) 
-							o << tab <<tab << tab << s->getName() <<"_d <=  (" << s->width()-1 <<" downto 0 => '0');\n";
-						else
-							o << tab <<tab << tab << s->getName() <<"_d <=  '0';\n";
-					}
-				}
-				o << tab << tab << tab << "else" << endl;
-				for(i=0; i<signalList_.size(); i++) {
-					Signal *s = signalList_[i];
-					if(s->type()==Signal::registeredWithSyncReset) 
-						o << tab <<tab << tab << s->getName() <<"_d <=  " << s->getName() <<";\n";
-				}
-				o << tab << tab << tab << "end if;" << endl;
-				o << tab << tab << "end if;" << endl;
-				o << tab << tab << "end process;" << endl;
-			}
-		}
-	}
 	
 	
 	void Operator::outputVHDLComponent(std::ostream& o, std::string name) {
@@ -337,13 +280,15 @@ namespace flopoco{
 		{
 			o << tab << tab << "port ( ";
 			if(isSequential()) {
-				// add clk and rst signals which are no longer member of iolist
-				o << "clk, rst : in std_logic;" <<endl;
+				// add clk, rst, etc. signals which are not member of iolist
+				if(hasClockEnable()) 
+					o << "clk, rst, ce : in std_logic;" <<endl;
+				else if(isRecirculatory())
+					o << "clk, rst stall_s: in std_logic;" <<endl;
+				else 
+					o << "clk, rst : in std_logic;" <<endl;
 			}
-			if(isRecirculatory()) {
-				// add clk and rst signals which are no longer member of iolist
-				o << "stall_s : in std_logic;" <<endl;
-			}
+
 			for (i=0; i<this->ioList_.size(); i++){
 				Signal* s = this->ioList_[i];
 				if (i>0 || isSequential()) // align signal names 
@@ -368,14 +313,14 @@ namespace flopoco{
 		if (ioList_.size() > 0)
 		{
 			o << tab << "port ( ";
-			
 			if(isSequential()) {
-				// add clk and rst signals which are no longer member of iolist
-				o << "clk, rst : in std_logic;" <<endl;
-			}
-			if(isRecirculatory()) {
-				// add stall signals to stop pipeline work 
-				o << "stall_s : in std_logic;" <<endl;
+					// add clk, rst, etc. signals which are not member of iolist
+				if(hasClockEnable()) 
+					o << "clk, rst, ce : in std_logic;" <<endl;
+				else if(isRecirculatory()) 
+					o << "clk, rst stall_s: in std_logic;" <<endl;
+				else 
+					o << "clk, rst : in std_logic;" <<endl;
 			}
 			
 			for (i=0; i<this->ioList_.size(); i++){
@@ -1005,6 +950,9 @@ namespace flopoco{
 		if (op->isRecirculatory()) {
 			o << "," << endl << tab << tab << "           stall_s => stall_s";
 		};
+		if (op->hasClockEnable()) {
+			o << "," << endl << tab << tab << "           ce => ce";
+		};
 		
 		for (it=op->portMap_.begin()  ; it != op->portMap_.end(); it++ ) {
 			bool outputSignal = false;
@@ -1176,23 +1124,28 @@ namespace flopoco{
 		return o.str();	
 	}
 	
+
+
+
 	string  Operator::buildVHDLRegisters() {
 		ostringstream o;
 		
 		// execute only if the operator is sequential, otherwise output nothing
 		string recTab = "";
-		if (isRecirculatory()) recTab = tab;
+		if ( isRecirculatory() || hasClockEnable() )
+			recTab = tab;
 		if (isSequential()){
+			// First registers without reset
 			o << tab << "process(clk)" << endl;
 			o << tab << tab << "begin" << endl;
 			o << tab << tab << tab << "if clk'event and clk = '1' then" << endl;
 			if (isRecirculatory()) o << tab << tab << tab << tab << "if stall_s = '0' then" << endl;
+			else if (hasClockEnable()) o << tab << tab << tab << tab << "if ce = '1' then" << endl;
 			for(unsigned int i=0; i<signalList_.size(); i++) {
 				Signal *s = signalList_[i];
 				if ((s->type() == Signal::registeredWithoutReset) || (s->type()==Signal::registeredWithZeroInitialiser) || (s->type() == Signal::wire)) 
 					if(s->getLifeSpan() >0) {
 						for(int j=1; j <= s->getLifeSpan(); j++)
-							
 							o << recTab << tab << tab <<tab << tab << s->delayedName(j) << " <=  " << s->delayedName(j-1) <<";" << endl;
 					}
 			}
@@ -1203,11 +1156,12 @@ namespace flopoco{
 						o << recTab << tab << tab <<tab << tab << s->delayedName(j) << " <=  " << s->delayedName(j-1) <<";" << endl;
 				}
 			}
-			if (isRecirculatory()) o << tab << tab << tab << tab << "end if;" << endl;
+			if (isRecirculatory() || hasClockEnable()) 
+				o << tab << tab << tab << tab << "end if;" << endl;
 			o << tab << tab << tab << "end if;\n";
 			o << tab << tab << "end process;\n"; 
 			
-			// then registers with a reset
+			// then registers with asynchronous reset
 			if (hasRegistersWithAsyncReset_) {
 				o << tab << "process(clk, rst)" << endl;
 				o << tab << tab << "begin" << endl;
@@ -1225,14 +1179,19 @@ namespace flopoco{
 						}
 				}			
 				o << tab << tab << tab << "elsif clk'event and clk = '1' then" << endl;
+				if (isRecirculatory()) o << tab << tab << tab << tab << "if stall_s = '0' then" << endl;
+				else if (hasClockEnable()) o << tab << tab << tab << tab << "if ce = '1' then" << endl;
 				for(unsigned int i=0; i<signalList_.size(); i++) {
 					Signal *s = signalList_[i];
 					if (s->type() == Signal::registeredWithAsyncReset)  
 						if(s->getLifeSpan() >0) {
 							for(int j=1; j <= s->getLifeSpan(); j++)
-								o << tab <<tab << tab << tab << s->delayedName(j) << " <=  " << s->delayedName(j-1) <<";" << endl;
+								o << recTab << tab <<tab << tab << tab << s->delayedName(j) << " <=  " << s->delayedName(j-1) <<";" << endl;
 						}
-				}			o << tab << tab << tab << "end if;" << endl;
+				}
+			if (isRecirculatory() || hasClockEnable()) 
+				o << tab << tab << tab << tab << "end if;" << endl;
+				o << tab << tab << tab << "end if;" << endl;
 				o << tab << tab <<"end process;" << endl;
 			}
 			
@@ -1255,6 +1214,8 @@ namespace flopoco{
 						}
 				}			
 				o << tab << tab << tab << tab << "else" << endl;
+				if (isRecirculatory()) o << tab << tab << tab << tab << "if stall_s = '0' then" << endl;
+				else if (hasClockEnable()) o << tab << tab << tab << tab << "if ce = '1' then" << endl;
 				for(unsigned int i=0; i<signalList_.size(); i++) {
 					Signal *s = signalList_[i];
 					if (s->type() == Signal::registeredWithSyncReset)  
@@ -1263,6 +1224,8 @@ namespace flopoco{
 								o << tab <<tab << tab <<tab << tab << s->delayedName(j) << " <=  " << s->delayedName(j-1) <<";" << endl;
 						}
 				}			
+				if (isRecirculatory() || hasClockEnable()) 
+					o << tab << tab << tab << tab << "end if;" << endl;
 				o << tab << tab << tab << tab << "end if;" << endl;
 				o << tab << tab << tab << "end if;" << endl;
 				o << tab << tab << "end process;" << endl;
@@ -1437,6 +1400,94 @@ namespace flopoco{
 		vhdl.setSecondLevelCode(str);
 	}
 	
+	void  Operator::setIndirectOperator(Operator* op){
+		indirectOperator_=op;
+		if(op!=NULL) 	{		
+			op->setuid(getuid()); //the selected implemetation becomes this operator 
+			
+			// TODO outDelayMap["R"] = op->getOutputDelay("R"); //populate output delays
+			setCycle(op->getPipelineDepth());
+			op->setName (getName() );//accordingly set the name of the implementation
+				
+			signalList_ = op->signalList_;
+			subComponents_ = op->subComponents_;
+			ioList_ = op->ioList_;
+		 }
+	}
+
+	void Operator::cleanup(vector<Operator*> *ol, Operator* op){
+		//iterate through all the components of op
+		map<string, Operator*>::iterator it;
+	
+		for (it = op->subComponents_.begin(); it!= op->subComponents_.end(); it++)
+			cleanup(ol, it->second);
+			
+		for (unsigned j=0; j< (*ol).size(); j++){
+			if ((*ol)[j]->myuid == op->myuid){
+				(*ol).erase((*ol).begin()+j);
+			}
+		}	
+	}
+
+	string Operator::signExtend(string name, int w){
+		ostringstream e;
+		e << srcFileName << " (" << uniqueName_ << "): ERROR in signExtend, "; // just in case
+
+		Signal* s;
+		try {
+			s=getSignalByName(name);
+		}
+		catch (string e2) {
+			e << endl << tab << e2;
+			throw e.str();
+		}
+
+		//get the signals's width 
+		if (w == s->width()){
+			//nothing to do
+			return name;
+		}else if (w < s->width()){
+			cout << "WARNING: you required a sign extension to "<<w<<" bits of signal " << name << " whose width is " << s->width() << endl;
+			return name;
+		}else{
+			ostringstream n;
+			n << "(";
+			for (int i=0; i< w - s->width(); i++){
+				n<< name << of ( s->width() -1 ) << " & ";
+			}
+			n << name << ")";
+			string r = n.str();
+			return r;
+		}
+	}
+
+	string Operator::zeroExtend(string name, int w){
+		ostringstream e;
+		e << srcFileName << " (" << uniqueName_ << "): ERROR in zeroExtend, "; // just in case
+
+		Signal* s;
+		try {
+			s=getSignalByName(name);
+		}
+		catch (string e2) {
+			e << endl << tab << e2;
+			throw e.str();
+		}
+
+		//get the signals's width 
+		if (w == s->width()){
+			//nothing to do
+			return name;
+		}else if (w < s->width()){
+			cout << "WARNING: you required a zero extension to "<<w<<" bits of signal " << name << " whose width is " << s->width() << endl;
+			return name;
+		}else{
+			ostringstream n;
+			n << "(" << zg(w-s->width())<<" &" <<name << ")";
+			string r = n.str();
+			return r;
+		}
+	}
 	
 	void Operator::emulate(TestCase * tc) {
 		throw std::string("emulate() not implemented for ") + uniqueName_;
@@ -1762,6 +1813,52 @@ namespace flopoco{
 		return flpHelper->createFloorplan();
 	}
 	/////////////////////////////////////////////////////////////////////////////////////////////////
+
+	/** Completely replace "this" with a copy of another operator. */
+	void  Operator::cloneOperator(Operator *op){
+		stdLibType_ = op->stdLibType_;
+		subComponents_ = op->getSubComponents();
+		signalList_ = op->getSignalList();	
+		ioList_     = op->getIOListV();
+		target_           = op->getTarget();
+		uniqueName_       = op->getUniqueName();
+		architectureName_ = op->getArchitectureName();
+		testCaseSignals_ = op->getTestCaseSignals();	
+		portMap_ = op->getPortMap();
+		outDelayMap = map<string,double>(op->getOutDelayMap());
+		inputDelayMap = op->getInputDelayMap();
+		vhdl.vhdlCodeBuffer << op->vhdl.vhdlCodeBuffer.str();
+		vhdl.vhdlCode       << op->vhdl.vhdlCode.str();
+		vhdl.currentCycle_   = op->vhdl.currentCycle_;	
+		vhdl.useTable        = op->vhdl.useTable;
+		srcFileName = op->getSrcFileName();
+		declareTable = op->getDeclareTable();
+		cost = op->getOperatorCost();
+		numberOfInputs_  = op->getNumberOfInputs();
+		numberOfOutputs_ = op->getNumberOfOutputs();
+		isSequential_    = op->isSequential();
+		pipelineDepth_   = op->getPipelineDepth();
+		signalMap_ = op->getSignalMap();
+		constants_ = op->getConstants();
+		attributes_ = op->getAttributes();
+		types_ = op->getTypes();
+		attributesValues_ = op->getAttributesValues();
+
+		hasRegistersWithoutReset_   = op->getHasRegistersWithoutReset();
+		hasRegistersWithAsyncReset_ = op->getHasRegistersWithAsyncReset();
+		hasRegistersWithSyncReset_  = op->getHasRegistersWithSyncReset();
+		hasClockEnable_             = op->hasClockEnable();
+		copyrightString_            = op->getCopyrightString();
+		currentCycle_               = op->getCurrentCycle();
+		criticalPath_               = op->getCriticalPath();
+		needRecirculationSignal_    = op->getNeedRecirculationSignal();
+		indirectOperator_           = op->getIndirectOperator();
+		hasDelay1Feedbacks_         = op->hasDelay1Feedbacks();
+
+		oplist                      = op->getOpList();
+	}
+	
+	
 }
 
 

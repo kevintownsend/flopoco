@@ -69,11 +69,13 @@ namespace flopoco{
 		// add clk and rst
 		declare("clk");
 		declare("rst");
-                // declaration and assignation of the recirculation signal
-                if (op_->isRecirculatory()) {
-                  declare("stall_s");
-                  vhdl << tab << "stall_s <= '0';" << endl;
-                }
+		// declaration and assignation of the recirculation signal
+		if (op_->isRecirculatory()) {
+			vhdl << tab << declare("stall_s") << " <= '0';" << endl;
+		}
+		if (op_->hasClockEnable()) {
+			vhdl << tab << declare("ce") << " <= '1';" << endl;
+		}
 		// The VHDL for the instance
 		vhdl << instance(op, "test");
 
@@ -88,8 +90,8 @@ namespace flopoco{
 		vhdl << tab << "end process;" <<endl;
 		vhdl << endl;
 
-                if (fromFile) generateTestFromFile();
-                else generateTestInVhdl();
+		if (fromFile) generateTestFromFile();
+		else generateTestInVhdl();
 	}
 
 

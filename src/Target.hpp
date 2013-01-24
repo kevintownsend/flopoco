@@ -45,6 +45,7 @@ namespace flopoco{
 		 */ 
 		Target()   {
 			pipeline_          = true;
+			useClockEnable_       = false;
 			lutInputs_         = 4;
 			frequency_         = 400000000.;
 			hasHardMultipliers_= true;
@@ -279,10 +280,16 @@ namespace flopoco{
 		/**< Sets the target to combinatorial */    
 		void setNotPipelined();                 
 	
-		/** Returns true if the target is pipelined, otherwise false
+		/** Returns true if the target is to have pipelined design, otherwise false
 		 * @return if the target is pipelined
 		 */
 		bool isPipelined();
+	
+		/** Returns true if the target is to have clock enable signals
+		 */
+		bool useClockEnable();
+
+		void setClockEnable(bool val);
 	
 		/** Returns the desired frequency for this target in Hz
 		 * @return the frequency
@@ -603,6 +610,7 @@ namespace flopoco{
 		string vendor_;
 		int    lutInputs_;          /**< The number of inputs for the LUTs */
 		bool   pipeline_;           /**< True if the target is pipelined/ false otherwise */
+		bool   useClockEnable_;     /**< True if we want a clock enable signal */
 		double frequency_;          /**< The desired frequency for the operator in Hz */
 		bool   hasHardMultipliers_; /**< If true, this target offers hardware multipliers */
 		bool   hasFastLogicTernaryAdders_; /**< If true, this target offers support for ternary addition at the cost of binary addition */

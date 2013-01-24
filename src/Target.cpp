@@ -39,6 +39,14 @@ namespace flopoco{
 	bool Target::isPipelined() {
 		return pipeline_;
 	}
+	
+	void Target::setClockEnable(bool val) {
+		useClockEnable_=val;
+	}
+
+	bool Target::useClockEnable(){
+		return useClockEnable_;
+	}
 
 	int Target::lutInputs() {
 		return lutInputs_;

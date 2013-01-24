@@ -667,12 +667,7 @@ public:
 	 * @param o the stream where the component is outputed
 	 */
 	void outputVHDLComponent(std::ostream& o);  
-	
-	/**  DEPRECATED Function which outputs the processes which declare the registers ( assign name_d <= name )
-	 * @param o the stream where the component is outputed
-	 */
-	void outputVHDLRegisters(std::ostream& o);
-	
+		
 		
 
 	/** Return the number of input+output signals 
@@ -785,12 +780,6 @@ public:
 	*/	
 	map<string, int> getDeclareTable();
 
-	FlopocoStream* getFlopocoVHDLStream(){
-		return &vhdl;
-	}
-
-	void parse2();
-
 	Target* getTarget(){
 		return target_;
 	}
@@ -868,6 +857,18 @@ public:
 		return hasRegistersWithSyncReset_;
 	}
 
+	bool hasReset() {
+		return hasRegistersWithSyncReset_ || hasRegistersWithAsyncReset_;
+	}
+
+	bool hasClockEnable(){
+		return hasClockEnable_;
+	}
+
+	void setClockEnable(bool val){
+		hasClockEnable_=val;
+	}
+
 	string getCopyrightString(){
 		return copyrightString_;
 	}
@@ -880,20 +881,7 @@ public:
 		return indirectOperator_;
 	}
 
-	void setIndirectOperator(Operator* op){
-		indirectOperator_=op;
-		if(op!=NULL) 	{		
-			op->setuid(getuid()); //the selected implemetation becomes this operator 
-			
-			// TODO outDelayMap["R"] = op->getOutputDelay("R"); //populate output delays
-			setCycle(op->getPipelineDepth());
-			op->setName (getName() );//accordingly set the name of the implementation
-				
-			signalList_ = op->signalList_;
-			subComponents_ = op->subComponents_;
-			ioList_ = op->ioList_;
-		 }
-	}
+	void setIndirectOperator(Operator* op);
 	
 	vector<Operator*> getOpList(){
 		return oplist;
@@ -907,20 +895,13 @@ public:
 	
 	bool hasComponent(string s);
 	
-	void cleanup(vector<Operator*> *ol, Operator* op){
-		//iterate through all the components of op
-		map<string, Operator*>::iterator it;
+	void cleanup(vector<Operator*> *ol, Operator* op);
 	
-		for (it = op->subComponents_.begin(); it!= op->subComponents_.end(); it++)
-			cleanup(ol, it->second);
-			
-		for (unsigned j=0; j< (*ol).size(); j++){
-			if ((*ol)[j]->myuid == op->myuid){
-				(*ol).erase((*ol).begin()+j);
-			}
-		}	
+	FlopocoStream* getFlopocoVHDLStream(){
+		return &vhdl;
 	}
-	
+
+	void parse2();
 
 	
 	void setuid(int mm){
@@ -933,65 +914,9 @@ public:
 
 
 
-	string signExtend(string name, int w){
-		ostringstream e;
-		e << srcFileName << " (" << uniqueName_ << "): ERROR in signExtend, "; // just in case
-
-		Signal* s;
-		try {
-			s=getSignalByName(name);
-		}
-		catch (string e2) {
-			e << endl << tab << e2;
-			throw e.str();
-		}
-
-		//get the signals's width 
-		if (w == s->width()){
-			//nothing to do
-			return name;
-		}else if (w < s->width()){
-			cout << "WARNING: you required a sign extension to "<<w<<" bits of signal " << name << " whose width is " << s->width() << endl;
-			return name;
-		}else{
-			ostringstream n;
-			n << "(";
-			for (int i=0; i< w - s->width(); i++){
-				n<< name << of ( s->width() -1 ) << " & ";
-			}
-			n << name << ")";
-			string r = n.str();
-			return r;
-		}
-	}
+	string signExtend(string name, int w);
 	
-	string zeroExtend(string name, int w){
-		ostringstream e;
-		e << srcFileName << " (" << uniqueName_ << "): ERROR in zeroExtend, "; // just in case
-
-		Signal* s;
-		try {
-			s=getSignalByName(name);
-		}
-		catch (string e2) {
-			e << endl << tab << e2;
-			throw e.str();
-		}
-
-		//get the signals's width 
-		if (w == s->width()){
-			//nothing to do
-			return name;
-		}else if (w < s->width()){
-			cout << "WARNING: you required a zero extension to "<<w<<" bits of signal " << name << " whose width is " << s->width() << endl;
-			return name;
-		}else{
-			ostringstream n;
-			n << "(" << zg(w-s->width())<<" &" <<name << ")";
-			string r = n.str();
-			return r;
-		}
-	}
+	string zeroExtend(string name, int w);
 
 	int level; //printing issues
 
@@ -1005,51 +930,8 @@ public:
 	void addFullComment(string comment, int lineLength = 80);
 
 
-
-
 	/** Completely replace "this" with a copy of another operator. */
-	void cloneOperator(Operator *op){
-		stdLibType_ = op->stdLibType_;
-		subComponents_ = op->getSubComponents();
-		signalList_ = op->getSignalList();	
-		ioList_     = op->getIOListV();
-		target_           = op->getTarget();
-		uniqueName_       = op->getUniqueName();
-		architectureName_ = op->getArchitectureName();
-		testCaseSignals_ = op->getTestCaseSignals();	
-		portMap_ = op->getPortMap();
-		outDelayMap = map<string,double>(op->getOutDelayMap());
-		inputDelayMap = op->getInputDelayMap();
-		vhdl.vhdlCodeBuffer << op->vhdl.vhdlCodeBuffer.str();
-		vhdl.vhdlCode       << op->vhdl.vhdlCode.str();
-		vhdl.currentCycle_   = op->vhdl.currentCycle_;	
-		vhdl.useTable        = op->vhdl.useTable;
-		srcFileName = op->getSrcFileName();
-		declareTable = op->getDeclareTable();
-		cost = op->getOperatorCost();
-		numberOfInputs_  = op->getNumberOfInputs();
-		numberOfOutputs_ = op->getNumberOfOutputs();
-		isSequential_    = op->isSequential();
-		pipelineDepth_   = op->getPipelineDepth();
-		signalMap_ = op->getSignalMap();
-		constants_ = op->getConstants();
-		attributes_ = op->getAttributes();
-		types_ = op->getTypes();
-		attributesValues_ = op->getAttributesValues();
-
-		hasRegistersWithoutReset_   = op->getHasRegistersWithoutReset();
-		hasRegistersWithAsyncReset_ = op->getHasRegistersWithAsyncReset();
-		hasRegistersWithSyncReset_  = op->getHasRegistersWithSyncReset();
-		copyrightString_            = op->getCopyrightString();
-		currentCycle_               = op->getCurrentCycle();
-		criticalPath_               = op->getCriticalPath();
-		needRecirculationSignal_    = op->getNeedRecirculationSignal();
-		indirectOperator_           = op->getIndirectOperator();
-		hasDelay1Feedbacks_         = op->hasDelay1Feedbacks();
-
-		oplist                      = op->getOpList();
-	}
-	
+	void cloneOperator(Operator *op);	
 	
 	
 	/////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1516,6 +1398,7 @@ private:
 	int                    currentCycle_;               	/**< The current cycle, when building a pipeline */
 	double                 criticalPath_;               	/**< The current delay of the current pipeline stage */
 	bool                   needRecirculationSignal_;    	/**< True if the operator has registers having a recirculation signal  */
+	bool                   hasClockEnable_;    	          /**< True if the operator has a clock enable signal  */
 	int					    hasDelay1Feedbacks_;		/**< True if this operator has feedbacks of one cyle, and no more than one cycle (i.e. an error if the distance is more). False gives warnings */
 	Operator*              indirectOperator_;              /**< NULL if this operator is just an interface operator to several possible implementations, otherwise points to the instance*/
 

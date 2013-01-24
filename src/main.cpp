@@ -619,6 +619,7 @@ void usage(char *name, string opName = ""){
 		cerr << "Options affecting the operators that follow them:\n";
 		cerr << "   -pipeline=<yes|no>                       (default=yes)\n";
 		cerr << "   -frequency=<target frequency in MHz>     (default=400)\n";
+		cerr << "   -clockenable=<yes|no>                    (default is no)\n";
 		cerr << "   -DSP_blocks=<yes|no>\n";
 		cerr << "       optimize for the use of DSP blocks   (default=yes)\n";
 		cerr << "   -name=<entity name>\n";
@@ -743,6 +744,7 @@ bool parseCommandLine(int argc, char* argv[]){
 						target->setPipelined();
 					else 
 						target->setNotPipelined();
+					target->setClockEnable(oldTarget->useClockEnable());
 					delete(oldTarget);
 				}
 
@@ -751,6 +753,14 @@ bool parseCommandLine(int argc, char* argv[]){
 					else if(v=="no")  target->setNotPipelined();
 					else {
 						cerr<<"ERROR: pipeline option should be yes or no,    got "<<v<<"."<<endl; 
+						usage(argv[0],"options");
+					}
+				}
+				else if (o == "clockenable") {
+					if(v=="yes") target->setClockEnable(true);
+					else if(v=="no")  target->setClockEnable(false);
+					else {
+						cerr<<"ERROR: clockenable option should be yes or no,    got "<<v<<"."<<endl; 
 						usage(argv[0],"options");
 					}
 				}
