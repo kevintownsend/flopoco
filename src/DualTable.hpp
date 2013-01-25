@@ -113,61 +113,8 @@ namespace flopoco{
 	
 			stringstream inputData;
 		
-			void setInputData(std::ostringstream&  data)
-			{
-				inputData.str("");
-				inputData<<data.str();
-			}
-		
-				
-			primitiveDualMemory(Target* target, int _wIn, int _wOut, int _minIn, int _maxIn) : 
-				Operator(target),
-				wIn(_wIn), wOut(_wOut), minIn(_minIn), maxIn(_maxIn) 
-			{
-				setCopyrightString("Radu Tudoran, Florent de Dinechin (2009)");
-				setCombinatorial();
-		
-				// Set up the IO signals
-
-				addInput ("X1"  , wIn);
-				addOutput ("Y1"  , wOut);
-				addInput ("X2"  , wIn);
-				addOutput ("Y2"  , wOut);			
-		
-				ostringstream array;
-				int x;
-				mpz_class y;
-				ostringstream type;
-
-				type<<"array (0 to "<< intpow2(wIn)-1<< ") of std_logic_vector("<<wOut-1 <<" downto 0)";
-				addType("ROMContent", type.str());
-				
-
-				array <<tab << "( "<<endl;
-	
-				int count=0;
-				for (x = minIn; x <= maxIn; x++) {
-					inputData>>y;
-					array 	<< tab<<tab << "\"" << unsignedBinary(y, wOut)  ;
-					if(x!=maxIn)
-						array<< "\", ";
-					else
-						array<<"\" ";
-					count++;
-					if(count==4)
-						{array<<endl;
-							count=0;
-						}
-				}
-				array<<")"<<endl;
-
-				
-				addConstant("memVar", "ROMContent", array.str());
-
-				vhdl<<tab<<tab<<tab<<" Y1 <= memVar(conv_integer(X1)); "<<endl;
-				vhdl<<tab<<tab<<tab<<" Y2 <= memVar(conv_integer(X2)); "<<endl;
-			}
-
+			void setInputData(std::ostringstream&  data);				
+			primitiveDualMemory(Target* target, int _wIn, int _wOut, int _minIn, int _maxIn);
 			~primitiveDualMemory() {}
 		
 		

@@ -85,9 +85,6 @@ namespace flopoco{
 
 
 	void Operator::addSubComponent(Operator* op) {
-		// The following is not really useful because it won't be recursive.
-		// First add to Operator.cpp a recursive version
-		//		op->changeName(getName() + "_" + op->getName());
 		oplist.push_back(op);
 	}
 
@@ -948,13 +945,13 @@ namespace flopoco{
 		if(op->isSequential()) {
 			o << "clk  => clk";
 			o << "," << endl << tab << tab << "           rst  => rst";
+			if (op->isRecirculatory()) {
+				o << "," << endl << tab << tab << "           stall_s => stall_s";
+			};
+			if (op->hasClockEnable()) {
+				o << "," << endl << tab << tab << "           ce => ce";
+			};
 		}
-		if (op->isRecirculatory()) {
-			o << "," << endl << tab << tab << "           stall_s => stall_s";
-		};
-		if (op->hasClockEnable()) {
-			o << "," << endl << tab << tab << "           ce => ce";
-		};
 		
 		for (it=op->portMap_.begin()  ; it != op->portMap_.end(); it++ ) {
 			bool outputSignal = false;
