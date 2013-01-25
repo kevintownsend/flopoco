@@ -126,7 +126,7 @@ namespace flopoco{
 
 			FixRealKCMTable *t; 
 			t = new FixRealKCMTable(target, this, 0, 0, wIn, wOut, signedInput, false);
-			oplist.push_back(t);
+			addSubComponent(t);
 			useSoftRAM(t);
 
 			manageCriticalPath(target->localWireDelay() + target->lutDelay());
@@ -193,7 +193,7 @@ namespace flopoco{
 				t[i] = new FixRealKCMTable(target, this, i, highBit, // already updated 
 				                           diSize[i], ppiSize[i], tableSigned, last, 1);
 				useSoftRAM(t[i]);
-				oplist.push_back(t[i]);
+				addSubComponent(t[i]);
             	
 
 #define USE_MADDER 0
@@ -209,13 +209,13 @@ namespace flopoco{
 #if USE_MADDER
 			if(nbOfTables>2) {
 				adder = new IntMultiAdder(target, wOut+g, nbOfTables, inDelayMap("X0",target->localWireDelay() + getCriticalPath()));
-				oplist.push_back(adder);
+				addSubComponent(adder);
 				for (int i=0; i<nbOfTables; i++)
 					inPortMap (adder, join("X",i) , join("addOp",i));
 			}
 			else { // 2 tables only
 				adder = new IntAdder(target, wOut+g, inDelayMap("X",target->localWireDelay() + getCriticalPath()));
-				oplist.push_back(adder);
+				addSubComponent(adder);
 				inPortMap (adder, "X" , join("addOp",0));
 				inPortMap (adder, "Y" , join("addOp",1));
 				inPortMapCst(adder, "Cin" , "'0'");
@@ -296,7 +296,7 @@ namespace flopoco{
 				}
 				vhdl << tab << declare("addOp0", wOut+g ) << " <= " << rangeAssign(wOut+g-1, ppiSize[0], "'0'") << " & pp0;" << endl;
 				adder = new IntAdder(target, wOut+g, inDelayMap("X",  target->localWireDelay() + getCriticalPath() + target->localWireDelay(ppiSize[1]) + target->lutDelay()  ));
-				oplist.push_back(adder);
+				addSubComponent(adder);
 				inPortMap (adder, "X" , "addOp0");
 				inPortMap (adder, "Y" , "pp1");
 				inPortMapCst(adder, "Cin" , "'0'");

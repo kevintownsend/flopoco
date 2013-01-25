@@ -85,7 +85,9 @@ namespace flopoco{
 
 
 	void Operator::addSubComponent(Operator* op) {
-		op->changeName(getName()+op->getName());
+		// The following is not really useful because it won't be recursive.
+		// First add to Operator.cpp a recursive version
+		//		op->changeName(getName() + "_" + op->getName());
 		oplist.push_back(op);
 	}
 

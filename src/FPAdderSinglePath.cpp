@@ -172,7 +172,7 @@ FPAdderSinglePath::FPAdderSinglePath(Target* target, int wEX, int wFX, int wEY, 
 		REPORT(DETAILED, "Building far path right shifter");	
 		rightShifter = new Shifter(target,wF+1,wF+3, Shifter::Right, inDelayMap("X",getCriticalPath()));
 		rightShifter->changeName(getName()+"_RightShifter");
-		oplist.push_back(rightShifter);
+		addSubComponent(rightShifter);
 		inPortMap  (rightShifter, "X", "fracY");
 		inPortMap  (rightShifter, "S", "shiftVal");
 		outPortMap (rightShifter, "R","shiftedFracY");
@@ -211,7 +211,7 @@ FPAdderSinglePath::FPAdderSinglePath(Target* target, int wEX, int wFX, int wEY, 
 		
 		//result is always positive.
 		fracAddFar = new IntAdder(target,wF+4, inDelayMap("X", getCriticalPath()));
-		oplist.push_back(fracAddFar);
+		addSubComponent(fracAddFar);
 		inPortMap  (fracAddFar, "X", "fracXfar");
 		inPortMap  (fracAddFar, "Y", "fracYfarXorOp");
 		inPortMap  (fracAddFar, "Cin", "cInAddFar");
@@ -235,7 +235,7 @@ FPAdderSinglePath::FPAdderSinglePath(Target* target, int wEX, int wFX, int wEY, 
 		
 		
 		lzocs = new LZOCShifterSticky(target, wF+5, wF+5, intlog2(wF+5), false, 0, inDelayMap("I",getCriticalPath()));
-		oplist.push_back(lzocs);
+		addSubComponent(lzocs);
 		inPortMap  (lzocs, "I", "fracGRS");
 		outPortMap (lzocs, "Count","nZerosNew");
 		outPortMap (lzocs, "O","shiftedFrac");
@@ -284,7 +284,7 @@ FPAdderSinglePath::FPAdderSinglePath(Target* target, int wEX, int wFX, int wEY, 
 				setCriticalPath(cpexpFrac);
 			
 		IntAdder *ra = new IntAdder(target, wE+2+wF+1, inDelayMap("X", getCriticalPath() ) );
-		oplist.push_back(ra);
+		addSubComponent(ra);
 		
 		inPortMap(ra,"X", "expFrac");
 		inPortMapCst(ra, "Y", zg(wE+2+wF+1,0) );

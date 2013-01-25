@@ -244,7 +244,7 @@ namespace flopoco{
 		// left shift
 		int maxshift=wE+g-1; // maxX < 2^(wE-1); 
 		Shifter* lshift = new Shifter(target, wFIn+1, maxshift , Shifter::Left);   
-		oplist.push_back(lshift);
+		addSubComponent(lshift);
 		int shiftInSize = lshift->getShiftInWidth();
 		vhdl << tab  << declare("shiftValIn", shiftInSize) << " <= shiftVal" << range(shiftInSize-1, 0) << ";" << endl;
 
@@ -272,7 +272,7 @@ namespace flopoco{
 		setCycleFromSignal("shiftVal", scp);
 
 		Shifter* lshift = new Shifter(target, wFIn+1, maxshift , Shifter::Left, inDelayMap("S", target->localWireDelay(wFIn+1) + getCriticalPath())  );   
-		oplist.push_back(lshift);
+		addSubComponent(lshift);
 		int shiftInSize = lshift->getShiftInWidth();
 		vhdl << tab  << declare("shiftValIn", shiftInSize) << " <= shiftVal" << range(shiftInSize-1, 0) << ";" << endl;
 
@@ -305,7 +305,7 @@ namespace flopoco{
 																						 inDelayMap( "X", target->localWireDelay(2) + getCriticalPath())
 																						 
 																						 );
-		oplist.push_back(mulInvLog2);
+		addSubComponent(mulInvLog2);
 		outPortMap(mulInvLog2, "R", "absK");
 		inPortMap(mulInvLog2, "X", "xMulIn");
 		vhdl << instance(mulInvLog2, "mulInvLog2");
@@ -334,7 +334,7 @@ namespace flopoco{
 																				 1.0, 
 																				 inDelayMap( "X", target->localWireDelay(wF+g) + getCriticalPath()) );
 
-		oplist.push_back(mulLog2);
+		addSubComponent(mulLog2);
 		outPortMap(mulLog2, "R", "absKLog2");
 		inPortMap(mulLog2, "X", "absK");
 		vhdl << instance(mulLog2, "mulLog2");
@@ -357,7 +357,7 @@ namespace flopoco{
 		IntAdder *yPaddedAdder = new IntAdder(target, sizeY, // we know the leading bits will cancel out
 																					inDelayMap("X", target->localWireDelay() + getCriticalPath()) ); 
 		target->setFrequency( 1.0 / ctperiod );
-		oplist.push_back(yPaddedAdder);
+		addSubComponent(yPaddedAdder);
 
 		outPortMap( yPaddedAdder, "R", "Y");
 		inPortMapCst ( yPaddedAdder, "Cin", "'1'");
@@ -397,7 +397,7 @@ namespace flopoco{
 #if 0 //// stupid ISE not able to pack both tables in a single dual-port one
 			LowerExpTable* lowertable;
 			lowertable = new LowerExpTable(target, k, sizeZhigh, wF+g); // last parameter is -LSB of the result
-			oplist.push_back(lowertable);
+			addSubComponent(lowertable);
 			outPortMap(lowertable, "Y", "expZmZm1_0");
 			inPortMap(lowertable, "X", "Zhigh");
 			vhdl << instance(lowertable, "expZmZm1_table");
@@ -413,7 +413,7 @@ namespace flopoco{
 
 			vhdl << tab << declare("Addr2", k) << " <= Z" << range(sizeZ-1, sizeZ-k) << ";\n";
 			magicTable* table = new magicTable(target);
-			oplist.push_back(table);
+			addSubComponent(table);
 			
 			/* Magic Table is an instance of DualTable which is, for now combinatorial */
 			nextCycle(); //However, to get the MagicTable inferred as a dual-port ram, it needs buffered inputs			
@@ -442,7 +442,7 @@ namespace flopoco{
 //			manageCriticalPath( target->LogicToRAMWireDelay() + target->RAMDelay() );
 			firstExpTable* table;
 			table = new firstExpTable(target, k, sizeExpA); // e^A-1 has MSB weight 1
-			oplist.push_back(table);
+			addSubComponent(table);
 			outPortMap(table, "Y", "expA");
 			inPortMap(table, "X", "Addr1");
 			vhdl << instance(table, "table");
@@ -459,7 +459,7 @@ namespace flopoco{
 			ostringstream function;
 			function << "1b"<<2*k<<"*(exp(x*1b-" << k << ")-x*1b-" << k << "-1), 0,1,1";
 			fe = new FunctionEvaluator(target, function.str(), sizeZhigh, wF+g-2*k, d, true, inDelayMap("X", target->localWireDelay() + getCriticalPath()) );
-			oplist.push_back(fe);
+			addSubComponent(fe);
 			inPortMap(fe, "X", "Zhigh");
 			outPortMap(fe, "R", "expZmZm1_0");
 			vhdl << instance(fe, "poly");
@@ -469,7 +469,7 @@ namespace flopoco{
 			ostringstream function;
 			function << "1b"<<2*k<<"*(exp(x*1b-" << k << ")-x*1b-" << k << "-1)";
 			fe = new FunctionTable(target, function.str(), sizeZhigh, -wF-g+2*k, -1, inDelayMap("X", target->localWireDelay() + getCriticalPath()) );
-			oplist.push_back(fe);
+			addSubComponent(fe);
 			inPortMap(fe, "X", "Zhigh");
 			outPortMap(fe, "Y", "expZmZm1_0");
 			vhdl << instance(fe, "poly");
@@ -486,7 +486,7 @@ namespace flopoco{
 		vhdl << tab << "-- Computing Z + (exp(Z)-1-Z)" << endl;
 		
 		IntAdder* addexpZminus1 = new IntAdder( target, sizeExpZm1, inDelayMap( "X", target->localWireDelay() + getCriticalPath() ) );
-		oplist.push_back(addexpZminus1);
+		addSubComponent(addexpZminus1);
 		
 		vhdl << tab << declare( "expZminus1X", sizeExpZm1) << " <= '0' & Z;"<<endl;
 		vhdl << tab << declare( "expZminus1Y", sizeExpZm1) << " <= " << rangeAssign(sizeZ, sizeZ-k+1, "'0'") << " & expZmZm1 ;" << endl;
@@ -503,7 +503,7 @@ namespace flopoco{
 		setCycleFromSignal("expA", getSignalDelay("expA"));
 		
 		IntAdder* expArounded0 = new IntAdder( target, sizeMultIn+1, inDelayMap( "X", target->RAMToLogicWireDelay() + getCriticalPath()) );
-		oplist.push_back(expArounded0);
+		addSubComponent(expArounded0);
 		
 		
 		inPortMapCst(expArounded0, "X", "expA"+range(sizeExpA-1, sizeExpA-sizeMultIn-1));
@@ -540,7 +540,7 @@ namespace flopoco{
 		                            false,  /*unsigned*/
 		                            1.0,
 		                            inDelayMap("X", target->LogicToDSPWireDelay() + getCriticalPath() ) );
-			oplist.push_back(lowProd);
+			addSubComponent(lowProd);
 		
 			inPortMap(lowProd, "X", "expArounded");
 		inPortMap(lowProd, "Y", "expZminus1");
@@ -554,7 +554,7 @@ namespace flopoco{
 
 #if 0 // Trying to round the product instead of truncating it		Why doesn't that work?
 		IntAdder *finalAdder = new IntAdder(target, sizeExpA+1, finalAdderInDelayMap, 2, 1, -1);
-		oplist.push_back(finalAdder);
+		addSubComponent(finalAdder);
 		
 		vhdl << tab << declare("extendedLowerProduct",sizeExpA+1) << " <= (" << rangeAssign(sizeExpA-1, sizeExpA-k+1, "'0'") 
 		     << " & lowerProduct" << range(sizeMultIn+sizeExpZm1-1, sizeMultIn+sizeExpZm1 - (sizeExpA-k+1) -1) << ");" << endl;		
@@ -572,7 +572,7 @@ namespace flopoco{
 		     		
 #else  //  truncating it		
 		IntAdder *finalAdder = new IntAdder(target, sizeExpA, inDelayMap( "X", target->localWireDelay() + getCriticalPath()));
-		oplist.push_back(finalAdder);
+		addSubComponent(finalAdder);
 		
 		vhdl << tab << declare("extendedLowerProduct",sizeExpA) << " <= (" << rangeAssign(sizeExpA-1, sizeExpA-k+1, "'0'") 
 		     << " & lowerProduct" << range(sizeProd-1, sizeProd - (sizeExpA-k+1)) << ");" << endl;
@@ -611,7 +611,7 @@ namespace flopoco{
 
 		
 		IntAdder *roundedExpSigOperandAdder = new IntAdder(target, wE+wF+2, inDelayMap( "X", target->localWireDelay() + getCriticalPath()));
-		oplist.push_back(roundedExpSigOperandAdder);
+		addSubComponent(roundedExpSigOperandAdder);
 		
 		inPortMap(roundedExpSigOperandAdder, "X", "preRoundBiasSig");
 		inPortMap(roundedExpSigOperandAdder, "Y", "roundNormAddend");
