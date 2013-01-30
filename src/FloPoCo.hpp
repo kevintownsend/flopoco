@@ -118,6 +118,9 @@
 #include "CORDIC/CordicSinCos.hpp"
 
 #include "FixedPointFIR.hpp"
+
+#include "FixedPointFIRBH.hpp"
+
 #endif
 
 /* floating-point -------------------------------------------- */ 

@@ -291,6 +291,8 @@ src/IntMultipliers/MultiplierBlock
  src/CORDIC/FixedPointSinOrCos.cpp
  src/CORDIC/CordicSinCos
  src/FixedPointFIR
+ 
+ src/FixedPointFIRBH
 
 # Floating-Point ----------------------------------------------------
 #--------------------------------------------------------------------
