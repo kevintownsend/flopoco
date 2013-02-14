@@ -5,8 +5,7 @@
 
 #include "FixedPointFIRBH.hpp"
 
-
-#include "ConstMult/FixRealKCM.hpp"
+#include "ConstMult/FixRealKCMBH.hpp"
 
 using namespace std;
 namespace flopoco{
@@ -92,69 +91,51 @@ namespace flopoco{
 #endif		
 
 
-		int size = 1+ (leadingBit - (-p) +1) + g ; // sign + overflow  bits on the left, guard bits on the right
+		int size = 1+ (leadingBit - (-p) +1) + g; // sign + overflow  bits on the left, guard bits on the right
 		REPORT(INFO, "Sum size is: "<< size );
 		
+		//compute the guard bits from the KCM mulipliers
+		int guardBitsKCM = 0;
+		
+		for(int i=0; i<n; i++)
+		{
+			int wIn = p + 1;	//p bits + 1 sign bit
+			int lsbOut = -p-g;
+			double targetUlpError = 1.0;
+			int temp = FixRealKCMBH::neededGuardBits(target, wIn, lsbOut, targetUlpError);
+			
+			if(temp > guardBitsKCM)
+				guardBitsKCM = temp;
+		}
+		
+		size += guardBitsKCM; // sign + overflow  bits on the left, guard bits + guard bits from KCMs on the right
+		REPORT(INFO, "Sum size with KCM guard bits is: "<< size );
 		
 		//create the bitheap that computes the sum
 		bitHeap = new BitHeap(this, size);
 		
-		for (int i=0; i< n; i++) {
-			// Multiplication: instantiating a KCM object. 
-			FixRealKCM* mult = new FixRealKCM(target, 
-			                                  -p, // input LSB weight
-			                                  -1, // input MSB, but one sign bit will be added
-			                                  true, // signed
-			                                  -p-g, // output LSB weight -- the output MSB is computed out of the constant
-			                                  coeff[i] // pass the string unmodified
-			                                  );			
-			addSubComponent(mult);
-			inPortMap(mult,"X", join("X",i));
-			outPortMap(mult, "R", join("P",i));
-			vhdl << instance(mult, join("mult",i));
-			
-			int pSize = getSignalByName(join("P",i))->width();
-			
-			//handle sign
-			if(coeffsign[i] == 1)
-			{
-				//there's an easy way to do it?
-				if(pSize<size)
-					for(int j=size-1; j>=pSize; j--){
-						stringstream s;
-				
-						s << join("P",i, "_inv") << of(j);
-						bitHeap->addBit(j, s.str());
-					}
-				else
-					vhdl << tab << declare(join("P",i, "_inv"), pSize) << " <= " <<  join("P",i) << " xor \"" << og(pSize) << "\";";
-			}
-			
-			//add the bits to the bitheap
-			for(int w = pSize-1; w >= 0; w--){
-				stringstream s;
-				
-				s << join("P",i, ((coeffsign[i]==1 && pSize<size) ? "_inv" : "")) << of(w);
-				bitHeap->addBit(w, s.str());
-			}
-			for(int w = size-1; w >= pSize; w--){
-				stringstream s;
-				
-				s << join("P",i, ((coeffsign[i]==1 && pSize<size) ? "_inv" : "")) << of(pSize-1);
-				bitHeap->addBit(w, s.str());
-			}
-			
-			if((coeffsign[i] == 1) && (pSize<size))
-				bitHeap->addConstantOneBit(0);
-		}	
+		for (int i=0; i<n; i++) 
+		{
+			// Multiplication: instantiating a KCM object.
+			FixRealKCMBH* mult = new FixRealKCMBH(this,			// the envelopping operator
+													target, 	// the target FPGA
+													getSignalByName(join("X",i)),
+													-p, 		// input LSB weight
+													-1, 		// input MSB, but one sign bit will be added
+													true, 		// signed
+													-p-g, 		// output LSB weight -- the output MSB is computed out of the constant
+													coeff[i], 	// pass the string unmodified
+													bitHeap		// pass the reference to the bitheap that will accumulate the inytermediary products
+												);			
+		}
 		
 		//rounding - add 1/2 ulps
-		bitHeap->addConstantOneBit(g-1);
+		bitHeap->addConstantOneBit(g+guardBitsKCM-1);
 		
 		//compress the bitheap
 		bitHeap -> generateCompressorVHDL();
 		
-		vhdl << tab << "R" << " <= " << bitHeap-> getSumName() << range(size-1, g) << ";" << endl;
+		vhdl << tab << "R" << " <= " << bitHeap-> getSumName() << range(size-1, g+guardBitsKCM) << ";" << endl;
 			
 	};
 	
