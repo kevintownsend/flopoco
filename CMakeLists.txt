@@ -293,6 +293,8 @@ src/IntMultipliers/MultiplierBlock
  src/FixedPointFIR
  
  src/FixedPointFIRBH
+ 
+src/ConstMult/FixRealKCMBH
 
 # Floating-Point ----------------------------------------------------
 #--------------------------------------------------------------------

@@ -969,6 +969,22 @@ bool parseCommandLine(int argc, char* argv[]){
 				addOperator(op);
 			}        
 		}
+		
+		else if(opname=="FixRealKCMBH"){
+			int nargs = 5;
+			if (i+nargs > argc)
+				usage(argv[0],opname);
+			else {
+				int lsbIn = atoi(argv[i++]);
+				int msbIn = atoi(argv[i++]);
+				int signedInput = checkBoolean(argv[i++], argv[0]);
+				int lsbOut = atoi(argv[i++]);
+				string constant = argv[i++];
+				op = new FixRealKCMBH(target, lsbIn, msbIn, signedInput, lsbOut, constant);
+				addOperator(op);
+			}        
+		}
+		
 		else if(opname=="FixRealKCMExpert"){ // hidden, for debug
 			int nargs = 6;
 			if (i+nargs > argc)

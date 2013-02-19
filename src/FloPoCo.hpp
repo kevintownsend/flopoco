@@ -120,6 +120,7 @@
 #include "FixedPointFIR.hpp"
 
 #include "FixedPointFIRBH.hpp"
+#include "ConstMult/FixRealKCMBH.hpp"
 
 #endif
 
