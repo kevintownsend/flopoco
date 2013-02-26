@@ -256,6 +256,9 @@ libflopoco_la_SOURCES = \
                         FixSinCos.cpp \
                         CORDIC/FixedPointSinOrCos.cpp \
                         CORDIC/CordicSinCos.cpp \
+                        FixedPointFIR.cpp \
+                        FixedPointFIRBH.cpp \
+                        ConstMult/FixRealKCMBH.cpp \
                         FPAdderDualPath.cpp \
                         FPAdderSinglePath.cpp \
                         FPAdder3Input.cpp \
