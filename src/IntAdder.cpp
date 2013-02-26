@@ -81,6 +81,7 @@ namespace flopoco {
 		}
 		
 		int currentCost = 16384;
+		selectedVersion = 0;
 		for (unsigned j=0; j< addImplementationList.size(); j++)
 			if (currentCost > addImplementationList[j]->getOperatorCost()){
 				currentCost = addImplementationList[j]->getOperatorCost();
