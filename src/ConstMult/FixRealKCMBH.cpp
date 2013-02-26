@@ -353,7 +353,8 @@ namespace flopoco{
 		}
 		nbOfTables = counter;
 		counter--;
-		diSize[counter] = wIn - (currentSize - diSize[counter]);
+		diSize[counter] = wIn - (currentSize - diSize[counter]);		
+		
 		//Better to move the remaining bits to the first tables, than to have them in a new table
 		if (diSize[counter] <= lutWidth/2)
 		{
@@ -371,7 +372,7 @@ namespace flopoco{
 			counter--;
 			diSize[counter] = wIn - (currentSize - diSize[counter]);
 		}
-		REPORT(INFO, "Constant multiplication in "<< nbOfTables << " tables");
+		REPORT(INFO, "Constant multiplication in "<< nbOfTables << " tables");		
 		
 		//TODO: no longer accurate, needs to be replaced
 		//		possibly synchronized to the input signal?
@@ -583,7 +584,7 @@ namespace flopoco{
 		}
 		nbOfTables = counter;
 		counter--;
-		diSize[counter] = wIn - (currentSize - diSize[counter]);
+		diSize[counter] = wIn - (currentSize - diSize[counter]);		
 		
 		//Better to move the remaining bits to the first tables, than to have them in a new table
 		if (diSize[counter] <= lutWidth/2)
@@ -602,7 +603,7 @@ namespace flopoco{
 			counter--;
 			diSize[counter] = wIn - (currentSize - diSize[counter]);
 		}
-		
+				
 		if(nbOfTables==2 && targetUlpError==1.0)
 			guardBits = 0; // specific case: two CR table make up a faithful sum
 		else

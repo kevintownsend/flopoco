@@ -26,6 +26,8 @@
 
 // To enable SVG plotting, uncomment the following line
  #define BITHEAP_GENERATE_SVG 1
+ 
+ #define COMPRESSION_TYPE 0
 
 
 /* 
@@ -66,8 +68,13 @@ namespace flopoco{
 		    @param op                the operator in which this bit heap is beeing built
 		    @param maxWeight         the maximum weight of the heap (it should be known statically, shouldn't it?)
 		    @param enableSuperTiles  if true, the bit heap compression will try and supertile DSP blocks   
-		    @param name              a description of the heap that will be integrated into its unique name */
-		BitHeap(Operator* op, int maxWeight,  bool enableSuperTiles=true, string name="");
+		    @param name              a description of the heap that will be integrated into its unique name
+		    @param compressionType	 the type of compression applied to the bit heap: 
+										0 = using only compressors (default),
+										1 = using only an adder tree,
+										2 = using a mix of the two, with an addition tree at the end of the compression
+		*/
+		BitHeap(Operator* op, int maxWeight, bool enableSuperTiles = true, string name = "", int compressionType = COMPRESSION_TYPE);
 		~BitHeap();
 
 		/** add a bit to the bit heap. The bit will be added at the cycle op->currentCycle() with critical path op->getCriticalPath().
@@ -171,12 +178,19 @@ namespace flopoco{
 
 		//applies an adder with wIn = col1-col0+1; col0 always has size=3 and the other columns (includind col1) have size=2
 		void applyAdder(int col0, int col1, bool hasCin=true);
+		
+		/**
+		 * compress the remaining columns using adders
+		 */
+		void applyAdderTreeCompression();
 
 		/** returns a pointer to the  latest bit from the inputs to a compressor applied to the bottom of a bit heap
 		  w is the weight, c0 and c1 are the input heights of the compressor, e.g. 3,0 for a full adder */
 		WeightedBit* latestInputBitToCompressor(unsigned w, int c0, int c1);
 
-		//** computes the latest bit from the bitheap, in order to manage the cycle before the final adding*/
+		/** 
+		 * computes the latest bit from the bitheap, in order to manage the cycle before the final adding
+		 */
 		WeightedBit* getLatestBit(int lsbColumn, int msbColumn);
 
 		WeightedBit* getFirstSoonestBit();
@@ -197,8 +211,14 @@ namespace flopoco{
 
 
 
-		/**is making the compression for the bitheap**/
-		void compress(int stage);
+		/**
+		 * Compress the bitheap using compressors
+		 * @param stage: the compression stage
+		 * @param lutCompressionLevel: the maximum index in the list of generated 
+		 * 		compressors until which compressors will be used
+		 * @param startingIndex: the column index from which to start compressions
+		 **/
+		void compress(int stage, int lutCompressionLevel, int* startingIndex);
 
 		/** return the current height a column (bits not yet compressed) */
 		unsigned currentHeight(unsigned w);
@@ -236,26 +256,27 @@ namespace flopoco{
 		void printBitHeapStatus();
 
 	public: // TODO privatize
-		vector<list<WeightedBit*> > bits; /**<  Each list is ordered by arrival time of the bits, i.e. lexicographic order on (cycle, cp). 
-		                                     During the generation of the compressor, bits are added and removed to these lists */
-		vector<list<WeightedBit*> > history; /**<  remembers all the changes to bits */
+		vector<list<WeightedBit*> > bits; 			/**<  Each list is ordered by arrival time of the bits, i.e. lexicographic order on (cycle, cp). 
+															During the generation of the compressor, bits are added and removed to these lists */
+		vector<list<WeightedBit*> > history; 		/**<  remembers all the changes to bits */
 	private:
 		Operator* op;
-		unsigned maxWeight;     /**< The compressor tree will produce a result for weights < maxWeight (work modulo 2^maxWeight)*/
-		unsigned minWeight; /**< bits smaller than this one are already compressed */    
-		mpz_class constantBits; /**< This int gather all the constant bits that need to be added to the bit heap (for rounding, two's complement etc) */
+		int compressionType;						/**< The type of compression performed (explained in the header of the constructor)*/
+		unsigned maxWeight;							/**< The compressor tree will produce a result for weights < maxWeight (work modulo 2^maxWeight)*/
+		unsigned minWeight;							/**< bits smaller than this one are already compressed */    
+		mpz_class constantBits;						/**< This int gather all the constant bits that need to be added to the bit heap (for rounding, two's complement etc) */
 		vector<BasicCompressor *> possibleCompressors;
-		bool usedCompressors[100]; /** the list of compressors which were used at least once*/ // 100 should be more than enough for everybody
+		bool usedCompressors[100];					/** the list of compressors which were used at least once*/ // 100 should be more than enough for everybody
 		BasicCompressor * halfAdder;
 		BasicCompressor * fullAdder;
 		unsigned chunkDoneIndex; 
-		unsigned inConcatIndex; /** input index - to form the inputsignals of the compressor*/
-		unsigned outConcatIndex; /** output index - to form the outputsignals of the compressor*/
-		unsigned compressorIndex; /** the index of the instance of compressors*/
-		unsigned adderIndex; /** the index of the instance of IntAdder*/
-		unsigned cnt[100000]; /** number of bits which will be compressed in the current iteration*/
-		vector<int> uid;   /**< unique id, per weight */
-		int guid;   /**< global uid  for this bit heap, useful in operators managing several bit heaps */
+		unsigned inConcatIndex;						/** input index - to form the inputsignals of the compressor*/
+		unsigned outConcatIndex;					/** output index - to form the outputsignals of the compressor*/
+		unsigned compressorIndex;					/** the index of the instance of compressors*/
+		unsigned adderIndex;						/** the index of the instance of IntAdder*/
+		unsigned cnt[100000];						/** number of bits which will be compressed in the current iteration*/
+		vector<int> uid;							/**< unique id, per weight */
+		int guid;									/**< global uid  for this bit heap, useful in operators managing several bit heaps */
 		ofstream fileFig;
 		ostringstream fig;
 		bool drawCycleLine;
@@ -269,13 +290,13 @@ namespace flopoco{
 		string srcFileName;
 		string uniqueName_;
 		// TODO? signedIO should be managed multiplier block per multiplier block.
-		bool signedIO;             /**< true if the uncompressed multiplier blocks have signed IO*/  
+		bool signedIO;								/**< true if the uncompressed multiplier blocks have signed IO*/  
 		int plottingStage;
 		int plottingCycle;
 		double plottingCP;
-		unsigned int adder3Index;		/**< The index of the ternary adders */
-		unsigned int minAdd3Length;	/**< The minimum length of a 3-input adder */
-		unsigned int maxAdd3Length;	/**< The maximum length of a 3-input adder */
+		unsigned int adder3Index;					/**< The index of the ternary adders */
+		unsigned int minAdd3Length;					/**< The minimum length of a 3-input adder */
+		unsigned int maxAdd3Length;					/**< The maximum length of a 3-input adder */
 		bool enableSuperTiles;
 	};
 
