@@ -1,14 +1,15 @@
 /*
  * A faithful multiplier by a real constant, using a variation of the KCM method
+ * using bit heaps
 
  This file is part of the FloPoCo project developed by the Arenaire
  team at Ecole Normale Superieure de Lyon
   
- Author : Florent de Dinechin, Florent.de.Dinechin@ens-lyon.fr
+ Author : Florent de Dinechin, Matei Istoan
 
  Initial software.
  Copyright © ENS-Lyon, INRIA, CNRS, UCBL,  
- 2008-2011.
+ 2008-2013.
   All rights reserved.
 */
 
@@ -284,7 +285,7 @@ namespace flopoco{
 	//	for use as part of a bigger operator
 	FixRealKCMBH::FixRealKCMBH(Operator* parentOp, Target* target, Signal* multiplicandX, int lsbIn_, int msbIn_, bool signedInput_, int lsbOut_, string constant_, BitHeap* bitHeap_, double targetUlpError_, map<string, double> inputDelays) :
 		Operator(target, inputDelays), lsbIn(lsbIn_), msbIn(msbIn_), signedInput(signedInput_),
-		wIn(msbIn_-lsbIn_+1), lsbOut(lsbOut_), bitHeap(bitHeap_), constant(constant_), targetUlpError(targetUlpError_) 
+		wIn(msbIn_-lsbIn_+1), lsbOut(lsbOut_), constant(constant_), bitHeap(bitHeap_), targetUlpError(targetUlpError_)
 	{
 		srcFileName="FixRealKCMBH";
 
@@ -331,8 +332,13 @@ namespace flopoco{
 		msbC = mpfr_get_si(log2C, GMP_RNDU);
 
 		msbOut = msbC + msbIn;
+		
+		//FIXME: is this correct? the msbOut should never be less than lsbOut, no?
+		if(msbOut < lsbOut)
+			msbOut = lsbOut;
+		
 		wOut = msbOut + signBit - lsbOut + 1;
-		REPORT(DEBUG, "msbConstant=" << msbC << "   lsbOut="<<lsbOut << "   msbOut="<<msbOut << "   wOut="<<wOut);
+		REPORT(DEBUG, "msbConstant=" << msbC << "   msbIn=" << msbIn << "   lsbIn=" << lsbIn << "   msbOut=" << msbOut << "   lsbOut=" << lsbOut << "   wOut="<<wOut);
 
 		int lutWidth = target->lutInputs(); // -1 because the tools are able to pack LUT + addition in one LUT
 
@@ -379,7 +385,8 @@ namespace flopoco{
 		//setCriticalPath( getMaxInputDelays(inputDelays) );
 		parentOp->syncCycleFromSignal(multiplicandX->getName());
 
-		if(wIn <= lutWidth+1){
+		if(wIn <= lutWidth+1)
+		{
 			///////////////////////////////////  multiplication using 1 table only ////////////////////////////////////
 			REPORT(INFO, "Constant multiplication in a single table, will be correctly rounded");
 			g=0;
@@ -396,7 +403,7 @@ namespace flopoco{
 			parentOp->vhdl << parentOp->instance(t , join("KCMTable_kcmMult_", getuid()));
 
 			//add the resulting bits to the bit heap
-			unsigned int ySize;
+			int ySize;
 			
 			ySize = parentOp->getSignalByName(join("Y_kcmMult_", getuid()))->width();
 			//all but the msb, which is handled separately
@@ -407,6 +414,7 @@ namespace flopoco{
 				s << join("Y_kcmMult_", getuid()) << of(w);
 				bitHeap->addBit(w, s.str());
 			}
+			
 			//add the msb, complemented
 			{
 				stringstream s;
@@ -414,13 +422,16 @@ namespace flopoco{
 				s << "not(" << join("Y_kcmMult_", getuid()) << of(ySize-1) << ")";
 				bitHeap->addBit(ySize-1, s.str());
 			}
+			
 			//add the rest of the constant bits
-			for(int w=(bitHeap->getMaxWeight()-1); w>=ySize-1; w--)
+			for(int w=((int)bitHeap->getMaxWeight()-1); w>=ySize-1; w--)
 			{
+				//REPORT(DEBUG, "heapSize=" << bitHeap->getMaxWeight()-1 << " ySize=" << ySize << " iteration w=" << w << " added constant one bit");
+				
 				bitHeap->addConstantOneBit(w);
 			}
-			
-		}else
+		}
+		else
 		{
 			///////////////////////////////////   Generic Case  ////////////////////////////////////
 
@@ -604,7 +615,7 @@ namespace flopoco{
 			diSize[counter] = wIn - (currentSize - diSize[counter]);
 		}
 				
-		if(nbOfTables==2 && targetUlpError==1.0)
+		if(nbOfTables<=2 && targetUlpError==1.0)
 			guardBits = 0; // specific case: two CR table make up a faithful sum
 		else
 			guardBits = ceil(log2(nbOfTables/((targetUlpError-0.5)*exp2(-lsbOut)))) -1 -lsbOut;
@@ -630,47 +641,79 @@ namespace flopoco{
   
 	FixRealKCMBHTable::~FixRealKCMBHTable() {}
 
-	mpz_class FixRealKCMBHTable::function(int x0) {
-		int x;
-		// get rid of two's complement
-		x = x0;
-		if(signedInput) {
-			if ( x0 > ((1<<(wIn-1))-1) )
-				x = x - (1<<wIn);
+	mpz_class FixRealKCMBHTable::function(int x0)
+	{
+		
+		if(wIn < 2)
+		{
+			// Now we want to compute the product correctly rounded to LSB  lsbOut-g
+			// but we have to coerce MPFR into rounding to this fixed-point format.
+			mpfr_t mpR;
+			
+			mpfr_init2(mpR, 10*wOut);
+			// do the mult in large precision
+			if(x0 == 0)
+				mpfr_set_d(mpR, 0, GMP_RNDN);
+			else
+				mpfr_set(mpR, mother->mpC, GMP_RNDN);
+
+			// Result is integer*C, which is more or less what we need: just scale to add g bits.
+			mpfr_mul_2si(mpR, mpR, mother->wOut - mother->wIn - mother->msbC + mother->g, GMP_RNDN); //Exact
+
+			// Here is when we do the rounding
+			mpz_class result;
+			mpfr_get_z(result.get_mpz_t(), mpR, GMP_RNDN); // Should be exact
+
+			return  result;
 		}
-		// Cast x to mpfr 
-		mpfr_t mpX;
-		mpfr_init2(mpX, wIn);	
-		mpfr_set_si(mpX, x, GMP_RNDN); // should be exact
-		mpfr_mul_2si(mpX, mpX, weight, GMP_RNDN); //Exact
-		// now mpX is the integer radix-LUTinput digit, with its proper weight 
+		else
+		{
+			int x;
+		
+			// get rid of two's complement
+			x = x0;
+			if(signedInput)
+			{
+				if ( x0 > ((1<<(wIn-1))-1) )
+					x = x - (1<<wIn);
+			}
+			// Cast x to mpfr 
+			mpfr_t mpX;
+			
+			mpfr_init2(mpX, wIn);
+			
+			mpfr_set_si(mpX, x, GMP_RNDN); // should be exact
+			mpfr_mul_2si(mpX, mpX, weight, GMP_RNDN); //Exact
+			// now mpX is the integer radix-LUTinput digit, with its proper weight 
 
-		// Now we want to compute the product correctly rounded to LSB  lsbOut-g
-		// but we have to coerce MPFR into rounding to this fixed-point format.
-		mpfr_t mpR;
-		mpfr_init2(mpR, 10*wOut);	
-		// do the mult in large precision
-		mpfr_mul(mpR, mpX, mother->mpC, GMP_RNDN);
+			// Now we want to compute the product correctly rounded to LSB  lsbOut-g
+			// but we have to coerce MPFR into rounding to this fixed-point format.
+			mpfr_t mpR;
+			
+			mpfr_init2(mpR, 10*wOut);
+			// do the mult in large precision
+			mpfr_mul(mpR, mpX, mother->mpC, GMP_RNDN);
 
-		// Result is integer*C, which is more or less what we need: just scale to add g bits.
-		mpfr_mul_2si(mpR, mpR, mother->wOut - mother->wIn - mother->msbC + mother->g, GMP_RNDN); //Exact
+			// Result is integer*C, which is more or less what we need: just scale to add g bits.
+			mpfr_mul_2si(mpR, mpR, mother->wOut - mother->wIn - mother->msbC + mother->g, GMP_RNDN); //Exact
 
-		// and add the half-ulp of the result that turns truncation into rounding
-		// if g=0 (meaning either one table, or two tables+faithful rounding), 
-		// we don't need to add this bit
-		if(last && mother->g!=0) 
-			mpfr_add_si(mpR, mpR, 1<<(mother->g-1), GMP_RNDN);
+			// and add the half-ulp of the result that turns truncation into rounding
+			// if g=0 (meaning either one table, or two tables+faithful rounding), 
+			// we don't need to add this bit
+			if(last && mother->g!=0) 
+				mpfr_add_si(mpR, mpR, 1<<(mother->g-1), GMP_RNDN);
 
-		// Here is when we do the rounding
-		mpz_class result;
-		mpfr_get_z(result.get_mpz_t(), mpR, GMP_RNDN); // Should be exact
+			// Here is when we do the rounding
+			mpz_class result;
+			mpfr_get_z(result.get_mpz_t(), mpR, GMP_RNDN); // Should be exact
 
-		// Gimme back two's complement
-		if(signedInput) {
-			if ( x0 > (1<<(wIn-1))-1 ) // if x was negative
-				result = result + (mpz_class(1)<<wOut);
-		}
-		return  result;
+			// Gimme back two's complement
+			if(signedInput) {
+				if ( x0 > (1<<(wIn-1))-1 ) // if x was negative
+					result = result + (mpz_class(1)<<wOut);
+			}
+			return  result;
+		}		
 	}
 
 

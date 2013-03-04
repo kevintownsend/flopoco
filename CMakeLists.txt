@@ -23,11 +23,11 @@ INCLUDE(CPack)
 #Compilation flags
 #SET(CMAKE_CXX_FLAGS_DEBUG "-Wall")
 # Uncomment for profiling
-#SET(CMAKE_CXX_FLAGS_DEBUG "-g -pg -Wall")
-SET(CMAKE_CXX_FLAGS_DEBUG "-pg -Wall")
+SET(CMAKE_CXX_FLAGS_DEBUG "-g -pg -Wall")
+#SET(CMAKE_CXX_FLAGS_DEBUG "-pg -Wall")
 # Do you want an executable of 12MB ?
-#SET(CMAKE_BUILD_TYPE DEBUG)
-SET(CMAKE_BUILD_TYPE release)
+SET(CMAKE_BUILD_TYPE DEBUG)
+#SET(CMAKE_BUILD_TYPE release)
 
 
 FIND_PATH(MPFR_H
@@ -250,6 +250,8 @@ src/Plotter
 
 src/IntMultipliers/MultiplierBlock
 
+src/IntMultipliers/FixXPow3Div6
+
 # Shifters/LZOC related ---------------------------------------------
 #--------------------------------------------------------------------
  src/LZOC 
@@ -294,7 +296,7 @@ src/IntMultipliers/MultiplierBlock
  
  src/FixedPointFIRBH
  
-src/ConstMult/FixRealKCMBH
+ src/ConstMult/FixRealKCMBH
 
 # Floating-Point ----------------------------------------------------
 #--------------------------------------------------------------------

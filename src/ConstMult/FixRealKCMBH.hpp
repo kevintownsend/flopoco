@@ -51,6 +51,7 @@ namespace flopoco{
 	{
 	public:
 		FixRealKCMBHTable(Target* target, FixRealKCMBH* mother, int i, int weight, int wIn, int wOut, bool signedInput, bool last, int logicTable = 1);
+		
 		~FixRealKCMBHTable();
     
 		mpz_class function(int x);

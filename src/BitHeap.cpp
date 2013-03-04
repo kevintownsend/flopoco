@@ -574,17 +574,19 @@ namespace flopoco
 	void  BitHeap::addBit(int w, string rhs, string comment, int type)
 	{
 		if (w<0)
-			THROWERROR("Negative weight (" << w << ") in addConstantOneBit");
+			THROWERROR("Negative weight (" << w << ") in addBit");
+			
 		REPORT(DEBUG, "addBit at weigth " <<w <<"   for rhs=" << rhs );
+		
 		// ignore bits beyond the declared maxWeight
-		if((unsigned)w >= maxWeight) {
+		if((unsigned)w >= maxWeight)
+		{
 			REPORT(INFO, "WARNING in addBit, w=" << w << " greater than mawWeight=" <<maxWeight << "... ignoring it"  );
 			return;
 		}
 
 		WeightedBit* bit= new WeightedBit(getGUid(), newUid(w), w, type, op->getCurrentCycle(), op->getCriticalPath()) ;
 		// created at (op->getCycle(), opt-getCriticalPath())
-
 
 		int bitStage = bit->computeStage(stagesPerCycle, elementaryTime);
 		if (bitStage > plottingStage)
@@ -600,7 +602,6 @@ namespace flopoco
 		{
 			if (it==l.end() || (*bit <= **it))
 			{ // test in this order to avoid segfault!
-
 				l.insert(it, bit);
 				proceed=false;
 			}
@@ -615,8 +616,7 @@ namespace flopoco
 		op->vhdl << tab << op->declare(bit->getName()) << " <= " << rhs << ";";
 		if(comment.size())
 			op->vhdl <<  " -- " << comment;
-		op->vhdl <<  " -- " << "cycle= "<< bit->getCycle() <<" cp= "<<bit->getCriticalPath(bit->getCycle());
-		op->vhdl <<  endl;
+		op->vhdl <<  " -- " << "cycle= " << bit->getCycle() << " cp= " << bit->getCriticalPath(bit->getCycle()) << endl;
 
 		REPORT(DEBUG, "added bit named "  << bit->getName() << " on column " << w <<" at cycle= "<< bit->getCycle() <<" cp= "<<bit->getCriticalPath(bit->getCycle()));
 
@@ -1065,6 +1065,8 @@ namespace flopoco
 			{
 				//lutCompressionLevel=2 - compression using a mix of compressors and adder tree for the last lines
 				//lutCompressionLevel>0 - adder tree compression involved
+				
+				//continue here -> check if the version that skips stages actually works, or not
 				
 				int startingIndex = minWeight;
 				
