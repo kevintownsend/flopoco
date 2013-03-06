@@ -251,6 +251,7 @@ src/Plotter
 src/IntMultipliers/MultiplierBlock
 
 src/IntMultipliers/FixXPow3Div6
+src/ConstMult/IntConstDiv3
 
 # Shifters/LZOC related ---------------------------------------------
 #--------------------------------------------------------------------

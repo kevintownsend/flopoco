@@ -179,6 +179,16 @@ void usage(char *name, string opName = ""){
 	 	cerr << "      Result is faithfully truncated to the format msbOut lsbOut\n";
 	 	cerr << "      signed=0: unsigned;     signed=1: signed inputs, signed outputs \n";
 	 }
+	 
+	 if ( full || opName == "IntConstDiv3"){
+	 	OP("IntConstDiv3", "wIn d alpha nbZeros");
+	 	cerr << "      Operator computing X/3 for an integer X of size wIn \n";
+	 	cerr << "      The division is performed on X_new=x_{n}00x_{n-1}00...x_{1}00x_{0}, where x_{i}, are the bits of the number inputted\n";
+	 	cerr << "      Result is faithfully truncated to 3*wIn\n";
+	 	cerr << "      d=the integer constant to divide by\n";
+	 	cerr << "      alpha=the size of the chunks of numbers to take from X and to tabulate (if unsure about the size, set to -1)\n";
+		cerr << "      nbZeros=the number of zeros to interleave in the original number\n";
+	 }
 
 	 if ( full  || opName == "IntMultiplier" || opName == "IntMultAdd"){
 	 	OP("IntMultAdd","w signedIO ratio");
@@ -1537,6 +1547,22 @@ bool parseCommandLine(int argc, char* argv[]){
 				
 				FixXPow3Div6* mul = new FixXPow3Div6(target, msbIn, lsbIn, msbOut, lsbOut, signedIO);
 				op = mul;
+				addOperator(op);
+			}
+		}
+		
+		else if(opname=="IntConstDiv3"){
+			int nargs = 4;
+			if (i+nargs > argc)
+				usage(argv[0],opname);
+			else {
+				int wIn    	= atoi(argv[i++]);
+				int d	    	= atoi(argv[i++]);
+				int alpha   	= atoi(argv[i++]);
+				int nbZeros   	= checkPositiveOrNull(argv[i++], argv[0]);
+				
+				IntConstDiv3* div = new IntConstDiv3(target, wIn, d, alpha, nbZeros);
+				op = div;
 				addOperator(op);
 			}
 		}

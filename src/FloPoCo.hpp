@@ -89,6 +89,7 @@
 #include "IntMultipliers/IntPower.hpp"
 
 #include "IntMultipliers/FixXPow3Div6.hpp"
+#include "ConstMult/IntConstDiv3.hpp"
 
 #include "ConstMult/IntConstMult.hpp"
 #include "ConstMult/FPConstMult.hpp"
