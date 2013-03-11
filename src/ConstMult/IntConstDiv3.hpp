@@ -44,6 +44,16 @@ namespace flopoco{
 			EuclideanDiv3Table(Target* target, int d_, int alpha_, int gamma_, int delta_);
 			mpz_class function(int x);
 		};
+		
+		class EuclideanDiv3TableSimple: public Table 
+		{
+		public:
+			int d;
+			int alpha;
+			int gamma;
+			EuclideanDiv3TableSimple(Target* target, int d_, int alpha_, int gamma_);
+			mpz_class function(int x);
+		};
 
 
 

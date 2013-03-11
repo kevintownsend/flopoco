@@ -31,11 +31,11 @@ using namespace std;
 namespace flopoco{
 
 	IntConstDiv3::EuclideanDiv3Table::EuclideanDiv3Table(Target* target, int d_, int alpha_, int gamma_, int delta_) :
-		//Table(target, alpha_+gamma_, alpha_+gamma_, 0, -1, 1), d(d_), alpha(alpha_), gamma(gamma_)
 		/* input on alpha+gamma bits: alpha from the number, gamma from the pervious remainder */
 		/* computations on alpha+gamma+nbZeros bits */
-		/* output on alpha+gamma+nbZeros-1 bits (the -1 should be right for all the sizes that we are working with -- could also be -intlog2(d_)+1 )*/
-		Table(target, alpha_+gamma_, alpha_+gamma_+delta_-1+gamma_, 0, -1, 1), d(d_), alpha(alpha_), gamma(gamma_), delta(delta_)
+		/* output on alpha+2*gamma*/
+		/* maximum value in the table: 101 - 10 from the pervious remainder, 1 from the current digit being processed */
+		Table(target, alpha_+gamma_, alpha_+2*gamma_, 0, 5, 1), d(d_), alpha(alpha_), gamma(gamma_), delta(delta_)
 	{
 		ostringstream name;
 		
@@ -48,8 +48,8 @@ namespace flopoco{
 	mpz_class IntConstDiv3::EuclideanDiv3Table::function(int x)
 	{
 		// machine integer arithmetic should be safe here
-		//	getting r_{1}r_{2}x_{i} as input, actually will work with r_{1}r_{2}x_{i}00
-		if((x < 0) || (x >= (1<<(1+gamma+2))))
+		//	getting r_{1}r_{2}x_{i} as input, actually will work with r_{1}r_{2}x_{i}00...0 (delta zeros)
+		if((x < 0) || (x >= (1<<(alpha+gamma))))
 		{
 			ostringstream e;
 			e << "ERROR in IntConstDiv3::EuclideanDiv3Table::function, argument out of range" <<endl;
@@ -59,6 +59,34 @@ namespace flopoco{
 		// shift the input two positions to the left, to get the actual input
 		int q = (x << delta) / d;
 		int r = (x << delta) - q*d;
+		
+		return mpz_class((q<<gamma) + r);
+	};
+	
+	IntConstDiv3::EuclideanDiv3TableSimple::EuclideanDiv3TableSimple(Target* target, int d_, int alpha_, int gamma_) :
+		Table(target, alpha_+gamma_, alpha_+2*gamma_, 0, 5, 1), d(d_), alpha(alpha_), gamma(gamma_)
+	{
+		ostringstream name;
+		
+		srcFileName = "IntConstDiv3::EuclideanDiv3TableSimple";
+		name << "EuclideanDiv3TableSimple_" << d << "_" << alpha;
+		setName(name.str());
+	};
+
+
+	mpz_class IntConstDiv3::EuclideanDiv3TableSimple::function(int x)
+	{
+		// machine integer arithmetic should be safe here
+		if((x < 0) || (x >= (1<<(alpha+gamma))))
+		{
+			ostringstream e;
+			e << "ERROR in IntConstDiv3::EuclideanDiv3TableSimple::function, argument out of range" <<endl;
+			throw e.str();
+		}
+		
+		// shift the input two positions to the left, to get the actual input
+		int q = x / d;
+		int r = x - q*d;
 		
 		return mpz_class((q<<gamma) + r);
 	};
@@ -125,7 +153,7 @@ namespace flopoco{
 		uniqueName_ = o.str();
 
 		//set the quotient size
-		qSize = (nbZeros + 1)*wIn - intlog2(d) + 1;
+		qSize = (alpha+gamma)*(wIn-1) + alpha;
 
 		//create the input
 		addInput("X", wIn);
@@ -136,9 +164,6 @@ namespace flopoco{
 		addOutput("R", gamma);
 
 		int k = wIn/alpha;
-		int rem = (nbZeros + 1)*wIn - k*(alpha + nbZeros);
-		if(rem != 0)
-			k++;
 
 		REPORT(INFO, "Architecture consists of k=" << k  <<  " levels.");
 		REPORT(DEBUG, "  d=" << d << "  wIn=" << wIn << "  alpha=" << alpha << "  gamma=" << gamma <<  "  k=" << k  <<  "  qSize=" << qSize);
@@ -156,12 +181,13 @@ namespace flopoco{
 
 		setCriticalPath(getMaxInputDelays(inputDelays));
 
-		for (int i=k-1; i>=0; i--)
+		//all bits except the last
+		for (int i=k-1; i>0; i--)
 		{
 			manageCriticalPath(tableDelay);
 
 			xi = join("x", i);
-			vhdl << tab << declare(xi, alpha, true) << " <= " << "X" << (alpha==1 ? of(i) : range((i+1)*alpha-1, i*alpha)) << ";" << endl; 
+			vhdl << tab << declare(xi, alpha, true) << " <= X" << range((i+1)*alpha-1, i*alpha) << ";" << endl;
 			
 			ini = join("in", i);
 			// This ri is r_{i+1}
@@ -175,19 +201,47 @@ namespace flopoco{
 			
 			ri = join("r", i);
 			qi = join("q", i);
-			vhdl << tab << declare(qi, alpha+gamma+nbZeros-1, true) << " <= " << outi << range(alpha+2*gamma+nbZeros-1, gamma) << ";" << endl;
-			vhdl << tab << declare(ri, gamma) << " <= " << outi << range(gamma-1, 0) << ";" << endl;
+			vhdl << tab << declare(qi, alpha+gamma, true) << " <= " << outi << range(alpha+2*gamma-1, gamma) << ";" << endl;
+			vhdl << tab << declare(ri, gamma) << " <= " << outi << range(gamma-1, 0) << ";" << endl << endl;
 		}
+		
+		//handle the last bit
+		{
+			EuclideanDiv3TableSimple* table2;
+			table2 = new EuclideanDiv3TableSimple(target, d, alpha, gamma);
+			useSoftRAM(table2);
+			oplist.push_back(table2);
+			tableDelay = table2->getOutputDelay("Y");
+			
+			manageCriticalPath(tableDelay);
 
+			xi = join("x", 0);
+			vhdl << tab << declare(xi, alpha, true) << " <= X" << range(alpha-1, 0) << ";" << endl;
+			
+			ini = join("in", 0);
+			vhdl << tab << declare(ini, alpha+gamma) << " <= " << ri << " & " << xi << ";" << endl;
+			
+			outi = join("out", 0);
+			
+			inPortMap(table2, "X", ini);
+			outPortMap(table2, "Y", outi);
+			vhdl << instance(table2, join("table", 0));
+			
+			ri = join("r", 0);
+			qi = join("q", 0);
+			vhdl << tab << declare(qi, alpha+gamma, true) << " <= " << outi << range(alpha+2*gamma-1, gamma) << ";" << endl;
+			vhdl << tab << declare(ri, gamma) << " <= " << outi << range(gamma-1, 0) << ";" << endl << endl;
+		}
 
 		if(!remainderOnly)
 		{
 			// build the quotient output
-			vhdl << tab << declare("tempQ", k*alpha) << " <= ";
-			for (unsigned int i=k-1; i>=1; i--) 
+			vhdl << tab << declare("tempQ", (alpha+gamma)*(k-1)+alpha) << " <= ";
+			for (unsigned int i=k-1; i>=1; i--)
 				vhdl << "q" << i << " & ";
-			vhdl << "q0 ;" << endl;
-				vhdl << tab << "Q <= tempQ" << range(qSize-1, 0)  << ";" << endl;
+			vhdl << "q0(" << alpha << " downto 0);" << endl;
+			
+			vhdl << tab << "Q <= tempQ" << range(qSize-1, 0)  << ";" << endl;
 		}
 
 		// This ri is r_0
@@ -207,20 +261,14 @@ namespace flopoco{
 		
 		// Recreate the true input value (x_{n}00x_{n-1}00...x_{1}00x_{0})
 		int shiftSize = 0;
-		mpz_class copyX = X, trueX = 0, digit, shiftedDigit;
+		mpz_class copyX, trueX, digit;
 		
-		cout << "computing the actual value of X=" << X << endl;
-		
+		copyX = X;
+		trueX = 0;
 		while(copyX > 0)
 		{
-			cout << "iteration " << shiftSize << " X=" << X << " trueX=" << trueX << " copyX=" << copyX;
-			
 			digit = copyX & 1;
-			shiftedDigit = digit<<((int)intpow2(shiftSize)-1);
-			
-			cout << " digit=" << digit << " shifted digit=" << shiftedDigit << endl;
-			
-			trueX = trueX + digit<<(3*shiftSize-1);		//continue here -> make the new number in the correct format!!!
+			trueX = trueX + (digit << (3*shiftSize));
 			
 			copyX = copyX >> 1;
 			shiftSize++;
