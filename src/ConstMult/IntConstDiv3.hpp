@@ -15,6 +15,7 @@
 #ifndef __IntConstDiv3_HPP
 #define __IntConstDiv3_HPP
 #include <vector>
+#include <list>
 #include <sstream>
 
 #include "Operator.hpp"
@@ -41,17 +42,8 @@ namespace flopoco{
 			int alpha;
 			int gamma;
 			int delta;
-			EuclideanDiv3Table(Target* target, int d_, int alpha_, int gamma_, int delta_);
-			mpz_class function(int x);
-		};
-		
-		class EuclideanDiv3TableSimple: public Table 
-		{
-		public:
-			int d;
-			int alpha;
-			int gamma;
-			EuclideanDiv3TableSimple(Target* target, int d_, int alpha_, int gamma_);
+			bool lastTable;
+			EuclideanDiv3Table(Target* target, int d_, int alpha_, int gamma_, int delta_, bool lastTable_);
 			mpz_class function(int x);
 		};
 

@@ -443,6 +443,19 @@ namespace flopoco{
 		return "";
 	}
 	
+	int oneGenerator(int n)
+	{
+		int result;
+		
+		result = 0;
+		for(int i=0; i<n; i++)
+		{
+			result = (result<<1) + 1;
+		}
+		
+		return result;
+	}
+	
 
 	// Does not handle multi-byte encodings.
 	char vhdlizeChar(char c)
