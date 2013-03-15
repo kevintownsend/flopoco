@@ -437,18 +437,18 @@ void usage(char *name, string opName = ""){
 	if ( full ){
 		cerr << "    ____________ FIXED-POINT OPERATORS __________________________________________\n";
 	}
-	if ( full || opName == "FixSinCos" || opName == "FixSinOrCos" || opName == "FixCos"){
+	if ( full || opName == "FixSinCos" || opName == "FixSinOrCos" || opName == "SinCos"){
 		NEWOP( "FixSinCos","w");
 		cerr << "      For a fixed-point 2's complement input x in [-1,1[, calculates\n";
 		cerr << "      (1-2^(-w))*{sin,cos}(pi*x); w is the precision not counting the sign bit\n";
 	}
-	if ( full || opName == "CordicSinCos" || opName == "FixSinOrCos" || opName == "FixCos"){
+	if ( full || opName == "CordicSinCos" || opName == "FixSinOrCos" || opName == "SinCos"){
 		NEWOP( "CordicSinCos","wIn wOut reduced");
 		cerr << "      Computes (1-2^(-w)) sin(pi*x) and (1-2^(-w)) cos(pi*x) for x in -[1,1[, ;\n";
 		cerr << "      wIn and wOut are the fixed-point precision of inputs and outputs (not counting the sign bit)\n";
 		cerr << "      reduced : if 1,  reduced number of iterations at the cost of two multiplications \n";
 	}
-	if ( full || opName == "CordicSinCos" || opName == "FixSinOrCos" || opName == "FixCos"){
+	if ( full || opName == "CordicSinCos" || opName == "FixSinOrCos" || opName == "SinCos"){
 		NEWOP( "FixSinOrCos","w d");
 		cerr << "      Computes (1-2^(-w)) sin(pi*x) or (1-2^(-w)) cos(pi*x) for x in -[1,1[, ;\n";
 		cerr << "      w is the fixed-point precision of inputs and outputs, not counting the sign bit\n";
@@ -2587,6 +2587,16 @@ bool parseCommandLine(int argc, char* argv[]){
 				usage(argv[0],opname); // and exit
 			int w = checkStrictlyPositive(argv[i++], argv[0]); // must be >=2 actually
 			Operator* tg = new FixSinCos(target, w);
+			addOperator(tg);
+		}
+
+		else if (opname == "FixSinCosExpert") {
+			int nargs = 2;
+			if (i+nargs > argc)
+				usage(argv[0],opname); // and exit
+			int w = checkStrictlyPositive(argv[i++], argv[0]); // must be >=2 actually
+			float ratio = atof(argv[i++]);
+			Operator* tg = new FixSinCos(target, w,ratio);
 			addOperator(tg);
 		}
 

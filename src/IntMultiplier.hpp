@@ -47,7 +47,7 @@ namespace flopoco {
 		 * @param[in] wY             Y multiplier size (including sign bit if any)
 		 * @param[in] wOut         wOut size for a truncated multiplier (0 means full multiplier)
 		 * @param[in] signedIO     false=unsigned, true=signed
-		 * @param[in] ratio            DSP block use ratio
+		 * @param[in] ratio            DSP block use ratio threshold
 		 **/
 		IntMultiplier(Target* target, int wX, int wY, int wOut=0, bool signedIO = false, 
 		              float ratio = 1.0, map<string, double> inputDelays = emptyDelayMap,bool enableSuperTiles=false);

@@ -3,7 +3,7 @@
 
   TODO in the virtual multiplier case, manage properly the case when the initial instant is not  0
 
-  Authors:  Bogdan Pasca, but we (F de Dinechin, Kinga Illyes and Bogdan Popa) spent two months getting rid of the last bits of his code
+  Authors:  Bogdan Pasca, and then F de Dinechin, Matei Istoan, Kinga Illyes and Bogdan Popa spent 12 cumulated months getting rid of the last bits of his code
 
   This file is part of the FloPoCo project
   developed by the Arenaire team at Ecole Normale Superieure de Lyon
@@ -420,8 +420,8 @@ namespace flopoco {
 		}
 
 
-		// TODO weight=-1 here
-		//add the round bit
+#if 0
+		// TODO revive? The following turns truncation into rounding, except that the overhead is large for small multipliers.
 		if(g>0) {
 			int weight = lsbWeight-1;
 			if(negate)
@@ -429,6 +429,8 @@ namespace flopoco {
 			else
 				bitHeap->addConstantOneBit(weight);
 		}
+#endif
+
 
 #if GENERATE_SVG
 		plotter->plotMultiplierConfiguration(getName(), localSplitVector, wX, wY, wOut, g);

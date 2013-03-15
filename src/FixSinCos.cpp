@@ -26,7 +26,7 @@ using namespace flopoco;
 #define SUBCYCLEPIPELINING 0
 #define USEBITHEAP 1
 
-FixSinCos::FixSinCos(Target * target, int w_):Operator(target), w(w_)
+FixSinCos::FixSinCos(Target * target, int w_, float ratio):Operator(target), w(w_)
 {
 	srcFileName="FixSinCos";
 	
@@ -141,7 +141,8 @@ FixSinCos::FixSinCos(Target * target, int w_):Operator(target), w(w_)
 	//  with width >=w+g
 	if (wA <= bram_words_log2-1)
 		wA = bram_words_log2-1;
-	int wY = wIn-wA, wZ = wY+2;
+	int wY = wIn-wA;
+	int wZ = wY+2;
 	// vhdl:split (Y_in -> A & Y_red)
 	vhdl << tab << declare ("A",wA) << " <= Y_in" << range (wIn-1,wIn-wA) << ";" << endl;
 	vhdl << tab << declare ("Y_red",wY) << " <= Y_in" << range (wIn-wA-1,0) << ';' << endl;
@@ -156,14 +157,16 @@ FixSinCos::FixSinCos(Target * target, int w_):Operator(target), w(w_)
 		// error using the with-rounding {Sin,Cos}PiA in multipliers
 		ostringstream halfulp;
 		halfulp << "1b-" << (w+1);
-		sin_table = new FunctionTable (target, omu.str()
-						     + " * sin(pi*x/4) + "
-						     + halfulp.str()
-					     , wA, -(w+g), -1);
-		cos_table = new FunctionTable (target, omu.str()
-						     + " * cos(pi*x/4) + "
-						     + halfulp.str()
-					     , wA, -(w+g), -1);
+		sin_table = new FunctionTable (target, 
+		                               omu.str() + " * sin(pi*x/4) + " + halfulp.str(),
+		                               wA, 
+		                               -(w+g), 
+		                               -1);
+		cos_table = new FunctionTable (target, 
+		                               omu.str() + " * cos(pi*x/4) + " + halfulp.str(),
+		                               wA, 
+		                               -(w+g), 
+		                               -1);
 	}
 	sin_table -> changeName(getName() + "_SinTable");
 	cos_table -> changeName(getName() + "_CosTable");
@@ -251,7 +254,7 @@ FixSinCos::FixSinCos(Target * target, int w_):Operator(target), w(w_)
 		wZ2o2 = 2; //for sanity
 	vhdl << tab << "-- First truncate the inputs of the multiplier to the precision of the output" << endl;
 	vhdl << tab << declare("Z_truncToZ2", wZ2o2) << " <= Z" << range(wZ-1, wZ-wZ2o2) << ";" << endl;
-	sqr_z = new IntMultiplier (target, wZ2o2, wZ2o2, wZ2o2, false, 1.0, sqr_z_inputDelays);
+	sqr_z = new IntMultiplier (target, wZ2o2, wZ2o2, wZ2o2, false, ratio, sqr_z_inputDelays);
 	oplist.push_back (sqr_z);
 	inPortMap (sqr_z, "Y", "Z_truncToZ2");
 	inPortMap (sqr_z, "X", "Z_truncToZ2");
@@ -301,7 +304,7 @@ FixSinCos::FixSinCos(Target * target, int w_):Operator(target), w(w_)
 
 
 
-	/*********************************** Reconstruction of Sine **************************************/
+	/*********************************** Reconstruction of cosine **************************************/
 
 	// First get back to the cycle of Z2
 #if SUBCYCLEPIPELINING
@@ -311,12 +314,14 @@ FixSinCos::FixSinCos(Target * target, int w_):Operator(target), w(w_)
 	nextCycle();
 #endif
 
+
+#if 1 // No bit heap
 	// // vhdl:id (CosPiA -> C_out_1)
 	// vhdl:mul (Z2o2, CosPiA -> Z2o2CosPiA)
 	vhdl << tab << "-- First truncate the larger input of the multiplier to the precision of the output" << endl;
 	vhdl << tab << declare("CosPiA_truncToZ2o2", wZ2o2) << " <= CosPiA" << range(w+g-1, w+g-wZ2o2) << ";" << endl;
 	IntMultiplier *c_out_2;
-	c_out_2 = new IntMultiplier (target, wZ2o2, wZ2o2, wZ2o2, false, 1.0);
+	c_out_2 = new IntMultiplier (target, wZ2o2, wZ2o2, wZ2o2, false, ratio);
 	oplist.push_back (c_out_2);
 	inPortMap (c_out_2, "X", "Z2o2");
 	inPortMap (c_out_2, "Y", "CosPiA_truncToZ2o2");
@@ -344,7 +349,7 @@ FixSinCos::FixSinCos(Target * target, int w_):Operator(target), w(w_)
 
 	vhdl << tab << "-- First truncate the larger input of the multiplier to the precision of the output" << endl;
 	vhdl << tab << declare("SinPiA_truncToZ", wZ) << " <= SinPiA" << range(w+g-1, w+g-wZ) << ";" << endl;
-	c_out_3 = new IntMultiplier (target, wZ, wZ, wZ, false);
+	c_out_3 = new IntMultiplier (target, wZ, wZ, wZ, false, ratio);
 	oplist.push_back (c_out_3);
 	inPortMap (c_out_3, "Y", "SinPiA_truncToZ");
 	inPortMap (c_out_3, "X", "SinZ");
@@ -366,10 +371,51 @@ FixSinCos::FixSinCos(Target * target, int w_):Operator(target), w(w_)
 	vhdl << tab << declare ("C_out_rnd_aux", w+g)
 	     << " <= CosZCosPiA_plus_rnd - SinZSinPiA;" << endl;
 
+	// ---------------------------------------------
+#else //Bit heap computing Cos Z  ~   CosPiA - Z2o2*cosPiA + sinZ*SinPiA
+	vhdl << tab << "--  truncate the larger input of the multiplier to the precision of the output" << endl;
+	vhdl << tab << declare("CosPiA_truncToZ2o2", wZ2o2) << " <= CosPiA" << range(w+g-1, w+g-wZ2o2) << ";" << endl;
+
+	BitHeap* bitHeapCos = new BitHeap(this, w+g, "Sin"); 
+
+	// Add CosPiA to the bit heap
+	bitHeapCos -> addUnsignedBitVector(0, "CosPiA", w+g);
+
+	// First virtual multiplier
+	new IntMultiplier (this,
+	                   bitHeapSin,
+	                   getSignalByName("Z2o2"),
+	                   getSignalByName("CosPiA_truncToZ2o2"),
+	                   wZ2o2, wZ2o2, wZ2o2,
+	                   lsbweight,
+	                   false, // negate
+	                   false, // signed
+	                   ratio);
 
 
-	/*********************************** Reconstruction of Sine **************************************/
+	     
+	vhdl << tab << "--  truncate the larger input of the multiplier to the precision of the output" << endl;
+	vhdl << tab << declare("SinPiA_truncToZ", wZ) << " <= SinPiA" << range(w+g-1, w+g-wZ) << ";" << endl;
 
+	     // Second virtual multiplier
+	     new IntMultiplier (this,
+	                   bitHeapSin,
+	                   getSignalByName("sinZ"),
+	                   getSignalByName("SinPiA_truncToZ"),
+	                   wZ2o2, wZ2o2, wZ2o2,
+	                   false, // negate
+	                   false, // signed
+	                   ratio
+	                   );
+	     
+	     // 
+	     bitHeapCos -> generateCompressorVHDL();	
+	vhdl << tab << declare ("C_out", w) << " <= " << bitHeapCos -> getSumName() << range (w+g-1, g) << ';' << endl;
+
+#endif
+
+	/*********************************** Reconstruction of sine **************************************/
+ //Bit heap computing   SinPiA - Z2o2*sinPiA + sinZ*CosPiA
 	// Sin Y_in:
 
 	// First get back to the cycle of Z2 (same as Cos_y_red):
@@ -386,7 +432,7 @@ FixSinCos::FixSinCos(Target * target, int w_):Operator(target), w(w_)
 	vhdl << tab << "-- First truncate the larger input of the multiplier to the precision of the output" << endl;
 	vhdl << tab << declare("SinPiA_truncToZ2o2", wZ2o2) << " <= SinPiA" << range(w+g-1, w+g-wZ2o2) << ";" << endl;
 	IntMultiplier *s_out_2;
-	s_out_2 = new IntMultiplier (target, wZ2o2, wZ2o2, wZ2o2, false);
+	s_out_2 = new IntMultiplier (target, wZ2o2, wZ2o2, wZ2o2, false, ratio);
 	oplist.push_back (s_out_2);
 	inPortMap (s_out_2, "X", "Z2o2");
 	inPortMap (s_out_2, "Y", "SinPiA_truncToZ2o2");
@@ -405,7 +451,7 @@ FixSinCos::FixSinCos(Target * target, int w_):Operator(target), w(w_)
 	vhdl << tab << declare("CosPiA_truncToSinZ", wZ) << " <= CosPiA" << range(w+g-1, w+g-wZ) << ";" << endl;
 
 	IntMultiplier *s_out_3;
-	s_out_3 = new IntMultiplier (target, wZ, wZ, wZ, false);
+	s_out_3 = new IntMultiplier (target, wZ, wZ, wZ, false, ratio);
 	oplist.push_back (s_out_3);
 	inPortMap (s_out_3, "X", "SinZ");
 	inPortMap (s_out_3, "Y", "CosPiA_truncToSinZ");
@@ -431,8 +477,6 @@ FixSinCos::FixSinCos(Target * target, int w_):Operator(target), w(w_)
 	//Final synchronization
 	syncCycleFromSignal("C_out_rnd_aux");
 
-	vhdl << tab << declare ("C_out", w)
-	     << " <= C_out_rnd_aux" << range (w+g-1, g) << ';' << endl;
 	vhdl << tab << declare ("S_out", w)
 	     << " <= S_out_rnd_aux" << range (w+g-1, g) << ';' << endl;
 

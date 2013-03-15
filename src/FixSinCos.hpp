@@ -16,7 +16,7 @@ class FixSinCos: public Operator {
 
 
 	public:
-		FixSinCos(Target * target, int w);
+	FixSinCos(Target * target, int w, float ratio=0.5);
 
 		~FixSinCos();
 
