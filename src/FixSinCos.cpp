@@ -3,6 +3,8 @@
 #include "FixedPointFunctions/FunctionTable.hpp"
 #include "IntConstDiv.hpp"
 
+// TODOs 
+
 // works only with sollya
 #ifdef HAVE_SOLLYA
 
@@ -34,6 +36,21 @@ FixSinCos::FixSinCos(Target * target, int w_):Operator(target), w(w_)
 	setName(name.str());
 
 	setCopyrightString("Florent de Dinechin, Guillaume Sergent (2012)");
+
+
+
+
+	// everybody needs many digits of Pi
+	mpfr_init2(constPi, 10*w);
+	mpfr_const_pi( constPi, GMP_RNDN);
+	
+	//compute the scale factor		
+	mpfr_init2(scale, w+1);
+	mpfr_set_d(scale, -1.0, GMP_RNDN);           // exact
+	mpfr_mul_2si(scale, scale, -w, GMP_RNDN); // exact
+	mpfr_add_d(scale, scale, 1.0, GMP_RNDN);     // exact
+	REPORT(DEBUG, "scale=" << printMPFR(scale, 15));
+	
 
 	// declaring inputs
 	addInput("X", w+1);
@@ -242,23 +259,7 @@ FixSinCos::FixSinCos(Target * target, int w_):Operator(target), w(w_)
 	vhdl << instance (sqr_z, "sqr_z");
 
 
-	/*********************************** THE CUBING UNIT **************************************/
-
-
-	// remember the cycle and the critical path here, because we'll get back in time here
-	map<string, double> Z3_inputDelays;
-#if SUBCYCLEPIPELINING
-	setSignalDelay("Z2o2", sqr_z->getOutputDelay("R")) ; // TODO should be done automatically by outPortMap 
-	syncCycleFromSignal("Z2o2", sqr_z->getOutputDelay("R")); // TODO Then this would not need to pass a CP
-	Z3_inputDelays["X"] = sqr_z->getOutputDelay("R");
-	Z3_inputDelays["Y"] = sqr_z->getOutputDelay("R");
-#else
-	syncCycleFromSignal("Z2o2"); // TODO Then this would not need to pass a CP
-	nextCycle();
-#endif
-
-	// vhdl:mul (Z, Z2o2 -> Z3)
-
+	/*********************************** Z-Z^3/6 **************************************/
 
 	int wZ3 = 3*wZ - 2*(w+g) -1; // -1 for the div by 2
 	int wZ3o6 = 3*wZ - 2*(w+g) -2;
@@ -266,92 +267,31 @@ FixSinCos::FixSinCos(Target * target, int w_):Operator(target), w(w_)
 		wZ3 = 2;
 	if (wZ3o6 < 2)
 		wZ3o6 = 2; //using 1 will generate bad vhdl
-
-#if 1
+	REPORT(DETAILED, "wZ3 = " << wZ3 << "            wZ3o6 = " << wZ3o6 );
+	
 	if(wZ3<=11) {
 		vhdl << tab << "-- First truncate Z" << endl;
 		vhdl << tab << declare("Z_truncToZ3o6", wZ3o6) << " <= Z" << range(wZ-1, wZ-wZ3o6) << ";" << endl;
 		FunctionTable *z3o6Table;
-		z3o6Table = new FunctionTable (target, "x^3/6)", wZ3o6, -wZ3o6-2, -3);
+		z3o6Table = new FunctionTable (target, "x^3/6", wZ3o6, -wZ3o6-2, -3);
 		z3o6Table -> changeName(getName() + "_Z3o6Table");
 		oplist.push_back (z3o6Table);
 		inPortMap (z3o6Table, "X", "Z_truncToZ3o6");
 		outPortMap (z3o6Table, "Y", "Z3o6");
 		vhdl << instance (z3o6Table, "z3o6Table");
 		
+		manageCriticalPath(target->adderDelay(wZ));
+		vhdl << tab << declare ("SinZ", wZ)
+		     << " <= Z - Z3o6;" << endl;
+		setSignalDelay("SinZ", getCriticalPath());
+		
 	}
 	else {
 		// TODO: replace all this with an ad-hoc unit
-		vhdl << tab << "-- First truncate the inputs of the multiplier to the precision of the output" << endl;
-		vhdl << tab << declare("Z2o2_truncToZ3", wZ3) << " <= Z2o2" << range(wZ2o2-1, wZ2o2-wZ3) << ";" << endl;
-		vhdl << tab << declare("Z_truncToZ3", wZ3) << " <= Z" << range(wZ-1, wZ-wZ3) << ";" << endl;
-		IntMultiplier *Z3;
-		Z3 = new IntMultiplier (target, wZ3, wZ3, wZ3,  
-		                              0.5, false);
-		oplist.push_back (Z3);
-		outPortMap (Z3, "R", "Z3o2");
-		inPortMap (Z3, "Y", "Z2o2_truncToZ3");
-		inPortMap (Z3, "X", "Z_truncToZ3");
-		vhdl << instance (Z3, "z3_compute");
-		syncCycleFromSignal("Z3o2", Z3->getOutputDelay("R"));
-		
-
-		map<string, double> cdiv_3_inputDelays;
-#if SUBCYCLEPIPELINING
-		cdiv_3_inputDelays["X"] = Z3->getOutputDelay("R");
-#else
-		nextCycle();
-#endif
-		
-		IntConstDiv *cdiv_3;
-		cdiv_3 = new IntConstDiv (target, wZ3, 3, -1, false, cdiv_3_inputDelays);
-		oplist.push_back (cdiv_3);
-		outPortMap (cdiv_3, "Q", "Z3o6");
-		inPortMap (cdiv_3, "X", "Z3o2");
-		vhdl << instance (cdiv_3, "cdiv_3");
-		syncCycleFromSignal("Z3o6", cdiv_3->getOutputDelay("Q"));
-
 	}
-#else
-	vhdl << tab << declare("Z_truncToZ3", wZ3) << " <= Z" << range(wZ-1, wZ-wZ3) << ";" << endl;
-	ProductIR z3o6 = ProductIR::identity(wZ3).toPow(3).simplifyInPlace().div(6).quo.setMSB(-3);
-	// target wZ3o6, not wZ3 when output is concerned
-	// 1 ulp of output trunc as of now
-	ProductIR z3o6_t = z3o6.truncate (mpz_class(1) << (wZ3*3-wZ3o6));
-	size_t wZ3o6_ext = z3o6_t.data.size();
-	GenericBinaryPolynomial *z3o6gbp;
-	z3o6gbp = new GenericBinaryPolynomial (target, z3o6_t, Z3_inputDelays);
-	oplist.push_back (z3o6gbp);
-	outPortMap (z3o6gbp, "R", "Z3o6_before_trunc");
-	inPortMap (z3o6gbp, "X", "Z_truncToZ3");
-	vhdl << instance (z3o6gbp, "z3o6gbp");
-	syncCycleFromSignal ("Z3o6_before_trunc", z3o6gbp->getOutputDelay("R"));
-	if (wZ3o6_ext >= wZ3o6) { 
-		vhdl << tab << declare("Z3o6",wZ3o6) << " <= Z3o6_before_trunc"
-		     << range(wZ3o6_ext-1, wZ3o6_ext-wZ3o6) << ";\n";
-	} else {
-		vhdl << tab << declare("Z3o6",wZ3o6)
-		     << " <= Z3o6_before_trunc & \"" 
-		     << std::string (wZ3o6-wZ3o6_ext,'0')
-		     << "\";" << endl;
-	}
-#endif
-
-
-	/*********************************** Z-Z3o6 **************************************/
-
-
-#if SUBCYCLEPIPELINING
-#else
-		nextCycle();
-#endif
 
 
 	// vhdl:sub (Z, Z3o6 -> sinZ)
-	manageCriticalPath(target->adderDelay(wZ));
-	vhdl << tab << declare ("SinZ", wZ)
-	     << " <= Z - Z3o6;" << endl;
-	setSignalDelay("SinZ", getCriticalPath());
 
 
 
@@ -528,151 +468,113 @@ FixSinCos::FixSinCos(Target * target, int w_):Operator(target), w(w_)
 
 
 
+FixSinCos::~FixSinCos(){
+		mpfr_clears (scale, constPi, NULL);		
+	 };
+
+
+
+
+
 
 void FixSinCos::emulate(TestCase * tc)
 {
-	mpz_class sx = tc->getInputValue ("X");
-	mpfr_t x, sind, cosd, sinu, cosu, pixd, pixu, one_minus_ulp;
-	mpz_t sind_z, cosd_z, sinu_z, cosu_z;
-	//one extra bit of precision because we temporarily hold the sign
-	//in the mantissa
-	mpfr_init2 (x, 2+w);
-	mpz_init2 (sind_z, 1+w);
-	mpz_init2 (cosd_z, 1+w);
-	mpz_init2 (sinu_z, 1+w);
-	mpz_init2 (cosu_z, 1+w);
-	mpfr_inits (sind, cosd, sinu, cosu, pixd, pixu, (mpfr_ptr) 0);
-	mpfr_init2 (one_minus_ulp, 1+w);
-	//these 3 following roundings are exact
-	mpfr_set_ui (one_minus_ulp, 1UL, GMP_RNDD);
-	mpfr_div_2ui (one_minus_ulp, one_minus_ulp, w, GMP_RNDD);
-	mpfr_ui_sub (one_minus_ulp, 1UL, one_minus_ulp, GMP_RNDD);
+	// TODO eventually have only one shared FixSinCos emulate code
 
-	mpfr_set_z (x, sx.get_mpz_t(), GMP_RNDD); // this rounding is exact
-	mpfr_div_2si (x, x, w, GMP_RNDD); // this rounding is acually exact
-	// now handle the sign of x
-	if (mpfr_cmp_ui (x, 1UL) >= 0) { // if (x >= 1.f)
-		// 2's complement: just sub 2
-		mpfr_add_si (x, x, -2, GMP_RNDD); //this rnd is exact
-	}
-	int i=0, ep; // ep: extra precision
-	do {
-		ep = 1 << i;
-		mpfr_set_prec (sind, 2+w+ep);
-		mpfr_set_prec (cosd, 2+w+ep);
-		mpfr_set_prec (sinu, 2+w+ep);
-		mpfr_set_prec (cosu, 2+w+ep);
-		mpfr_set_prec (pixd, 2+w+ep);
-		mpfr_set_prec (pixu, 2+w+ep);
-		mpfr_const_pi (pixd, GMP_RNDD);
-		mpfr_const_pi (pixu, GMP_RNDU);
-		mpfr_mul (pixd, pixd, x, GMP_RNDD);
-		mpfr_mul (pixu, pixu, x, GMP_RNDU);
-		if (mpfr_cmp_ui_2exp (x, 1UL, -1) < 0
-		 && mpfr_cmp_si_2exp (x, -1L, -1) > 0) { // if (|x| < 0.5f)
-			// then sin is increasing near x
-			mpfr_sin (sind, pixd, GMP_RNDD);
-			mpfr_sin (sinu, pixu, GMP_RNDU);
-		} else {
-			// then sin is decreasing near x
-			mpfr_sin (sind, pixu, GMP_RNDD); // use the upper x for the lower sin
-			mpfr_sin (sinu, pixd, GMP_RNDU);
-		}
-		if (mpfr_cmp_ui (x, 0UL) > 0) {
-			mpfr_cos (cosd, pixu, GMP_RNDD); // cos decreases from 0 to pi
-			mpfr_cos (cosu, pixd, GMP_RNDU);
-		} else {
-			mpfr_cos (cosd, pixd, GMP_RNDD); // cos increases from -pi to 0
-			mpfr_cos (cosu, pixu, GMP_RNDU);
-		}	
-		// multiply by the (1-ulp) factor now
-		mpfr_mul (sind, sind, one_minus_ulp, GMP_RNDD);
-		mpfr_mul (cosd, cosd, one_minus_ulp, GMP_RNDD);
-		mpfr_mul (sinu, sinu, one_minus_ulp, GMP_RNDU);
-		mpfr_mul (cosu, cosu, one_minus_ulp, GMP_RNDU);
-		// if the cosine is <0 we must add 2 to it
-		// (2's complement)
-		if (mpfr_cmp_ui (cosd, 0) < 0) {
-			mpfr_add_ui (cosd, cosd, 2UL, GMP_RNDD); // exact rnd
-		}
-		// same as before
-		if (mpfr_cmp_ui (cosu, 0) < 0) {
-			mpfr_add_ui (cosu, cosu, 2UL, GMP_RNDU);
-		}
-		// and we have to do the same for sin
-		if (mpfr_cmp_ui (sind, 0) < 0) {
-			mpfr_add_ui (sind, sind, 2UL, GMP_RNDD); // exact rnd
-		}
-		if (mpfr_cmp_ui (sinu, 0) < 0) {
-			mpfr_add_ui (sinu, sinu, 2UL, GMP_RNDU);
-		}
-		mpfr_mul_2si (sind, sind, w, GMP_RNDD); // exact rnd here
-		mpfr_mul_2si (cosd, cosd, w, GMP_RNDD);
-		mpfr_mul_2si (sinu, sinu, w, GMP_RNDU);
-		mpfr_mul_2si (cosu, cosu, w, GMP_RNDU);
-		mpfr_get_z (sind_z, sind, GMP_RNDD); // there can be a real rounding here
-		mpfr_get_z (cosd_z, cosd, GMP_RNDD);
-		mpfr_get_z (sinu_z, sinu, GMP_RNDU); // there can be a real rounding here
-		mpfr_get_z (cosu_z, cosu, GMP_RNDU);
-		// now we test if the upper results are the lower ones + 1
-		// as we want them to
-		mpz_sub_ui (sinu_z, sinu_z, 1UL);
-		mpz_sub_ui (cosu_z, cosu_z, 1UL);
-		if (mpz_cmp (sind_z, sinu_z) == 0 &&
-		    mpz_cmp (cosd_z, cosu_z) == 0) {
-			// the rounding are really what we want
-			// TODO: detect wraparounds, or do the sign conversion
-			// later than there
-			break;
-		} else {
-			i++;
-		}
-	} while (i<16); // for sanity
-	if (i==16)
-		REPORT(INFO,"Computation failure with 65536 extra"
-		            "precision bits, something got wrong\n");
-	mpz_class sind_zc (sind_z), cosd_zc (cosd_z);
-	// and since the operator does only faithful rounding
-	// we add also as expected results the upper roundings
-	mpz_class neg_zero (1); neg_zero <<= w;
-	mpz_class ones (neg_zero - 1);
-	mpz_class all_ones ((neg_zero << 1) - 1);
-	// ones is actually the greatest representable signal
-	tc->addExpectedOutput ("S", sind_zc);
-	tc->addExpectedOutput ("C", cosd_zc);
-	if (sind_zc != ones) {
-		tc->addExpectedOutput ("S", (sind_zc+1) & all_ones);
-	}
-	if (cosd_zc != ones) {
-		tc->addExpectedOutput ("C", (cosd_zc+1) & all_ones);
-	}
-	mpfr_clears (x, sind, cosd, sinu, cosu,
-	             pixd, pixu, one_minus_ulp, NULL);
-	mpz_clear (sind_z);
-	mpz_clear (cosd_z);
-	mpz_clear (sinu_z);
-	mpz_clear (cosu_z);
+	mpfr_t z, rsin, rcos;
+		mpz_class sin_z, cos_z;
+		mpfr_init2(z, 10*w);
+		mpfr_init2(rsin, 10*w); 
+		mpfr_init2(rcos, 10*w); 
+
+		/* Get I/O values */
+		mpz_class svZ = tc->getInputValue("X");
+		
+		/* Compute correct value */
+		
+		mpfr_set_z (z, svZ.get_mpz_t(), GMP_RNDN); //  exact
+		mpfr_div_2si (z, z, w, GMP_RNDN); // exact
+	
+		// No need to manage sign bit etc: modulo 2pi is the same as modulo 2 in the initial format
+		mpfr_mul(z, z, constPi, GMP_RNDN);
+
+		mpfr_sin(rsin, z, GMP_RNDN); 
+		mpfr_cos(rcos, z, GMP_RNDN);
+		mpfr_mul(rsin, rsin, scale, GMP_RNDN);
+		mpfr_mul(rcos, rcos, scale, GMP_RNDN);
+
+		mpfr_add_d(rsin, rsin, 6.0, GMP_RNDN); // exact rnd here
+		mpfr_add_d(rcos, rcos, 6.0, GMP_RNDN); // exact rnd here
+		mpfr_mul_2si (rsin, rsin, w, GMP_RNDN); // exact rnd here
+		mpfr_mul_2si (rcos, rcos, w, GMP_RNDN); // exact rnd here
+
+		// Rounding down
+		mpfr_get_z (sin_z.get_mpz_t(), rsin, GMP_RNDD); // there can be a real rounding here
+		mpfr_get_z (cos_z.get_mpz_t(), rcos, GMP_RNDD); // there can be a real rounding here
+		sin_z -= mpz_class(6)<<(w);
+		cos_z -= mpz_class(6)<<(w);
+
+		tc->addExpectedOutput ("S", sin_z);
+		tc->addExpectedOutput ("C", cos_z);
+
+		// Rounding up
+		mpfr_get_z (sin_z.get_mpz_t(), rsin, GMP_RNDU); // there can be a real rounding here
+		mpfr_get_z (cos_z.get_mpz_t(), rcos, GMP_RNDU); // there can be a real rounding here
+		sin_z -= mpz_class(6)<<(w);
+		cos_z -= mpz_class(6)<<(w);
+
+		tc->addExpectedOutput ("S", sin_z);
+		tc->addExpectedOutput ("C", cos_z);
+		
+		// clean up
+		mpfr_clears (z, rsin, rcos, NULL);		
 }
 
 
 void FixSinCos::buildStandardTestCases(TestCaseList * tcl)
 {
-	TestCase* tc;
-	tc = new TestCase (this);
-	tc -> addInput ("X",mpz_class(0));
-	emulate(tc);
-	tcl->add(tc);
-	tc = new TestCase (this);
-	tc -> addInput ("X",mpz_class(1));
-	emulate(tc);
-	tcl->add(tc);
-	mpz_class ones(1);
-	ones <<= w;
-	ones -= 1;
-	tc = new TestCase (this);
-	tc -> addInput ("X",ones);
-	emulate(tc);
-	tcl->add(tc);
+		mpfr_t z;
+		mpz_class zz;
+		TestCase* tc;
+				
+		mpfr_init2(z, 10*w);
+		
+		//z=0
+		tc = new TestCase (this);
+		tc -> addInput ("X", mpz_class(0));
+		emulate(tc);
+		tcl->add(tc);
+					
+		tc = new TestCase (this);
+		tc->addComment("Pi/4-eps");
+		mpfr_set_d (z, 0.24, GMP_RNDD); 
+		mpfr_mul_2si (z, z, w-1, GMP_RNDD); 
+		mpfr_get_z (zz.get_mpz_t(), z, GMP_RNDD);  
+		tc -> addInput ("X", zz);
+		emulate(tc);
+		tcl->add(tc);
+				
+		tc = new TestCase (this);
+		tc->addComment("Pi/6");
+		mpfr_set_d (z, 0.166666666666666666666666666666666, GMP_RNDD); 
+		mpfr_mul_2si (z, z, w-1, GMP_RNDD); 
+		mpfr_get_z (zz.get_mpz_t(), z, GMP_RNDD);  
+		tc -> addInput ("X", zz);
+		emulate(tc);
+		tcl->add(tc);
+				
+		tc = new TestCase (this);
+		tc->addComment("Pi/3");
+		mpfr_set_d (z, 0.333333333333333333333333333333, GMP_RNDD); 
+		mpfr_mul_2si (z, z, w-1, GMP_RNDD); 
+		mpfr_get_z (zz.get_mpz_t(), z, GMP_RNDD);  
+		tc -> addInput ("X", zz);
+		emulate(tc);
+		tcl->add(tc);
+				
+		
+		mpfr_clears (z, NULL);
+
 }
 
 #endif // SOLLYA

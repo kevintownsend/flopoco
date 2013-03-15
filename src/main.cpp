@@ -445,7 +445,7 @@ void usage(char *name, string opName = ""){
 	if ( full || opName == "CordicSinCos" || opName == "FixSinOrCos" || opName == "FixCos"){
 		NEWOP( "CordicSinCos","wIn wOut reduced");
 		cerr << "      Computes (1-2^(-w)) sin(pi*x) and (1-2^(-w)) cos(pi*x) for x in -[1,1[, ;\n";
-		cerr << "      wIn and wOut are the fixed-point precision of inputs and outputs (including  the sign bit)\n";
+		cerr << "      wIn and wOut are the fixed-point precision of inputs and outputs (not counting the sign bit)\n";
 		cerr << "      reduced : if 1,  reduced number of iterations at the cost of two multiplications \n";
 	}
 	if ( full || opName == "CordicSinCos" || opName == "FixSinOrCos" || opName == "FixCos"){

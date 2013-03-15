@@ -121,7 +121,7 @@ namespace flopoco{
 				vhdl << "("<< size-1 << " downto " << pSize<< " => "<< join("P",i) << of(pSize-1) << ")" << " & " ;
 			vhdl << join("P",i) << ");" << endl;
 		}
-		
+		// TODO this is a truncation, we should add one half ulp first
 		vhdl << tab << "R <= " <<  join("S", n) << range(size-1, size-wO) << ";" << endl;
 			
 	};

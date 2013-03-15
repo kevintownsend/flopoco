@@ -16,16 +16,20 @@ class FixSinCos: public Operator {
 
 
 	public:
-		FixSinCos(Target * target, int w = 2//, int unused = 0);
-		);
+		FixSinCos(Target * target, int w);
 
-		~FixSinCos() {
-		};
+		~FixSinCos();
 
 
 		void emulate(TestCase * tc);
 
 		void buildStandardTestCases(TestCaseList * tcl);
+
+
+	private:
+		mpfr_t scale;              /**< 1-2^(wOut-1)*/
+		mpfr_t constPi;
+
 };
 
 #endif // HAVE_SOLLYA

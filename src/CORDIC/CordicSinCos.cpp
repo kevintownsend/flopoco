@@ -11,9 +11,11 @@ using namespace std;
 namespace flopoco{
 
 
-
+	//The wIn+1 below is for consistency with FixSinCos and FixSinOrCos interfaces.
+	// TODO possibly fix all the code instead... This would enable sharing emulate() etc.
+ 
 	CordicSinCos::CordicSinCos(Target* target, int wIn_, int wOut_, int reducedIterations_, map<string, double> inputDelays) 
-		: Operator(target), wIn(wIn_), wOut(wOut_), reducedIterations(reducedIterations_)
+		: Operator(target), wIn(wIn_+1), wOut(wOut_+1), reducedIterations(reducedIterations_)
 	{
 
 		int stage;
@@ -21,7 +23,7 @@ namespace flopoco{
 		setCopyrightString ( "Matei Istoan, Florent de Dinechin (2012-...)" );
 
 		ostringstream name;
-		name << "CordicSinCos_" << (reducedIterations==1?"reducedIterations":"") << wIn << "_" << wOut;
+		name << "CordicSinCos_" << (reducedIterations==1?"reducedIterations":"") << wIn_ << "_" << wOut_;
 		if(target->isPipelined())
 			name  <<"_f" << target->frequencyMHz();
 		else 

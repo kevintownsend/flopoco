@@ -3,6 +3,10 @@ TODO file for FloPoCo
 Here and there, fix VHDL style issues needed for whimsical simulators or synthesizers. See doc/VHDLStyle.txt
 
 
+Clean up src/ file hierarchy:
+- mv FixSinCos into CORDIC, and rename CORDIC to SinCos or something
+
+
 
 
 BitHeapization 
