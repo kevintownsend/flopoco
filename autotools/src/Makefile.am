@@ -122,6 +122,7 @@ noinst_HEADERS = \
           IntMultipliers/GenericBinaryPolynomial.hpp \
           IntMultipliers/IntPower.hpp \
           IntMultipliers/MultiplierBlock.hpp \
+          IntMultipliers/FixSinPoly.hpp \
           IntMultipliers/FixXPow3Div6.hpp \
           ConstMult/IntConstDiv3.hpp \
           LongAcc2FP.hpp \
@@ -231,6 +232,7 @@ libflopoco_la_SOURCES = \
                         IntMultipliers/GenericBinaryPolynomial.cpp \
                         IntMultipliers/IntPower.cpp \
                         IntMultipliers/MultiplierBlock.cpp \
+                        IntMultipliers/FixSinPoly.cpp \
                         IntMultipliers/FixXPow3Div6.cpp \
                         ConstMult/IntConstDiv3.cpp \
                         LZOC.cpp \
