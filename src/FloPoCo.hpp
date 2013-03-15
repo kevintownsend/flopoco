@@ -88,6 +88,7 @@
 #include "IntMultipliers/GenericBinaryPolynomial.hpp"
 #include "IntMultipliers/IntPower.hpp"
 
+#include "IntMultipliers/FixSinPoly.hpp"
 #include "IntMultipliers/FixXPow3Div6.hpp"
 #include "ConstMult/IntConstDiv3.hpp"
 

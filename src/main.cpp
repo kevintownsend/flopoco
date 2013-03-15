@@ -173,6 +173,13 @@ void usage(char *name, string opName = ""){
 		cerr << "      enableSuperTiles=0 =>  lower latency, higher logic cost; enableSuperTiles=1=> lower logic cost, longer latency \n";
 	 }
 	 
+	 if ( full || opName == "FixSinPoly"){
+	 	OP("FixSinPoly","msbIn lsbIn msbOut lsbOut signed");
+	 	cerr << "      Operator computing X-X^3/6 for an integer X of size given by msbIn and lsbIn \n";
+	 	cerr << "      Result is faithfully truncated to the format msbOut lsbOut\n";
+	 	cerr << "      signed=0: unsigned;     signed=1: signed inputs, signed outputs \n";
+	 }
+	 
 	 if ( full || opName == "FixXPow3Div6"){
 	 	OP("FixXPow3Div6","msbIn lsbIn msbOut lsbOut signed");
 	 	cerr << "      Operator computing X^3/6 for an integer X of size given by msbIn and lsbIn \n";
@@ -1530,6 +1537,23 @@ bool parseCommandLine(int argc, char* argv[]){
 				int buildSuperTiles = false ;// checkBoolean(argv[i++], argv[0]);
 #endif
 				FixMultAdd* op=new FixMultAdd(target, wInX, wInY, wA, wA, wA-1, 0, signedIO, ratio);
+				addOperator(op);
+			}
+		}
+		
+		else if(opname=="FixSinPoly"){
+			int nargs = 5;
+			if (i+nargs > argc)
+				usage(argv[0],opname);
+			else {
+				int msbIn    	= atoi(argv[i++]);
+				int lsbIn    	= atoi(argv[i++]);
+				int msbOut   	= atoi(argv[i++]);
+				int lsbOut   	= atoi(argv[i++]);
+				int signedIO    =  checkBoolean(argv[i++], argv[0]);
+				
+				FixSinPoly* mul = new FixSinPoly(target, msbIn, lsbIn, msbOut, lsbOut, signedIO);
+				op = mul;
 				addOperator(op);
 			}
 		}

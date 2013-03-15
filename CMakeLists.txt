@@ -250,6 +250,7 @@ src/Plotter
 
 src/IntMultipliers/MultiplierBlock
 
+src/IntMultipliers/FixSinPoly
 src/IntMultipliers/FixXPow3Div6
 src/ConstMult/IntConstDiv3
 
