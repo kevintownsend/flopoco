@@ -1817,8 +1817,8 @@ namespace flopoco
 		if(isXilinx)
 		{
 			stringstream inAdder0, inAdder1, outAdder;
-			unsigned i;
-			unsigned minIndex, maxIndex;
+			int i;
+			int minIndex, maxIndex;
 			
 			//determine the index of the column where the addition should start
 			//	not necessarly the minimum index line

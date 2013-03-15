@@ -122,6 +122,8 @@ noinst_HEADERS = \
           IntMultipliers/GenericBinaryPolynomial.hpp \
           IntMultipliers/IntPower.hpp \
           IntMultipliers/MultiplierBlock.hpp \
+          IntMultipliers/FixXPow3Div6.hpp \
+          ConstMult/IntConstDiv3.hpp \
           LongAcc2FP.hpp \
           LongAcc.hpp LZOC.hpp \
           OutputIEEE.hpp \
@@ -222,13 +224,15 @@ libflopoco_la_SOURCES = \
                         IntDualSub.cpp \
                         Plotter.cpp \
                         IntMultiplier.cpp \
-												FixMultAdd.cpp \
+			FixMultAdd.cpp \
                         IntMultipliers/IntKaratsuba.cpp \
                         IntSquarer.cpp \
                         IntMultipliers/FormalBinaryProduct.cpp \
                         IntMultipliers/GenericBinaryPolynomial.cpp \
                         IntMultipliers/IntPower.cpp \
                         IntMultipliers/MultiplierBlock.cpp \
+                        IntMultipliers/FixXPow3Div6.cpp \
+                        ConstMult/IntConstDiv3.cpp \
                         LZOC.cpp \
                         LZOCShifterSticky.cpp \
                         Shifters.cpp \
