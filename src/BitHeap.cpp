@@ -49,7 +49,7 @@ namespace flopoco
 		outConcatIndex=0;
 		compressorIndex=0;
 		adderIndex=0;
-		for(int i=0; i<10;++i)
+		for(int i=0; i<100;++i)
 			usedCompressors[i]=false;
 		for (int i=0; i< maxWeight; i++) {
 			uid.push_back(0);
@@ -1264,7 +1264,14 @@ namespace flopoco
 		for(int i=0; i<(sizeof(usedCompressors)/sizeof(bool)); i++)
 		{
 			if (usedCompressors[i]==true)
-					possibleCompressors[i]->addToGlobalOpList();
+			{
+					if(i < possibleCompressors.size())
+					{
+						possibleCompressors[i]->addToGlobalOpList();
+					}
+					else
+					        usedCompressors[i] = false;
+			}
 		}
 
 		// Let's assume the half-adder and full adder are always used
