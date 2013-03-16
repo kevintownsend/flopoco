@@ -28,23 +28,46 @@ namespace flopoco{
 	//		and not from the parameters given to the constructor
 	
 	//standalone operator 
-	FixSinPoly::FixSinPoly(Target* target, int msbIn_, int lsbIn_, int msbOut_, int lsbOut_, bool signedInput_, map<string, double> inputDelays) :
-		Operator(target, inputDelays), msbIn(msbIn_), lsbIn(lsbIn_), msbOut(msbOut_), lsbOut(lsbOut_), signedInput(signedInput_)
+	FixSinPoly::FixSinPoly(Target* target, int msbIn_, int lsbIn_, bool truncated_, int msbOut_, int lsbOut_, bool signedInput_, map<string, double> inputDelays) :
+		Operator(target, inputDelays), msbIn(msbIn_), lsbIn(lsbIn_), truncated(truncated_), msbOut(msbOut_), lsbOut(lsbOut_), signedInput(signedInput_)
 	{
+		int indexMin, indexMax, wOutFull;
+		
 		srcFileName="FixSinPoly";
 
 		if(lsbIn > msbIn)
 			throw string("FixSinPoly: Error, lsbIn should not be greater than msbIn");
     
-		if(lsbIn > msbIn)
+		if((lsbOut > msbOut) && !truncated)
 			throw string("FixSinPoly: Error, lsbOut should not be greater than msbOut");
+			
+		if(!truncated)
+		{
+			msbOut = msbIn;
+			lsbOut = (lsbIn<0 ? 3*lsbIn : lsbIn) - 1;
+		}
 		
 		wIn = msbIn - lsbIn + 1;
-		wOut = (msbIn<0 ? msbIn : 3*msbIn) - (lsbIn<0 ? 3*lsbIn : lsbIn) + 1 + (lsbIn<0 ? 1 : 0);				//one more bit to cover all the range of produced bits
+		if(truncated)
+		{
+			//compute the number of needed guard bits
+			g = neededGuardBits(lsbOut);
+			
+			wOut = (msbIn<0 ? msbIn : 3*msbIn) - lsbOut + 1 + g;
+			wOutFull = (msbIn<0 ? msbIn : 3*msbIn) - (lsbIn<0 ? 3*lsbIn : lsbIn) + 1 + 1;			//one more bit to cover all the range of produced bits
+			
+			REPORT(DEBUG, "wIn=" << wIn << " wOut=" << wOut << " msbIn=" << msbIn << " lsbIn=" << lsbIn << " msbOut=" << msbOut << " lsbOut=" << lsbOut << " g=" << g);
+		}
+		else
+		{
+			wOut = (msbIn<0 ? msbIn : 3*msbIn) - (lsbIn<0 ? 3*lsbIn : lsbIn) + 1 + 1;				//one more bit to cover all the range of produced bits
+			
+			REPORT(DEBUG, "wIn=" << wIn << " wOut=" << wOut << " msbIn=" << msbIn << " lsbIn=" << lsbIn << " msbOut=" << msbOut << " lsbOut=" << lsbOut);
+		}
 		
 		// build the name
-		ostringstream name; 
-		name << "FixSinPoly_" << vhdlize(wIn) << "_" << vhdlize(wOut) << (signedInput ? "_signed" : "_unsigned");
+		ostringstream name;
+		name << "FixSinPoly_" << vhdlize(wIn) << "_" << vhdlize(wOut) << (truncated ? "_truncated" : "") << (signedInput ? "_signed" : "_unsigned");
 		setName(name.str());
 		
 		//create the input and the output
@@ -57,14 +80,16 @@ namespace flopoco{
 		REPORT(DEBUG, "Adding the bits for X");
 		
 		//add the bits corresponding to sum_{i=imin}^imax(2^i*x_i)
-		for(int i=lsbIn; i<=msbIn; i++)
+		indexMin = (truncated ? (lsbOut-g>lsbIn ? lsbOut-g : lsbIn) : lsbIn);
+		indexMax = msbIn;
+		for(int i=indexMin; i<=indexMax; i++)
 		{
 			stringstream s;
 			
-			vhdl << tab << declare(join("X_orig_", (lsbIn<0 ? i-lsbIn : i))) 
-				<< " <= X" << of(lsbIn<0 ? i-lsbIn : i) << ";" << endl;
+			vhdl << tab << declare(join("X_orig_", (indexMin<0 ? i-indexMin : i))) 
+				<< " <= X" << of(indexMin<0 ? i-indexMin : i) << ";" << endl;
 						
-			s << join("X_orig_", (lsbIn<0 ? i-lsbIn : i));
+			s << join("X_orig_", (indexMin<0 ? i-indexMin : i));
 			
 			if(msbIn<0 && lsbIn<0)
 			{
@@ -94,7 +119,9 @@ namespace flopoco{
 		outPortMap(divider , "Q", "XZeroIntDiv3");
 		vhdl << instance(divider , "Divider");
 		
-		for(int i=0; i<=((msbIn-lsbIn+1)*3-2)-1; i++)
+		indexMax = ((msbIn-lsbIn+1)*3-2)-1;
+		indexMin = (truncated ? wOutFull-1-(msbIn-lsbOut)-g : 0);
+		for(int i=indexMin; i<=indexMax; i++)
 		{
 			stringstream s;
 			
@@ -118,6 +145,9 @@ namespace flopoco{
 				//add the bit only if i != j
 				if(i == j)
 					continue;
+				//if truncated, then add the bit only if it is in the correct bit-range
+				if(truncated && ((lsbIn<0 ? (i-lsbIn)+2*(j-lsbIn)-1 : i+2*j-1)+1 < wOutFull-1-(msbIn-lsbOut)-g))
+					continue;
 				
 				stringstream s;
 				
@@ -140,6 +170,10 @@ namespace flopoco{
 			for(int j=i+1; j<=msbIn; j++)
 				for(int k=j+1; k<=msbIn; k++)
 				{
+					//if truncated, then add the bit only if it is in the correct bit-range
+					if(truncated && ((lsbIn<0 ? (i-lsbIn)+(j-lsbIn)+(k-lsbIn) : i+j+k)+1 < wOutFull-1-(msbIn-lsbOut)-g))
+						continue;
+					
 					//i < j < k
 					stringstream s;					
 					
@@ -153,12 +187,19 @@ namespace flopoco{
 					for(int l=(lsbIn<0 ? (i-lsbIn)+(j-lsbIn)+(k-lsbIn) : i+j+k) + 1; l<wOut; l++)
 						bitHeap->addConstantOneBit(l);
 				}
-				
+		
+		//if needed add a bit at position g-1, for rounding
+		if(truncated)
+			bitHeap->addConstantOneBit(g-1);
+		
 		//compress the bitheap
 		bitHeap -> generateCompressorVHDL();
 		
 		//generate the final result
-		vhdl << tab << "R" << " <= " << bitHeap-> getSumName() << range(wOut-1, 0) << ";" << endl;
+		if(truncated)
+			vhdl << tab << "R" << " <= " << bitHeap-> getSumName() << range(wOut-1, g) << ";" << endl;
+		else
+			vhdl << tab << "R" << " <= " << bitHeap-> getSumName() << range(wOut-1, 0) << ";" << endl;
 						
 	}
 	
@@ -188,20 +229,142 @@ namespace flopoco{
 		// TODO 
 	}
 
-
+	/**
+	 * The emulate function actually computes X*2-X^3/3, in order to cover the whole range of bits
+	 */
 	void FixSinPoly::emulate(TestCase* tc)
 	{
 		// get I/O values
 		mpz_class svX = tc->getInputValue("X");
 		mpz_class svR;
 		
-		//compute the value of the result
+		// compute the value of the result
 		svR = svX*svX*svX;
 		svR = svR/3;
 		svR = (svX << (lsbIn-3*lsbIn + 1)) - svR;
 		
 		// add the result
 		tc->addExpectedOutput("R", svR);
+	}
+	
+	
+	
+	int FixSinPoly::neededGuardBits(int k)
+	{
+		mpz_class sum, signBitSum, temp;
+		int nbDigits, fullWOut, guardBits;
+		
+		//the size of the computations
+		fullWOut = (msbIn<0 ? msbIn : 3*msbIn) - (lsbIn<0 ? 3*lsbIn : lsbIn) + 1 + 1;				//one more bit to cover all the range of produced bits
+		
+		REPORT(DEBUG, "fullWOut=" << fullWOut << " maximum weight allowed=" << fullWOut-1-(msbIn-k));
+		
+		//initialize the sum to 0
+		sum = 0;
+		
+		REPORT(DEBUG, "initially sum=" << sum);
+		
+		//add the truncated bits corresponding to sum_{i=imin}^imax(2^i*x_i)
+		for(int i=lsbIn; i<k; i++)
+			sum += (mpz_class(1) << (fullWOut-1-(msbIn-i)));
+			
+		REPORT(DEBUG, "after adding bits from the initial number, sum=" << sum);
+			
+		//add the truncated terms corresponding to sum_{i=imin}^imax(2^(3i-1)*x_i)
+		//	negated
+		for(int i=0; ((i<=((msbIn-lsbIn+1)*3-2)-1) && (i<fullWOut-1-(msbIn-k))); i++)
+		{
+			sum += (mpz_class(1) << i);
+			
+			REPORT(DEBUG, "added to sum " << (mpz_class(1) << i));
+			
+			for(int j=i; j<=fullWOut-1-(msbIn-k); j++)
+			{
+				signBitSum += (mpz_class(1) << j);
+				
+				REPORT(DEBUG, "added to signBitSum " << (mpz_class(1) << j));
+			}
+		}
+		
+		REPORT(DEBUG, "after adding bits from the first sum, sum=" << sum);
+		
+		//add the truncated terms corresponding to sum_i_j_imin^imax(2^(i+2j-1)*x_i*x_j)
+		//	negated
+		for(int i=lsbIn; i<msbIn; i++)
+			for(int j=lsbIn; j<msbIn; j++)
+			{
+				//add the bit only if i != j
+				if(i == j)
+					continue;
+					
+				//add the bit only if it is less than 1 << fullWOut-1-(msbIn-k)
+				if(((lsbIn<0 ? (i-lsbIn)+2*(j-lsbIn)-1 : i+2*j-1) + 1) > fullWOut-1-(msbIn-k))
+					continue;
+				
+				sum += (mpz_class(1)<<((lsbIn<0 ? (i-lsbIn)+2*(j-lsbIn)-1 : i+2*j-1) + 1));
+				
+				REPORT(DEBUG, "added to sum " << (mpz_class(1)<<((lsbIn<0 ? (i-lsbIn)+2*(j-lsbIn)-1 : i+2*j-1) + 1)));
+				
+				for(int l=(lsbIn<0 ? (i-lsbIn)+2*(j-lsbIn)-1 : i+2*j-1) + 1; l<=fullWOut-1-(msbIn-k); l++)
+					signBitSum += (mpz_class(1)<<l);
+			}
+			
+		REPORT(DEBUG, "after adding bits from the second sum, sum=" << sum);
+			
+		//add the truncated terms corresponding to sum_i_j_k_imin^imax(2^(i+j+k)*x_i*x_j*x_k)
+		//	negated
+		for(int i=lsbIn; i<=msbIn; i++)
+			for(int j=i+1; j<=msbIn; j++)
+				for(int l=j+1; l<=msbIn; l++)
+				{
+					//add the bit only if it is less than 1 << fullWOut-1-(msbIn-k)
+					if(((lsbIn<0 ? (i-lsbIn)+(j-lsbIn)+(l-lsbIn) : i+j+l) + 1) > fullWOut-1-(msbIn-k))
+						continue;
+					
+					//i < j < k
+					sum += (mpz_class(1)<<((lsbIn<0 ? (i-lsbIn)+(j-lsbIn)+(l-lsbIn) : i+j+l) + 1));
+					
+					REPORT(DEBUG, "added to sum " << (mpz_class(1)<<((lsbIn<0 ? (i-lsbIn)+(j-lsbIn)+(l-lsbIn) : i+j+l) + 1)));
+					
+					for(int m=(lsbIn<0 ? (i-lsbIn)+(j-lsbIn)+(l-lsbIn) : i+j+l) + 1; m<=fullWOut-1-(msbIn-k); m++)
+						signBitSum += (mpz_class(1)<<m);
+				}
+		
+		REPORT(DEBUG, "after adding bits from the third sum, sum=" << sum);
+		
+		//count the overflow bits
+		//	count the total number of bits of the result
+		signBitSum = signBitSum & ((mpz_class(1)<<(fullWOut-1-(msbIn-k)+1+1))-1);
+		
+		temp = sum + signBitSum;
+		
+		REPORT(DEBUG, "temp=" << temp);
+		
+		if(temp == 0)
+			nbDigits = 1;
+		else
+			nbDigits = 0;
+		
+		while(temp > 0)
+		{
+			//REPORT(DEBUG, "temp=" << temp);
+			
+			temp = (temp >> 1);
+			nbDigits++;
+		}
+		
+		REPORT(DEBUG, "number of digits in the number: " << nbDigits);
+		
+		//	now compute the number of bits exceding the truncation limit k
+		guardBits = nbDigits - (fullWOut-1-(msbIn-k));
+		
+		REPORT(DEBUG, "number of guard bits: " << guardBits);
+		
+		//return the number of needed guard bits
+		if(guardBits<0)
+			return 0;
+		else
+			return guardBits;
 	}
 
 }

@@ -25,7 +25,7 @@ namespace flopoco{
 	{
 	public:
 
-		FixSinPoly(Target* target, int msbIn_, int lsbIn_, int msbOut_, int lsbOut_, bool signedInput_ = false, map<string, double> inputDelays = emptyDelayMap);
+		FixSinPoly(Target* target, int msbIn_, int lsbIn_, bool truncated = false, int msbOut_ = 0, int lsbOut_ = 0, bool signedInput_ = false, map<string, double> inputDelays = emptyDelayMap);
 		
 		FixSinPoly(Operator* parentOp, Target* target, Signal* multiplicandX, int msbIn_, int lsbIn_, int msbOut_, int lsbOut_,
 							 BitHeap* bitheap,
@@ -34,6 +34,13 @@ namespace flopoco{
 
 		// Overloading the virtual functions of Operator
 		void emulate(TestCase* tc);
+		
+		/**
+		 * Compute the number of needed guard bits when truncating at position
+		 * k (msbIn > k >= lsbIn).
+		 * NOTE: msbIn, lsbIn should have been set prior to calling this function
+		 */
+		int neededGuardBits(int k);
 		
 		int msbIn;						/**< The MSB of the input */
 		int lsbIn;						/**< The LSB of the input */
@@ -45,6 +52,7 @@ namespace flopoco{
 		int		wIn;					/**< The input width */
 		int		wOut;					/**< The output width */
 		bool	signedInput;			/**< Signed or unsigned operator */		//For now, the input is always positive, so signedInput defaults FALSE
+		bool	truncated;				/**< The result is truncated to a given length, or not */
 		
 		int g;							/**< The number of guard bits used for the computations */
 		
