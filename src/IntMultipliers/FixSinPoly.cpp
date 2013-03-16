@@ -38,7 +38,7 @@ namespace flopoco{
 		if(lsbIn > msbIn)
 			throw string("FixSinPoly: Error, lsbIn should not be greater than msbIn");
     
-		if((lsbOut > msbOut) && !truncated)
+		if(truncated && (lsbOut > msbOut))
 			throw string("FixSinPoly: Error, lsbOut should not be greater than msbOut");
 			
 		if(!truncated)
@@ -53,13 +53,16 @@ namespace flopoco{
 			//compute the number of needed guard bits
 			g = neededGuardBits(lsbOut);
 			
-			wOut = (msbIn<0 ? msbIn : 3*msbIn) - lsbOut + 1 + g;
+			wOut = (msbIn<0 ? msbIn : 3*msbIn) - lsbOut + 1;
 			wOutFull = (msbIn<0 ? msbIn : 3*msbIn) - (lsbIn<0 ? 3*lsbIn : lsbIn) + 1 + 1;			//one more bit to cover all the range of produced bits
 			
 			REPORT(DEBUG, "wIn=" << wIn << " wOut=" << wOut << " msbIn=" << msbIn << " lsbIn=" << lsbIn << " msbOut=" << msbOut << " lsbOut=" << lsbOut << " g=" << g);
 		}
 		else
 		{
+			//no guard bits needed
+			g = 0;
+			
 			wOut = (msbIn<0 ? msbIn : 3*msbIn) - (lsbIn<0 ? 3*lsbIn : lsbIn) + 1 + 1;				//one more bit to cover all the range of produced bits
 			
 			REPORT(DEBUG, "wIn=" << wIn << " wOut=" << wOut << " msbIn=" << msbIn << " lsbIn=" << lsbIn << " msbOut=" << msbOut << " lsbOut=" << lsbOut);
@@ -75,7 +78,7 @@ namespace flopoco{
 		addOutput("R", wOut);
 		
 		//create the bitheap that computes the sum
-		bitHeap = new BitHeap(this, wOut);
+		bitHeap = new BitHeap(this, wOut+g);
 		
 		REPORT(DEBUG, "Adding the bits for X");
 		
@@ -86,18 +89,18 @@ namespace flopoco{
 		{
 			stringstream s;
 			
-			vhdl << tab << declare(join("X_orig_", (indexMin<0 ? i-indexMin : i))) 
-				<< " <= X" << of(indexMin<0 ? i-indexMin : i) << ";" << endl;
+			vhdl << tab << declare(join("X_orig_", (indexMin<0 ? i-indexMin + (lsbOut-g>lsbIn ? lsbOut-g-lsbIn : 0) : i))) 
+				<< " <= X" << of(indexMin<0 ? i-indexMin + (lsbOut-g>lsbIn ? lsbOut-g-lsbIn : 0) : i) << ";" << endl;
 						
-			s << join("X_orig_", (indexMin<0 ? i-indexMin : i));
+			s << join("X_orig_", (indexMin<0 ? (lsbOut-g>lsbIn ? i-indexMin+(lsbOut-g-lsbIn) : i-lsbIn) : i));
 			
-			if(msbIn<0 && lsbIn<0)
+			if(indexMax<0 && indexMin<0)
 			{
-				bitHeap->addBit(wOut-1-(msbIn-i), s.str());
+				bitHeap->addBit(wOut+g-1-(indexMax-i), s.str());
 			}
-			else if(lsbIn<0)
+			else if(indexMin<0)
 			{
-				bitHeap->addBit((i-lsbIn)-2*lsbIn+1, s.str());
+				bitHeap->addBit((i-indexMin)-2*indexMin+1, s.str());
 			}
 			else
 			{
@@ -120,7 +123,7 @@ namespace flopoco{
 		vhdl << instance(divider , "Divider");
 		
 		indexMax = ((msbIn-lsbIn+1)*3-2)-1;
-		indexMin = (truncated ? wOutFull-1-(msbIn-lsbOut)-g : 0);
+		indexMin = (truncated ? wOutFull-1-(msbIn-lsbOut+g) : 0);
 		for(int i=indexMin; i<=indexMax; i++)
 		{
 			stringstream s;
@@ -129,9 +132,9 @@ namespace flopoco{
 			
 			s << "XZeroIntDiv3_inverted_" << i;
 			
-			bitHeap->addBit(i, s.str());
+			bitHeap->addBit((truncated ? i-(wOutFull-(msbIn-lsbOut+1+g)) : i), s.str());
 			
-			for(int j=i; j<wOut; j++)
+			for(int j=(truncated ? i-(wOutFull-(msbIn-lsbOut+1+g)) : i); j<wOut+g; j++)
 				bitHeap->addConstantOneBit(j);
 		}
 		
@@ -146,7 +149,7 @@ namespace flopoco{
 				if(i == j)
 					continue;
 				//if truncated, then add the bit only if it is in the correct bit-range
-				if(truncated && ((lsbIn<0 ? (i-lsbIn)+2*(j-lsbIn)-1 : i+2*j-1)+1 < wOutFull-1-(msbIn-lsbOut)-g))
+				if(truncated && ((lsbIn<0 ? (i-lsbIn)+2*(j-lsbIn)-1 : i+2*j-1)+1 < wOutFull-1-(msbIn-lsbOut+g)))
 					continue;
 				
 				stringstream s;
@@ -156,9 +159,9 @@ namespace flopoco{
 							
 				s << "X_temp_" << (lsbIn<0 ? i-lsbIn : i) << "_" << (lsbIn<0 ? j-lsbIn : j);
 				
-				bitHeap->addBit((lsbIn<0 ? (i-lsbIn)+2*(j-lsbIn)-1 : i+2*j-1) + 1, s.str());
+				bitHeap->addBit((lsbIn<0 ? (i-lsbIn)+2*(j-lsbIn)-1 : i+2*j-1) + 1 - (truncated ? (wOutFull-(msbIn-lsbOut+1+g)) : 0), s.str());
 				
-				for(int k=(lsbIn<0 ? (i-lsbIn)+2*(j-lsbIn)-1 : i+2*j-1) + 1; k<wOut; k++)
+				for(int k=(lsbIn<0 ? (i-lsbIn)+2*(j-lsbIn)-1 : i+2*j-1) + 1 - (truncated ? (wOutFull-(msbIn-lsbOut+1+g)) : 0); k<wOut+g; k++)
 					bitHeap->addConstantOneBit(k);
 			}
 		
@@ -171,7 +174,7 @@ namespace flopoco{
 				for(int k=j+1; k<=msbIn; k++)
 				{
 					//if truncated, then add the bit only if it is in the correct bit-range
-					if(truncated && ((lsbIn<0 ? (i-lsbIn)+(j-lsbIn)+(k-lsbIn) : i+j+k)+1 < wOutFull-1-(msbIn-lsbOut)-g))
+					if(truncated && ((lsbIn<0 ? (i-lsbIn)+(j-lsbIn)+(k-lsbIn) : i+j+k)+1 < wOutFull-1-(msbIn-lsbOut+g)))
 						continue;
 					
 					//i < j < k
@@ -182,9 +185,9 @@ namespace flopoco{
 					
 					s << "X_temp2_" << (lsbIn<0 ? i-lsbIn : i) << "_" << (lsbIn<0 ? j-lsbIn : j) << "_" << (lsbIn<0 ? k-lsbIn : k);
 					
-					bitHeap->addBit((lsbIn<0 ? (i-lsbIn)+(j-lsbIn)+(k-lsbIn) : i+j+k) + 1, s.str());
+					bitHeap->addBit((lsbIn<0 ? (i-lsbIn)+(j-lsbIn)+(k-lsbIn) : i+j+k) + 1 - (truncated ? (wOutFull-(msbIn-lsbOut+1+g)) : 0), s.str());
 					
-					for(int l=(lsbIn<0 ? (i-lsbIn)+(j-lsbIn)+(k-lsbIn) : i+j+k) + 1; l<wOut; l++)
+					for(int l=(lsbIn<0 ? (i-lsbIn)+(j-lsbIn)+(k-lsbIn) : i+j+k) + 1- (truncated ? (wOutFull-(msbIn-lsbOut+1+g)) : 0); l<wOut+g; l++)
 						bitHeap->addConstantOneBit(l);
 				}
 		
@@ -197,7 +200,7 @@ namespace flopoco{
 		
 		//generate the final result
 		if(truncated)
-			vhdl << tab << "R" << " <= " << bitHeap-> getSumName() << range(wOut-1, g) << ";" << endl;
+			vhdl << tab << "R" << " <= " << bitHeap-> getSumName() << range(wOut+g-1, g) << ";" << endl;
 		else
 			vhdl << tab << "R" << " <= " << bitHeap-> getSumName() << range(wOut-1, 0) << ";" << endl;
 						
@@ -237,11 +240,29 @@ namespace flopoco{
 		// get I/O values
 		mpz_class svX = tc->getInputValue("X");
 		mpz_class svR;
+		int wOutFull = (msbIn<0 ? msbIn : 3*msbIn) - (lsbIn<0 ? 3*lsbIn : lsbIn) + 1 + 1;			//one more bit to cover all the range of produced bits
 		
-		// compute the value of the result
-		svR = svX*svX*svX;
-		svR = svR/3;
-		svR = (svX << (lsbIn-3*lsbIn + 1)) - svR;
+		if(truncated)
+		{
+			// compute the value of the result
+			svR = svX*svX*svX;
+			svR = svR/3;
+			svR = (svX << (lsbIn-3*lsbIn + 1)) - svR;
+			
+			svR = (svR >> (wOutFull-(msbIn-lsbOut+1)));
+			
+			tc->addExpectedOutput("R", svR);
+			
+			svR += 1;
+			svR &= ((1 << wOut) - 1);
+		}
+		else
+		{
+			// compute the value of the result
+			svR = svX*svX*svX;
+			svR = svR/3;
+			svR = (svX << (lsbIn-3*lsbIn + 1)) - svR;
+		}
 		
 		// add the result
 		tc->addExpectedOutput("R", svR);
@@ -262,13 +283,13 @@ namespace flopoco{
 		//initialize the sum to 0
 		sum = 0;
 		
-		REPORT(DEBUG, "initially sum=" << sum);
+		//REPORT(DEBUG, "initially sum=" << sum);
 		
 		//add the truncated bits corresponding to sum_{i=imin}^imax(2^i*x_i)
 		for(int i=lsbIn; i<k; i++)
 			sum += (mpz_class(1) << (fullWOut-1-(msbIn-i)));
 			
-		REPORT(DEBUG, "after adding bits from the initial number, sum=" << sum);
+		//REPORT(DEBUG, "after adding bits from the initial number, sum=" << sum);
 			
 		//add the truncated terms corresponding to sum_{i=imin}^imax(2^(3i-1)*x_i)
 		//	negated
@@ -276,17 +297,17 @@ namespace flopoco{
 		{
 			sum += (mpz_class(1) << i);
 			
-			REPORT(DEBUG, "added to sum " << (mpz_class(1) << i));
+			//REPORT(DEBUG, "added to sum " << (mpz_class(1) << i));
 			
 			for(int j=i; j<=fullWOut-1-(msbIn-k); j++)
 			{
 				signBitSum += (mpz_class(1) << j);
 				
-				REPORT(DEBUG, "added to signBitSum " << (mpz_class(1) << j));
+				//REPORT(DEBUG, "added to signBitSum " << (mpz_class(1) << j));
 			}
 		}
 		
-		REPORT(DEBUG, "after adding bits from the first sum, sum=" << sum);
+		//REPORT(DEBUG, "after adding bits from the first sum, sum=" << sum);
 		
 		//add the truncated terms corresponding to sum_i_j_imin^imax(2^(i+2j-1)*x_i*x_j)
 		//	negated
@@ -303,13 +324,13 @@ namespace flopoco{
 				
 				sum += (mpz_class(1)<<((lsbIn<0 ? (i-lsbIn)+2*(j-lsbIn)-1 : i+2*j-1) + 1));
 				
-				REPORT(DEBUG, "added to sum " << (mpz_class(1)<<((lsbIn<0 ? (i-lsbIn)+2*(j-lsbIn)-1 : i+2*j-1) + 1)));
+				//REPORT(DEBUG, "added to sum " << (mpz_class(1)<<((lsbIn<0 ? (i-lsbIn)+2*(j-lsbIn)-1 : i+2*j-1) + 1)));
 				
 				for(int l=(lsbIn<0 ? (i-lsbIn)+2*(j-lsbIn)-1 : i+2*j-1) + 1; l<=fullWOut-1-(msbIn-k); l++)
 					signBitSum += (mpz_class(1)<<l);
 			}
 			
-		REPORT(DEBUG, "after adding bits from the second sum, sum=" << sum);
+		//REPORT(DEBUG, "after adding bits from the second sum, sum=" << sum);
 			
 		//add the truncated terms corresponding to sum_i_j_k_imin^imax(2^(i+j+k)*x_i*x_j*x_k)
 		//	negated
@@ -324,13 +345,13 @@ namespace flopoco{
 					//i < j < k
 					sum += (mpz_class(1)<<((lsbIn<0 ? (i-lsbIn)+(j-lsbIn)+(l-lsbIn) : i+j+l) + 1));
 					
-					REPORT(DEBUG, "added to sum " << (mpz_class(1)<<((lsbIn<0 ? (i-lsbIn)+(j-lsbIn)+(l-lsbIn) : i+j+l) + 1)));
+					//REPORT(DEBUG, "added to sum " << (mpz_class(1)<<((lsbIn<0 ? (i-lsbIn)+(j-lsbIn)+(l-lsbIn) : i+j+l) + 1)));
 					
 					for(int m=(lsbIn<0 ? (i-lsbIn)+(j-lsbIn)+(l-lsbIn) : i+j+l) + 1; m<=fullWOut-1-(msbIn-k); m++)
 						signBitSum += (mpz_class(1)<<m);
 				}
 		
-		REPORT(DEBUG, "after adding bits from the third sum, sum=" << sum);
+		//REPORT(DEBUG, "after adding bits from the third sum, sum=" << sum);
 		
 		//count the overflow bits
 		//	count the total number of bits of the result
@@ -338,7 +359,7 @@ namespace flopoco{
 		
 		temp = sum + signBitSum;
 		
-		REPORT(DEBUG, "temp=" << temp);
+		//REPORT(DEBUG, "temp=" << temp);
 		
 		if(temp == 0)
 			nbDigits = 1;
@@ -353,12 +374,12 @@ namespace flopoco{
 			nbDigits++;
 		}
 		
-		REPORT(DEBUG, "number of digits in the number: " << nbDigits);
+		//REPORT(DEBUG, "number of digits in the number: " << nbDigits);
 		
 		//	now compute the number of bits exceding the truncation limit k
 		guardBits = nbDigits - (fullWOut-1-(msbIn-k));
 		
-		REPORT(DEBUG, "number of guard bits: " << guardBits);
+		//REPORT(DEBUG, "number of guard bits: " << guardBits);
 		
 		//return the number of needed guard bits
 		if(guardBits<0)
