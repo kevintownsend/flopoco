@@ -415,20 +415,10 @@ namespace flopoco {
 			if(parentOp == NULL)
 				manageCriticalPath(target->DSPMultiplierDelay());
 
-			if(parentOp == NULL)
-			{
-				vhdl << tab << declare(join("DSP_mult_", getuid()), dspXSize+dspYSize+(signedIO ? 0 : 2))
+			vhdl << tab << declare(join("DSP_mult_", getuid()), dspXSize+dspYSize+(signedIO ? 0 : 2))
 						 << " <= (" << zg(zerosX) << " & " << addUID("XX") << ")"
 						 << " *" 
 						 << " (" << zg(zerosY) << " & " << addUID("YY") << ");" << endl;
-			}
-			else
-			{
-				parentOp->vhdl << tab << parentOp->declare(join("DSP_mult_", getuid()), dspXSize+dspYSize+(signedIO ? 0 : 2))
-						 << " <= (" << zg(zerosX) << " & " << addUID("XX") << ")"
-						 << " *" 
-						 << " (" << zg(zerosY) << " & " << addUID("YY") << ");" << endl;
-			}
 
 			s << join("DSP_mult_", getuid());
 			
