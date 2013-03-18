@@ -141,8 +141,10 @@ FixSinCos::FixSinCos(Target * target, int w_, float ratio):Operator(target), w(w
 	// -the memory width is a power of 2
 	// -the bram can always be used as dual-port (one for sin, one for cos)
 	//  with width >=w+g
+#if 0
 	if (wA <= bram_words_log2-1)
 		wA = bram_words_log2-1;
+#endif
 	int wY = wIn-wA;
 	int wZ = wY+2;
 	// vhdl:split (Y_in -> A & Y_red)
@@ -576,7 +578,7 @@ FixSinCos::FixSinCos(Target * target, int w_, float ratio):Operator(target), w(w
 	REPORT(INFO, " wA=" << wA <<" wZ=" << wZ <<" wZ2=" << wZ2o2 <<" wZ3o6=" << wZ3o6 );
 
 	// For LateX in the paper
-	 cout << "     " << w <<  "   &   " << g <<"   &   " << wA << "   &   " << wZ << "   &   " << wZ2o2 << "   &   " << wZ3o6 << "   \\\\ \n \\hline" <<  endl;
+	//	cout << "     " << w <<  "   &   "  << wA << "   &   " << wZ << "   &   " << wZ2o2 << "   &   " << wZ3o6 << "   \\\\ \n \\hline" <<  endl;
 };
 
 
