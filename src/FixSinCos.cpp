@@ -87,7 +87,7 @@ FixSinCos::FixSinCos(Target * target, int w_, float ratio):Operator(target), w(w
 
 	// we need to know the number of guard bits _now_ to have a good Y_in
 	// some precision is lost with the optimized multipliers
-	const int g=6;
+	const int g=5;
 	//const int g=4; //guard bits
 	//const int g=3; //guard bits
 	//we take 4 guard bits even if error < 8 ulp because rounding will take
@@ -266,15 +266,12 @@ FixSinCos::FixSinCos(Target * target, int w_, float ratio):Operator(target), w(w
 
 	/*********************************** Z-Z^3/6 **************************************/
 
-	int wZ3 = 3*wZ - 2*(w+g) -1; // -1 for the div by 2
+	//	int wZ3 = 3*wZ - 2*(w+g) -1; // -1 for the div by 2
 	int wZ3o6 = 3*wZ - 2*(w+g) -2;
-	if (wZ3 < 2)
-		wZ3 = 2;
 	if (wZ3o6 < 2)
 		wZ3o6 = 2; //using 1 will generate bad vhdl
-	REPORT(DETAILED, "wZ3 = " << wZ3 << "            wZ3o6 = " << wZ3o6 );
-	
-	if(wZ3<=10) {
+
+	if(wZ3o6<=10) {
 		vhdl << tab << "-- First truncate Z" << endl;
 		vhdl << tab << declare("Z_truncToZ3o6", wZ3o6) << " <= Z" << range(wZ-1, wZ-wZ3o6) << ";" << endl;
 		FunctionTable *z3o6Table;
@@ -576,10 +573,10 @@ FixSinCos::FixSinCos(Target * target, int w_, float ratio):Operator(target), w(w
 	     << tab << "C <= C_wo_sgn_ext when C_sgn = '0'"
 	     << " else C_wo_sgn_neg;" << endl;
 
-	REPORT(INFO, " wA=" << wA <<" wZ=" << wZ <<" wZ2=" << wZ2o2 <<" wZ3=" << wZ3 );
+	REPORT(INFO, " wA=" << wA <<" wZ=" << wZ <<" wZ2=" << wZ2o2 <<" wZ3o6=" << wZ3o6 );
 
 	// For LateX in the paper
-	// cout << "     " << w <<  "   &   " << g <<"   &   " << wA << "   &   " << wZ << "   &   " << wZ2o2 << "   &   " << wZ3 << "   \\\\ \n \\hline" <<  endl;
+	 cout << "     " << w <<  "   &   " << g <<"   &   " << wA << "   &   " << wZ << "   &   " << wZ2o2 << "   &   " << wZ3o6 << "   \\\\ \n \\hline" <<  endl;
 };
 
 
