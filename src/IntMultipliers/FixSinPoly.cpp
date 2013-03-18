@@ -114,14 +114,13 @@ namespace flopoco{
 		//	negated
 		IntConstDiv3 *divider;
 		divider = new IntConstDiv3(target, wIn, 3, -1, 2);
-		addSubComponent(divider);
-
-		//manageCriticalPath(divider->getOutputDelay("Q"));
-  
+		addSubComponent(divider);  
 		inPortMap (divider , "X", "X");
 		outPortMap(divider , "Q", "XZeroIntDiv3");
 		vhdl << instance(divider , "Divider");
-		
+
+		syncCycleFromSignal("XZeroIntDiv3");		
+
 		indexMax = ((msbIn-lsbIn+1)*3-2)-1;
 		indexMin = (truncated ? wOutFull-1-(msbIn-lsbOut+g) : 0);
 		for(int i=indexMin; i<=indexMax; i++)

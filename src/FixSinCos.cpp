@@ -274,7 +274,7 @@ FixSinCos::FixSinCos(Target * target, int w_, float ratio):Operator(target), w(w
 		wZ3o6 = 2; //using 1 will generate bad vhdl
 	REPORT(DETAILED, "wZ3 = " << wZ3 << "            wZ3o6 = " << wZ3o6 );
 	
-	if(wZ3<=2) {
+	if(wZ3<=10) {
 		vhdl << tab << "-- First truncate Z" << endl;
 		vhdl << tab << declare("Z_truncToZ3o6", wZ3o6) << " <= Z" << range(wZ-1, wZ-wZ3o6) << ";" << endl;
 		FunctionTable *z3o6Table;
