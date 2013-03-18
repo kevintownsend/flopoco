@@ -120,7 +120,7 @@ namespace flopoco{
 
 
 	IntConstDiv3::IntConstDiv3(Target* target, int wIn_, int d_, int alpha_, int nbZeros_,  bool remainderOnly_, map<string, double> inputDelays)
-		: Operator(target), wIn(wIn_), d(d_), alpha(alpha_), nbZeros(nbZeros_), remainderOnly(remainderOnly_)
+		: Operator(target), wIn(wIn_), d(d_), remainderOnly(remainderOnly_), alpha(alpha_), nbZeros(nbZeros_)
 	{
 		setCopyrightString("Florent de Dinechin, Matei Istoan (2013)");
 		srcFileName="IntConstDiv3";
@@ -246,7 +246,8 @@ namespace flopoco{
 		if(!remainderOnly)
 		{
 			// build the quotient output
-			vhdl << tab << declare("tempQ", qSize) << " <= ";
+			int tempQSize = (alpha*(nbZeros+1))*k-2;
+			vhdl << tab << declare("tempQ", tempQSize) << " <= ";
 			for (unsigned int i=k-1; i>=1; i--)
 				vhdl << "q" << i << " & ";
 			vhdl << "q0;" << endl;

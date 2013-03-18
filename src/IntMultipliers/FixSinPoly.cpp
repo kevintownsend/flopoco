@@ -209,10 +209,9 @@ namespace flopoco{
 	
 	//operator incorporated into a global compression
 	//	for use as part of a bigger operator
-	FixSinPoly::FixSinPoly(Operator* parentOp_, Target* target, Signal* multiplicandX, int msbIn_, int lsbIn_, int msbOut_, int lsbOut_, BitHeap* bitHeap_, bool signedInput_, map<string, double> inputDelays) :
-		Operator(target, inputDelays), msbIn(msbIn_), lsbIn(lsbIn_), msbOut(msbOut_), lsbOut(lsbOut_), signedInput(signedInput_),
-		wIn(msbIn_-lsbIn+1), wOut(msbOut_-lsbOut+1),
-		parentOp(parentOp_), bitHeap(bitHeap_) 
+	FixSinPoly::FixSinPoly(Operator* parentOp_, Target* target, Signal* multiplicandX, int msbIn_, int lsbIn_, int truncated_, int msbOut_, int lsbOut_, BitHeap* bitHeap_, bool signedInput_, map<string, double> inputDelays) :
+		Operator(target, inputDelays), msbIn(msbIn_), lsbIn(lsbIn_), truncated(truncated_), msbOut(msbOut_), lsbOut(lsbOut_),
+		wIn(msbIn_-lsbIn+1), wOut(msbOut_-lsbOut+1), signedInput(signedInput_), bitHeap(bitHeap_), parentOp(parentOp_) 
 	{
 		srcFileName="FixSinPoly";
 

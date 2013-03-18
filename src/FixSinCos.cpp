@@ -3,6 +3,7 @@
 #include "FixedPointFunctions/FunctionTable.hpp"
 #include "IntConstDiv.hpp"
 #include "BitHeap.hpp"
+#include "IntMultipliers/FixSinPoly.hpp"
 
 // TODOs 
 // Compare not-ing Y and negating it properly
@@ -273,7 +274,7 @@ FixSinCos::FixSinCos(Target * target, int w_, float ratio):Operator(target), w(w
 		wZ3o6 = 2; //using 1 will generate bad vhdl
 	REPORT(DETAILED, "wZ3 = " << wZ3 << "            wZ3o6 = " << wZ3o6 );
 	
-	if(wZ3<=11) {
+	if(wZ3<=2) {
 		vhdl << tab << "-- First truncate Z" << endl;
 		vhdl << tab << declare("Z_truncToZ3o6", wZ3o6) << " <= Z" << range(wZ-1, wZ-wZ3o6) << ";" << endl;
 		FunctionTable *z3o6Table;
@@ -292,6 +293,17 @@ FixSinCos::FixSinCos(Target * target, int w_, float ratio):Operator(target), w(w
 	}
 	else {
 		// TODO: replace all this with an ad-hoc unit
+		FixSinPoly *fsp =new FixSinPoly(target, 
+		                                -wA-1, //msbin
+		                                -w-g, // lsbin
+		                                true, // truncated
+		                                -wA-1, // msbOut_ = 0,
+		                                -w-g, // lsbout
+		                                false);
+		oplist.push_back (fsp);
+		inPortMap (fsp, "X", "Z");
+		outPortMap(fsp, "R", "SinZ");
+		vhdl << instance (fsp, "ZminusZ3o6");
 	}
 
 
@@ -316,10 +328,16 @@ FixSinCos::FixSinCos(Target * target, int w_, float ratio):Operator(target), w(w
 #endif
 
 
+
+
+
+
+
 #if 1 // No bit heap
 	// // vhdl:id (CosPiA -> C_out_1)
 	// vhdl:mul (Z2o2, CosPiA -> Z2o2CosPiA)
-	vhdl << tab << "-- First truncate the larger input of the multiplier to the precision of the output" << endl;
+
+	vhdl << tab << "--  truncate the larger input of each multiplier to the precision of its output" << endl;
 	vhdl << tab << declare("CosPiA_truncToZ2o2", wZ2o2) << " <= CosPiA" << range(w+g-1, w+g-wZ2o2) << ";" << endl;
 	IntMultiplier *c_out_2;
 	c_out_2 = new IntMultiplier (target, wZ2o2, wZ2o2, wZ2o2, false, ratio);
@@ -345,11 +363,13 @@ FixSinCos::FixSinCos(Target * target, int w_, float ratio):Operator(target), w(w
 	nextCycle();
 #endif
 
+	vhdl << tab << "--  truncate the larger input of each multiplier to the precision of its output" << endl;
+	vhdl << tab << declare("SinPiA_truncToZ", wZ) << " <= SinPiA" << range(w+g-1, w+g-wZ) << ";" << endl;
+
+
 	// vhdl:mul (SinZ, SinPiA -> SinZSinPiA)
 	IntMultiplier *c_out_3;
 
-	vhdl << tab << "-- First truncate the larger input of the multiplier to the precision of the output" << endl;
-	vhdl << tab << declare("SinPiA_truncToZ", wZ) << " <= SinPiA" << range(w+g-1, w+g-wZ) << ";" << endl;
 	c_out_3 = new IntMultiplier (target, wZ, wZ, wZ, false, ratio);
 	oplist.push_back (c_out_3);
 	inPortMap (c_out_3, "Y", "SinPiA_truncToZ");
@@ -377,17 +397,21 @@ FixSinCos::FixSinCos(Target * target, int w_, float ratio):Operator(target), w(w
 
 
 
+
 	// ---------------------------------------------
-#else //Bit heap computing Cos Z  ~   CosPiA - Z2o2*cosPiA + sinZ*SinPiA
+#else //Bit heap computing Cos Z  ~   CosPiA - Z2o2*cosPiA - sinZ*SinPiA
 	//
 	// cosPiA   xxxxxxxxxxxxxxxxxxggggg
 	//
 
-	vhdl << tab << "--  truncate the larger input of the multiplier to the precision of the output" << endl;
-	vhdl << tab << declare("CosPiA_truncToZ2o2", wZ2o2) << " <= CosPiA" << range(w+g-1, w+g-wZ2o2) << ";" << endl;
+#define TINKERCOS 1
+#if TINKERCOS
+	int gMult=0;
+#else
 	int g1 = IntMultiplier::neededGuardBits(wZ, wZ, wZ);
 	int g2 = IntMultiplier::neededGuardBits(wZ2o2, wZ2o2, wZ2o2);
 	int gMult=max(g1,g2);
+#endif
 
 	REPORT(0, "wZ2o2=" << wZ2o2 << "    wZ=" << wZ << "    g=" << g << "    gMult=" << gMult);
 	BitHeap* bitHeapCos = new BitHeap(this, w+g+gMult, "Sin"); 
@@ -395,6 +419,42 @@ FixSinCos::FixSinCos(Target * target, int w_, float ratio):Operator(target), w(w
 	// Add CosPiA to the bit heap
 	bitHeapCos -> addUnsignedBitVector(gMult, "CosPiA", w+g);
 
+	vhdl << tab << "--  truncate the larger input of each multiplier to the precision of its output" << endl;
+	vhdl << tab << declare("CosPiA_truncToZ2o2", wZ2o2) << " <= CosPiA" << range(w+g-1, w+g-wZ2o2) << ";" << endl;
+	vhdl << tab << "--  truncate the larger input of each multiplier to the precision of its output" << endl;
+	vhdl << tab << declare("SinPiA_truncToZ", wZ) << " <= SinPiA" << range(w+g-1, w+g-wZ) << ";" << endl;
+
+
+#if TINKERCOS
+	setCycleFromSignal ("Z2o2");
+	nextCycle();
+	vhdl <<  tab << declare("Z2o2CosPiA", 2*wZ2o2) << " <= Z2o2 * CosPiA_truncToZ2o2" << ";" << endl;
+	nextCycle();
+	// add it to the bit heap
+	
+	for (int i=0; i<wZ2o2-1; i++)
+		bitHeapCos->addBit(i, "not Z2o2CosPiA"+of(i+wZ2o2));
+	bitHeapCos->addBit(wZ2o2-1, "Z2o2CosPiA"+of(wZ2o2+wZ2o2-1));
+	for (int i=wZ2o2-1; i<w+g+gMult; i++)
+		bitHeapCos->addConstantOneBit(i);
+	bitHeapCos->addConstantOneBit(0);
+
+
+	setCycleFromSignal ("SinZ");
+	nextCycle();
+	vhdl <<  tab << declare("SinZSinPiA", 2*wZ) << " <=  SinZ *SinPiA_truncToZ" << ";" << endl;
+	nextCycle();
+	
+	// add it to the bit heap	
+	for (int i=0; i<wZ-1; i++)
+		bitHeapCos->addBit(i, "not SinZSinPiA"+of(i+wZ));
+	bitHeapCos->addBit(wZ-1, "SinZSinPiA"+of(wZ+wZ-1));
+	for (int i=wZ-1; i<w+g+gMult; i++)
+		bitHeapCos->addConstantOneBit(i);
+	bitHeapCos->addConstantOneBit(0);
+
+	//	vhdl <<  tab << declare("Z2o2CosPiA", 2*wZ) << " <= " << range(w+g-1, w+g-wZ) << ";" << endl;
+#else
 	// First virtual multiplier
 	new IntMultiplier (this,
 	                   bitHeapCos,
@@ -403,13 +463,10 @@ FixSinCos::FixSinCos(Target * target, int w_, float ratio):Operator(target), w(w
 	                   wZ2o2, wZ2o2, wZ2o2,
 	                   gMult,
 	                   true, // negate
-	                   false, // signed
+	                   false, // signed inputs
 	                   ratio);
 
-
 	     
-	vhdl << tab << "--  truncate the larger input of the multiplier to the precision of the output" << endl;
-	vhdl << tab << declare("SinPiA_truncToZ", wZ) << " <= SinPiA" << range(w+g-1, w+g-wZ) << ";" << endl;
 
 	// Second virtual multiplier
 	new IntMultiplier (this,
@@ -418,10 +475,11 @@ FixSinCos::FixSinCos(Target * target, int w_, float ratio):Operator(target), w(w
 	                   getSignalByName("SinPiA_truncToZ"),
 	                   wZ, wZ, wZ,
 	                   gMult,
-	                   false, // negate
-	                   false, // signed
+	                   true, // negate
+	                   false, // signed inputs
 	                   ratio
 	                   );
+#endif
 	     
 	// The round bit is in the table already
 	bitHeapCos -> generateCompressorVHDL();	

@@ -27,7 +27,7 @@ namespace flopoco{
 
 		FixSinPoly(Target* target, int msbIn_, int lsbIn_, bool truncated = false, int msbOut_ = 0, int lsbOut_ = 0, bool signedInput_ = false, map<string, double> inputDelays = emptyDelayMap);
 		
-		FixSinPoly(Operator* parentOp, Target* target, Signal* multiplicandX, int msbIn_, int lsbIn_, int msbOut_, int lsbOut_,
+		FixSinPoly(Operator* parentOp, Target* target, Signal* multiplicandX, int msbIn_, int lsbIn_, int truncated, int msbOut_, int lsbOut_,
 							 BitHeap* bitheap,
 							 bool signedInput_ = false, map<string, double> inputDelays = emptyDelayMap);
 		~FixSinPoly();
@@ -44,15 +44,15 @@ namespace flopoco{
 		
 		int msbIn;						/**< The MSB of the input */
 		int lsbIn;						/**< The LSB of the input */
-										/**< The MSB and the LSB of the input give the format of the number being input */
+		/* The MSB and the LSB of the input give the format of the number being input */
+		bool	truncated;				/**< The result is truncated to a given length, or not */
 		int msbOut;						/**< The MSB of the output */
 		int lsbOut;						/**< The LSB of the output */
-										/**< The MSB and the LSB of the input give the format of the number being output */
+										/* The MSB and the LSB of the input give the format of the number being output */
 
 		int		wIn;					/**< The input width */
 		int		wOut;					/**< The output width */
 		bool	signedInput;			/**< Signed or unsigned operator */		//For now, the input is always positive, so signedInput defaults FALSE
-		bool	truncated;				/**< The result is truncated to a given length, or not */
 		
 		int g;							/**< The number of guard bits used for the computations */
 		

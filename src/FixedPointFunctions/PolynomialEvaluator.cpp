@@ -172,10 +172,12 @@ namespace flopoco{
 #define USE_BITHEAP 0
 #if !USE_BITHEAP //
 
-					IntMultiplier *sm = new IntMultiplier ( target, wIn1, wIn2, wIn1+wIn2-k, true /*signedIO*/, thresholdForDSP); //inDelayMap("X",getCriticalPath()));
+					//					nextCycle(); //TODO fix it by feeding the input delay to IntTruncMultiplier
+
+
+					IntMultiplier *sm = new IntMultiplier ( target, wIn1, wIn2, wIn1+wIn2-k, true /*signedIO*/, thresholdForDSP,   inDelayMap("X",getCriticalPath()));
 					oplist.push_back(sm);
 					
-					nextCycle(); //TODO fix it by feeding the input delay to IntTruncMultiplier
 					inPortMap ( sm, "X", join("yT",i));
 					inPortMap ( sm, "Y", join("sigmaP",i-1));
 					outPortMap (sm, "R", join("piPT",i));
@@ -183,9 +185,6 @@ namespace flopoco{
 					syncCycleFromSignal(join("piPT",i)); 
 				
 					setCriticalPath( sm->getOutputDelay("R") );
-
-					IntAdder* sa = new IntAdder (target, sigmakPSize[i]+1, inDelayMap("X",getCriticalPath()));
-					oplist.push_back(sa);
 
 					// coeff: shifted and sign extended 
 					vhdl << tab << declare( join("op1_",i), sigmakPSize[i]+1 ) 
@@ -197,6 +196,11 @@ namespace flopoco{
 					     << " & " << join("piPT",i) << range(pikPTSize[i], pikPTSize[i] - pikPTWeight[i] - (coef_[degree_-i]->getSize()-coef_[degree_-i]->getWeight() + aGuard_[degree_ -i]))
 					     << " & "<< zg( - (pikPTSize[i] - pikPTWeight[i] - (coef_[degree_-i]->getSize()-coef_[degree_-i]->getWeight() + aGuard_[degree_ -i])) ,0)
 					     << ");" << endl;
+
+					nextCycle();
+					IntAdder* sa = new IntAdder (target, sigmakPSize[i]+1,  inDelayMap("X", getCriticalPath()));
+					oplist.push_back(sa);
+
 					inPortMap ( sa, "X", join("op1_",i) );
 					inPortMap ( sa, "Y", join("op2_",i) );
 					inPortMapCst ( sa, "Cin", "'1'");
@@ -205,6 +209,7 @@ namespace flopoco{
 					vhdl << instance ( sa, join("Sum",i));
 					syncCycleFromSignal( join("sigmaP",i) );
 					setCriticalPath( sa->getOutputDelay("R") );
+					nextCycle();
 
 #else //bitheap-based 347sl 15ns
 					int wA=coef_[degree_-i]->getSize()+1;

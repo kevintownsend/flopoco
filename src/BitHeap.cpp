@@ -1918,6 +1918,7 @@ namespace flopoco
 			
 			op->vhdl << tab << "-- concatenate all the compressed chunks" << endl;
 			//result
+			op->syncCycleFromSignal(outAdderName);
 			op->vhdl << tab << op->declare(join("CompressionResult", guid), (maxWeight+1)) << " <= " << outAdderName;
 
 			//adding the rightmost bits
@@ -2182,11 +2183,12 @@ namespace flopoco
 					}
 				}
 			}
-			// -----------------------------------------------------------------
+			//end of Altera -----------------------------------------------------------------
 			
 			
 			op->vhdl << tab << "-- concatenate all the compressed chunks" << endl;
 			//result
+			op->syncCycleFromSignal(outAdderName);
 			op->vhdl << tab << op->declare(join("CompressionResult", guid), maxWeight+2) << " <= " << outAdderName;
 
 			//adding the rightmost bits

@@ -70,12 +70,12 @@ namespace flopoco{
 		int remainderSize();  													/**< Size in bits of a remainder; gamma=ceil(log2(d-1)) */
 
 	private:
-		int d;																	/**< Divisor*/
 		int wIn;																/**< Size in bits of the input X */
-		bool remainderOnly;														/**< if true, only the remainder will be computed. If false, quotient will be computed */
+		int d;																	/**< Divisor*/
+		bool remainderOnly;												/**< if true, only the remainder will be computed. If false, quotient will be computed */
 		int alpha;																/**< Size of the chunk (should be between 1 and 16)*/
-		int gamma;																/**< Size in bits of a remainder; gamma=ceil(log2(d-1)) */
 		int nbZeros;															/**< Number of zero bits that should be interleaved between the bits of the number */
+		int gamma;																/**< Size in bits of a remainder; gamma=ceil(log2(d-1)) */
 		int qSize;																/**< Size in bits of the quotient output */
 		
 	};
