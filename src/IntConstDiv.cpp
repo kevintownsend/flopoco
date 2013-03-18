@@ -148,7 +148,7 @@ namespace flopoco{
 		for (unsigned int i=k-1; i>=1; i--) 
 			vhdl << "q" << i << " & ";
 		vhdl << "q0 ;" << endl; 
-			vhdl << tab << "Q <= tempQ" << range(qSize-1, 0)  << ";" << endl;
+		vhdl << tab << "Q <= tempQ" << range(qSize-1, 0)  << ";" << endl;
 		}		
 
 		vhdl << tab << "R <= " << ri << ";" << endl; // This ri is r_0

@@ -16,6 +16,14 @@
 
 // To enable SVG plotting, #define BITHEAP_GENERATE_SVG in BitHeap.hpp
 
+
+// TODO 
+// Again needs a complete overhaul I'm afraid
+// - Improve the case when a multiplier fits one DSP (very common)
+//     In this case even for truncated mults we should have simple truncation, g=0 (also in neededGuardBits),
+//     and a special management of negate and signedIO
+
+
 /* 
    Who calls whom
    the constructor calls buildLogicOnly or buildTiling
@@ -190,10 +198,10 @@ namespace flopoco {
 			name << "LogicOnly_";
 		name << wXdecl << "_" << wYdecl <<"_" << wOut << "_" << (signedIO?"signed":"unsigned") << "_uid"<<Operator::getNewUId();
 		setName ( name.str() );
+		
+		REPORT(DEBUG, "Building " << name.str() );
 
-		REPORT(DEBUG, "Building " << name.str() )
-
-			xname = x->getName();
+		xname = x->getName();
 		yname = y->getName();
 
 		// // we create a separate Plotter for this mult. Is it useful?
@@ -388,20 +396,24 @@ namespace flopoco {
 
 		// Now getting more and more generic
 
-		// TODO HERE
-
-#if 0
+#if 1
 		// Finish the negation of the smaller input by adding X (since -yx=not(y)x +x)
-		setCycle(0); // TODO FIXME for the virtual multiplier case where inputs can arrive later
-		setCriticalPath(initialCP);
+		//		setCycle(0); // TODO F2D FIXME for the virtual multiplier case where inputs can arrive later
+		// setCriticalPath(initialCP);
 
-		// TODO FIXME need to sign extend
 		if(negate) {
+			vhdl << tab << "-- Finish the negation of the product (-xy as x(not(y)+1)) by adding XX " << endl;
 			for(int i=0; i<wX; i++) {
 				int w = lsbWeight + i-weightShift;
 				if(w>=0) {
 					ostringstream rhs;
-					rhs << addUID("XX") << of(i);
+					if(signedIO){
+						rhs << addUID("not XX") << of(i);
+						for(unsigned int j=i; j<bitHeap->getMaxWeight(); j++)
+							bitHeap->addConstantOneBit(j); 
+					}
+					else
+						rhs << addUID("XX") << of(i);
 					bitHeap->addBit(w, rhs.str());
 				}
 			}
@@ -421,7 +433,7 @@ namespace flopoco {
 
 
 #if 0
-		// TODO revive? The following turns truncation into rounding, except that the overhead is large for small multipliers.
+		// TODO F2D revive? The following turns truncation into rounding, except that the overhead is large for small multipliers.
 		if(g>0) {
 			int weight = lsbWeight-1;
 			if(negate)

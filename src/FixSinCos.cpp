@@ -2,8 +2,10 @@
 #include "IntMultiplier.hpp"
 #include "FixedPointFunctions/FunctionTable.hpp"
 #include "IntConstDiv.hpp"
+#include "BitHeap.hpp"
 
 // TODOs 
+// Compare not-ing Y and negating it properly
 
 // works only with sollya
 #ifdef HAVE_SOLLYA
@@ -74,14 +76,13 @@ FixSinCos::FixSinCos(Target * target, int w_, float ratio):Operator(target), w(w
 	vhdl << tab << declare ("Y",w-2) << " <= X " << range (w-3,0) << ";" << endl;
 	// now X -> X_sgn + Q*.5 + O*.25 + Y where Q,O \in {0,1} and Y \in {0,.25}
 
-	// Y_prime = .25 - y
-	// perhaps do a logic ~ at a cost of 1 ulp ?
-	//vhdl << declare ("Y_prime",w-2) << " <= "
-	//     << "2**" << (w-2) << " - Y;" << endl;
-	// if we do an arithmetic 1's complement it will do **** since
-	// 1-0 doesn't fit
+	// notY = .25 - y
+	// do a logic ~ at a cost of 1 ulp ?
+	// It saves one carry-propagate latency (one cycle)
+	// but enlarges the constant multiplier input by g bits
+	// and adds one ulp of error
 	manageCriticalPath(target->localWireDelay(w-2) + target->lutDelay());
-	vhdl << tab << declare ("Y_prime", w-2) << " <= " << "not Y;" << endl;
+	vhdl << tab << declare ("notY", w-2) << " <= " << "not Y;" << endl;
 
 	// we need to know the number of guard bits _now_ to have a good Y_in
 	// some precision is lost with the optimized multipliers
@@ -92,12 +93,12 @@ FixSinCos::FixSinCos(Target * target, int w_, float ratio):Operator(target), w(w
 	//another half final ulp
 	int wIn = w-2+g;
 
-	// Y_in = / Y_prime if O=1
+	// Y_in = / notY if O=1
 	//        \ Y if O=0
-	// and we extend the precision to make it look as if Y_prime was
-	// 0.[1, wIn times] - Y: 1/2**g error reduction in Y_prime
+	// and we extend the precision to make it look as if notY was
+	// 0.[1, wIn times] - Y: 1/2**g error reduction in notY
 	// (which should be arithmetic 1-Y)
-	vhdl << tab << declare ("Y_in",wIn) << " <= Y_prime & "
+	vhdl << tab << declare ("Y_in",wIn) << " <= notY & "
 	     << '"' << std::string (g, '1') << '"' << " when O='1' else Y & "
 	     << '"' << std::string (g, '0') << '"' << ";"
 	     << endl;
@@ -294,7 +295,7 @@ FixSinCos::FixSinCos(Target * target, int w_, float ratio):Operator(target), w(w
 	}
 
 
-	// vhdl:sub (Z, Z3o6 -> sinZ)
+	// vhdl:sub (Z, Z3o6 -> SinZ)
 
 
 
@@ -336,7 +337,7 @@ FixSinCos::FixSinCos(Target * target, int w_, float ratio):Operator(target), w(w
 	nextCycle();
 #endif
 
-	// get back to the cycle of sinZ, certainly later than the SinPiA
+	// get back to the cycle of SinZ, certainly later than the SinPiA
 #if SUBCYCLEPIPELINING
 	setCycleFromSignal("SinZ", getSignalDelay("SinZ")); 
 #else
@@ -371,24 +372,37 @@ FixSinCos::FixSinCos(Target * target, int w_, float ratio):Operator(target), w(w
 	vhdl << tab << declare ("C_out_rnd_aux", w+g)
 	     << " <= CosZCosPiA_plus_rnd - SinZSinPiA;" << endl;
 
+	vhdl << tab << declare ("C_out", w)
+	     << " <= C_out_rnd_aux" << range (w+g-1, g) << ';' << endl;
+
+
+
 	// ---------------------------------------------
 #else //Bit heap computing Cos Z  ~   CosPiA - Z2o2*cosPiA + sinZ*SinPiA
+	//
+	// cosPiA   xxxxxxxxxxxxxxxxxxggggg
+	//
+
 	vhdl << tab << "--  truncate the larger input of the multiplier to the precision of the output" << endl;
 	vhdl << tab << declare("CosPiA_truncToZ2o2", wZ2o2) << " <= CosPiA" << range(w+g-1, w+g-wZ2o2) << ";" << endl;
+	int g1 = IntMultiplier::neededGuardBits(wZ, wZ, wZ);
+	int g2 = IntMultiplier::neededGuardBits(wZ2o2, wZ2o2, wZ2o2);
+	int gMult=max(g1,g2);
 
-	BitHeap* bitHeapCos = new BitHeap(this, w+g, "Sin"); 
+	REPORT(0, "wZ2o2=" << wZ2o2 << "    wZ=" << wZ << "    g=" << g << "    gMult=" << gMult);
+	BitHeap* bitHeapCos = new BitHeap(this, w+g+gMult, "Sin"); 
 
 	// Add CosPiA to the bit heap
-	bitHeapCos -> addUnsignedBitVector(0, "CosPiA", w+g);
+	bitHeapCos -> addUnsignedBitVector(gMult, "CosPiA", w+g);
 
 	// First virtual multiplier
 	new IntMultiplier (this,
-	                   bitHeapSin,
+	                   bitHeapCos,
 	                   getSignalByName("Z2o2"),
 	                   getSignalByName("CosPiA_truncToZ2o2"),
 	                   wZ2o2, wZ2o2, wZ2o2,
-	                   lsbweight,
-	                   false, // negate
+	                   gMult,
+	                   true, // negate
 	                   false, // signed
 	                   ratio);
 
@@ -397,20 +411,21 @@ FixSinCos::FixSinCos(Target * target, int w_, float ratio):Operator(target), w(w
 	vhdl << tab << "--  truncate the larger input of the multiplier to the precision of the output" << endl;
 	vhdl << tab << declare("SinPiA_truncToZ", wZ) << " <= SinPiA" << range(w+g-1, w+g-wZ) << ";" << endl;
 
-	     // Second virtual multiplier
-	     new IntMultiplier (this,
-	                   bitHeapSin,
-	                   getSignalByName("sinZ"),
+	// Second virtual multiplier
+	new IntMultiplier (this,
+	                   bitHeapCos,
+	                   getSignalByName("SinZ"),
 	                   getSignalByName("SinPiA_truncToZ"),
-	                   wZ2o2, wZ2o2, wZ2o2,
+	                   wZ, wZ, wZ,
+	                   gMult,
 	                   false, // negate
 	                   false, // signed
 	                   ratio
 	                   );
 	     
-	     // 
-	     bitHeapCos -> generateCompressorVHDL();	
-	vhdl << tab << declare ("C_out", w) << " <= " << bitHeapCos -> getSumName() << range (w+g-1, g) << ';' << endl;
+	// The round bit is in the table already
+	bitHeapCos -> generateCompressorVHDL();	
+	vhdl << tab << declare ("C_out", w) << " <= " << bitHeapCos -> getSumName() << range (w+g+gMult-1, g+gMult) << ';' << endl;
 
 #endif
 
@@ -475,7 +490,7 @@ FixSinCos::FixSinCos(Target * target, int w_, float ratio):Operator(target), w(w
 
 
 	//Final synchronization
-	syncCycleFromSignal("C_out_rnd_aux");
+	syncCycleFromSignal("C_out");
 
 	vhdl << tab << declare ("S_out", w)
 	     << " <= S_out_rnd_aux" << range (w+g-1, g) << ';' << endl;
