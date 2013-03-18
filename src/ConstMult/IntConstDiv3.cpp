@@ -157,6 +157,9 @@ namespace flopoco{
 
 		//set the quotient size
 		qSize = (1+nbZeros)*(wIn-1) + 1;
+		
+		//manage the pipeline
+		setCriticalPath(getMaxInputDelays(inputDelays));
 
 		//create the input
 		addInput("X", wIn);
@@ -185,12 +188,11 @@ namespace flopoco{
 		ri = join("r", k);
 		vhdl << tab << declare(ri, gamma) << " <= " << zg(gamma, 0) << ";" << endl;
 
-		setCriticalPath(getMaxInputDelays(inputDelays));
-
 		//all bits except the last
 		for (int i=k-1; i>0; i--)
 		{
-			manageCriticalPath(tableDelay);
+			//manageCriticalPath(tableDelay);
+			manageCriticalPath(target->lutDelay());
 
 			xi = join("x", i);
 			if(i==k-1 && rem!=0)
@@ -210,10 +212,15 @@ namespace flopoco{
 			outPortMap(table, "Y", outi);
 			vhdl << instance(table, join("table",i));
 			
+			syncCycleFromSignal(outi);
+			
 			ri = join("r", i);
 			qi = join("q", i);
 			vhdl << tab << declare(qi, alpha*(1+nbZeros), true) << " <= " << outi << range(alpha*(1+nbZeros)+gamma-1, gamma) << ";" << endl;
 			vhdl << tab << declare(ri, gamma) << " <= " << outi << range(gamma-1, 0) << ";" << endl << endl;
+			
+			syncCycleFromSignal(qi);
+			syncCycleFromSignal(ri);
 		}
 		
 		//handle the last bit
@@ -223,7 +230,8 @@ namespace flopoco{
 			oplist.push_back(table);
 			tableDelay = table->getOutputDelay("Y");
 			
-			manageCriticalPath(tableDelay);
+			//manageCriticalPath(tableDelay);
+			manageCriticalPath(target->lutDelay());
 
 			xi = join("x", 0);
 			vhdl << tab << declare(xi, alpha, true) << " <= X" << range(alpha-1, 0) << ";" << endl;
@@ -237,10 +245,15 @@ namespace flopoco{
 			outPortMap(table, "Y", outi);
 			vhdl << instance(table, join("table", 0));
 			
+			syncCycleFromSignal(outi);
+			
 			ri = join("r", 0);
 			qi = join("q", 0);
 			vhdl << tab << declare(qi, (alpha-1)*(1+nbZeros)+1, true) << " <= " << outi << range((alpha-1)*(1+nbZeros)+1+gamma-1, gamma) << ";" << endl;
 			vhdl << tab << declare(ri, gamma) << " <= " << outi << range(gamma-1, 0) << ";" << endl << endl;
+			
+			syncCycleFromSignal(qi);
+			syncCycleFromSignal(ri);
 		}
 
 		if(!remainderOnly)
@@ -252,11 +265,17 @@ namespace flopoco{
 				vhdl << "q" << i << " & ";
 			vhdl << "q0;" << endl;
 			
+			syncCycleFromSignal("tempQ");
+			
 			vhdl << tab << "Q <= tempQ" << range(qSize-1, 0)  << ";" << endl;
+			
+			outDelayMap["Q"] = getCriticalPath();
 		}
 
 		// This ri is r_0
 		vhdl << tab << "R <= " << ri << ";" << endl;
+		
+		outDelayMap["R"] = getCriticalPath();
 	}	
 
 	IntConstDiv3::~IntConstDiv3()

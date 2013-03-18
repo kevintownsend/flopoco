@@ -32,6 +32,7 @@ namespace flopoco{
 		Operator(target, inputDelays), msbIn(msbIn_), lsbIn(lsbIn_), truncated(truncated_), msbOut(msbOut_), lsbOut(lsbOut_), signedInput(signedInput_)
 	{
 		int indexMin, indexMax, wOutFull;
+		double maxCriticalPath = 0;
 		
 		srcFileName="FixSinPoly";
 
@@ -82,6 +83,10 @@ namespace flopoco{
 		
 		REPORT(DEBUG, "Adding the bits for X");
 		
+		//manage the pipeline
+		setCriticalPath(getMaxInputDelays(inputDelays));
+		manageCriticalPath(target->localWireDelay());
+		
 		//add the bits corresponding to sum_{i=imin}^imax(2^i*x_i)
 		indexMin = (truncated ? (lsbOut-g>lsbIn ? lsbOut-g : lsbIn) : lsbIn);
 		indexMax = msbIn;
@@ -108,18 +113,27 @@ namespace flopoco{
 			}
 		}
 		
+		if(getCriticalPath() > maxCriticalPath)
+			maxCriticalPath = getCriticalPath();
+		
 		REPORT(DEBUG, "Adding the bits for the first sum");
+		
+		//manage the pipeline
+		setCycleFromSignal("X");
+		setCriticalPath(getMaxInputDelays(inputDelays));
 		
 		//add the terms corresponding to sum_{i=imin}^imax(2^(3i-1)*x_i)
 		//	negated
 		IntConstDiv3 *divider;
-		divider = new IntConstDiv3(target, wIn, 3, -1, 2);
+		divider = new IntConstDiv3(target, wIn, 3, -1, 2, false,  inDelayMap("X", getCriticalPath())) ;
 		addSubComponent(divider);  
 		inPortMap (divider , "X", "X");
 		outPortMap(divider , "Q", "XZeroIntDiv3");
 		vhdl << instance(divider , "Divider");
 
-		syncCycleFromSignal("XZeroIntDiv3");		
+		//manage the pipeline
+		syncCycleFromSignal("XZeroIntDiv3");
+		manageCriticalPath(target->localWireDelay() + target->lutDelay());
 
 		indexMax = ((msbIn-lsbIn+1)*3-2)-1;
 		indexMin = (truncated ? wOutFull-1-(msbIn-lsbOut+g) : 0);
@@ -137,7 +151,15 @@ namespace flopoco{
 				bitHeap->addConstantOneBit(j);
 		}
 		
+		if(getCriticalPath() > maxCriticalPath)
+			maxCriticalPath = getCriticalPath();
+		
 		REPORT(DEBUG, "Adding the bits for the second sum");
+		
+		//manage the pipeline
+		setCycleFromSignal("X");
+		setCriticalPath(getMaxInputDelays(inputDelays));
+		manageCriticalPath(target->localWireDelay() + target->lutDelay());
 		
 		//add the terms corresponding to sum_i_j_imin^imax(2^(i+2j-1)*x_i*x_j)
 		//	negated
@@ -164,7 +186,15 @@ namespace flopoco{
 					bitHeap->addConstantOneBit(k);
 			}
 		
+		if(getCriticalPath() > maxCriticalPath)
+			maxCriticalPath = getCriticalPath();
+		
 		REPORT(DEBUG, "Adding the bits for the third sum");
+		
+		//manage the pipeline
+		setCycleFromSignal("X");
+		setCriticalPath(getMaxInputDelays(inputDelays));
+		manageCriticalPath(target->localWireDelay() + target->lutDelay());
 		
 		//add the terms corresponding to sum_i_j_k_imin^imax(2^(i+j+k)*x_i*x_j*x_k)
 		//	negated
@@ -190,19 +220,29 @@ namespace flopoco{
 						bitHeap->addConstantOneBit(l);
 				}
 		
+		if(getCriticalPath() > maxCriticalPath)
+			maxCriticalPath = getCriticalPath();
+		
 		//if needed add a bit at position g-1, for rounding
 		if(truncated)
 			bitHeap->addConstantOneBit(g-1);
 		
+		//manage the pipeline
+		setCriticalPath(maxCriticalPath);
+		
 		//compress the bitheap
 		bitHeap -> generateCompressorVHDL();
+		
+		//manage the pipeline
+		syncCycleFromSignal(bitHeap->getSumName());
 		
 		//generate the final result
 		if(truncated)
 			vhdl << tab << "R" << " <= " << bitHeap-> getSumName() << range(wOut+g-1, g) << ";" << endl;
 		else
 			vhdl << tab << "R" << " <= " << bitHeap-> getSumName() << range(wOut-1, 0) << ";" << endl;
-						
+			
+		outDelayMap["R"] = getCriticalPath();						
 	}
 	
 	
