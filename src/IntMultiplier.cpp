@@ -226,8 +226,8 @@ namespace flopoco {
 
 
 	// The constructor for a stand-alone operator
-	IntMultiplier::IntMultiplier (Target* target, int wX_, int wY_, int wOut_, bool signedIO_, float ratio_, map<string, double> inputDelays_, bool enableSuperTiles_):
-		Operator ( target, inputDelays_ ), wxDSP(0), wyDSP(0), wXdecl(wX_), wYdecl(wY_), wX(0), wY(0), wOut(wOut_), wFull(0), ratio(ratio_),  maxError(0.0), negate(false), signedIO(signedIO_),enableSuperTiles(enableSuperTiles_) 
+	IntMultiplier::IntMultiplier (Target* target_, int wX_, int wY_, int wOut_, bool signedIO_, float ratio_, map<string, double> inputDelays_, bool enableSuperTiles_):
+		Operator ( target_, inputDelays_ ), wxDSP(0), wyDSP(0), wXdecl(wX_), wYdecl(wY_), wX(0), wY(0), wOut(wOut_), wFull(0), ratio(ratio_),  maxError(0.0), negate(false), signedIO(signedIO_),enableSuperTiles(enableSuperTiles_), target(target_)
 	{
 		srcFileName="IntMultiplier";
 		setCopyrightString ( "Florent de Dinechin, Kinga Illyes, Bogdan Popa, Bogdan Pasca, 2012" );
@@ -305,7 +305,8 @@ namespace flopoco {
 		// To manage stand-alone cases, we just build a bit-heap of max height one, so the compression will do nothing
 
 		// The really small ones fit in two LUTs and that's as small as it gets  
-		if(wX+wY <=  parentOp->getTarget()->lutInputs()+2) {
+		if(wX+wY <=  parentOp->getTarget()->lutInputs()+2)
+		{
 			vhdl << tab << "-- Ne pouvant me fier a mon raisonnement, j'ai appris par coeur le résultat de toutes les multiplications possibles" << endl;
 
 			SmallMultTable *t = new SmallMultTable(  parentOp->getTarget(), wX, wY, wOut, negate, signedIO, signedIO);
@@ -330,7 +331,8 @@ namespace flopoco {
 		}
 
 		// Multiplication by 1-bit integer is simple
-		if ((wY == 1)){
+		if ((wY == 1))
+		{
 			vhdl << tab << "-- How to obfuscate multiplication by 1 bit: first generate a trivial bit vector" << endl;
 			if (signedIO){
 				manageCriticalPath(  parentOp->getTarget()->localWireDelay(wX) +  parentOp->getTarget()->adderDelay(wX+1) );
@@ -354,10 +356,9 @@ namespace flopoco {
 			return;
 		}
 
-		if ((wY == 2)) {
-
-			// Multiplication by 2-bit integer is one addition, which is delegated to BitHeap compression anyway
-
+		// Multiplication by 2-bit integer is one addition, which is delegated to BitHeap compression anyway
+		if ((wY == 2))
+		{
 			vhdl << tab << declare(addUID("R0"),wX+2) << " <= (";
 			if (signedIO) 
 				vhdl << addUID("XX") << of(wX-1) << " & "<< addUID("XX") << of(wX-1);  
@@ -390,8 +391,59 @@ namespace flopoco {
 				bitHeap->addConstantOneBit(lsbWeight-g);
 			// and that's it
 			return;
+		}
+		
+		// Multiplications that fit directly into a DSP
+		int dspXSize, dspYSize;
+		
+		if(parentOp == NULL)
+			target->getDSPWidths(dspXSize, dspYSize, signedIO);
+		// if we are using at least half of the DSP, then just implement 
+		//	the multiplication in a DSP, without passing through a bitheap
+		if((wX > 0.5*dspXSize) && (wY > 0.5*dspYSize))
+		{
+			stringstream s;
+			int zerosX = dspXSize - wX + (signedIO ? 0 : 1);
+			int zerosY = dspYSize - wY + (signedIO ? 0 : 1);
 
-		} 
+			if(zerosX<0)
+				zerosX=0;
+			if(zerosY<0)
+				zerosY=0;
+
+			//manage the pipeline
+			if(parentOp == NULL)
+				manageCriticalPath(target->DSPMultiplierDelay());
+
+			if(parentOp == NULL)
+			{
+				vhdl << tab << declare(join("DSP_mult_", getuid()), dspXSize+dspYSize+(signedIO ? 0 : 2))
+						 << " <= (" << zg(zerosX) << " & " << addUID("XX") << ")"
+						 << " *" 
+						 << " (" << zg(zerosY) << " & " << addUID("YY") << ");" << endl;
+			}
+			else
+			{
+				parentOp->vhdl << tab << parentOp->declare(join("DSP_mult_", getuid()), dspXSize+dspYSize+(signedIO ? 0 : 2))
+						 << " <= (" << zg(zerosX) << " & " << addUID("XX") << ")"
+						 << " *" 
+						 << " (" << zg(zerosY) << " & " << addUID("YY") << ");" << endl;
+			}
+
+			s << join("DSP_mult_", getuid());
+			
+			//manage the pipeline
+			if(parentOp == NULL)
+				syncCycleFromSignal(s.str());
+			
+			for(int w=(wX+wY-wOut); w<(wX+wY); w++)
+			{
+				bitHeap->addBit(lsbWeight + w-(wX+wY-wOut), join(s.str(), of(w)));
+			}
+			
+			// this should be it
+			return;
+		}
 
 
 		// Now getting more and more generic

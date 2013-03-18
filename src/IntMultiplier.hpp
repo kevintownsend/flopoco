@@ -178,6 +178,7 @@ namespace flopoco {
 		//vector<DSP*> dsps;
 		//ofstream fig;
 
+		Target* target;
 
 	};
 
