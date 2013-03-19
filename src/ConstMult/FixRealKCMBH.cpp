@@ -56,10 +56,11 @@ namespace flopoco{
 			signBit=1;
 		wIn+=signBit;
 
-		/* Convert the input string into a sollya evaluation tree */
+		// Convert the input string into a sollya evaluation tree
 		sollya_node_t node;
-		node = parseString(constant.c_str());	/* If conversion did not succeed (i.e. parse error) */
-		if (node == 0) {
+		node = parseString(constant.c_str());	// If conversion did not succeed (i.e. parse error)
+		if (node == 0)
+		{
 			ostringstream error;
 			error << srcFileName << ": Unable to parse string "<< constant << " as a numeric constant" <<endl;
 			throw error.str();
@@ -67,10 +68,18 @@ namespace flopoco{
 
 		mpfr_init2(mpC, 10000);
 		setToolPrecision(10000);
-		evaluateConstantExpression(mpC, node,  getToolPrecision());// should be enough for everybody
+		evaluateConstantExpression(mpC, node, getToolPrecision());	// should be enough for everybody
 
-		if(mpfr_cmp_si(mpC, 0)<0)
-			throw string("FixRealKCMBH: only positive constants are supported");
+		//if negative constant, then set negativeConstant and remake the constant positive
+		negativeConstant = false;
+		if(mpfr_cmp_si(mpC, 0) < 0)
+		{
+			//throw string("FixRealKCMBH: only positive constants are supported");
+			negativeConstant = true;
+			mpfr_abs(mpC, mpC, GMP_RNDN);
+			
+			//cout << "constat negative" << endl;
+		}
 
 		REPORT(DEBUG, "Constant evaluates to " << mpfr_get_d(mpC, GMP_RNDN));
 
@@ -149,10 +158,23 @@ namespace flopoco{
 			inPortMap (t , "X", "X");
 			outPortMap(t , "Y", "Y");
 			vhdl << instance(t , "KCMTable");
-
-			vhdl << tab << "R <= Y;" << endl;
+			
+			//negate the result if necessary
+			if(negativeConstant)
+			{
+				vhdl << tab << declare("Y_xored", wOut) << " <= Y xor " << og(wOut) << ";" << endl;
+				vhdl << tab << declare("Y_negated", wOut) << " <= Y_xored + (" << zg(wOut-1) << " & \'1\');" << endl;
+				
+				vhdl << tab << "R <= Y_negated;" << endl;
+			}
+			else
+			{
+				vhdl << tab << "R <= Y;" << endl;
+			}
+			
 		  	outDelayMap["R"] = getCriticalPath();
-		}else
+		}
+		else
 		{
 			///////////////////////////////////   Generic Case  ////////////////////////////////////
 
@@ -214,8 +236,11 @@ namespace flopoco{
 			//create the bitheap
 			bitHeap = new BitHeap(this, wOut+g);
 			
-			if(nbOfTables>2)
-			{				
+			if(nbOfTables > 2)
+			{
+				//manage the pipeline
+				manageCriticalPath(target->localWireDelay() + target->lutDelay());
+				
 				for(int i=0; i<nbOfTables; i++)
 				{
 					inPortMap (t[i] , "X", join("d",i));
@@ -223,26 +248,25 @@ namespace flopoco{
 					vhdl << instance(t[i] , join("KCMTable_",i));
 					
 					//add the bits to the bit heap
-					for(int w = ppiSize[i]-1; w >= 0; w--)
+					for(int w=0; w<=ppiSize[i]-1; w++)
 					{
 						stringstream s;
 						
-						if((i == nbOfTables-1) && (w == ppiSize[i]-1))
-						{
+						if(negativeConstant || ((i == nbOfTables-1) && (w == ppiSize[i]-1)))
 							s << "not(pp" << i << of(w) << ")";
-						}else
-						{
+						else
 							s << "pp" << i << of(w);
-						}
+						
 						bitHeap->addBit(w, s.str());
+						
+						for(int w2=w; w2<wOut+g; w2++)
+							bitHeap->addConstantOneBit(w2);
 					}
 					
-					if(i == nbOfTables-1)
+					if((i == nbOfTables-1) && (!negativeConstant))
 					{
-						for(int w= wOut+g; w>=ppiSize[i]-1; w--)
-						{
+						for(int w=ppiSize[i]-1; w<wOut+g; w++)
 							bitHeap->addConstantOneBit(w);
-						}
 					}
 				}
 				
@@ -252,27 +276,50 @@ namespace flopoco{
 				//because of final add in bit heap, add one more bit to the result
 				vhdl << declare("OutRes", wOut+g) << " <= " << bitHeap->getSumName() << range(wOut+g-1, 0) << ";" << endl;
 			}
-			else { // 2 tables only
+			else
+			{ 
+				// 2 tables only
 				Operator* adder;
+				
+				//manage the pipeline
+				manageCriticalPath(target->localWireDelay() + target->lutDelay());
 			
-				for(int i=0; i<nbOfTables; i++) {
-					//cout << endl << "*****CP=" << getCriticalPath();
+				for(int i=0; i<nbOfTables; i++)
+				{
 					inPortMap (t[i] , "X", join("d",i));
 					outPortMap(t[i] , "Y", join("pp",i));
 					vhdl << instance(t[i] , join("KCMTable_",i));
 				}
+				
 				vhdl << tab << declare("addOp0", wOut+g ) << " <= " << rangeAssign(wOut+g-1, ppiSize[0], "'0'") << " & pp0;" << endl;
-				adder = new IntAdder(target, wOut+g, inDelayMap("X",  target->localWireDelay() + getCriticalPath() + target->localWireDelay(ppiSize[1]) + target->lutDelay()  ));
+				
+				adder = new IntAdder(target, wOut+g, inDelayMap("X", target->localWireDelay()+getCriticalPath()+target->localWireDelay(ppiSize[1])+target->lutDelay()));
 				addSubComponent(adder);
+				
 				inPortMap (adder, "X" , "addOp0");
 				inPortMap (adder, "Y" , "pp1");
 				inPortMapCst(adder, "Cin" , "'0'");
-				outPortMap(adder, "R", "OutRes");
+				if(negativeConstant)
+					outPortMap(adder, "R", "OutRes_int");
+				else
+					outPortMap(adder, "R", "OutRes");
 				vhdl << instance(adder, "Result_Adder");
+				
+				if(negativeConstant)
+				{
+					syncCycleFromSignal("OutRes_int");
+					
+					vhdl << tab << declare("OutRes_int_xored", wOut+g) << " <= OutRes_int xor " << og(wOut+g) << ";" << endl;
+					
+					inPortMap	 (adder, "X" , "OutRes_int_xored");
+					inPortMapCst (adder, "Y" , "\'0\'");
+					inPortMapCst (adder, "Cin" , "\'1\'");
+					outPortMap(adder, "R", "OutRes");
+				}
+				
 				syncCycleFromSignal("OutRes");
 			}
 			
-			//vhdl << tab << "R <= OutRes" << range(wOut+g, g+1) << ";" << endl;
 			vhdl << tab << "R <= OutRes" << range(wOut+g-1, g) << ";" << endl;
 			outDelayMap["R"] = getCriticalPath();
 		}
@@ -535,25 +582,39 @@ namespace flopoco{
 
 	// To have MPFR work in fix point, we perform the multiplication in very large precision using RN,
 	// and the RU and RD are done only when converting to an int at the end.
-	void FixRealKCMBH::emulate(TestCase* tc){
-		/* Get I/O values */
+	void FixRealKCMBH::emulate(TestCase* tc)
+	{
+		// Get I/O values
 		mpz_class svX = tc->getInputValue("X");
+		
 		// get rid of two's complement
-		if(signedInput) {
+		if(signedInput)
+		{
 			if ( svX > ( (mpz_class(1)<<(wIn-1))-1) )
 				svX = svX - (mpz_class(1)<<wIn);
 		}
+		
 		// Cast it to mpfr 
 		mpfr_t mpX; 
 		mpfr_init2(mpX, msbIn-lsbIn+2);	
 		mpfr_set_z(mpX, svX.get_mpz_t(), GMP_RNDN); // should be exact
+		
 		// scale appropriately: multiply by 2^lsbIn
 		mpfr_mul_2si(mpX, mpX, lsbIn, GMP_RNDN); //Exact
+		
 		// prepare the result
 		mpfr_t mpR;
 		mpfr_init2(mpR, 10*wOut);	
+		
+		//negate the constant if necessary
+		if(negativeConstant)
+			mpfr_neg(mpC, mpC, GMP_RNDN);
+			
+		mpfr_printf("in emulate - the value of the constant mpC = %.10Rf\n", mpC);
+		
 		// do the multiplication
 		mpfr_mul(mpR, mpX, mpC, GMP_RNDN);
+		
 		// scale back to an integer
 		mpfr_mul_2si(mpR, mpR, -lsbOut, GMP_RNDN); //Exact
 		mpz_class svRu, svRd;
