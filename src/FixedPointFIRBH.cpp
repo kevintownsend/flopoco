@@ -41,32 +41,36 @@ namespace flopoco{
 		mpfr_init2 (sumAbsCoeff, 10*(1+p));
 		mpfr_set_d (sumAbsCoeff, 0.0, GMP_RNDN);
 		
-		for (int i=0; i< n; i++) {
+		for(int i=0; i< n; i++)
+		{
 			// parse the coeffs from the string. TODO: replace with Sollya parsing
-			mpfr_init_set_str (mpcoeff[i], coeff[i].c_str(), 10, GMP_RNDN);
-			if (mpfr_get_d(mpcoeff[i], GMP_RNDN) <0) {
+			mpfr_init_set_str(mpcoeff[i], coeff[i].c_str(), 10, GMP_RNDN);
+			if(mpfr_get_d(mpcoeff[i], GMP_RNDN) < 0)
+			{
 				coeffsign[i] = 1;
-				ostringstream m;
-				m << "-(" << coeff[i] << ")";
-				coeff[i] = m.str();
-				cout << "AAAA  " <<coeff[i] << endl;
+				
+				cout << "AAAA  " << coeff[i] << endl;
 			}
 			else
 				coeffsign[i] = 0;
+			
 			mpfr_abs(mpcoeff[i], mpcoeff[i], GMP_RNDN);
 				
 			// Accumulate the absolute values
 			mpfr_add(sumAbsCoeff, sumAbsCoeff, mpcoeff[i], GMP_RNDU);
 		}
+		
 		// now sumAbsCoeff is the max value that the filter can take.
 		double sumAbs = mpfr_get_d(sumAbsCoeff, GMP_RNDU); // just to make the following loop easier
 		int leadingBit=0;
-		while(sumAbs>=2.0) {
-			sumAbs*=0.5;
+		while(sumAbs >= 2.0)
+		{
+			sumAbs *= 0.5;
 			leadingBit++;
 		}
-		while(sumAbs<1.0) {
-			sumAbs*=2.0;
+		while(sumAbs < 1.0)
+		{
+			sumAbs *= 2.0;
 			leadingBit--;
 		}
 		REPORT(INFO, "Worst-case weight of MSB of the result is "<< leadingBit);
@@ -78,7 +82,8 @@ namespace flopoco{
 
 #if 0		
 		ostringstream dlist;
-		for (int i=0; i< n; i++) {
+		for (int i=0; i< n; i++)
+		{
 			char *ptr;
 			mp_exp_t exp;
 			ptr = mpfr_get_str (0,  &exp, 10, 0, mpcoeff[i], GMP_RNDN);
@@ -91,8 +96,8 @@ namespace flopoco{
 #endif		
 
 
-		int size = 1+ (leadingBit - (-p) +1) + g; // sign + overflow  bits on the left, guard bits on the right
-		REPORT(INFO, "Sum size is: "<< size );
+		int size = 1 + (leadingBit - (-p) +1) + g; // sign + overflow  bits on the left, guard bits on the right
+		REPORT(INFO, "Sum size is: "<< size);
 		
 		//compute the guard bits from the KCM mulipliers
 		int guardBitsKCM = 0;
@@ -109,7 +114,7 @@ namespace flopoco{
 		}
 		
 		size += guardBitsKCM; // sign + overflow  bits on the left, guard bits + guard bits from KCMs on the right
-		REPORT(INFO, "Sum size with KCM guard bits is: "<< size );
+		REPORT(INFO, "Sum size with KCM guard bits is: "<< size);
 		
 		//create the bitheap that computes the sum
 		bitHeap = new BitHeap(this, size);
@@ -125,8 +130,8 @@ namespace flopoco{
 													true, 		// signed
 													-p-g, 		// output LSB weight -- the output MSB is computed out of the constant
 													coeff[i], 	// pass the string unmodified
-													bitHeap		// pass the reference to the bitheap that will accumulate the inytermediary products
-												);			
+													bitHeap		// pass the reference to the bitheap that will accumulate the intermediary products
+												);
 		}
 		
 		//rounding - add 1/2 ulps
@@ -145,8 +150,8 @@ namespace flopoco{
 	}
 
 	
-	void FixedPointFIRBH::emulate(TestCase * tc) {
-
+	void FixedPointFIRBH::emulate(TestCase * tc)
+	{
 		// Not completely safe: we compute everything on 10 times the required precision, and hope that rounding this result is equivalent to rounding the exact result
 
 		mpfr_t x, t, s, rd, ru;
@@ -155,35 +160,23 @@ namespace flopoco{
 		mpfr_init2 (s, 10*(1+p));
 		mpfr_init2 (rd, 1+p);
 		mpfr_init2 (ru, 1+p);
-		
-
+	
 		mpfr_set_d(s, 0.0, GMP_RNDN); // initialize s to 0
 
-		for (int i=0; i< n; i++) {
-			double d;
-			mpz_class sx = tc->getInputValue(join("X", i)); // get the input bit vector as an integer
-			sx = bitVectorToSigned(sx, 1+p); // convert it to a signed mpz_class
-			mpfr_set_z (x, sx.get_mpz_t(), GMP_RNDD); // convert this integer to an MPFR; this rounding is exact
-			mpfr_div_2si (x, x, p, GMP_RNDD); // multiply this integer by 2^-p to obtain a fixed-point value; this rounding is again exact
+		for (int i=0; i<n; i++)
+		{
+			mpz_class sx = tc->getInputValue(join("X", i));			// get the input bit vector as an integer
+			sx = bitVectorToSigned(sx, 1+p);						// convert it to a signed mpz_class
+			mpfr_set_z (x, sx.get_mpz_t(), GMP_RNDD);				// convert this integer to an MPFR; this rounding is exact
+			mpfr_div_2si (x, x, p, GMP_RNDD);						// multiply this integer by 2^-p to obtain a fixed-point value; this rounding is again exact
 
-			//d=mpfr_get_d(x,GMP_RNDN);
-			//cout << " x=" << d;
-
-			mpfr_mul(t, x, mpcoeff[i], GMP_RNDN); // Here rounding possible, but precision used is ridiculously high so it won't matter
-
+			mpfr_mul(t, x, mpcoeff[i], GMP_RNDN);					// Here rounding possible, but precision used is ridiculously high so it won't matter
+			
 			if(coeffsign[i]==1)
 				mpfr_neg(t, t, GMP_RNDN); 
 
-			//d=mpfr_get_d(t,GMP_RNDN);
-			//cout << "  ci.x=" << d;
-
-			mpfr_add(s, s, t, GMP_RNDN); // same comment as above
-
-			//d=mpfr_get_d(s,GMP_RNDN);
-			//cout << "  s=" << d;
-
+			mpfr_add(s, s, t, GMP_RNDN); 							// same comment as above
 		}
-		//cout << endl;
 
 		// now we should have in s the (exact in most cases) sum
 		// round it up and down
@@ -193,16 +186,15 @@ namespace flopoco{
 
 		mpz_class rdz, ruz;
 
-		mpfr_get_z (rdz.get_mpz_t(), s, GMP_RNDD); // there can be a real rounding here
+		mpfr_get_z (rdz.get_mpz_t(), s, GMP_RNDD);					// there can be a real rounding here
 		rdz=signedToBitVector(rdz, wO);
 		tc->addExpectedOutput ("R", rdz);
 
-		mpfr_get_z (ruz.get_mpz_t(), s, GMP_RNDU); // there can be a real rounding here	
+		mpfr_get_z (ruz.get_mpz_t(), s, GMP_RNDU);					// there can be a real rounding here	
 		ruz=signedToBitVector(ruz, wO);
 		tc->addExpectedOutput ("R", ruz);
 		
 		mpfr_clears (x, t, s, rd, ru, NULL);
-
 	}
 
 

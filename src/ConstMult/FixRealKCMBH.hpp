@@ -28,22 +28,24 @@ namespace flopoco{
 		
 		static int neededGuardBits(Target* target, int wIn, int lsbOut, double targetUlpError);
 
-		int lsbIn;
-		int msbIn;
-		bool signedInput;
-		int wIn;
-		int lsbOut;
-		int msbOut;
-		int wOut;
-		string constant;
-		float targetUlpError;
-		mpfr_t mpC;
-		int msbC;
-		int g;
+		int			lsbIn;
+		int			msbIn;
+		bool		signedInput;
+		int			wIn;
+		int			lsbOut;
+		int			msbOut;
+		int			wOut;
+		string		constant;
+		float		targetUlpError;
+		mpfr_t		mpC;
+		int			msbC;
+		int			g;
+		
+		bool		negativeConstant;		/**< The constant is negaitve (negativeConstant = true), or positive (negativeConstant = false) */
 		
 		
-		BitHeap* bitHeap;    			/**< The heap of weighted bits that will be used to do the additions */
-		Operator* parentOp;				/**< The operator which envelops this constant multiplier */
+		BitHeap*	bitHeap;    			/**< The heap of weighted bits that will be used to do the additions */
+		Operator*	parentOp;				/**< The operator which envelops this constant multiplier */
 
 	};
   

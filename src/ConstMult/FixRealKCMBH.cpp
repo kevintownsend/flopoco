@@ -77,8 +77,6 @@ namespace flopoco{
 			//throw string("FixRealKCMBH: only positive constants are supported");
 			negativeConstant = true;
 			mpfr_abs(mpC, mpC, GMP_RNDN);
-			
-			//cout << "constat negative" << endl;
 		}
 
 		REPORT(DEBUG, "Constant evaluates to " << mpfr_get_d(mpC, GMP_RNDN));
@@ -270,6 +268,10 @@ namespace flopoco{
 					}
 				}
 				
+				//FIXME: is this right?
+				//add one bit at weight g-1, for faithfull rounding
+				bitHeap->addConstantOneBit(g);
+				
 				//compress the bitheap and produce the result
 				bitHeap->generateCompressorVHDL();
 					
@@ -332,7 +334,7 @@ namespace flopoco{
 	//	for use as part of a bigger operator
 	FixRealKCMBH::FixRealKCMBH(Operator* parentOp, Target* target, Signal* multiplicandX, int lsbIn_, int msbIn_, bool signedInput_, int lsbOut_, string constant_, BitHeap* bitHeap_, double targetUlpError_, map<string, double> inputDelays) :
 		Operator(target, inputDelays), lsbIn(lsbIn_), msbIn(msbIn_), signedInput(signedInput_),
-		wIn(msbIn_-lsbIn_+1), lsbOut(lsbOut_), constant(constant_), bitHeap(bitHeap_), targetUlpError(targetUlpError_)
+		wIn(msbIn_-lsbIn_+1), lsbOut(lsbOut_), constant(constant_), targetUlpError(targetUlpError_), bitHeap(bitHeap_)
 	{
 		srcFileName="FixRealKCMBH";
 
@@ -362,8 +364,14 @@ namespace flopoco{
 		setToolPrecision(10000);
 		evaluateConstantExpression(mpC, node,  getToolPrecision());// should be enough for everybody
 
-		if(mpfr_cmp_si(mpC, 0)<0)
-			throw string("FixRealKCMBH: only positive constants are supported");
+		//if the constant is negative, remake it positive and set negativeConstant
+		negativeConstant = false;
+		if(mpfr_cmp_si(mpC, 0) < 0)
+		{
+			//throw string("FixRealKCMBH: only positive constants are supported");
+			negativeConstant = true;
+			mpfr_abs(mpC, mpC, GMP_RNDN);
+		}
 
 		REPORT(DEBUG, "Constant evaluates to " << mpfr_get_d(mpC, GMP_RNDN));
 
@@ -380,7 +388,7 @@ namespace flopoco{
 
 		msbOut = msbC + msbIn;
 		
-		//FIXME: is this correct? the msbOut should never be less than lsbOut, no?
+		//FIXME: is this correct? the msbOut should never be less than lsbOut, right?
 		if(msbOut < lsbOut)
 			msbOut = lsbOut;
 		
@@ -437,6 +445,7 @@ namespace flopoco{
 			///////////////////////////////////  multiplication using 1 table only ////////////////////////////////////
 			REPORT(INFO, "Constant multiplication in a single table, will be correctly rounded");
 			g=0;
+			int bitheapSize = bitHeap->getMaxWeight() - bitHeap->getMinWeight()  + 1;
 
 			FixRealKCMBHTable *t;
 			t = new FixRealKCMBHTable(target, this, 0, 0, wIn, wOut, signedInput, false);
@@ -454,12 +463,22 @@ namespace flopoco{
 			
 			ySize = parentOp->getSignalByName(join("Y_kcmMult_", getuid()))->width();
 			//all but the msb, which is handled separately
-			for(int w=ySize-2; w>=0; w--)
+			for(int w=0; w<=ySize-2; w++)
 			{
 				stringstream s;
 				
-				s << join("Y_kcmMult_", getuid()) << of(w);
+				if(negativeConstant)
+					s << "not(" << join("Y_kcmMult_", getuid()) << of(w) << ")";
+				else
+					s << join("Y_kcmMult_", getuid()) << of(w);
+				
 				bitHeap->addBit(w, s.str());
+				
+				if(negativeConstant)
+				{
+					for(int w2=w; w2<bitheapSize; w2++)
+						bitHeap->addConstantOneBit(w2);
+				}
 			}
 			
 			//add the msb, complemented
@@ -471,12 +490,8 @@ namespace flopoco{
 			}
 			
 			//add the rest of the constant bits
-			for(int w=((int)bitHeap->getMaxWeight()-1); w>=ySize-1; w--)
-			{
-				//REPORT(DEBUG, "heapSize=" << bitHeap->getMaxWeight()-1 << " ySize=" << ySize << " iteration w=" << w << " added constant one bit");
-				
+			for(int w=ySize-1; w<bitheapSize; w++)
 				bitHeap->addConstantOneBit(w);
-			}
 		}
 		else
 		{
@@ -536,7 +551,9 @@ namespace flopoco{
 				parentOp->addSubComponent(t[i]);
 			}
 			
-			int bitHeapSize = bitHeap->getMaxWeight()-bitHeap->getMinWeight();
+			int bitheapSize = bitHeap->getMaxWeight()-bitHeap->getMinWeight();
+			
+			REPORT(DEBUG, "working with bitheap of size=" << bitheapSize);
 			
 			for(int i=0; i<nbOfTables; i++)
 			{
@@ -545,26 +562,28 @@ namespace flopoco{
 				parentOp->vhdl << parentOp->instance(t[i] , join("KCMTable_", i, "_kcmMult_", getuid()));
 				
 				//add the bits to the bit heap
-				for(int w = ppiSize[i]-1; w >= 0; w--)
+				for(int w=0; w<=ppiSize[i]-1; w++)
 				{
 					stringstream s;
 					
-					if((i == nbOfTables-1) && (w == ppiSize[i]-1))
-					{
+					if(((i == nbOfTables-1) && (w == ppiSize[i]-1)) || negativeConstant)
 						s << "not(pp" << i << "_kcmMult_" << getuid() << of(w) << ")";
-					}else
-					{
+					else
 						s << "pp" << i << "_kcmMult_" << getuid() << of(w);
-					}
+					
 					bitHeap->addBit(w, s.str());
+					
+					if(negativeConstant)
+					{
+						for(int w2=w; w2<bitheapSize; w2++)
+							bitHeap->addConstantOneBit(w2);
+					}
 				}
 				
-				if(i == nbOfTables-1)
+				if((i == nbOfTables-1) && (!negativeConstant))
 				{
-					for(int w= bitHeapSize; w>=ppiSize[i]-1; w--)
-					{
+					for(int w=ppiSize[i]-1; w<bitheapSize; w++)
 						bitHeap->addConstantOneBit(w);
-					}
 				}
 			}
 		}
@@ -604,13 +623,14 @@ namespace flopoco{
 		
 		// prepare the result
 		mpfr_t mpR;
-		mpfr_init2(mpR, 10*wOut);	
+		mpfr_init2(mpR, 10*wOut);
 		
 		//negate the constant if necessary
 		if(negativeConstant)
+		{
+			mpfr_abs(mpC, mpC, GMP_RNDN);
 			mpfr_neg(mpC, mpC, GMP_RNDN);
-			
-		mpfr_printf("in emulate - the value of the constant mpC = %.10Rf\n", mpC);
+		}
 		
 		// do the multiplication
 		mpfr_mul(mpR, mpX, mpC, GMP_RNDN);
@@ -625,6 +645,13 @@ namespace flopoco{
 
 		// clean up
 		mpfr_clears(mpX, mpR, NULL);
+		
+		//negate the constant if necessary, so the constant exits the function with the value it had before
+		//	mpC should exit as positive, right?
+		if(negativeConstant)
+		{
+			mpfr_abs(mpC, mpC, GMP_RNDN);
+		}
 	}
 
 	// void FixRealKCMBH::buildStandardTestCases(TestCaseList* tcl){
