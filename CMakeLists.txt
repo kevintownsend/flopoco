@@ -296,9 +296,11 @@ src/ConstMult/IntConstDiv3
  src/CORDIC/CordicSinCos
  src/FixedPointFIR
  
+ src/ConstMult/FixRealKCMBH
+ 
  src/FixedPointFIRBH
  
- src/ConstMult/FixRealKCMBH
+ src/FixedPointDCT
 
 # Floating-Point ----------------------------------------------------
 #--------------------------------------------------------------------

@@ -174,10 +174,11 @@ void usage(char *name, string opName = ""){
 	 }
 	 
 	 if ( full || opName == "FixSinPoly"){
-	 	OP("FixSinPoly","msbIn lsbIn msbOut lsbOut signed");
+	 	OP("FixSinPoly","msbIn lsbIn truncated msbOut lsbOut signed");
 	 	cerr << "      Operator computing X-X^3/6 for an integer X of size given by msbIn and lsbIn \n";
 	 	cerr << "      Result is faithfully truncated to the format msbOut lsbOut\n";
 	 	cerr << "      signed=0: unsigned;     signed=1: signed inputs, signed outputs \n";
+	 	cerr << "      truncated=0: full result;     truncated=1: truncated result \n";
 	 }
 	 
 	 if ( full || opName == "FixXPow3Div6"){
@@ -231,6 +232,14 @@ void usage(char *name, string opName = ""){
 		cerr << "      Faithful multiplier of a fixed-point input by a real constant\n";
 		cerr << "      The constant is provided as a Sollya expression, e.g \"log(2)\"\n";
 	}
+	
+	if ( full || opName == "FixRealKCMBH"){					
+		OP( "FixRealKCMBH","lsbIn msbIn signedInput lsbOut constant");
+		cerr << "      Faithful multiplier of a fixed-point input by a real constant\n";
+		cerr << "      The constant is provided as a Sollya expression, e.g \"log(2)\"\n";
+		cerr << "      Computations done using bit heaps\n";
+	}
+	
 	if ( full || opName == "FixedPointFIR"){
 		OP("FixedPointFIR","p taps [coeff list]");
 		cerr << "      A faithful FIR on an (1,p) fixed-point format\n";
@@ -239,6 +248,11 @@ void usage(char *name, string opName = ""){
 	if ( full || opName == "FixedPointFIRBH"){
 		OP("FixedPointFIRBH","p taps [coeff list]");
 		cerr << "      A faithful FIR on an (1,p) fixed-point format using bit heaps\n";
+	}
+	
+	if ( full || opName == "FixedPointDCT"){
+		OP("FixedPointDCT","p taps current_index");
+		cerr << "      A DCT2 on an (1,p) fixed-point format using bit heaps\n";
 	}
 #endif // HAVE_SOLLYA
 
@@ -1396,6 +1410,21 @@ bool parseCommandLine(int argc, char* argv[]){
 			}
 		}
 		
+		else if(opname=="FixedPointDCT")
+		{
+			int nargs = 3;
+			if (i+nargs > argc)
+				usage(argv[0],opname);
+			else {
+				int p 		= checkStrictlyPositive(argv[i++], argv[0]);
+				int taps 	= checkStrictlyPositive(argv[i++], argv[0]);
+				int k 		= checkPositiveOrNull(argv[i++], argv[0]);
+				
+				op = new FixedPointDCT(target, p, taps, k, true);
+				addOperator(op);
+			}
+		}
+		
 
 		/* Exploration of other fast adders */
 		else if(opname=="IntAdderSpecific"){ //Hidden
@@ -1542,17 +1571,18 @@ bool parseCommandLine(int argc, char* argv[]){
 		}
 		
 		else if(opname=="FixSinPoly"){
-			int nargs = 5;
+			int nargs = 6;
 			if (i+nargs > argc)
 				usage(argv[0],opname);
 			else {
 				int msbIn    	= atoi(argv[i++]);
 				int lsbIn    	= atoi(argv[i++]);
+				int truncated   = checkBoolean(argv[i++], argv[0]);
 				int msbOut   	= atoi(argv[i++]);
 				int lsbOut   	= atoi(argv[i++]);
-				int signedIO    =  checkBoolean(argv[i++], argv[0]);
+				int signedIO    = checkBoolean(argv[i++], argv[0]);
 				
-				FixSinPoly* mul = new FixSinPoly(target, msbIn, lsbIn, msbOut, lsbOut, signedIO);
+				FixSinPoly* mul = new FixSinPoly(target, msbIn, lsbIn, (truncated==0 ? false : true), msbOut, lsbOut, (signedIO==0 ? false : true));
 				op = mul;
 				addOperator(op);
 			}

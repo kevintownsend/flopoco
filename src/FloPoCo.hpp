@@ -126,6 +126,8 @@
 #include "FixedPointFIRBH.hpp"
 #include "ConstMult/FixRealKCMBH.hpp"
 
+#include "FixedPointDCT.hpp"
+
 #endif
 
 /* floating-point -------------------------------------------- */ 
