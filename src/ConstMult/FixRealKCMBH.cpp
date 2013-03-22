@@ -250,27 +250,27 @@ namespace flopoco{
 					{
 						stringstream s;
 						
-						if(negativeConstant || ((i == nbOfTables-1) && (w == ppiSize[i]-1)))
+						if(negativeConstant != (w==(ppiSize[i]-1) && i==(nbOfTables-1)))
 							s << "not(pp" << i << of(w) << ")";
 						else
 							s << "pp" << i << of(w);
 						
 						bitHeap->addBit(w, s.str());
-						
-						for(int w2=w; w2<wOut+g; w2++)
-							bitHeap->addConstantOneBit(w2);
 					}
 					
-					if((i == nbOfTables-1) && (!negativeConstant))
+					if(negativeConstant || (i==(nbOfTables-1)  && !negativeConstant))
 					{
-						for(int w=ppiSize[i]-1; w<wOut+g; w++)
+						for(int w=(((negativeConstant && i==(nbOfTables-1)) || (i==(nbOfTables-1))) ? ppiSize[i]-1 : ppiSize[i]); w<wOut+g; w++)
 							bitHeap->addConstantOneBit(w);
+						
+						if(negativeConstant)
+							bitHeap->addConstantOneBit(0);
 					}
 				}
 				
 				//FIXME: is this right?
 				//add one bit at weight g-1, for faithfull rounding
-				bitHeap->addConstantOneBit(g);
+				bitHeap->addConstantOneBit(g-1);
 				
 				//compress the bitheap and produce the result
 				bitHeap->generateCompressorVHDL();
@@ -566,25 +566,23 @@ namespace flopoco{
 				{
 					stringstream s;
 					
-					if(((i == nbOfTables-1) && (w == ppiSize[i]-1)) || negativeConstant)
+					if(negativeConstant != (w==(ppiSize[i]-1) && i==(nbOfTables-1)))
 						s << "not(pp" << i << "_kcmMult_" << getuid() << of(w) << ")";
 					else
 						s << "pp" << i << "_kcmMult_" << getuid() << of(w);
 					
 					bitHeap->addBit(w, s.str());
-					
-					if(negativeConstant)
-					{
-						for(int w2=w; w2<bitheapSize; w2++)
-							bitHeap->addConstantOneBit(w2);
-					}
 				}
 				
-				if((i == nbOfTables-1) && (!negativeConstant))
+				if(negativeConstant || (i==(nbOfTables-1)  && !negativeConstant))
 				{
-					for(int w=ppiSize[i]-1; w<bitheapSize; w++)
+					for(int w=(((negativeConstant && i==(nbOfTables-1)) || (i==(nbOfTables-1))) ? ppiSize[i]-1 : ppiSize[i]); w<bitheapSize; w++)
 						bitHeap->addConstantOneBit(w);
+					
+					if(negativeConstant)	
+						bitHeap->addConstantOneBit(0);
 				}
+				
 			}
 		}
 
