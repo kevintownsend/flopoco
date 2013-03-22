@@ -1,3 +1,6 @@
+#ifndef FixedPointFIRBH_HPP
+#define FixedPointFIRBH_HPP
+
 #include "Operator.hpp"
 #include "utils.hpp"
 
@@ -50,3 +53,5 @@ namespace flopoco{
 
 
 }
+
+#endif
