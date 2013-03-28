@@ -49,7 +49,7 @@ namespace flopoco {
 		 * @param[in] signedIO     false=unsigned, true=signed
 		 * @param[in] ratio            DSP block use ratio threshold
 		 **/
-		IntMultiplier(Target* target, int wX, int wY, int wOut=0, bool signedIO = false, 
+		IntMultiplier(Target* target, int wX, int wY, int wOut=0, bool signedIO = false,
 		              float ratio = 1.0, map<string, double> inputDelays = emptyDelayMap,bool enableSuperTiles=false);
 
 

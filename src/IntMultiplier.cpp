@@ -93,6 +93,11 @@ namespace flopoco {
 #define setCycle parentOp->setCycle
 #define oplist parentOp->getOpListR()
 
+//constant defining the minimum DSP area utilization ratio 
+//	(a small multiplier must use at least SMALL_MULT_RATIO of the total DSP area 
+//	in order to be implemented directly in a DSP)
+#define SMALL_MULT_RATIO 0.3
+
 	int IntMultiplier::neededGuardBits(int wX, int wY, int wOut)
 	{
 		int g;
@@ -165,7 +170,8 @@ namespace flopoco {
 		// possibly negate the smaller
 		if(!negate)
 			vhdl << tab << declare(addUID("YY"), wY, true) << " <= " << newyname << " ;" << endl;	 
-		else {	
+		else
+		{
 			vhdl << tab << "-- we compute -xy as x(not(y)+1)" << endl;
 			vhdl << tab << declare(addUID("YY"), wY, true) << " <= not " << newyname << " ;" << endl;	 
 		}
@@ -254,7 +260,7 @@ namespace flopoco {
 		multiplierUid=parentOp->getNewUId();
 		xname="X";
 		yname="Y";
-
+		
 		initialize();
 		lsbWeight=g; // g was computed in initialize()
 
@@ -396,39 +402,87 @@ namespace flopoco {
 		// Multiplications that fit directly into a DSP
 		int dspXSize, dspYSize;
 		
-		if(parentOp == NULL)
-			target->getDSPWidths(dspXSize, dspYSize, signedIO);
-		// if we are using at least half of the DSP, then just implement 
+		target->getDSPWidths(dspXSize, dspYSize, signedIO);
+		// if we are using at least SMALL_MULT_RATIO of the DSP, then just implement 
 		//	the multiplication in a DSP, without passing through a bitheap
-		if((wX > 0.5*dspXSize) && (wY > 0.5*dspYSize))
+		//	the last three conditions ensure that the multiplier can actually fit in a DSP
+		if((1.0*wX*wY >= 1.0*SMALL_MULT_RATIO*dspXSize*dspYSize) && (1.0*wX*wY < 1.0*dspXSize*dspYSize) && (wX <= dspXSize) && (wY <= dspYSize))
 		{
-			stringstream s;
+			ostringstream s, zerosXString, zerosYString, zerosYNegString;
 			int zerosX = dspXSize - wX + (signedIO ? 0 : 1);
 			int zerosY = dspYSize - wY + (signedIO ? 0 : 1);
+			int startingIndex, endingIndex;
 
 			if(zerosX<0)
 				zerosX=0;
 			if(zerosY<0)
 				zerosY=0;
+				
+			//sign extension (or zero-extension, if working with unsigned numbers)
+			if(signedIO)
+			{
+				//sign extension
+				zerosXString << "(";
+				for(int i=0; i<zerosX; i++)
+						zerosXString << addUID("XX") << of(wX-1) << (i!=(zerosX-1) ? " & " : ")");
+				zerosYString << "(";
+				zerosYNegString << "(";
+				for(int i=0; i<zerosY; i++)
+				{
+					zerosYString << addUID("YY") << of(wY-1) << (i!=(zerosY-1) ? " & " : ")");
+					zerosYNegString << addUID("YY") << "_neg" << of(wY-1) << (i!=(zerosY-1) ? " & " : ")");
+				}
+			}
+			else
+			{
+				//zero extension
+				zerosXString << "(" << zg(zerosX) << ")";
+				zerosYString << "(" << zg(zerosY) << ")";
+				zerosYNegString << "(" << og(zerosY) << ")";
+			}
+				
+			//if negated, the product becomes -xy = not(y)*x + x
+			//	TODO: this should be more efficient than negating the product at
+			//	the end, as it should be implemented in a single DSP, multiplication and addition
+			if(negate)
+				vhdl << tab << declare(join(addUID("YY"), "_neg"), wY+zerosY) << " <= " << zerosYNegString.str() << " & " << addUID("YY") << ";" << endl;
 
 			//manage the pipeline
-			if(parentOp == NULL)
-				manageCriticalPath(target->DSPMultiplierDelay());
+			manageCriticalPath(target->DSPMultiplierDelay());
 
 			vhdl << tab << declare(join("DSP_mult_", getuid()), dspXSize+dspYSize+(signedIO ? 0 : 2))
-						 << " <= (" << zg(zerosX) << " & " << addUID("XX") << ")"
-						 << " *" 
-						 << " (" << zg(zerosY) << " & " << addUID("YY") << ");" << endl;
-
-			s << join("DSP_mult_", getuid());
+						 << " <= (" << zerosXString.str() << " & " << addUID("XX") << ")"
+						 << " *";
+			if(negate)
+				vhdl	 <<	" (" << addUID("YY") << "_neg);" << endl;
+			else
+				vhdl	 << " (" << zerosYString.str() << " & " << addUID("YY") << ");" << endl;
+			
+			s << "DSP_mult_" << getuid();
 			
 			//manage the pipeline
-			if(parentOp == NULL)
-				syncCycleFromSignal(s.str());
+			syncCycleFromSignal(s.str());
 			
-			for(int w=(wX+wY-wOut); w<(wX+wY); w++)
+			//add the bits of x*(not y)
+			endingIndex	  = dspXSize+(signedIO ? 0 : 1)+dspYSize+(signedIO ? 0 : 1)-zerosX-zerosY;
+			startingIndex = endingIndex-wX-wY+(wX+wY-wOut-g);
+			
+			//for(int w=(wX+wY-wOut); w<(wX+wY); w++)
+			for(int w=startingIndex; w<endingIndex; w++)
+				bitHeap->addBit(lsbWeight+w-startingIndex, join(s.str(), of(w)));
+			
+			//add the bits of x
+			if(negate)
 			{
-				bitHeap->addBit(lsbWeight + w-(wX+wY-wOut), join(s.str(), of(w)));
+				endingIndex	  = wX;
+				startingIndex = 0+(wX+wY-wOut-g);
+				
+				for(int w=startingIndex; w<endingIndex; w++)
+					bitHeap->addBit(lsbWeight+w-startingIndex, join(addUID("XX"), of(w)));
+					
+				//x, when added, should be sign-extended
+				for(int w=endingIndex; w<wOut; w++)
+					bitHeap->addBit(lsbWeight+w-startingIndex, join(addUID("XX"), of(wX-1)));
 			}
 			
 			// this should be it
@@ -443,11 +497,14 @@ namespace flopoco {
 		//		setCycle(0); // TODO F2D FIXME for the virtual multiplier case where inputs can arrive later
 		// setCriticalPath(initialCP);
 
-		if(negate) {
+		if(negate)
+		{
 			vhdl << tab << "-- Finish the negation of the product (-xy as x(not(y)+1)) by adding XX " << endl;
-			for(int i=0; i<wX; i++) {
+			for(int i=0; i<wX; i++)
+			{
 				int w = lsbWeight + i-weightShift;
-				if(w>=0) {
+				if(w>=0)
+				{
 					ostringstream rhs;
 					if(signedIO){
 						rhs << addUID("not XX") << of(i);
@@ -463,13 +520,14 @@ namespace flopoco {
 #endif
 
 		if(useDSP) 
-			{
-				REPORT(DETAILED,"useDSP");
-				 parentOp->getTarget()->getDSPWidths(wxDSP, wyDSP, signedIO);
-				buildTiling();
-			}
-
-		else {// This target has no DSP, going for a logic-only implementation	
+		{
+			REPORT(DETAILED,"useDSP");
+			parentOp->getTarget()->getDSPWidths(wxDSP, wyDSP, signedIO);
+			buildTiling();
+		}
+		else 
+		{
+			// This target has no DSP, going for a logic-only implementation	
 			buildLogicOnly();
 		}
 
@@ -1614,39 +1672,45 @@ namespace flopoco {
 
 
 
-	void IntMultiplier::emulate ( TestCase* tc ) {
+	void IntMultiplier::emulate (TestCase* tc)
+	{
 		mpz_class svX = tc->getInputValue("X");
 		mpz_class svY = tc->getInputValue("Y");
 		mpz_class svR;
 
-		if (! signedIO){
+		if(!signedIO)
+		{
 			svR = svX * svY;
 		}
-
-		else{ // Manage signed digits
+		else
+		{
+			// Manage signed digits
 			mpz_class big1 = (mpz_class(1) << (wXdecl));
 			mpz_class big1P = (mpz_class(1) << (wXdecl-1));
 			mpz_class big2 = (mpz_class(1) << (wYdecl));
 			mpz_class big2P = (mpz_class(1) << (wYdecl-1));
 
-			if ( svX >= big1P)
+			if(svX >= big1P)
 				svX -= big1;
 
-			if ( svY >= big2P)
+			if(svY >= big2P)
 				svY -= big2;
 
 			svR = svX * svY;
 		}
+		
 		if(negate)
 			svR = -svR;
 
 		// manage two's complement at output
-		if ( svR < 0){
+		if(svR < 0)
+		{
 			svR += (mpz_class(1) << wFull); 
 		}
 		if(wTruncated==0) 
 			tc->addExpectedOutput("R", svR);
-		else {
+		else
+		{
 			// there is truncation, so this mult should be faithful
 			svR = svR >> wTruncated;
 			tc->addExpectedOutput("R", svR);
