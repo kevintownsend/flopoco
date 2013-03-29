@@ -266,7 +266,8 @@ namespace flopoco{
 					outPortMap (sm, "R", join("piP",i));
 					vhdl << instance ( sm, join("Product_",i) );
 					syncCycleFromSignal(join("piP",i)); 
-				
+					
+					nextCycle(); // Argh
 					setCriticalPath( sm->getOutputDelay("R") );
 					vhdl << tab << "-- the delay at the output of the multiplier is : " << sm->getOutputDelay("R") << endl;
 

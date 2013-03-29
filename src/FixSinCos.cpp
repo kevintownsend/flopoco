@@ -133,15 +133,15 @@ FixSinCos::FixSinCos(Target * target, int w_, float ratio):Operator(target), w(w
 
 	/*********************************** THE TABLES **************************************/
 
-	// upper log2 of memory width needed for table
-	int wg_log2 = (int) ceil ((double) log2 (w+g));
-	int bram_words = target->sizeOfMemoryBlock() / (1u << wg_log2);
-	int bram_words_log2 = (int) floor ((double) log2 (bram_words));
+#if 0
 	// FIXME: assumes that both
 	// -the memory width is a power of 2
 	// -the bram can always be used as dual-port (one for sin, one for cos)
 	//  with width >=w+g
-#if 0
+	// upper log2 of memory width needed for table
+	int wg_log2 = (int) ceil ((double) log2 (w+g));
+	int bram_words = target->sizeOfMemoryBlock() / (1u << wg_log2);
+	int bram_words_log2 = (int) floor ((double) log2 (bram_words));
 	if (wA <= bram_words_log2-1)
 		wA = bram_words_log2-1;
 #endif
@@ -273,7 +273,7 @@ FixSinCos::FixSinCos(Target * target, int w_, float ratio):Operator(target), w(w
 	if (wZ3o6 < 2)
 		wZ3o6 = 2; //using 1 will generate bad vhdl
 
-	if(wZ3o6<=10) {
+	if(wZ3o6<=12) {
 		vhdl << tab << "-- First truncate Z" << endl;
 		vhdl << tab << declare("Z_truncToZ3o6", wZ3o6) << " <= Z" << range(wZ-1, wZ-wZ3o6) << ";" << endl;
 		FunctionTable *z3o6Table;
@@ -497,6 +497,8 @@ FixSinCos::FixSinCos(Target * target, int w_, float ratio):Operator(target), w(w
 	// TODO
 #else
 	setCycleFromSignal("Z2o2");
+	nextCycle();
+
 #endif
 
 	// // vhdl:id (SinPiA -> S_out_1)

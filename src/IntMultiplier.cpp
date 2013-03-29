@@ -494,20 +494,24 @@ namespace flopoco {
 
 #if 1
 		// Finish the negation of the smaller input by adding X (since -yx=not(y)x +x)
+
 		//		setCycle(0); // TODO F2D FIXME for the virtual multiplier case where inputs can arrive later
 		// setCriticalPath(initialCP);
 
 		if(negate)
 		{
-			vhdl << tab << "-- Finish the negation of the product (-xy as x(not(y)+1)) by adding XX " << endl;
+			vhdl << tab << "-- Finish the negation of the product (-xy as x((111..111-y)+111..111)) by adding XX + 2^wY.not XX +  2^wY" << endl;
+
+			// Adding XX
 			for(int i=0; i<wX; i++)
 			{
 				int w = lsbWeight + i-weightShift;
 				if(w>=0)
 				{
 					ostringstream rhs;
-					if(signedIO){
+					if(signedIO && i==wX-1){
 						rhs << addUID("not XX") << of(i);
+						// sign extension
 						for(unsigned int j=i; j<bitHeap->getMaxWeight(); j++)
 							bitHeap->addConstantOneBit(j); 
 					}
@@ -516,6 +520,22 @@ namespace flopoco {
 					bitHeap->addBit(w, rhs.str());
 				}
 			}
+
+			// Adding 2^(wY+1) not XX
+			for(int i=0; i<wX; i++)
+			{
+				int w = wY + lsbWeight + i-weightShift;
+				if(w>=0 && w<bitHeap->getMaxWeight())
+				{
+					ostringstream rhs;
+					rhs << "not " << addUID("XX") << of(i);
+					bitHeap->addBit(w, rhs.str());
+				}
+			}
+			int w = wY + lsbWeight -weightShift;
+			if(w>=0 && w<bitHeap->getMaxWeight())
+				bitHeap->addConstantOneBit(wY + lsbWeight -weightShift); 
+
 		}
 #endif
 
@@ -737,12 +757,9 @@ namespace flopoco {
 
 			SmallMultTable *tUU, *tSU, *tUS, *tSS;
 
-
-			// The output size of tUU needs to be one bit larger in case of negation:
-			// example for dx=3, dy=3, -0*0 = 0 (positive), -7*7=-49 (negative but sign bit at weight 6)
-			tUU = new SmallMultTable( target, dx, dy, dx+dy, false, false, false);
-
-			//useSoftRAM(tUU);
+			// In the negate case we will negate the bits coming out of this table
+			tUU = new SmallMultTable( target, dx, dy, dx+dy, false /*negate*/, false /*signx*/, false/*signy*/);
+			useSoftRAM(tUU);
 			//oplist.push_back(tUU);
 			tUU->addToGlobalOpList();
 
@@ -750,18 +767,18 @@ namespace flopoco {
 			{ // need for 4 different tables
 
 				tSU = new SmallMultTable( target, dx, dy, dx+dy, false, true, false );
-				//useSoftRAM(tSU);
+				useSoftRAM(tSU);
 				// oplist.push_back(tSU);
 				tSU->addToGlobalOpList();
 
 				tUS = new SmallMultTable( target, dx, dy, dx+dy, false, false, true );
-				//useSoftRAM(tUS);
+				useSoftRAM(tUS);
 				// oplist.push_back(tUS);
 				tUS->addToGlobalOpList();
 
 
 				tSS = new SmallMultTable( target, dx, dy, dx+dy, false, true, true );
-				//useSoftRAM(tSS);
+				useSoftRAM(tSS);
 				//oplist.push_back(tSS);
 				tSS->addToGlobalOpList();
 
@@ -794,7 +811,7 @@ namespace flopoco {
 							t=tUU; 
 					}
 
-					//smallMultTable needed only if it is on the left size of the truncation 	
+					//smallMultTable needed only if it is on the left of the truncation line
 					if(dx*(ix+1)+dy*(iy+1)+topX+topY-padX-padY > wFull-wOut-g)
 					{
 						bitHeap->getPlotter()->addSmallMult(dx*(ix)+topX-padX, dy*(iy)+topY-padY,dx,dy);
