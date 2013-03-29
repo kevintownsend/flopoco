@@ -1037,28 +1037,15 @@ namespace flopoco
 				
 				REPORT(DEBUG, "checkpoint 0: compression type 0, starting compressions");
 				
-				int startingIndex = minWeight;
-				
 				while(getMaxHeight() >= 3)
 				{
-					int currentColumnIndex = startingIndex;
-					
-					REPORT(DEBUG, "checkpoint 1: maxHeight=" << getMaxHeight() << " maxHeight limit=3");
-					
-					compress(stage, possibleCompressors.size()-1, &startingIndex);
+					compress(stage);
 
 					plotter->heapSnapshot(didCompress, plottingCycle, plottingCP);
 					plottingCycle=0;
 					plottingCP=0;
 					
-					if(startingIndex != currentColumnIndex)
-					{
-						stage++;
-						startingIndex++;
-					}
-						
-					if(startingIndex == maxWeight)
-						startingIndex = minWeight;
+					stage++;
 				}
 			}
 			else
@@ -1074,20 +1061,13 @@ namespace flopoco
 				{
 					int currentColumnIndex = startingIndex;
 					
-					compress(stage, possibleCompressors.size()-1, &startingIndex);
+					compress(stage);
 
 					plotter->heapSnapshot(didCompress, plottingCycle, plottingCP);
 					plottingCycle=0;
 					plottingCP=0;
 					
-					if(startingIndex != currentColumnIndex)
-					{
-						stage++;
-						startingIndex++;
-					}
-						
-					if(startingIndex == maxWeight)
-						startingIndex = minWeight;
+					stage++;
 				}
 				
 				if(compressionType > 0)
@@ -2209,23 +2189,16 @@ namespace flopoco
 
 
 	//the compression
-	void BitHeap::compress(int stage, int lutCompressionLevel, int* startingIndex)
+	void BitHeap::compress(int stage)
 	{
 		plottingStage = stage;
 
 		unsigned w;
 		didCompress = false;
 
-		REPORT(DEBUG, "maxWeight="<< maxWeight);
-		REPORT(DEBUG, "Column height before compression");
-		for (w=0; w<bits.size(); w++) {
-			REPORT(DEBUG, "   w=" << w << ":\t height=" << bits[w].size());
-			printColumnInfo(w);
-		}
-
 		concatenateLSBColumns();
 
-
+		//update cnt
 		for(unsigned i=minWeight; i<maxWeight; i++)
 		{
 			cnt[i]=0;
@@ -2239,9 +2212,17 @@ namespace flopoco
 		}
 
 
+		REPORT(DEBUG, "maxWeight=" << maxWeight);
+		REPORT(DEBUG, "stage=" << stage);
+		REPORT(DEBUG, "Column height before compression");
+		for (w=0; w<bits.size(); w++)
+		{
+			REPORT(DEBUG, "   w=" << w << ":\t height=" << bits[w].size() << "\t cnt[w]=" << cnt[w]);
+			printColumnInfo(w);
+		}
+		
 
 		//extra additions for lsb columns
-
 		unsigned index = minWeight;
 		unsigned columnIndex;
 		double timeLatestBitAdded=0.0e-12, timeFirstBitNotAdded=1;
@@ -2253,17 +2234,17 @@ namespace flopoco
 		//search for lsb columns that won't be compressed at the current stage
 		//REPORT(INFO, endl);
 
-		while((index<maxWeight-1) && ((cnt[index]<=2)&&(cnt[index]>0)))
+		while((index<maxWeight) && ((cnt[index]<=2)&&(cnt[index]>0)))
 		{
-			//REPORT(INFO, "cnt[" << index <<"]="<< cnt[index]);
 			list<WeightedBit*>::iterator it = bits[index].begin();
-			columnIndex=0;
+			columnIndex = 0;
+			
 			while(columnIndex<cnt[index]-1)
 			{
-				columnIndex++;
 				it++;
+				columnIndex++;
 			}
-
+			
 			if (timeLatestBitAdded < (*it)->getCycle()*(1/op->getTarget()->frequency()) +
 			    (*it)->getCriticalPath((*it)->getCycle()))
 			{
@@ -2272,9 +2253,8 @@ namespace flopoco
 				possiblyLatestBitAdded = *it;
 			}
 
-
-
-			it++;
+			if(cnt[index] > 1)
+				it++;
 
 			if (timeFirstBitNotAdded > (*it)->getCycle()*(1/op->getTarget()->frequency()) +
 			    (*it)->getCriticalPath((*it)->getCycle()))
@@ -2291,9 +2271,10 @@ namespace flopoco
 				latestBitAdded = possiblyLatestBitAdded;
 			}
 
-
 			index++;
 		}
+		
+		REPORT(DEBUG,"checked for adder in last columns; found adder from " << minWeight << " to " << adderMaxWeight);
 
 		if(adderMaxWeight > minWeight)
 		{
@@ -2324,7 +2305,19 @@ namespace flopoco
 
 			//didCompress = true;
 		}
-		//=============================
+		
+		//update cnt
+		for(unsigned i=minWeight; i<maxWeight; i++)
+		{
+			cnt[i]=0;
+			for(list<WeightedBit*>::iterator it = bits[i].begin(); it!=bits[i].end(); it++)
+			{
+				if((*it)->computeStage(stagesPerCycle, elementaryTime)<=stage)
+				{
+					cnt[i]++;
+				}
+			}
+		}
 		
 
 		//--------------- Compress with ADD3s ----------------------------------
@@ -2590,23 +2583,19 @@ namespace flopoco
 		//----------------------------------------------------------------------
 
 
-		REPORT(DEBUG,"start compressing "<< maxWeight);
+		REPORT(DEBUG,"start compressing maxHeight=" << maxWeight);
 		
 		/*
 		 * Try to use only optimal compressors. When going through the columns, 
 		 * if the compressible bits in a column are not enough to fill an OPTIMAL 
 		 * compressor, then leave the bits unprocessed and move on to the next column
 		 */
-		int i, j, k;
-		bool appliedCompressor;
+		int i, j;
 		
-		//i = minWeight;		//column index
-		i = *startingIndex;
+		i = minWeight;		//column index
 		j = 0;				//compressor index
-		while(j <= lutCompressionLevel)
+		while(j < possibleCompressors.size())
 		{
-			appliedCompressor = false;
-			
 			while(i < maxWeight)
 			{
 				while(
@@ -2625,8 +2614,6 @@ namespace flopoco
 							cnt[i+1]-=possibleCompressors[j]->getColumnSize(1);
 							didCompress = true;
 							usedCompressors[j]=true;
-							
-							appliedCompressor = true;
 						}
 					}
 					else
@@ -2639,21 +2626,6 @@ namespace flopoco
 							cnt[i]-=possibleCompressors[j]->getColumnSize(0);
 							didCompress = true;
 							usedCompressors[j]=true;
-							
-							appliedCompressor = true;
-						}
-					}
-				}
-				
-				//update the next three (actually, the log of the size of the largest compressor) columns
-				for(int k=i; ((k<=i+2) && (k<maxWeight)); k++)
-				{
-					cnt[k]=0;
-					for(list<WeightedBit*>::iterator it = bits[k].begin(); it!=bits[k].end(); it++)
-					{
-						if((*it)->computeStage(stagesPerCycle, elementaryTime) <= stage)
-						{
-							cnt[k]++;
 						}
 					}
 				}
@@ -2661,12 +2633,21 @@ namespace flopoco
 				i++;
 			}
 			
-			if(appliedCompressor == true)
-				break;
-			
-			*startingIndex = *startingIndex + 1;
 			i = minWeight;
 			j++;
+		}
+		
+		//update the next three (actually, the log of the size of the largest compressor) columns
+		for(int i=minWeight; i<maxWeight; i++)
+		{
+			cnt[i]=0;
+			for(list<WeightedBit*>::iterator it = bits[i].begin(); it!=bits[i].end(); it++)
+			{
+				if((*it)->computeStage(stagesPerCycle, elementaryTime) <= stage)
+				{
+					cnt[i]++;
+				}
+			}
 		}
 				
 	}

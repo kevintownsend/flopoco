@@ -214,11 +214,8 @@ namespace flopoco{
 		/**
 		 * Compress the bitheap using compressors
 		 * @param stage: the compression stage
-		 * @param lutCompressionLevel: the maximum index in the list of generated 
-		 * 		compressors until which compressors will be used
-		 * @param startingIndex: the column index from which to start compressions
 		 **/
-		void compress(int stage, int lutCompressionLevel, int* startingIndex);
+		void compress(int stage);
 
 		/** return the current height a column (bits not yet compressed) */
 		unsigned currentHeight(unsigned w);
