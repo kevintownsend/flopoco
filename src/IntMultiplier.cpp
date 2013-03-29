@@ -221,7 +221,6 @@ namespace flopoco {
 
 		fillBitHeap();
 
-
 		// leave the compression to the parent op
 	}
 
@@ -289,7 +288,7 @@ namespace flopoco {
 		setCriticalPath(getMaxInputDelays ( inputDelays_ ));
 
 		fillBitHeap();
-
+		
 		bitHeap -> generateCompressorVHDL();			
 		vhdl << tab << "R" << " <= " << bitHeap-> getSumName() << range(wOut+g-1, g) << ";" << endl;
 	}
@@ -402,7 +401,7 @@ namespace flopoco {
 		// Multiplications that fit directly into a DSP
 		int dspXSize, dspYSize;
 		
-		target->getDSPWidths(dspXSize, dspYSize, signedIO);
+		parentOp->getTarget()->getDSPWidths(dspXSize, dspYSize, signedIO);
 		// if we are using at least SMALL_MULT_RATIO of the DSP, then just implement 
 		//	the multiplication in a DSP, without passing through a bitheap
 		//	the last three conditions ensure that the multiplier can actually fit in a DSP
@@ -489,7 +488,6 @@ namespace flopoco {
 			return;
 		}
 
-
 		// Now getting more and more generic
 
 #if 1
@@ -525,7 +523,7 @@ namespace flopoco {
 			for(int i=0; i<wX; i++)
 			{
 				int w = wY + lsbWeight + i-weightShift;
-				if(w>=0 && w<bitHeap->getMaxWeight())
+				if(w>=0 && w<(int)bitHeap->getMaxWeight())
 				{
 					ostringstream rhs;
 					rhs << "not " << addUID("XX") << of(i);
@@ -533,7 +531,7 @@ namespace flopoco {
 				}
 			}
 			int w = wY + lsbWeight -weightShift;
-			if(w>=0 && w<bitHeap->getMaxWeight())
+			if(w>=0 && w<(int)bitHeap->getMaxWeight())
 				bitHeap->addConstantOneBit(wY + lsbWeight -weightShift); 
 
 		}
