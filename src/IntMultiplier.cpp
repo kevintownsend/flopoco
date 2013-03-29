@@ -232,7 +232,7 @@ namespace flopoco {
 
 	// The constructor for a stand-alone operator
 	IntMultiplier::IntMultiplier (Target* target_, int wX_, int wY_, int wOut_, bool signedIO_, float ratio_, map<string, double> inputDelays_, bool enableSuperTiles_):
-		Operator ( target_, inputDelays_ ), wxDSP(0), wyDSP(0), wXdecl(wX_), wYdecl(wY_), wX(0), wY(0), wOut(wOut_), wFull(0), ratio(ratio_),  maxError(0.0), negate(false), signedIO(signedIO_),enableSuperTiles(enableSuperTiles_), target(target_)
+		Operator ( target_, inputDelays_ ), wxDSP(0), wyDSP(0), wXdecl(wX_), wYdecl(wY_), wX(0), wY(0), wOut(wOut_), wFull(0), ratio(ratio_),  maxError(0.0), negate(true), signedIO(signedIO_),enableSuperTiles(enableSuperTiles_), target(target_)
 	{
 		srcFileName="IntMultiplier";
 		setCopyrightString ( "Florent de Dinechin, Kinga Illyes, Bogdan Popa, Bogdan Pasca, 2012" );
@@ -437,7 +437,8 @@ namespace flopoco {
 				//zero extension
 				zerosXString << "(" << zg(zerosX) << ")";
 				zerosYString << "(" << zg(zerosY) << ")";
-				zerosYNegString << "(" << og(zerosY) << ")";
+				//zerosYNegString << "(" << og(zerosY) << ")";
+				zerosYNegString << "(" << zg(zerosY) << ")";
 			}
 				
 			//if negated, the product becomes -xy = not(y)*x + x
@@ -470,18 +471,37 @@ namespace flopoco {
 			for(int w=startingIndex; w<endingIndex; w++)
 				bitHeap->addBit(lsbWeight+w-startingIndex, join(s.str(), of(w)));
 			
-			//add the bits of x
+			//add the bits of x, (not x)<<2^wY, 2^wY
 			if(negate)
 			{
+				//add x
 				endingIndex	  = wX;
 				startingIndex = 0+(wX+wY-wOut-g);
-				
 				for(int w=startingIndex; w<endingIndex; w++)
 					bitHeap->addBit(lsbWeight+w-startingIndex, join(addUID("XX"), of(w)));
 					
 				//x, when added, should be sign-extended
-				for(int w=endingIndex; w<wOut; w++)
-					bitHeap->addBit(lsbWeight+w-startingIndex, join(addUID("XX"), of(wX-1)));
+				if(signedIO)
+					for(int w=endingIndex; w<wOut; w++)
+						bitHeap->addBit(lsbWeight+w-startingIndex, join(addUID("XX"), of(wX-1)));
+					
+				if(!signedIO)
+				{
+					//add x<<2^wY
+					endingIndex	  = wX+wY;
+					startingIndex = 0+(wX+wY-wOut-g)+wY;
+					for(int w=startingIndex; w<endingIndex; w++)
+					{
+						ostringstream s;
+						
+						s << "not(" << addUID("XX") << of(w-wY) << ")";
+						
+						bitHeap->addBit(lsbWeight+w-startingIndex+wY, s.str());
+					}
+						
+					//add 2^wY
+					bitHeap->addConstantOneBit(wY);
+				}
 			}
 			
 			// this should be it
