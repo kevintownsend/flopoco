@@ -164,6 +164,9 @@ noinst_HEADERS = \
           FixSinCos.hpp \
           CORDIC/FixedPointSinOrCos.hpp \
           CORDIC/CordicSinCos.hpp \
+          FixedPointFIR.hpp \
+          FixedPointFIRBH.hpp \
+          FixedPointDCT.hpp \
           FPAddSub.hpp \
           random/urng/LutSrRng.hpp
 
@@ -264,6 +267,7 @@ libflopoco_la_SOURCES = \
                         CORDIC/CordicSinCos.cpp \
                         FixedPointFIR.cpp \
                         FixedPointFIRBH.cpp \
+                        FixedPointDCT.cpp \
                         ConstMult/FixRealKCMBH.cpp \
                         FPAdderDualPath.cpp \
                         FPAdderSinglePath.cpp \
