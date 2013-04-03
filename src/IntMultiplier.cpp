@@ -97,6 +97,7 @@ namespace flopoco {
 //	(a small multiplier must use at least SMALL_MULT_RATIO of the total DSP area 
 //	in order to be implemented directly in a DSP)
 #define SMALL_MULT_RATIO 0.3
+//#define SMALL_MULT_RATIO 0.9
 
 	int IntMultiplier::neededGuardBits(int wX, int wY, int wOut)
 	{
@@ -401,7 +402,10 @@ namespace flopoco {
 		// Multiplications that fit directly into a DSP
 		int dspXSize, dspYSize;
 		
-		parentOp->getTarget()->getDSPWidths(dspXSize, dspYSize, signedIO);
+		if(parentOp != NULL)
+			parentOp->getTarget()->getDSPWidths(dspXSize, dspYSize, signedIO);
+		else
+			getTarget()->getDSPWidths(dspXSize, dspYSize, signedIO);
 		// if we are using at least SMALL_MULT_RATIO of the DSP, then just implement 
 		//	the multiplication in a DSP, without passing through a bitheap
 		//	the last three conditions ensure that the multiplier can actually fit in a DSP
@@ -429,7 +433,8 @@ namespace flopoco {
 				for(int i=0; i<zerosY; i++)
 				{
 					zerosYString << addUID("YY") << of(wY-1) << (i!=(zerosY-1) ? " & " : ")");
-					zerosYNegString << addUID("YY") << "_neg" << of(wY-1) << (i!=(zerosY-1) ? " & " : ")");
+					//zerosYNegString << addUID("YY") << "_neg" << of(wY-1) << (i!=(zerosY-1) ? " & " : ")");
+					zerosYNegString << addUID("YY") << of(wY-1) << (i!=(zerosY-1) ? " & " : ")");
 				}
 			}
 			else
@@ -437,7 +442,6 @@ namespace flopoco {
 				//zero extension
 				zerosXString << "(" << zg(zerosX) << ")";
 				zerosYString << "(" << zg(zerosY) << ")";
-				//zerosYNegString << "(" << og(zerosY) << ")";
 				zerosYNegString << "(" << zg(zerosY) << ")";
 			}
 				
@@ -448,7 +452,7 @@ namespace flopoco {
 				vhdl << tab << declare(join(addUID("YY"), "_neg"), wY+zerosY) << " <= " << zerosYNegString.str() << " & " << addUID("YY") << ";" << endl;
 
 			//manage the pipeline
-			manageCriticalPath(target->DSPMultiplierDelay());
+			manageCriticalPath(parentOp->getTarget()->DSPMultiplierDelay());
 
 			vhdl << tab << declare(join("DSP_mult_", getuid()), dspXSize+dspYSize+(signedIO ? 0 : 2))
 						 << " <= (" << zerosXString.str() << " & " << addUID("XX") << ")"
@@ -461,15 +465,14 @@ namespace flopoco {
 			s << "DSP_mult_" << getuid();
 			
 			//manage the pipeline
-			syncCycleFromSignal(s.str());
+			//syncCycleFromSignal(s.str());
 			
 			//add the bits of x*(not y)
-			endingIndex	  = dspXSize+(signedIO ? 0 : 1)+dspYSize+(signedIO ? 0 : 1)-zerosX-zerosY;
-			startingIndex = endingIndex-wX-wY+(wX+wY-wOut-g);
-			
-			//for(int w=(wX+wY-wOut); w<(wX+wY); w++)
+			endingIndex	  = wX+wY;
+			startingIndex = 0+(wX+wY-wOut-g);
 			for(int w=startingIndex; w<endingIndex; w++)
-				bitHeap->addBit(lsbWeight+w-startingIndex, join(s.str(), of(w)));
+				if(w-startingIndex >= 0)
+					bitHeap->addBit(w-startingIndex, join(s.str(), of(w)));
 			
 			//add the bits of x, (not x)<<2^wY, 2^wY
 			if(negate)
@@ -478,29 +481,34 @@ namespace flopoco {
 				endingIndex	  = wX;
 				startingIndex = 0+(wX+wY-wOut-g);
 				for(int w=startingIndex; w<endingIndex; w++)
-					bitHeap->addBit(lsbWeight+w-startingIndex, join(addUID("XX"), of(w)));
+					if(w-startingIndex >= 0)
+						bitHeap->addBit(w-startingIndex, join(addUID("XX"), of(w)));
 					
 				//x, when added, should be sign-extended
 				if(signedIO)
-					for(int w=endingIndex; w<wOut; w++)
-						bitHeap->addBit(lsbWeight+w-startingIndex, join(addUID("XX"), of(wX-1)));
+					for(int w=endingIndex; w<wOut+g+(wX+wY-wOut-g); w++)
+						if(w-startingIndex >= 0)
+							bitHeap->addBit(w-startingIndex, join(addUID("XX"), of(wX-1)));
+				
 					
 				if(!signedIO)
 				{
-					//add x<<2^wY
-					endingIndex	  = wX+wY;
-					startingIndex = 0+(wX+wY-wOut-g)+wY;
+					//add (not x)<<2^(wY+1)
+					endingIndex	  = wX+wY-(wX+wY-wOut-g);
+					startingIndex = wY-(wX+wY-wOut-g);
 					for(int w=startingIndex; w<endingIndex; w++)
 					{
 						ostringstream s;
 						
-						s << "not(" << addUID("XX") << of(w-wY) << ")";
+						s << "not(" << addUID("XX") << of(w-startingIndex) << ")";
 						
-						bitHeap->addBit(lsbWeight+w-startingIndex+wY, s.str());
+						if((w >= 0) && (w < wOut+g))
+							bitHeap->addBit(w, s.str());
 					}
 						
-					//add 2^wY
-					bitHeap->addConstantOneBit(wY);
+					//add 2^(wY+1)
+					if(wY+1-(wX+wY-wOut-g) >= 0)
+						bitHeap->addConstantOneBit(wY+1-(wX+wY-wOut-g));
 				}
 			}
 			
