@@ -51,9 +51,14 @@ namespace flopoco{
 			tempCoeff_ld = getDCT2FilterCoeff(i);
 			
 			//FIXME: find a better conversion
+			/*
 			ostringstream tempString;
 			tempString << tempCoeff_ld;
 			coeff.push_back(tempString.str());
+			*/
+			string tempString;
+			tempString = getDCT2FilterCoeffString(i);
+			coeff.push_back(tempString);
 			
 			mpfr_init2	(tempCoeff, 10*(1+p));
 			mpfr_init2	(mpcoeff[i], 10*(1+p));
@@ -125,6 +130,7 @@ namespace flopoco{
 	{
 		mpfr_t coeffValue, temp;
 		long double result;
+		string resultString;
 		
 		mpfr_init2(temp, 10*(1+p));
 		mpfr_init2(coeffValue, 10*(1+p));
@@ -140,6 +146,16 @@ namespace flopoco{
 		mpfr_clears(temp, coeffValue, (mpfr_ptr)0);
 		
 		return result;
+	};
+	
+	//create the string that generates the i-th coefficient using Sollya
+	string FixedPointDCT::getDCT2FilterCoeffString(int i)
+	{
+		ostringstream result;
+		
+		result << "cos(" << "pi/" << N << "*(" << i << "+0.5)*" << k << ")";
+		
+		return result.str();
 	};
 
 	

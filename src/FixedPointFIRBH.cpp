@@ -3,6 +3,8 @@
 #include "gmp.h"
 #include "mpfr.h"
 
+#include "sollya.h"
+
 #include "FixedPointFIRBH.hpp"
 
 #include "ConstMult/FixRealKCMBH.hpp"
@@ -18,7 +20,7 @@ namespace flopoco{
 		name<<"FixedPointFIRBH_"<<p<<"_uid"<<getNewUId(); 
 		setName(name.str()); 
 	
-		setCopyrightString("Florent de Dinechin (2013)");		
+		setCopyrightString("Florent de Dinechin, Matei Istoan (2013)");		
 
 		n=coeff.size();
 
@@ -43,14 +45,26 @@ namespace flopoco{
 		
 		for(int i=0; i< n; i++)
 		{
-			// parse the coeffs from the string. TODO: replace with Sollya parsing
-			mpfr_init_set_str(mpcoeff[i], coeff[i].c_str(), 10, GMP_RNDN);
-			if(mpfr_get_d(mpcoeff[i], GMP_RNDN) < 0)
+			// parse the coeffs from the string, with Sollya parsing
+			sollya_node_t node;
+			mpfr_t mpC;
+			
+			node = parseString(coeff[i].c_str());
+			// If conversion did not succeed (i.e. parse error)
+			if(node == 0)
 			{
-				coeffsign[i] = 1;
-				
-				cout << "AAAA  " << coeff[i] << endl;
+				ostringstream error;
+				error << srcFileName << ": Unable to parse string " << coeff[i] << " as a numeric constant" << endl;
+				throw error.str();
 			}
+
+			mpfr_init2(mpC, 10000);
+			setToolPrecision(10000);
+			evaluateConstantExpression(mpC, node,  getToolPrecision());
+			
+			mpfr_init_set(mpcoeff[i], mpC, GMP_RNDN);
+			if(mpfr_get_d(mpcoeff[i], GMP_RNDN) < 0)
+				coeffsign[i] = 1;
 			else
 				coeffsign[i] = 0;
 			

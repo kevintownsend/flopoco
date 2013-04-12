@@ -10,6 +10,7 @@
 #include <gmp.h>
 #include <mpfr.h>
 #include <gmpxx.h>
+#include <string.h>
 
 #include "sollya.h"
 
@@ -43,6 +44,7 @@ namespace flopoco{
 		
 		//TODO: revert back to returning an mpfr_t
 		long double getDCT2FilterCoeff(int i);
+		string getDCT2FilterCoeffString(int i);
 		
 		
 		int p;  					/**< The precision of inputs and outputs */ 
