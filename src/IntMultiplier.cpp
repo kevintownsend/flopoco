@@ -233,7 +233,7 @@ namespace flopoco {
 
 	// The constructor for a stand-alone operator
 	IntMultiplier::IntMultiplier (Target* target_, int wX_, int wY_, int wOut_, bool signedIO_, float ratio_, map<string, double> inputDelays_, bool enableSuperTiles_):
-		Operator ( target_, inputDelays_ ), wxDSP(0), wyDSP(0), wXdecl(wX_), wYdecl(wY_), wX(0), wY(0), wOut(wOut_), wFull(0), ratio(ratio_),  maxError(0.0), negate(true), signedIO(signedIO_),enableSuperTiles(enableSuperTiles_), target(target_)
+		Operator ( target_, inputDelays_ ), wxDSP(0), wyDSP(0), wXdecl(wX_), wYdecl(wY_), wX(0), wY(0), wOut(wOut_), wFull(0), ratio(ratio_),  maxError(0.0), negate(false), signedIO(signedIO_),enableSuperTiles(enableSuperTiles_), target(target_)
 	{
 		srcFileName="IntMultiplier";
 		setCopyrightString ( "Florent de Dinechin, Kinga Illyes, Bogdan Popa, Bogdan Pasca, 2012" );
@@ -406,6 +406,22 @@ namespace flopoco {
 			parentOp->getTarget()->getDSPWidths(dspXSize, dspYSize, signedIO);
 		else
 			getTarget()->getDSPWidths(dspXSize, dspYSize, signedIO);
+			
+		//correct the DSP sizes for Altera targets
+		if(parentOp->getTarget()->getVendor() == "Altera")
+		{
+			if(dspXSize > 18)
+				if(signedIO)
+					dspXSize = 17;
+				else
+					dspXSize = 18;
+			if(dspYSize > 18)
+				if(signedIO)
+					dspYSize = 17;
+				else
+					dspYSize = 18;
+		}
+		
 		// if we are using at least SMALL_MULT_RATIO of the DSP, then just implement 
 		//	the multiplication in a DSP, without passing through a bitheap
 		//	the last three conditions ensure that the multiplier can actually fit in a DSP
@@ -578,16 +594,17 @@ namespace flopoco {
 		}
 
 
-#if 0
-		// TODO F2D revive? The following turns truncation into rounding, except that the overhead is large for small multipliers.
-		if(g>0) {
+
+		// The following turns truncation into rounding, except that the overhead is large for small multipliers.
+		if(g>0)
+		{
 			int weight = lsbWeight-1;
 			if(negate)
 				bitHeap->subConstantOneBit(weight);
 			else
 				bitHeap->addConstantOneBit(weight);
 		}
-#endif
+
 
 
 #if GENERATE_SVG
