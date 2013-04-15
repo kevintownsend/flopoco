@@ -185,9 +185,9 @@ namespace flopoco{
 			mpfr_div_2si (x, x, p, GMP_RNDD);						// multiply this integer by 2^-p to obtain a fixed-point value; this rounding is again exact
 
 			mpfr_mul(t, x, mpcoeff[i], GMP_RNDN);					// Here rounding possible, but precision used is ridiculously high so it won't matter
-			
+					
 			if(coeffsign[i]==1)
-				mpfr_neg(t, t, GMP_RNDN); 
+				mpfr_neg(t, t, GMP_RNDN);
 
 			mpfr_add(s, s, t, GMP_RNDN); 							// same comment as above
 		}

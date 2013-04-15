@@ -50,12 +50,6 @@ namespace flopoco{
 			
 			tempCoeff_ld = getDCT2FilterCoeff(i);
 			
-			//FIXME: find a better conversion
-			/*
-			ostringstream tempString;
-			tempString << tempCoeff_ld;
-			coeff.push_back(tempString.str());
-			*/
 			string tempString;
 			tempString = getDCT2FilterCoeffString(i);
 			coeff.push_back(tempString);
