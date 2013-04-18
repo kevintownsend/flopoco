@@ -189,8 +189,16 @@ namespace flopoco{
 					vhdl << "("<< size-1 << " downto " << pSize<< " => "<< join("P",i) << of(pSize-1) << ")" << " & " ;
 				vhdl << join("P",i) << ");" << endl;
 			}
-			// TODO this is a truncation, we should add one half ulp first
+			
+			
+			// Truncation, we should add one half ulp first
+			/*
 			vhdl << tab << "R <= " <<  join("S", n) << range(size-1, size-wO) << ";" << endl;
+			*/
+			
+			//Adding one half ulp to obtain correct rounding
+			vhdl << tab << declare("R_int", wO+1) << " <= " <<  join("S",n-1) << " + (" << zg(wO) << " & \'1\';" << endl;
+			vhdl << tab << "R <= " <<  "R_int" << range(wO, 1) << ";" << endl;
 		}
 			
 	};
