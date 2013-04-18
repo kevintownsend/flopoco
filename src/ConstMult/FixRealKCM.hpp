@@ -3,6 +3,8 @@
 #include "../Operator.hpp"
 #include "../Table.hpp"
 
+#include "../BitHeap.hpp"
+
 namespace flopoco{
 
 
@@ -12,13 +14,21 @@ namespace flopoco{
 	public:
 
 		/** Input size will be msbIn-lsbIn+1 if unsigned, msbIn-lsbIn+2 if signed */
-		FixRealKCM(Target* target, int lsbIn, int msbIn, bool signedInput, int lsbOut, string constant, 
+		FixRealKCM(Target* target, int lsbIn, int msbIn, bool signedInput, int lsbOut, string constant,
+							 double targetUlpError = 1.0, map<string, double> inputDelays = emptyDelayMap,
+							 bool useBitheap = false);
+							 
+		FixRealKCM(Operator* parentOp, Target* target, Signal* multiplicandX, int lsbIn, int msbIn, bool signedInput, int lsbOut, string constant,
+							 BitHeap* bitheap,
 							 double targetUlpError = 1.0, map<string, double> inputDelays = emptyDelayMap);
+							 
 		~FixRealKCM();
 
 		// Overloading the virtual functions of Operator
 	  
 		void emulate(TestCase* tc);
+		
+		static int neededGuardBits(Target* target, int wIn, int lsbOut, double targetUlpError);
 
 		int lsbIn;
 		int msbIn;
@@ -32,6 +42,13 @@ namespace flopoco{
 		mpfr_t mpC;
 		int msbC;
 		int g;
+		
+		bool useBitheap;
+		
+		bool negativeConstant;
+		
+		BitHeap*	bitHeap;    			/**< The heap of weighted bits that will be used to do the additions */
+		Operator*	parentOp;				/**< The operator which envelops this constant multiplier */
 
 	};
   

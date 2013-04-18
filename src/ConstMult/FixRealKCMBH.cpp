@@ -36,7 +36,7 @@ namespace flopoco{
 
 
 
-	//standalone operator 
+	//standalone operator
 	FixRealKCMBH::FixRealKCMBH(Target* target, int lsbIn_, int msbIn_, bool signedInput_, int lsbOut_, string constant_, double targetUlpError_, map<string, double> inputDelays) :
 		Operator(target, inputDelays), lsbIn(lsbIn_), msbIn(msbIn_), signedInput(signedInput_),
 		wIn(msbIn_-lsbIn_+1), lsbOut(lsbOut_), constant(constant_), targetUlpError(targetUlpError_)
@@ -186,7 +186,7 @@ namespace flopoco{
 				g=0; // specific case: two CR table make up a faithful sum
 			else
 				g = ceil(log2(nbOfTables/((targetUlpError-0.5)*exp2(-lsbOut)))) -1 -lsbOut;
-
+				
 			REPORT(DEBUG, "g=" << g);
 
 			// All the tables are read in parallel
@@ -268,9 +268,8 @@ namespace flopoco{
 					}
 				}
 				
-				//FIXME: is this right?
 				//add one bit at weight g-1, for faithfull rounding
-				bitHeap->addConstantOneBit(g-1);
+				bitHeap->addConstantOneBit(g-1);				
 				
 				//compress the bitheap and produce the result
 				bitHeap->generateCompressorVHDL();
@@ -279,7 +278,7 @@ namespace flopoco{
 				vhdl << declare("OutRes", wOut+g) << " <= " << bitHeap->getSumName() << range(wOut+g-1, 0) << ";" << endl;
 			}
 			else
-			{ 
+			{
 				// 2 tables only
 				Operator* adder;
 				
@@ -592,7 +591,8 @@ namespace flopoco{
 
 
 
-	FixRealKCMBH::~FixRealKCMBH() {
+	FixRealKCMBH::~FixRealKCMBH()
+	{
 		// TODO 
 	}
 
@@ -636,9 +636,11 @@ namespace flopoco{
 		// scale back to an integer
 		mpfr_mul_2si(mpR, mpR, -lsbOut, GMP_RNDN); //Exact
 		mpz_class svRu, svRd;
+		
 		mpfr_get_z(svRd.get_mpz_t(), mpR, GMP_RNDD);
-		mpfr_get_z(svRu.get_mpz_t(), mpR, GMP_RNDU); 
 		tc->addExpectedOutput("R", svRd);
+		
+		mpfr_get_z(svRu.get_mpz_t(), mpR, GMP_RNDU);
 		tc->addExpectedOutput("R", svRu);
 
 		// clean up
@@ -729,7 +731,6 @@ namespace flopoco{
 
 	mpz_class FixRealKCMBHTable::function(int x0)
 	{
-		
 		if(wIn < 2)
 		{
 			// Now we want to compute the product correctly rounded to LSB  lsbOut-g
@@ -794,7 +795,8 @@ namespace flopoco{
 			mpfr_get_z(result.get_mpz_t(), mpR, GMP_RNDN); // Should be exact
 
 			// Gimme back two's complement
-			if(signedInput) {
+			if(signedInput)
+			{
 				if ( x0 > (1<<(wIn-1))-1 ) // if x was negative
 					result = result + (mpz_class(1)<<wOut);
 			}
