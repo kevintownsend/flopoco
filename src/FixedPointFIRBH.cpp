@@ -31,13 +31,12 @@ namespace flopoco{
 		ostringstream clist;
 		for (int i=0; i< n; i++)
 			clist << "    " << coeff[i] << ", ";
-		REPORT(INFO, "Building a "<< n << "-tap FIR of precision "<< p << " for coefficients " << clist.str())
+		REPORT(INFO, "Building a "<< n << "-tap FIR of precision "<< p << " for coefficients " << clist.str());
 
 		// guard bits for a faithful result
 		int g= 1+ intlog2(n-1); 
 		REPORT(INFO, "g=" << g);
 
-		//mpcoeff = calloc(n, sizeof(mpfr_t)); // too clever for me
 		mpfr_t absCoeff, sumAbsCoeff;
 		mpfr_init2 (absCoeff, 10*(1+p));
 		mpfr_init2 (sumAbsCoeff, 10*(1+p));
@@ -158,11 +157,6 @@ namespace flopoco{
 			
 	};
 	
-	void buildFIR(){
-		
-		
-	}
-
 	
 	void FixedPointFIRBH::emulate(TestCase * tc)
 	{

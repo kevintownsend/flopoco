@@ -1,6 +1,8 @@
 #include "Operator.hpp"
 #include "utils.hpp"
 
+#include "BitHeap.hpp"
+
 /*  All flopoco operators and utility functions are declared within
   the flopoco namespace.
     You have to use flopoco:: or using namespace flopoco in order to access these
@@ -12,19 +14,23 @@ namespace flopoco{
 	// new operator class declaration
 	class FixedPointFIR : public Operator {
 	public:
-		int p;  /**< The precision of inputs and outputs */ 
-		int n;  /**< number of taps */
-		vector<string> coeff;  /**< the coefficients as strings */
-		mpfr_t mpcoeff[10000];  /**< the absolute values of the coefficients as MPFR numbers */
-		bool coeffsign[10000];  /**< the signs of the coefficients */
+		int p;							/**< The precision of inputs and outputs */ 
+		int n;							/**< number of taps */
+		vector<string> coeff;			/**< the coefficients as strings */
+		mpfr_t mpcoeff[10000];			/**< the absolute values of the coefficients as MPFR numbers */
+		bool coeffsign[10000];			/**< the signs of the coefficients */
 
-		int wO;  /**< output size, will be computed out of the constants */
+		int wO;							/**< output size, will be computed out of the constants */
+		
+		BitHeap* bitHeap;    			/**< The heap of weighted bits that will be used to do the additions */
+		
+		bool useBitheap;
 
 	public:
 		// definition of some function for the operator    
 
 		// constructor, defined there with two parameters
-		FixedPointFIR(Target* target, int p_, vector<string> coeff_);
+		FixedPointFIR(Target* target, int p_, vector<string> coeff_, bool useBitheap = true);
 
 		// destructor
 		~FixedPointFIR() {};
