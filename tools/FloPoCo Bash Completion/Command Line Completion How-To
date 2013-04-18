@@ -1,0 +1,20 @@
+Command completion for FloPoCo How-To
+
+1) How do I use the command completion feature?
+	Easy. Just start typying and when you don't know how to complete the rest press [TAB].
+	
+2) What do I need to do to get it working?
+	Step 1: Enable the command line completion feature, if it's not already enabled. You can do that by
+			un-commenting the following lines in you .bashrc file (NOTE: the comments before need to remain commented-out):
+				# enable programmable completion features (you don't need to enable
+				# this, if it's already enabled in /etc/bash.bashrc and /etc/profile
+				# sources /etc/bash.bashrc).
+				if [ -f /etc/bash_completion ] && ! shopt -oq posix; then
+				    . /etc/bash_completion
+				fi
+	Step 2: If the file 'flopoco' (which should be in this directory also) is not already coppied to /etc/bash_completion.d , then you should do it
+	
+3) What else id there to do?
+	If you make your own operators and want to have completions for them, then you should 
+	probably add then to the 'flopoco' file that is coppied to /etc/bash_completion.d, in the
+	appropriate places.
