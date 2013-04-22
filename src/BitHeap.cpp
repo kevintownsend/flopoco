@@ -175,12 +175,14 @@ namespace flopoco
 		if (weight<0)
 			THROWERROR("Negative weight (" << weight << ") in addSignedBitVector");
 
- 		if(weight+size>maxWeight) {
+ 		if(weight+size>maxWeight)
+ 		{
 			REPORT(INFO, "in subtractUnsignedBitVector: Size of signal " << x << " is " << size <<
 			       ", adding it at weight " << weight << " overflows the bit heap (maxWeight=" << maxWeight << ")");
 		}
 
-		for(unsigned i=0; i<size; i++){
+		for(unsigned i=0; i<size; i++)
+		{
 			ostringstream rhs;
 			if(i==size-1) // complement for sign extension
 				rhs << "not ";
@@ -983,6 +985,8 @@ namespace flopoco
 			if (1 == ((constantBits>>w) & 1) )
 				addBit(w, "'1'","",2);
 		}
+		
+		op->vhdl << endl;
 
 		printBitHeapStatus();
 
@@ -2253,9 +2257,12 @@ namespace flopoco
 				possiblyLatestBitAdded = *it;
 			}
 
-			if(cnt[index] > 1)
+			if((cnt[index] > 1) && (columnIndex < bits[index].size()-1))
+			{
 				it++;
-
+				columnIndex++;
+			}
+			
 			if (timeFirstBitNotAdded > (*it)->getCycle()*(1/op->getTarget()->frequency()) +
 			    (*it)->getCriticalPath((*it)->getCycle()))
 			{
