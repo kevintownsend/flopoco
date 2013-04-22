@@ -488,7 +488,23 @@ namespace flopoco {
 			startingIndex = 0+(wX+wY-wOut-g);
 			for(int w=startingIndex; w<endingIndex; w++)
 				if(w-startingIndex >= 0)
-					bitHeap->addBit(w-startingIndex, join(s.str(), of(w)));
+				{
+					if((wOut > (bitHeap->getMaxHeight()-bitHeap->getMinWeight())) && (w == (endingIndex-1)))
+					{	
+						s.str("");
+						s << "not DSP_mult_" << getuid();
+						
+						bitHeap->addBit(w-startingIndex, join(s.str(), of(w)));
+					}
+					else
+						bitHeap->addBit(w-startingIndex, join(s.str(), of(w)));
+				}
+						
+			if(wOut < (bitHeap->getMaxWeight()-bitHeap->getMinWeight()))
+			{
+				for(int w=endingIndex-1; w<bitHeap->getMaxWeight(); w++)
+					bitHeap->addConstantOneBit(w);
+			}
 			
 			//add the bits of x, (not x)<<2^wY, 2^wY
 			if(negate)
@@ -505,6 +521,12 @@ namespace flopoco {
 					for(int w=endingIndex; w<wOut+g+(wX+wY-wOut-g); w++)
 						if(w-startingIndex >= 0)
 							bitHeap->addBit(w-startingIndex, join(addUID("XX"), of(wX-1)));
+				
+				if(wOut < (bitHeap->getMaxHeight()-bitHeap->getMinWeight()))
+				{
+					for(int w=wOut+g+(wX+wY-wOut-g); w<bitHeap->getMaxWeight(); w++)
+						bitHeap->addBit(w-startingIndex, join(addUID("XX"), of(wX-1)));
+				}
 				
 					
 				if(!signedIO)
