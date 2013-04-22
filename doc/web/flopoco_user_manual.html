@@ -529,6 +529,41 @@ These operators are described in <a href="http://hal-ens-lyon.archives-ouvertes.
     <dd> Correctly rounded floating-point division by d.2^e, where d is a small odd integer. alpha=-1 means a sensible default.</dd>
 </dl>
 
+<h3>Fixed-point elementary functions</h3>
+
+<dl>
+  <dt><code style="color: blue;">FixSinCos w</code></dt>
+    <dd>For a fixed-point 2's complement input x in [-1,1[, calculates
+      (1-2^(-w))*{sin,cos}(pi*x); w is the precision not counting the sign bit</dd>
+</dl>
+<dl>
+  <dt><code style="color: blue;">FixSinOrCos w d</code></dt>
+    <dd>Computes (1-2^(-w)) sin(pi*x) or (1-2^(-w)) cos(pi*x) for x in -[1,1[, ;
+      w is the fixed-point precision of inputs and outputs, not counting the sign bit
+      d: degree of the polynomial-based method (-1 should default to something sensible)</dd>
+</dl>
+<dl>
+  <dt><code style="color: blue;">CordicSinCos wIn wOut reduced</code></dt>
+    <dd>Computes (1-2^(-w)) sin(pi*x) and (1-2^(-w)) cos(pi*x) for x in -[1,1[, ;
+      wIn and wOut are the fixed-point precision of inputs and outputs (not counting the sign bit)
+      reduced : if 1,  reduced number of iterations at the cost of two multiplications </dd>
+</dl>
+<dl>
+  <dt><code style="color: blue;">FixedPointFIR p useBitheap taps [coeff list]</code></dt>
+    <dd>A faithful FIR on an (1,p) fixed-point format.
+      The filter may, or may not use bit heaps </dd>
+</dl>
+<dl>
+  <dt><code style="color: blue;">FixedPointFIR p useBitheap taps [coeff list]</code></dt>
+    <dd>A faithful FIR on an (1,p) fixed-point format.
+      The filter may, or may not use bit heaps</dd>
+</dl>
+<dl>
+  <dt><code style="color: blue;">FixedPointDCT p taps current_index</code></dt>
+    <dd>A DCT2 on an (1,p) fixed-point format. 
+      The filter uses bit heaps</dd>
+</dl>
+
 
 <h3>Floating-point elementary functions</h3>
 
