@@ -169,7 +169,7 @@ void usage(char *name, string opName = ""){
 	 	cerr << "      Integer multiplier of two integers X and Y of sizes wInX and wInY \n";
 	 	cerr << "      Result is faithfully truncated to wOut bits  (wOut=0 means: full multiplier)\n";
 	 	cerr << "      signed=0: unsigned multiplier;     signed=1: signed inputs, signed outputs \n";
-		cerr << "      0 <= ratio <= 1; shows how much of a DSP block's area is acceptable to be left unused\n";
+	 	cerr << "      0 <= ratio <= 1; shows how much of a DSP block's area is acceptable to be left unused\n";
 		cerr << "      enableSuperTiles=0 =>  lower latency, higher logic cost; enableSuperTiles=1=> lower logic cost, longer latency \n";
 	 }
 	 
@@ -228,31 +228,22 @@ void usage(char *name, string opName = ""){
 	}
 #ifdef HAVE_SOLLYA
 	if ( full || opName == "FixRealKCM"){					
-		OP( "FixRealKCM","lsbIn msbIn signedInput lsbOut constant");
+		OP( "FixRealKCM","lsbIn msbIn signedInput lsbOut constant useBitheap");
 		cerr << "      Faithful multiplier of a fixed-point input by a real constant\n";
 		cerr << "      The constant is provided as a Sollya expression, e.g \"log(2)\"\n";
-	}
-	
-	if ( full || opName == "FixRealKCMBH"){					
-		OP( "FixRealKCMBH","lsbIn msbIn signedInput lsbOut constant");
-		cerr << "      Faithful multiplier of a fixed-point input by a real constant\n";
-		cerr << "      The constant is provided as a Sollya expression, e.g \"log(2)\"\n";
-		cerr << "      Computations done using bit heaps\n";
+		cerr << "      The multiplier might or might not us bit heaps, based on the value of the useBitheap parameter\n";
 	}
 	
 	if ( full || opName == "FixedPointFIR"){
-		OP("FixedPointFIR","p taps [coeff list]");
+		OP("FixedPointFIR","p useBitheap taps [coeff list]");
 		cerr << "      A faithful FIR on an (1,p) fixed-point format\n";
-	}
-	
-	if ( full || opName == "FixedPointFIRBH"){
-		OP("FixedPointFIRBH","p taps [coeff list]");
-		cerr << "      A faithful FIR on an (1,p) fixed-point format using bit heaps\n";
+		cerr << "      The filter may, or may not use bit heaps\n";
 	}
 	
 	if ( full || opName == "FixedPointDCT"){
-		OP("FixedPointDCT","p taps current_index");
+		OP("FixedPointDCT","p useBitheap taps current_index");
 		cerr << "      A DCT2 on an (1,p) fixed-point format using bit heaps\n";
+		cerr << "      The filter uses bit heaps\n";
 	}
 #endif // HAVE_SOLLYA
 
@@ -994,7 +985,7 @@ bool parseCommandLine(int argc, char* argv[]){
 
 #ifdef HAVE_SOLLYA
 		else if(opname=="FixRealKCM"){
-			int nargs = 5;
+			int nargs = 6;
 			if (i+nargs > argc)
 				usage(argv[0],opname);
 			else {
@@ -1003,24 +994,10 @@ bool parseCommandLine(int argc, char* argv[]){
 				int signedInput = checkBoolean(argv[i++], argv[0]);
 				int lsbOut = atoi(argv[i++]);
 				string constant = argv[i++];
-				op = new FixRealKCM(target, lsbIn, msbIn, signedInput, lsbOut, constant);
+				int useBitheap = checkBoolean(argv[i++], argv[0]);
+				op = new FixRealKCM(target, lsbIn, msbIn, signedInput, lsbOut, constant, 1.0, emptyDelayMap, useBitheap);
 				addOperator(op);
-			}        
-		}
-		
-		else if(opname=="FixRealKCMBH"){
-			int nargs = 5;
-			if (i+nargs > argc)
-				usage(argv[0],opname);
-			else {
-				int lsbIn = atoi(argv[i++]);
-				int msbIn = atoi(argv[i++]);
-				int signedInput = checkBoolean(argv[i++], argv[0]);
-				int lsbOut = atoi(argv[i++]);
-				string constant = argv[i++];
-				op = new FixRealKCMBH(target, lsbIn, msbIn, signedInput, lsbOut, constant);
-				addOperator(op);
-			}        
+			}
 		}
 		
 		else if(opname=="FixRealKCMExpert"){ // hidden, for debug
@@ -1374,6 +1351,7 @@ bool parseCommandLine(int argc, char* argv[]){
 				usage(argv[0],opname);
 			else {
 				int p = checkStrictlyPositive(argv[i++], argv[0]);
+				int useBitheap = checkBoolean(argv[i++], argv[0]);
 				int taps = checkStrictlyPositive(argv[i++], argv[0]);
 				if (i+taps > argc)
 					usage(argv[0],opname);
@@ -1383,28 +1361,7 @@ bool parseCommandLine(int argc, char* argv[]){
 						{
 							coeff.push_back(argv[i++]);
 						}
-					op = new FixedPointFIR(target, p, coeff);
-					addOperator(op);
-				}
-			}
-		}
-		
-		else if(opname=="FixedPointFIRBH")
-		{
-			if (i+3 > argc)
-				usage(argv[0],opname);
-			else {
-				int p = checkStrictlyPositive(argv[i++], argv[0]);
-				int taps = checkStrictlyPositive(argv[i++], argv[0]);
-				if (i+taps > argc)
-					usage(argv[0],opname);
-				else {
-					std::vector<string> coeff;
-					for (int j = 0; j < taps; j++) 
-						{
-							coeff.push_back(argv[i++]);
-						}
-					op = new FixedPointFIRBH(target, p, coeff);
+					op = new FixedPointFIR(target, p, coeff, useBitheap);
 					addOperator(op);
 				}
 			}
@@ -1536,11 +1493,11 @@ bool parseCommandLine(int argc, char* argv[]){
 			if (i+nargs > argc)
 				usage(argv[0],opname);
 			else {
-				int wInX    = checkStrictlyPositive(argv[i++], argv[0]);
-				int wInY    = checkStrictlyPositive(argv[i++], argv[0]);
-				int wOut    = atoi(argv[i++]);
-				int signedIO    =  checkBoolean(argv[i++], argv[0]);
-				float ratio = atof(argv[i++]);
+				int wInX		    = checkStrictlyPositive(argv[i++], argv[0]);
+				int wInY		    = checkStrictlyPositive(argv[i++], argv[0]);
+				int wOut		    = atoi(argv[i++]);
+				int signedIO	    =  checkBoolean(argv[i++], argv[0]);
+				float ratio			= atof(argv[i++]);
 				int buildSuperTiles =  checkBoolean(argv[i++], argv[0]);
 				IntMultiplier* mul=new IntMultiplier(target, wInX, wInY, wOut, signedIO, ratio, emptyDelayMap,buildSuperTiles);
 				op = mul;
@@ -1565,7 +1522,7 @@ bool parseCommandLine(int argc, char* argv[]){
 				int wOut    = atoi(argv[i++]);
 				int buildSuperTiles = false ;// checkBoolean(argv[i++], argv[0]);
 #endif
-				FixMultAdd* op=new FixMultAdd(target, wInX, wInY, wA, wA, wA-1, 0, signedIO, ratio);
+				FixMultAdd* op=new FixMultAdd(target, wInX /*wX*/, wInY /*wY*/, wA /*wA*/, wA /*wOut*/, wA-1 /*msbP*/, 0 /*lsbA*/, signedIO, ratio);
 				addOperator(op);
 			}
 		}

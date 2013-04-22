@@ -1,18 +1,4 @@
-
-#include "Operator.hpp"
-
 #ifdef HAVE_SOLLYA
-
-#include <iostream>
-#include <sstream>
-#include <vector>
-#include <gmp.h>
-#include <mpfr.h>
-#include <gmpxx.h>
-
-#include "sollya.h"
-
-#include "utils.hpp"
 
 #include "FixedPointDCT.hpp"
 
@@ -95,7 +81,7 @@ namespace flopoco{
 			int wIn = p + 1;	//p bits + 1 sign bit
 			int lsbOut = -p-g;
 			double targetUlpError = 1.0;
-			int temp = FixRealKCMBH::neededGuardBits(target, wIn, lsbOut, targetUlpError);
+			int temp = FixRealKCM::neededGuardBits(target, wIn, lsbOut, targetUlpError);
 			
 			if(temp > guardBitsKCM)
 				guardBitsKCM = temp;
@@ -105,9 +91,10 @@ namespace flopoco{
 		REPORT(INFO, "Sum size with KCM guard bits is: "<< size);
 		
 		// Creating the FIR filter that will compute the DCT2
-		FixedPointFIRBH* filter = new FixedPointFIRBH(target, 	// the target FPGA
+		FixedPointFIR* filter = new FixedPointFIR(target, 		// the target FPGA
 														p, 			// the size of the inputs
-														coeff		// the constants
+														coeff,		// the constants
+														true		// use bit heaps
 													);
 		addSubComponent(filter);
 		for(int i=0; i<N; i++)

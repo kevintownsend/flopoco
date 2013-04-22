@@ -7,6 +7,7 @@
 #include <iostream>
 #include <sstream>
 #include <vector>
+
 #include <gmp.h>
 #include <mpfr.h>
 #include <gmpxx.h>
@@ -14,10 +15,12 @@
 
 #include "sollya.h"
 
-#include "BitHeap.hpp"
-#include "ConstMult/FixRealKCMBH.hpp"
+#include "Operator.hpp"
 
-#include "FixedPointFIRBH.hpp"
+#include "BitHeap.hpp"
+#include "ConstMult/FixRealKCM.hpp"
+
+#include "FixedPointFIR.hpp"
 
 namespace flopoco{
 

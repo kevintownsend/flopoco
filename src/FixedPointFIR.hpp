@@ -1,3 +1,6 @@
+#ifndef FixedPointFIR_HPP
+#define FixedPointFIR_HPP
+
 #include "Operator.hpp"
 #include "utils.hpp"
 
@@ -30,7 +33,7 @@ namespace flopoco{
 		// definition of some function for the operator    
 
 		// constructor, defined there with two parameters
-		FixedPointFIR(Target* target, int p_, vector<string> coeff_, bool useBitheap = true);
+		FixedPointFIR(Target* target, int p_, vector<string> coeff_, bool useBitheap = false);
 
 		// destructor
 		~FixedPointFIR() {};
@@ -52,3 +55,5 @@ namespace flopoco{
 
 
 }
+
+#endif
