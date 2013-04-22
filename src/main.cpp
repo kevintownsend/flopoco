@@ -241,7 +241,7 @@ void usage(char *name, string opName = ""){
 	}
 	
 	if ( full || opName == "FixedPointDCT"){
-		OP("FixedPointDCT","p useBitheap taps current_index");
+		OP("FixedPointDCT","p taps current_index");
 		cerr << "      A DCT2 on an (1,p) fixed-point format using bit heaps\n";
 		cerr << "      The filter uses bit heaps\n";
 	}
