@@ -20,4 +20,4 @@ flopoco FixedPointDCT 4 32 1
 flopoco FixedPointDCT 8 32 1
 flopoco FixedPointDCT 16 32 1
 flopoco FixedPointDCT 24 32 1
-flopoco FixedPointDCT 32 32 1 
+flopoco FixedPointDCT 32 32 1

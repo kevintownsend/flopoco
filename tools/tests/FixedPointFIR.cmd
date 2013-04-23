@@ -32,4 +32,4 @@ flopoco  FixedPointFIR 8 1 4 0.1 0.2 0.3 0.4
 flopoco  FixedPointFIR 16 1 4 0.1 0.2 0.3 0.4
 flopoco  FixedPointFIR 24 1 4 0.1 0.2 0.3 0.4
 flopoco  FixedPointFIR 32 1 4 0.1 0.2 0.3 0.4
-flopoco  FixedPointFIR 48 1 4 0.1 0.2 0.3 0.4 
+flopoco  FixedPointFIR 48 1 4 0.1 0.2 0.3 0.4
