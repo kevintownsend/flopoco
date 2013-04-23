@@ -102,6 +102,9 @@ namespace flopoco{
 		outPortMap(filter, "R", "R_int");
 		vhdl << instance(filter, "FIR_filter");
 		
+		//manage the critical path
+		setCycleFromSignal("R_int");
+		
 		vhdl << tab << "R" << " <= R_int;" << endl;			
 	};
 	

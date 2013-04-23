@@ -33,7 +33,7 @@ namespace flopoco{
 		// definition of some function for the operator    
 
 		// constructor, defined there with two parameters
-		FixedPointFIR(Target* target, int p_, vector<string> coeff_, bool useBitheap = false);
+		FixedPointFIR(Target* target, int p_, vector<string> coeff_, bool useBitheap = false, map<string, double> inputDelays = emptyDelayMap);
 
 		// destructor
 		~FixedPointFIR() {};

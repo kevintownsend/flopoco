@@ -13,7 +13,9 @@ using namespace std;
 namespace flopoco{
 
 
-	FixedPointFIR::FixedPointFIR(Target* target, int p_, vector<string> coeff_, bool useBitheap_) : Operator(target), p(p_), coeff(coeff_), useBitheap(useBitheap_) {
+	FixedPointFIR::FixedPointFIR(Target* target, int p_, vector<string> coeff_, bool useBitheap_, map<string, double> inputDelays) : 
+		Operator(target), p(p_), coeff(coeff_), useBitheap(useBitheap_)
+	{
 		srcFileName="FixedPointFIR";
 					
 		ostringstream name;
@@ -23,15 +25,18 @@ namespace flopoco{
 		setCopyrightString("Florent de Dinechin (2013)");
 
 		n=coeff.size();
+		
+		//manage the critical path
+		setCriticalPath(getMaxInputDelays(inputDelays));
 
 		for (int i=0; i< n; i++)
-			addInput(join("X",i), 1+p); // sign + p bits, from weights -1 to -p
-		
+			addInput(join("X",i), 1+p); // sign + p bits, from weights -1 to -p		
 
+		//reporting on the filter
 		ostringstream clist;
 		for (int i=0; i< n; i++)
 			clist << "    " << coeff[i] << ", ";
-		REPORT(INFO, "Building a "<< n << "-tap FIR of precision "<< p << " for coefficients " << clist.str());
+		REPORT(INFO, "Building a " << n << "-tap FIR of precision " << p << " for coefficients " << clist.str());
 
 		// guard bits for a faithful result
 		int g= 1+ intlog2(n-1); 
@@ -86,7 +91,7 @@ namespace flopoco{
 			sumAbs*=2.0;
 			leadingBit--;
 		}
-		REPORT(INFO, "Worst-case weight of MSB of the result is "<< leadingBit);
+		REPORT(INFO, "Worst-case weight of MSB of the result is " << leadingBit);
 
 		wO = 1+ (leadingBit - (-p)) + 1; //1 + sign  ; 
 
@@ -165,7 +170,12 @@ namespace flopoco{
 		else
 		{
 			vhdl << tab << declare("S0", size) << " <= " << zg(size) << ";" << endl;
-			for (int i=0; i< n; i++) {
+			
+			for(int i=0; i< n; i++)
+			{
+				//manage the critical path
+				setCycleFromSignal(join("X",i));
+				
 				// Multiplication: instantiating a KCM object. 
 				FixRealKCM* mult = new FixRealKCM(target, 
 												  -p, // input LSB weight
@@ -173,21 +183,27 @@ namespace flopoco{
 												  true, // signed
 												  -p-g, // output LSB weight -- the output MSB is computed out of the constant
 												  coeff[i] // pass the string unmodified
-												  );			
+												  );
 				addSubComponent(mult);
-				inPortMap(mult,"X", join("X",i));
-				outPortMap(mult, "R", join("P",i));
-				vhdl << instance(mult, join("mult",i));
+				inPortMap(mult,"X", join("X", i));
+				outPortMap(mult, "R", join("P", i));
+				vhdl << instance(mult, join("mult", i));
+				
+				//manage the critical path
+				syncCycleFromSignal(join("P", i));
+				syncCycleFromSignal(join("S", i));
+				manageCriticalPath(target->adderDelay(size));
+				
 				// Addition
-				int pSize=getSignalByName(join("P",i))->width();
-				vhdl << tab << declare(join("S",i+1), size) << " <= " <<  join("S",i);
-				if(coeffsign[i]==1)
+				int pSize = getSignalByName(join("P", i))->width();
+				vhdl << tab << declare(join("S", i+1), size) << " <= " <<  join("S",i);
+				if(coeffsign[i] == 1)
 					vhdl << " - (" ;
 				else
 					vhdl << " + (" ;
 				if(size>pSize) 
 					vhdl << "("<< size-1 << " downto " << pSize<< " => "<< join("P",i) << of(pSize-1) << ")" << " & " ;
-				vhdl << join("P",i) << ");" << endl;
+				vhdl << join("P", i) << ");" << endl;
 			}
 			
 			
@@ -196,8 +212,12 @@ namespace flopoco{
 			vhdl << tab << "R <= " <<  join("S", n) << range(size-1, size-wO) << ";" << endl;
 			*/
 			
+			//manage the critical path
+			syncCycleFromSignal(join("S", n));
+			manageCriticalPath(target->adderDelay(wO+1));
+			
 			//Adding one half ulp to obtain correct rounding
-			vhdl << tab << declare("R_int", wO+1) << " <= " <<  join("S",n-1) << " + (" << zg(wO) << " & \'1\';" << endl;
+			vhdl << tab << declare("R_int", wO+1) << " <= " <<  join("S", n) << range(size-1, size-wO-1) << " + (" << zg(wO) << " & \'1\');" << endl;
 			vhdl << tab << "R <= " <<  "R_int" << range(wO, 1) << ";" << endl;
 		}
 			

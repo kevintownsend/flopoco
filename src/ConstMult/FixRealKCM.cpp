@@ -135,10 +135,11 @@ namespace flopoco{
 		
 		REPORT(INFO, "Constant multiplication in "<< nbOfTables << " tables");
 		
+		//manage the critical path
+		setCriticalPath(getMaxInputDelays(inputDelays));
+		
 		addInput("X", wIn);
 		addOutput("R", wOut);
-		
-		setCriticalPath( getMaxInputDelays(inputDelays) );
 
 		if(wIn <= lutWidth+1)
 		{
@@ -151,15 +152,22 @@ namespace flopoco{
 			addSubComponent(t);
 			useSoftRAM(t);
 
+			//manage the critical path
 			manageCriticalPath(target->localWireDelay() + target->lutDelay());
       
 			inPortMap (t , "X", "X");
 			outPortMap(t , "Y", "Y");
 			vhdl << instance(t , "KCMTable");
+			
+			//manage the critical path
+			syncCycleFromSignal("Y");
 
 			//negate the result if necessary
 			if(negativeConstant)
 			{
+				//manage the critical path
+				manageCriticalPath(target->localWireDelay() + target->lutDelay());
+				
 				vhdl << tab << declare("Y_xored", wOut) << " <= Y xor " << og(wOut) << ";" << endl;
 				vhdl << tab << declare("Y_negated", wOut) << " <= Y_xored + (" << zg(wOut-1) << " & \'1\');" << endl;
 				
@@ -283,14 +291,23 @@ namespace flopoco{
 					
 					for(int i=0; i<nbOfTables; i++)
 					{
+						//manage the critical path
+						setCycleFromSignal(join("d",i));
+						
 						inPortMap (t[i] , "X", join("d",i));
 						outPortMap(t[i] , "Y", join("pp",i));
 						vhdl << instance(t[i] , join("KCMTable_",i));
+						
+						//manage the critical path
+						syncCycleFromSignal(join("pp",i));
 						
 						//add the bits to the bit heap
 						for(int w=0; w<=ppiSize[i]-1; w++)
 						{
 							stringstream s;
+							
+							//manage the critical path
+							manageCriticalPath(target->lutDelay());
 							
 							if(negativeConstant != (w==(ppiSize[i]-1) && i==(nbOfTables-1)))
 								s << "not(pp" << i << of(w) << ")";
@@ -315,6 +332,9 @@ namespace flopoco{
 					
 					//compress the bitheap and produce the result
 					bitHeap->generateCompressorVHDL();
+					
+					//manage the critical path
+					syncCycleFromSignal(bitHeap->getSumName());
 						
 					//because of final add in bit heap, add one more bit to the result
 					vhdl << declare("OutRes", wOut+g) << " <= " << bitHeap->getSumName() << range(wOut+g-1, 0) << ";" << endl;
@@ -408,6 +428,10 @@ namespace flopoco{
 					outPortMap(t[i] , "Y", join("pp",i));
 					vhdl << instance(t[i] , join("KCMTable_",i));
 				}
+				
+				//manage the critical path
+				syncCycleFromSignal(join("pp", 1));
+				manageCriticalPath(target->adderDelay(wOut+g));
 				
 				vhdl << tab << declare("addOp0", wOut+g ) << " <= " << rangeAssign(wOut+g-1, ppiSize[0], "'0'") << " & pp0;" << endl;
 				
@@ -524,7 +548,7 @@ namespace flopoco{
 		int currentSize = diSize[0];
 		
 		int counter=1;
-		while(currentSize < wIn) 
+		while(currentSize < wIn)
 		{
 			diSize[counter] = lutWidth-1;
 			currentSize += diSize[counter];
@@ -553,9 +577,7 @@ namespace flopoco{
 		}
 		REPORT(INFO, "Constant multiplication in "<< nbOfTables << " tables");		
 		
-		//TODO: no longer accurate, needs to be replaced
-		//		possibly synchronized to the input signal?
-		//setCriticalPath( getMaxInputDelays(inputDelays) );
+		//manage pipeline
 		parentOp->syncCycleFromSignal(multiplicandX->getName());
 
 		if(wIn <= lutWidth+1)
@@ -570,11 +592,15 @@ namespace flopoco{
 			parentOp->addSubComponent(t);
 			parentOp->useSoftRAM(t);
 
+			//manage critical path
 			parentOp->manageCriticalPath(target->localWireDelay() + target->lutDelay());
 			
 			parentOp->inPortMap (t , "X", multiplicandX->getName());
 			parentOp->outPortMap(t , "Y", join("Y_kcmMult_", getuid()));
 			parentOp->vhdl << parentOp->instance(t , join("KCMTable_kcmMult_", getuid()));
+			
+			//manage pipeline
+			syncCycleFromSignal(join("Y_kcmMult_", getuid()));
 
 			//add the resulting bits to the bit heap
 			int ySize;
@@ -628,9 +654,7 @@ namespace flopoco{
 
 			REPORT(DEBUG, "g=" << g);
 
-			// All the tables are read in parallel
-			//TODO: no longer accurate; MUST be redone
-			//setCriticalPath(getMaxInputDelays(inputDelays));
+			//manage pipeline
 			parentOp->syncCycleFromSignal(multiplicandX->getName());
 
 			int ppiSize[42*17]; // should be more than enough for everybody
@@ -675,9 +699,16 @@ namespace flopoco{
 			
 			for(int i=0; i<nbOfTables; i++)
 			{
+				//manage pipeline
+				parentOp->setCycleFromSignal(join("d", i, "_kcmMult_", getuid()));
+				parentOp->manageCriticalPath(target->lutDelay());
+				
 				parentOp->inPortMap (t[i] , "X", join("d", i, "_kcmMult_", getuid()));
 				parentOp->outPortMap(t[i] , "Y", join("pp", i, "_kcmMult_", getuid()));
 				parentOp->vhdl << parentOp->instance(t[i] , join("KCMTable_", i, "_kcmMult_", getuid()));
+				
+				//manage pipeline
+				parentOp->syncCycleFromSignal(join("pp", i, "_kcmMult_", getuid()));
 				
 				//add the bits to the bit heap
 				for(int w=0; w<=ppiSize[i]-1; w++)
@@ -685,7 +716,9 @@ namespace flopoco{
 					stringstream s;
 					
 					if(negativeConstant != (w==(ppiSize[i]-1) && i==(nbOfTables-1)))
+					{
 						s << "not(pp" << i << "_kcmMult_" << getuid() << of(w) << ")";
+					}
 					else
 						s << "pp" << i << "_kcmMult_" << getuid() << of(w);
 					
