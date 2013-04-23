@@ -411,15 +411,19 @@ namespace flopoco {
 		if(parentOp->getTarget()->getVendor() == "Altera")
 		{
 			if(dspXSize > 18)
+			{
 				if(signedIO)
 					dspXSize = 17;
 				else
 					dspXSize = 18;
+			}
 			if(dspYSize > 18)
+			{
 				if(signedIO)
 					dspYSize = 17;
 				else
 					dspYSize = 18;
+			}
 		}
 		
 		// if we are using at least SMALL_MULT_RATIO of the DSP, then just implement 
@@ -463,7 +467,7 @@ namespace flopoco {
 				
 			//if negated, the product becomes -xy = not(y)*x + x
 			//	TODO: this should be more efficient than negating the product at
-			//	the end, as it should be implemented in a single DSP, multiplication and addition
+			//	the end, as it should be implemented in a single DSP, both the multiplication and the addition
 			if(negate)
 				vhdl << tab << declare(join(addUID("YY"), "_neg"), wY+zerosY) << " <= " << zerosYNegString.str() << " & " << addUID("YY") << ";" << endl;
 
@@ -483,13 +487,13 @@ namespace flopoco {
 			//manage the pipeline
 			//syncCycleFromSignal(s.str());
 			
-			//add the bits of x*(not y)
+			//add the bits of x*(not y) (respectively x*y, when not negated)
 			endingIndex	  = wX+wY;
 			startingIndex = 0+(wX+wY-wOut-g);
 			for(int w=startingIndex; w<endingIndex; w++)
 				if(w-startingIndex >= 0)
 				{
-					if((wOut > (bitHeap->getMaxHeight()-bitHeap->getMinWeight())) && (w == (endingIndex-1)))
+					if((wOut < (int)(bitHeap->getMaxWeight()-bitHeap->getMinWeight())) && (w == (endingIndex-1)))
 					{	
 						s.str("");
 						s << "not DSP_mult_" << getuid();
@@ -500,11 +504,9 @@ namespace flopoco {
 						bitHeap->addBit(w-startingIndex, join(s.str(), of(w)));
 				}
 						
-			if(wOut < (bitHeap->getMaxWeight()-bitHeap->getMinWeight()))
-			{
-				for(int w=endingIndex-1; w<bitHeap->getMaxWeight(); w++)
-					bitHeap->addConstantOneBit(w);
-			}
+			//keep sign-extending, if necessary
+			for(int w=endingIndex-1-startingIndex; w<(int)bitHeap->getMaxWeight(); w++)
+				bitHeap->addConstantOneBit(w);
 			
 			//add the bits of x, (not x)<<2^wY, 2^wY
 			if(negate)
@@ -518,15 +520,9 @@ namespace flopoco {
 					
 				//x, when added, should be sign-extended
 				if(signedIO)
-					for(int w=endingIndex; w<wOut+g+(wX+wY-wOut-g); w++)
+					for(int w=endingIndex-startingIndex; w<(int)bitHeap->getMaxWeight(); w++)
 						if(w-startingIndex >= 0)
-							bitHeap->addBit(w-startingIndex, join(addUID("XX"), of(wX-1)));
-				
-				if(wOut < (bitHeap->getMaxHeight()-bitHeap->getMinWeight()))
-				{
-					for(int w=wOut+g+(wX+wY-wOut-g); w<bitHeap->getMaxWeight(); w++)
-						bitHeap->addBit(w-startingIndex, join(addUID("XX"), of(wX-1)));
-				}
+							bitHeap->addBit(w, join(addUID("XX"), of(wX-1)));
 				
 					
 				if(!signedIO)
