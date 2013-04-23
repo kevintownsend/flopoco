@@ -168,8 +168,9 @@ namespace flopoco{
 					// orig					int k = 1 + y_->getSize() + yGuard_[i] + sigmakPSize[i-1] + 1 - (pikPTSize[i]+2);
 					int k =  y_->getSize() + yGuard_[i] + sigmakPSize[i-1] - pikPTSize[i]; // looks like the number of truncated bits
 
-					
-#define USE_BITHEAP 0
+#if 0
+#else					
+#define USE_BITHEAP 1
 #if !USE_BITHEAP //
 
 					//					nextCycle(); //TODO fix it by feeding the input delay to IntTruncMultiplier
@@ -237,6 +238,7 @@ namespace flopoco{
 					syncCycleFromSignal( join("sigmaP",i) );
 					setCriticalPath( ma->getOutputDelay("R") );
 
+#endif
 #endif
 				                                                                   
 				}else{ // i=degree

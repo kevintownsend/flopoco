@@ -12,7 +12,6 @@
 
 #include "../BitHeap.hpp"
 #include "../Signal.hpp"
-#include "../ConstMult/FixRealKCMBH.hpp"
 #include "../ConstMult/IntConstDiv3.hpp"
 
 #include "../utils.hpp"
