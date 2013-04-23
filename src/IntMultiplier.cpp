@@ -93,11 +93,6 @@ namespace flopoco {
 #define setCycle parentOp->setCycle
 #define oplist parentOp->getOpListR()
 
-//constant defining the minimum DSP area utilization ratio 
-//	(a small multiplier must use at least SMALL_MULT_RATIO of the total DSP area 
-//	in order to be implemented directly in a DSP)
-#define SMALL_MULT_RATIO 0.3
-//#define SMALL_MULT_RATIO 0.9
 
 	int IntMultiplier::neededGuardBits(int wX, int wY, int wOut)
 	{
@@ -429,7 +424,8 @@ namespace flopoco {
 		// if we are using at least SMALL_MULT_RATIO of the DSP, then just implement 
 		//	the multiplication in a DSP, without passing through a bitheap
 		//	the last three conditions ensure that the multiplier can actually fit in a DSP
-		if((1.0*wX*wY >= 1.0*SMALL_MULT_RATIO*dspXSize*dspYSize) && (1.0*wX*wY < 1.0*dspXSize*dspYSize) && (wX <= dspXSize) && (wY <= dspYSize))
+		//if((1.0*wX*wY >= 1.0*SMALL_MULT_RATIO*dspXSize*dspYSize) && (1.0*wX*wY < 1.0*dspXSize*dspYSize) && (wX <= dspXSize) && (wY <= dspYSize))
+		if(checkThreshold(wX, wY, 0, 0, dspXSize, dspYSize) && (wX <= dspXSize) && (wY <= dspYSize))
 		{
 			ostringstream s, zerosXString, zerosYString, zerosYNegString;
 			int zerosX = dspXSize - wX + (signedIO ? 0 : 1);
@@ -493,8 +489,9 @@ namespace flopoco {
 			for(int w=startingIndex; w<endingIndex; w++)
 				if(w-startingIndex >= 0)
 				{
-					if((wOut < (int)(bitHeap->getMaxWeight()-bitHeap->getMinWeight())) && (w == (endingIndex-1)))
-					{	
+					//no point of sign-extending for just one bit
+					if((wOut < (int)(bitHeap->getMaxWeight()-bitHeap->getMinWeight())) && (w == (endingIndex-1)) && (bitHeap->getMaxWeight()-(endingIndex-1-startingIndex) > 1))
+					{
 						s.str("");
 						s << "not DSP_mult_" << getuid();
 						
@@ -505,8 +502,9 @@ namespace flopoco {
 				}
 						
 			//keep sign-extending, if necessary
-			for(int w=endingIndex-1-startingIndex; w<(int)bitHeap->getMaxWeight(); w++)
-				bitHeap->addConstantOneBit(w);
+			if(bitHeap->getMaxWeight()-(endingIndex-1-startingIndex) > 1)
+				for(int w=endingIndex-1-startingIndex; w<(int)bitHeap->getMaxWeight(); w++)
+					bitHeap->addConstantOneBit(w);
 			
 			//add the bits of x, (not x)<<2^wY, 2^wY
 			if(negate)
