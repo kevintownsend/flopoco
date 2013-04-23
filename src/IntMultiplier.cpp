@@ -88,6 +88,7 @@ namespace flopoco {
 #define inPortMap parentOp->inPortMap
 #define outPortMap parentOp->outPortMap
 #define instance parentOp->instance
+#define useSoftRAM parentOp->useSoftRAM
 #define manageCriticalPath parentOp->manageCriticalPath
 #define getCriticalPath parentOp->getCriticalPath
 #define setCycle parentOp->setCycle
@@ -311,7 +312,6 @@ namespace flopoco {
 			vhdl << tab << "-- Ne pouvant me fier a mon raisonnement, j'ai appris par coeur le résultat de toutes les multiplications possibles" << endl;
 
 			SmallMultTable *t = new SmallMultTable(  parentOp->getTarget(), wX, wY, wOut, negate, signedIO, signedIO);
-			//useSoftRAM(t);
 			t->addToGlobalOpList();
 
 			vhdl << tab << declare(addUID("XY"), wX+wY) << " <= "<<addUID("YY")<<" & "<<addUID("XX")<<";"<<endl;
@@ -319,6 +319,7 @@ namespace flopoco {
 			inPortMap(t, "X", addUID("XY"));
 			outPortMap(t, "Y", addUID("RR"));
 			vhdl << instance(t, "multTable");
+			useSoftRAM(t);
 
 			plotter->addSmallMult(0,0,wX,wY);
 			plotter->plotMultiplierConfiguration(getName(), localSplitVector, wX, wY, wOut, g);
@@ -818,27 +819,19 @@ namespace flopoco {
 
 			// In the negate case we will negate the bits coming out of this table
 			tUU = new SmallMultTable( target, dx, dy, dx+dy, false /*negate*/, false /*signx*/, false/*signy*/);
-			useSoftRAM(tUU);
-			//oplist.push_back(tUU);
 			tUU->addToGlobalOpList();
 
 			if(signedIO) 
 			{ // need for 4 different tables
 
 				tSU = new SmallMultTable( target, dx, dy, dx+dy, false, true, false );
-				useSoftRAM(tSU);
-				// oplist.push_back(tSU);
 				tSU->addToGlobalOpList();
 
 				tUS = new SmallMultTable( target, dx, dy, dx+dy, false, false, true );
-				useSoftRAM(tUS);
-				// oplist.push_back(tUS);
 				tUS->addToGlobalOpList();
 
 
 				tSS = new SmallMultTable( target, dx, dy, dx+dy, false, true, true );
-				useSoftRAM(tSS);
-				//oplist.push_back(tSS);
 				tSS->addToGlobalOpList();
 
 			}
@@ -883,6 +876,7 @@ namespace flopoco {
 						inPortMap(t, "X", XY(ix,iy,blockUid));
 						outPortMap(t, "Y", PP(ix,iy,blockUid));
 						vhdl << instance(t, PPTbl(ix,iy,blockUid));
+						useSoftRAM(t);
 
 						vhdl << tab << "-- Adding the relevant bits to the heap of bits" << endl;
 
