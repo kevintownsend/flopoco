@@ -406,19 +406,19 @@ namespace flopoco {
 		//correct the DSP sizes for Altera targets
 		if(parentOp->getTarget()->getVendor() == "Altera")
 		{
-			if(dspXSize > 18)
+			if(dspXSize >= 18)
 			{
 				if(signedIO)
-					dspXSize = 17;
-				else
 					dspXSize = 18;
+				else
+					dspXSize = 17;
 			}
-			if(dspYSize > 18)
+			if(dspYSize >= 18)
 			{
 				if(signedIO)
-					dspYSize = 17;
-				else
 					dspYSize = 18;
+				else
+					dspYSize = 17;
 			}
 		}
 		
@@ -466,18 +466,18 @@ namespace flopoco {
 			//	TODO: this should be more efficient than negating the product at
 			//	the end, as it should be implemented in a single DSP, both the multiplication and the addition
 			if(negate)
-				vhdl << tab << declare(join(addUID("YY"), "_neg"), wY+zerosY) << " <= " << zerosYNegString.str() << " & " << addUID("YY") << ";" << endl;
+				vhdl << tab << declare(join(addUID("YY"), "_neg"), wY+zerosY) << " <= " << (zerosY>0 ? join(zerosYNegString.str(), " & ") : "") << addUID("YY") << ";" << endl;
 
 			//manage the pipeline
 			manageCriticalPath(parentOp->getTarget()->DSPMultiplierDelay());
 
 			vhdl << tab << declare(join("DSP_mult_", getuid()), dspXSize+dspYSize+(signedIO ? 0 : 2))
-						 << " <= (" << zerosXString.str() << " & " << addUID("XX") << ")"
+						 << " <= (" << (zerosX>0 ? join(zerosXString.str(), " & ") : "") << addUID("XX") << ")"
 						 << " *";
 			if(negate)
 				vhdl	 <<	" (" << addUID("YY") << "_neg);" << endl;
 			else
-				vhdl	 << " (" << zerosYString.str() << " & " << addUID("YY") << ");" << endl;
+				vhdl	 << " (" << (zerosY>0 ? join(zerosYString.str(), " & ") : "") << addUID("YY") << ");" << endl;
 			
 			s << "DSP_mult_" << getuid();
 			
