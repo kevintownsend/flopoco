@@ -1,5 +1,7 @@
 TODO file for FloPoCo
 
+With Matei: see the nextCycles in FPExp and see if we can push them in IntMultiplier somehow
+
 Here and there, fix VHDL style issues needed for whimsical simulators or synthesizers. See doc/VHDLStyle.txt
 
 

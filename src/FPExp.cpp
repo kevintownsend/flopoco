@@ -475,15 +475,6 @@ namespace flopoco{
 		else{
 			if(useMagicTable) { // Magic exp table works up to single precision
 			
-#if 0 //// stupid ISE not able to pack both tables in a single dual-port one
-				LowerExpTable* lowertable;
-				lowertable = new LowerExpTable(target, k, sizeZhigh, wF+g); // last parameter is -LSB of the result
-				addSubComponent(lowertable);
-				outPortMap(lowertable, "Y", "expZmZm1_0");
-				inPortMap(lowertable, "X", "Zhigh");
-				vhdl << instance(lowertable, "expZmZm1_table");
-#else
-
 				//The following is really designed for k=9
 				if(k!=9){
 					REPORT(0, "k!=9, setting it to 9 to use the magic exp dual table")
@@ -509,8 +500,8 @@ namespace flopoco{
 				vhdl << tab << declare("expA", sizeExpA) << " <=  expA_expZmZm1_2" << range(sizeExpA+sizeExpZmZm1-1, sizeExpZmZm1) << ";" << endl;
 				setSignalDelay("expA", target->RAMDelay());
 				vhdl << tab << declare("expZmZm1_0", sizeExpZmZm1) << " <= expA_expZmZm1_1" << range(sizeExpZmZm1-1, 0) << ";" << endl;
-				
-#endif
+
+				// If we are here, the rest of the computation fits in one DSP block: let's pack it for it.
 			}
 			else { // generic case, use a polynomial evaluator
 				vhdl << tab << declare("Addr1", k) << " <= Y" << range(sizeY-1, sizeY-k) << ";\n";
@@ -598,26 +589,11 @@ namespace flopoco{
 		
 			int sizeProd;
 			Operator* lowProd;
-			if(false && wF+g-k>17){ // commented out because 1/ it fails the test, do,n't understand why and 2/ it adds 4 cycles to the latency TODO
-				sizeProd = (sizeExpA-k+1); 
-				//			lowProd = new IntTruncMultiplier(target, sizeMultIn, sizeExpZm1, sizeProd, 0.95, 1, -1, false, false);  //inDelayMap("X", target->LogicToDSPWireDelay() + getCriticalPath() ) );
-				lowProd = new IntMultiplier(target, sizeMultIn, sizeExpZm1, sizeProd, 
-				                            true, /*signedIO*/
-				                            0.9 /*DSP threshold */);  //inDelayMap("X", target->LogicToDSPWireDelay() + getCriticalPath() ) );
-			}
-			else {
-				sizeProd = sizeMultIn + sizeExpZm1;
-				//	if (wF==23){
-				//nextCycle();//FIXME -> add inputDelays to intTilingMultiplier
-				// ???? This builds a comlbinatorial mult,
-				//lowProd = new IntTilingMult(target, sizeMultIn, sizeExpZm1, false, 0.15, -1);//, inDelayMap("X", target->LogicToDSPWireDelay() + getCriticalPath() ) );
-				//}// else
-				// 		lowProd = new IntMultiplier(target, sizeMultIn, sizeExpZm1, inDelayMap("X", target->LogicToDSPWireDelay() + getCriticalPath() ) );
-			}
+			sizeProd = sizeMultIn + sizeExpZm1;
 			lowProd = new IntMultiplier(target, sizeMultIn, sizeExpZm1,  
 			                            0,  // untruncated
 			                            false,  /*unsigned*/
-			                            1.0,
+			                            0.9, // DSP threshold
 			                            inDelayMap("X", target->LogicToDSPWireDelay() + getCriticalPath() ) );
 			addSubComponent(lowProd);
 			
@@ -627,28 +603,13 @@ namespace flopoco{
 			
 			vhdl << instance(lowProd, "TheLowerProduct")<<endl;
 			syncCycleFromSignal("lowerProduct", lowProd->getOutputDelay("R") );
+			nextCycle(); // needed for the 1-DSP case TODO: fix in IntMultiplier instead 
+
+			if(target->normalizedFrequency()>=0.5){ // TODO instead of this ugly hack, do something clever
+				nextCycle(); // TODO should be something cleaner, fix in IntMultiplier instead
+			}
 
 			vhdl << tab << "-- Final addition -- the product MSB bit weight is -k+2 = "<< -k+2 << endl;
-
-
-#if 0 // Trying to round the product instead of truncating it		Why doesn't that work?
-			IntAdder *finalAdder = new IntAdder(target, sizeExpA+1, finalAdderInDelayMap, 2, 1, -1);
-			addSubComponent(finalAdder);
-		
-			vhdl << tab << declare("extendedLowerProduct",sizeExpA+1) << " <= (" << rangeAssign(sizeExpA-1, sizeExpA-k+1, "'0'") 
-			     << " & lowerProduct" << range(sizeMultIn+sizeExpZm1-1, sizeMultIn+sizeExpZm1 - (sizeExpA-k+1) -1) << ");" << endl;		
-			vhdl << tab << declare("extendedExpA",sizeExpA+1) << " <= expA & '1'; -- rounding bit for the product" << endl;		
-		     
-		     
-			inPortMap(finalAdder, "X", "extendedExpA");
-			inPortMap(finalAdder, "Y", "extendedLowerProduct");
-			inPortMapCst(finalAdder, "Cin", "'0'");
-			outPortMap(finalAdder, "R", "expY0");
-		
-			vhdl << instance(finalAdder,"TheFinalAdder") << endl;
-			syncCycleFromSignal("expY0");
-			vhdl << tab << declare("expY",sizeExpA) << " <= expY0" << range(sizeExpA, 1) << " ; -- rounding" << endl;		
-#else  //  truncating it		
 			// remember that sizeExpA==sizeExpY
 			IntAdder *finalAdder = new IntAdder(target, sizeExpY, inDelayMap( "X", target->localWireDelay() + getCriticalPath()));
 			addSubComponent(finalAdder);
@@ -663,8 +624,6 @@ namespace flopoco{
 		
 			vhdl << instance(finalAdder,"TheFinalAdder") << endl;
 			syncCycleFromSignal("expY", finalAdder->getOutputDelay("R") );
-			
-#endif
 			
 		} // end if(expYTabulated)
 				       

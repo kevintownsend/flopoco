@@ -454,7 +454,7 @@ namespace flopoco {
 					zerosYNegString << addUID("YY") << of(wY-1) << (i!=(zerosY-1) ? " & " : ")");
 				}
 			}
-			else
+			else // ! signedIO
 			{
 				//zero extension
 				zerosXString << "(" << zg(zerosX) << ")";
