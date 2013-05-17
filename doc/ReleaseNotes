@@ -1,5 +1,6 @@
-trunk: 
-added clock enable support to the pipeline framework.
+Version 2.5.0
+Fixed low-precision FPExp at last.
+Added FIR generators
 
 Version 2.4.0
 This version introduces a generic framework for bit heaps. 

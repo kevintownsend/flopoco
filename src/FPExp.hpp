@@ -31,17 +31,15 @@ namespace flopoco{
 	{
 	public:
 
-
 		/** The magic dual table */
 		
 		class magicTable: public DualTable {
 		public:
-			static const int sizeH = 27;
-			static const int sizeL = 9;
+			int sizeExpA;
+			int sizeExpZmZm1;
 
-			magicTable(Target* target) :
-
-				DualTable(target, 9, 36, 0, 511) {
+			magicTable(Target* target, int sizeExpA, int sizeExpZmZm1) : DualTable(target, 9, sizeExpA+sizeExpZmZm1, 0, 511),
+				sizeExpA(sizeExpA), sizeExpZmZm1(sizeExpZmZm1) {
 				ostringstream name; 
 				srcFileName="FPExp::MagicSPExpTable";
 				name <<"MagicSPExpTable";
@@ -52,14 +50,14 @@ namespace flopoco{
 		};
 
 
-		class firstExpTable: public Table {
+		class ExpYTable: public Table {
 		public:
 
-			firstExpTable(Target* target, int wIn, int wOut) : 
+			ExpYTable(Target* target, int wIn, int wOut) : 
 				Table(target, wIn, wOut) {
 				ostringstream name; 
-				srcFileName="FPExp::firstExpTable";
-				name <<"firstExpTable_" << wIn << "_" << wOut;
+				srcFileName="FPExp::ExpYTable";
+				name <<"ExpYTable_" << wIn << "_" << wOut;
 				setName(name.str());
 				
 				outDelayMap["Y"] = target->RAMDelay();
