@@ -1397,8 +1397,11 @@ namespace flopoco{
 			}				
 		}
 		vhdl.setSecondLevelCode(str);
+		REPORT(DEBUG, "   ... done second-level parsing for operator "<<srcFileName);
 	}
 	
+
+
 	void  Operator::setIndirectOperator(Operator* op){
 		indirectOperator_=op;
 		if(op!=NULL) 	{		
@@ -1520,11 +1523,9 @@ namespace flopoco{
 		string srcFileName = "Operator.cpp"; // for REPORT
 		for(unsigned i=0; i<oplist.size(); i++) {
 			try {
-				REPORT(FULL, "OPERATOR:"<<oplist[i]->getName());
-				REPORT(FULL, "--DECLARE LIST---------------------------------------------------");
-				REPORT(FULL, printMapContent(oplist[i]->getDeclareTable()) );
-				REPORT(FULL, "--USE LIST-------------------------------------------------------");
-				REPORT(FULL, printVectorContent(  (oplist[i]->getFlopocoVHDLStream())->getUseTable()) );
+				REPORT(FULL, "---------------OPERATOR: "<<oplist[i]->getName() <<"-------------");
+				REPORT(FULL, "  DECLARE LIST" << printMapContent(oplist[i]->getDeclareTable()));
+				REPORT(FULL, "  USE LIST" << printVectorContent(  (oplist[i]->getFlopocoVHDLStream())->getUseTable()) );
 				
 				// check for subcomponents 
 				if (! oplist[i]->getOpListR().empty() ){
@@ -1535,7 +1536,7 @@ namespace flopoco{
 
 				/* second parse is only for sequential operators */
 				if (oplist[i]->isSequential()){
-					REPORT (FULL, "--2nd PASS-------------------------------------------------------");
+					REPORT (FULL, "  2nd PASS");
 					oplist[i]->parse2();
 				}
 				oplist[i]->outputVHDL(file);			

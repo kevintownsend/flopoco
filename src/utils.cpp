@@ -554,7 +554,7 @@ namespace flopoco{
 		ostringstream o;
 		map<string, int>::iterator iter;
 		for (iter = inputDelays.begin(); iter!=inputDelays.end();++iter)
-			o << iter->first << " cycle " << iter->second << endl;			
+			o  << endl << "   " << iter->first << " cycle " << iter->second;			
 		return o.str();
 	}
 	
@@ -562,7 +562,7 @@ namespace flopoco{
 		ostringstream o;
 		vector< pair<string, int> >::iterator iter;
 		for (iter = table.begin(); iter!=table.end();++iter)
-			o << (*iter).first << " cycle " << (*iter).second << endl;			
+			o  << endl <<"   " << (*iter).first << " cycle " << (*iter).second;			
 		return o.str();
 	}
 

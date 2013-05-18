@@ -31,15 +31,19 @@ namespace flopoco{
 	{
 	public:
 
-		/** The magic dual table */
-		
+		/** The magic dual table, that holds either (e^A, e^Z-1) or (e^A, e^Z-Z-1) 
+		       |.....e^A....||...expZpart.....|
+		       <--sizeExpA--><--sizeExpZPart-->
+*/
+		       
 		class magicTable: public DualTable {
 		public:
 			int sizeExpA;
-			int sizeExpZmZm1;
+			int sizeExpZPart; /** sometimes e^Z-1, sometimes e^Z-Z-1*/
+			bool storeExpZmZm1;
 
-			magicTable(Target* target, int sizeExpA, int sizeExpZmZm1) : DualTable(target, 9, sizeExpA+sizeExpZmZm1, 0, 511),
-				sizeExpA(sizeExpA), sizeExpZmZm1(sizeExpZmZm1) {
+			magicTable(Target* target, int sizeExpA_, int sizeExpZPart_, bool storeExpZmZm1_) : DualTable(target, 9, sizeExpA_+sizeExpZPart_, 0, 511),
+				                   sizeExpA(sizeExpA_), sizeExpZPart(sizeExpZPart_), storeExpZmZm1(storeExpZmZm1_) {
 				ostringstream name; 
 				srcFileName="FPExp::MagicSPExpTable";
 				name <<"MagicSPExpTable";
