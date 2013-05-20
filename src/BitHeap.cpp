@@ -310,8 +310,12 @@ namespace flopoco
 				<< tab << tab << tab << "p2 := x2_d * y2_d;" << endl
 				<< endl
 				<< tab << tab << tab << "result := resize(p1, " << 2*length+1 << ") + resize(p2, " << 2*length+1 << ");" << endl
-				<< endl
-				<< tab << tab << tab << resultName << " <= std_logic_vector(result);" << endl
+				<< endl;
+				
+		//manage critical path
+		op->manageCriticalPath(op->getTarget()->DSPMultiplierDelay() + op->getTarget()->DSPAdderDelay() );
+				
+		op->vhdl << tab << tab << tab << resultName << " <= std_logic_vector(result);" << endl
 				<< tab << tab << "end if;" << endl
 				<< endl
 				<< tab << "end process;" << endl
@@ -385,7 +389,8 @@ namespace flopoco
 						for(int j=0; j<addedCycles; j++)
 							op->nextCycle();
 						op->setCriticalPath(addedCriticalPath);
-					}else
+					}
+					else
 					{
 						DSPuid++;
 						sumName << join("DSP_bh", guid, "_ch", i, "_", DSPuid);
@@ -416,21 +421,31 @@ namespace flopoco
 							op->vhdl << tab << sumName.str()
 						         << "<= (" << current->getSigName() << "(" << current->getSigLength()-1 << ") & " << current->getSigName()
 						         << ") +  ( " << zeros.str() << next->getSigName() << " );" <<endl;
-						}else
+						}
+						else
 						{
+							//reset timing
+							op->setCycleFromSignal(current->getInputName1());
+							op->syncCycleFromSignal(current->getInputName2());
+							op->syncCycleFromSignal(next->getInputName1());
+							op->syncCycleFromSignal(next->getInputName2());
+							
+							//manage critical path properly for the super-tile process
+							int currentCycle = op->getCurrentCycle(), addedCycles;
+							double currentCriticalPath = op->getCriticalPath(), addedCP;
+							
+							op->manageCriticalPath(op->getTarget()->DSPMultiplierDelay() + op->getTarget()->DSPAdderDelay() );
+							
 							op->declare(sumName.str(), 2*(current->getwX()+((signedIO) && ((current->getwX()==9) || (current->getwX()==12) || (current->getwX()==16) || (current->getwX()==18) || (current->getwX()==27) || (current->getwX()==36)) ? 0 :1)) + 1);
 							
-							//reset timing
-							op->setCycle(0);
-							op->setCriticalPath(0);
-							
+							//reset the timing to the original state
+							op->setCycle(currentCycle);
+							op->setCriticalPath(currentCriticalPath);
+														
 							generateAlteraSupertileVHDL(current, next, sumName.str());
 							
 							//manage critical path once again
-							for(int j=0; j<addedCycles; j++)
-								op->nextCycle();
-							op->setCriticalPath(addedCriticalPath);
-							op->manageCriticalPath( op->getTarget()->adderDelay(next->getSigLength()+1) );
+							op->syncCycleFromSignal(sumName.str());
 						}
 					}
 					
@@ -467,7 +482,8 @@ namespace flopoco
 						}
 					}
 					
-				}else
+				}
+				else
 				{
 					//iterate on the other blocks of the supertile
 					while(current->getNext()!=NULL)
