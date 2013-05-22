@@ -223,8 +223,9 @@ void usage(char *name, string opName = ""){
 		cerr << "      Integer constant multiplier using shift-and-add: w - input size, c - the constant\n";
 	}
 	if ( full || opName == "IntMultiplier" || opName == "IntIntKCM"){					
-		OP( "IntIntKCM","w c signedInput");
+		OP( "IntIntKCM","w c signedInput useBitheap");
 		cerr << "      Integer constant multiplier using KCM: w - input size, c - the constant\n";
+		cerr << "      		useBitheap - if true, operator is uses bit heaps\n";
 	}
 #ifdef HAVE_SOLLYA
 	if ( full || opName == "FixRealKCM"){					
@@ -872,6 +873,21 @@ bool parseCommandLine(int argc, char* argv[]){
 			}
 		}
 		else if(opname=="IntIntKCM"){
+			int nargs = 4;
+			if (i+nargs > argc)
+				usage(argv[0],opname);
+			else {
+				int w = atoi(argv[i++]);
+				mpz_class mpc(argv[i++]);
+				int signedInput = checkBoolean(argv[i++], argv[0]);
+				int useBitheap = checkBoolean(argv[i++], argv[0]);
+
+				op = new IntIntKCM(target, w, mpc, signedInput, useBitheap);
+				addOperator(op);
+			}        
+		}
+		
+		else if(opname=="IntIntKCMBH"){
 			int nargs = 3;
 			if (i+nargs > argc)
 				usage(argv[0],opname);
@@ -880,10 +896,11 @@ bool parseCommandLine(int argc, char* argv[]){
 				mpz_class mpc(argv[i++]);
 				int signedInput = checkBoolean(argv[i++], argv[0]);
 
-				op = new IntIntKCM(target, w, mpc, signedInput);
+				op = new IntIntKCMBH(target, w, mpc, signedInput);
 				addOperator(op);
 			}        
 		}
+		
 		else if(opname=="IntConstMult"){
 			int nargs = 2;
 			if (i+nargs > argc)
