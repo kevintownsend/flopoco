@@ -170,7 +170,7 @@ namespace flopoco{
 
 #if 0
 #else					
-#define USE_BITHEAP 1
+#define USE_BITHEAP 0
 #if !USE_BITHEAP //
 
 					//					nextCycle(); //TODO fix it by feeding the input delay to IntTruncMultiplier

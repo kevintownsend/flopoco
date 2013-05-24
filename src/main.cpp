@@ -165,11 +165,11 @@ void usage(char *name, string opName = ""){
 		cerr << "    ____________ INTEGER MULTIPLIERS/SQUARER/KARATSUBA _________________________\n";
 
 	 if ( full || opName == "IntMultiplier"){
-	 	OP("IntMultiplier","wInX wInY wOut signed ratio enableSupertiles");
+	 	OP("IntMultiplier","wInX wInY wOut signed DSP_threshold enableSupertiles");
 	 	cerr << "      Integer multiplier of two integers X and Y of sizes wInX and wInY \n";
 	 	cerr << "      Result is faithfully truncated to wOut bits  (wOut=0 means: full multiplier)\n";
 	 	cerr << "      signed=0: unsigned multiplier;     signed=1: signed inputs, signed outputs \n";
-	 	cerr << "      0 <= ratio <= 1; shows how much of a DSP block's area is acceptable to be left unused\n";
+	 	cerr << "      0 <= DSP_threshold <= 1;  proportion of a DSP block's area that may be left unused\n";
 		cerr << "      enableSuperTiles=0 =>  lower latency, higher logic cost; enableSuperTiles=1=> lower logic cost, longer latency \n";
 	 }
 	 
@@ -199,10 +199,10 @@ void usage(char *name, string opName = ""){
 	 }
 
 	 if ( full  || opName == "IntMultiplier" || opName == "IntMultAdd"){
-	 	OP("IntMultAdd","w signedIO ratio");
+	 	OP("IntMultAdd","w signedIO DSPThreshold");
 	 	cerr << "      integer  R=A+X*Y where X and Y are of size w, A and R are of size 2w \n";
 	 	cerr << "      signedIO: if 0, unsigned IO; if 1, signedIO \n";
-		cerr << "      0 <= ratio <= 1; shows how much of a DSP block's area is acceptable to be left unused\n";
+		cerr << "      0 <= DSPThreshold <= 1; shows how much of a DSP block's area is acceptable to be left unused\n";
 	 }
 
 
@@ -329,7 +329,7 @@ void usage(char *name, string opName = ""){
 		cerr << "      Mantissa multiplier uses Karatsuba\n";
 	}
 	if ( full || opName == "FPMultiplier" || opName == "FPMultiplierExpert"){						
-		OP( "FPMultiplierExpert","wE wFX_in wFY_in wF_out correctRounding ratio optTimeInMinutes");
+		OP( "FPMultiplierExpert","wE wFX_in wFY_in wF_out correctRounding DSPThreshold optTimeInMinutes");
 		cerr << "      Floating-point multiplier, supporting different in/out precision. \n";
 	}
 	if ( full || opName == "FPMultiplier" || opName == "FPSquarer"){					
@@ -398,9 +398,9 @@ void usage(char *name, string opName = ""){
 		cerr << "      Post-normalisation unit for LongAcc \n";
 	}
 	if ( full || opName == "DotProduct"){					
-		OP( "DotProduct","wE wFX wFY MaxMSB_in LSB_acc MSB_acc ratio");
+		OP( "DotProduct","wE wFX wFY MaxMSB_in LSB_acc MSB_acc DSPThreshold");
 		cerr << "      Floating-point dot product unit.\n";
-		cerr << "      0 <= ratio <= 1; shows how much of a DSP block's area is acceptable to be left unused\n";
+		cerr << "      0 <= DSPThreshold <= 1; shows how much of a DSP block's area is acceptable to be left unused\n";
 	}
 #ifdef HAVE_SOLLYA
 	if ( full || opName == "FPExp"){					
@@ -413,6 +413,7 @@ void usage(char *name, string opName = ""){
 		cerr << "      k: number of bits addressing the table;   d: degree of the polynomial;\n";
 		cerr << "      g: number of guard bits\n";
 		cerr << "      fullInput (boolean): if 1, accepts extended (typically unrounded) input\n";
+		cerr << "      DSP_threshold (float): between 0 and 1, 1 meaning that all small multipliers go to DSPs, 0 meaning that only multipliers filling DSPs go to DSP\n";
 	}
 	if ( full || opName == "FPLog"){					
 		OP( "FPLog","wE wF InTableSize");
@@ -1501,9 +1502,9 @@ bool parseCommandLine(int argc, char* argv[]){
 				int wInY		    = checkStrictlyPositive(argv[i++], argv[0]);
 				int wOut		    = atoi(argv[i++]);
 				int signedIO	    =  checkBoolean(argv[i++], argv[0]);
-				float ratio			= atof(argv[i++]);
+				float DSPThreshold			= atof(argv[i++]);
 				int buildSuperTiles =  checkBoolean(argv[i++], argv[0]);
-				IntMultiplier* mul=new IntMultiplier(target, wInX, wInY, wOut, signedIO, ratio, emptyDelayMap,buildSuperTiles);
+				IntMultiplier* mul=new IntMultiplier(target, wInX, wInY, wOut, signedIO, DSPThreshold, emptyDelayMap,buildSuperTiles);
 				op = mul;
 				addOperator(op);
 			}
@@ -1516,7 +1517,7 @@ bool parseCommandLine(int argc, char* argv[]){
 			else {
 				int wIn    = checkStrictlyPositive(argv[i++], argv[0]);
 				int signedIO    = checkBoolean(argv[i++], argv[0]);
-				float ratio = atof(argv[i++]);
+				float DSPThreshold = atof(argv[i++]);
 				int wInY=wIn;
 				int wInX=wIn;
 				int wA=2*wIn;
@@ -1526,7 +1527,7 @@ bool parseCommandLine(int argc, char* argv[]){
 				int wOut    = atoi(argv[i++]);
 				int buildSuperTiles = false ;// checkBoolean(argv[i++], argv[0]);
 #endif
-				FixMultAdd* op=new FixMultAdd(target, wInX /*wX*/, wInY /*wY*/, wA /*wA*/, wA /*wOut*/, wA-1 /*msbP*/, 0 /*lsbA*/, signedIO, ratio);
+				FixMultAdd* op=new FixMultAdd(target, wInX /*wX*/, wInY /*wY*/, wA /*wA*/, wA /*wOut*/, wA-1 /*msbP*/, 0 /*lsbA*/, signedIO, DSPThreshold);
 				addOperator(op);
 			}
 		}
@@ -1691,8 +1692,8 @@ bool parseCommandLine(int argc, char* argv[]){
 			else {
 				int wI = checkStrictlyPositive(argv[i++], argv[0]);
 				int wO = checkStrictlyPositive(argv[i++], argv[0]);
-				float ratio = atof(argv[i++]);
-				op = new FixedComplexMultiplier(target, wI, wO, ratio, true);
+				float DSPThreshold = atof(argv[i++]);
+				op = new FixedComplexMultiplier(target, wI, wO, DSPThreshold, true);
 				addOperator(op);
 			}
 		}
@@ -2231,7 +2232,7 @@ bool parseCommandLine(int argc, char* argv[]){
 
 		else if (opname == "FPExpExpert")
 		{
-			int nargs = 6;
+			int nargs = 7;
 			if (i+nargs > argc)
 				usage(argv[0],opname); // and exit
 			int wE = checkStrictlyPositive(argv[i++], argv[0]);
@@ -2240,7 +2241,8 @@ bool parseCommandLine(int argc, char* argv[]){
 			int d=atoi(argv[i++]);
 			int g=atoi(argv[i++]);
 			int fullInput=checkBoolean(argv[i++],  argv[0]);
-			op = new FPExp(target, wE, wF, k, d, g, fullInput);
+			float DSPThreshold = atof(argv[i++]);
+			op = new FPExp(target, wE, wF, k, d, g, fullInput, DSPThreshold);
 			addOperator(op);
 		}
 
@@ -2586,8 +2588,8 @@ bool parseCommandLine(int argc, char* argv[]){
 			if (i+nargs > argc)
 				usage(argv[0],opname); // and exit
 			int w = checkStrictlyPositive(argv[i++], argv[0]); // must be >=2 actually
-			float ratio = atof(argv[i++]);
-			Operator* tg = new FixSinCos(target, w,ratio);
+			float DSPThreshold = atof(argv[i++]);
+			Operator* tg = new FixSinCos(target, w,DSPThreshold);
 			addOperator(tg);
 		}
 

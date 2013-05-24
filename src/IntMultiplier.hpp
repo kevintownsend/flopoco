@@ -14,13 +14,12 @@
 namespace flopoco {
 
 	/*
-	  Definition of the DSP use threshold r:
+	  Definition of the DSP use threshold t:
 	  Consider a submultiplier block, by definition smaller than (or equal to) a DSP in both dimensions
-	  So: r=1 means any multiplier that does not fills a DSP goes to logic
-	  r=0       any multiplier, even very small ones, go to DSP
-
-	  (submultiplier area)/(DSP area) is between 0 and 1
-	  if (submultiplier area)/(DSP area) is larger than r then use a DSP for it 
+	  let r=(submultiplier area)/(DSP area); r is between 0 and 1
+	  if r >= 1-t   then use a DSP for this block 
+	  So: t=0 means: any submultiplier that does not fill a DSP goes to logic
+        t=1 means: any submultiplier, even very small ones, go to DSP
 	*/
 
 
@@ -45,12 +44,12 @@ namespace flopoco {
 		 * @param[in] target           the target device
 		 * @param[in] wX             X multiplier size (including sign bit if any)
 		 * @param[in] wY             Y multiplier size (including sign bit if any)
-		 * @param[in] wOut         wOut size for a truncated multiplier (0 means full multiplier)
-		 * @param[in] signedIO     false=unsigned, true=signed
-		 * @param[in] ratio            DSP block use ratio threshold
+		 * @param[in] wOut           wOut size for a truncated multiplier (0 means full multiplier)
+		 * @param[in] signedIO       false=unsigned, true=signed
+		 * @param[in] DSPThreshold   DSP block use threshold, see its def above
 		 **/
 		IntMultiplier(Target* target, int wX, int wY, int wOut=0, bool signedIO = false,
-		              float ratio = 1.0, map<string, double> inputDelays = emptyDelayMap,bool enableSuperTiles=false);
+		              float DSPThreshold = 1.0, map<string, double> inputDelays = emptyDelayMap,bool enableSuperTiles=false);
 
 
 		/**
@@ -68,10 +67,10 @@ namespace flopoco {
 		 *                          For a stand-alone multiplier lsbWeight=g, otherwise lsbWeight>=g
 		 * @param[in] negate     if true, the multiplier result is subtracted from the bit heap 
 		 * @param[in] signedIO     false=unsigned, true=signed
-		 * @param[in] ratio            DSP block use ratio
+		 * @param[in] DSPThreshold            DSP block use ratio
 		 **/
 		IntMultiplier (Operator* parentOp, BitHeap* bitHeap,  Signal* x, Signal* y, 
-		               int wX, int wY, int wOut, int lsbWeight, bool negate, bool signedIO, float ratio);
+		               int wX, int wY, int wOut, int lsbWeight, bool negate, bool signedIO, float DSPThreshold);
 
 		/** How many guard bits will a truncated multiplier need? Needed to set up the BitHeap of an operator using the virtual constructor */
 		static int neededGuardBits(int wX, int wY, int wOut);
@@ -133,8 +132,8 @@ namespace flopoco {
 
 
 		/** is called when no more dsp-s fit in a row, because of the truncation line
-		 *	checks the ratio, if only DSPs should be used, only logic, or maybe both, and applies it **/
-		bool checkThreshold(int topX, int topY, int botX, int botY,int wxDSP,int wyDSP);
+		 *	checks the DSPThreshold, if only DSPs should be used, only logic, or maybe both, and applies it **/
+		bool worthUsingOneDSP(int topX, int topY, int botX, int botY,int wxDSP,int wyDSP);
 		void addExtraDSPs(int topX, int topY, int botX, int botY, int wxDSP, int wyDSP);
 		int checkTiling(int wxDSP, int wyDSP, int& horDSP, int& verDSP);
 
@@ -151,7 +150,7 @@ namespace flopoco {
 		int wTruncated;                 /**< The number of truncated bits, wFull - wOut*/
 		int g ;                         /**< the number of guard bits */
 		int weightShift;                /**< the shift in weight for the LSB of a truncated multiplier compared to a full one,  wFull - (wOut+g)*/
-		double ratio;					/**< ratio = says what percentage of 1 DSP area is allowed to be lost */
+		double DSPThreshold;					/**<   says what proportion of a DSP area is allowed to be lost */
 		double maxError;     			/**< the max absolute value error of this multiplier, in ulps of the result. Should be 0 for untruncated, 1 or a bit less for truncated.*/  
 		double initialCP;    			/**< the initial delay, getMaxInputDelays ( inputDelays_ ).*/  
 	private:
@@ -168,7 +167,7 @@ namespace flopoco {
 		string yname;
 		string inputName1;
 		string inputName2;
-		bool negate;                    /**< if true this multiplier checkThresholds -xy */
+		bool negate;                    /**< if true this multiplier computes -xy */
 		int signedIO;                   /**< true if the IOs are two's complement */
 		bool enableSuperTiles;     		/** if true, supertiles are built (fewer resources, longer latency */
 		int multiplierUid;

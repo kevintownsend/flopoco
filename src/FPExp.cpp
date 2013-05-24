@@ -32,6 +32,20 @@
 using namespace std;
 
 
+
+/* TODOs
+Obtaining 400MHz in FPExp 8 23 depends on the version of ISE. Test with recent one.
+remove the nextCycle after the multiplier
+
+check the multiplier in the case 8 27: logic only, why?
+
+Pass DSPThreshold to PolyEval
+
+replace the truncated mult and following adder with an FixedMultAdd 
+Clean up poly eval and bitheapize it
+
+*/
+
 #define LARGE_PREC 1000 // 1000 bits should be enough for everybody
 
 namespace flopoco{
@@ -89,6 +103,7 @@ namespace flopoco{
 
 
 
+
 	mpz_class FPExp::ExpYTable::function(int x){
 		mpz_class h;
 		mpfr_t a, y;
@@ -118,8 +133,11 @@ namespace flopoco{
 	};
 
 
-	FPExp::FPExp(Target* target, int wE_, int wF_, int k_, int d_, int guardBits, bool fullInput, map<string, double> inputDelays)
-		: Operator(target), wE(wE_), wF(wF_), k(k_), d(d_), g(guardBits)
+
+
+
+	FPExp::FPExp(Target* target, int wE_, int wF_, int k_, int d_, int guardBits, bool fullInput, float DSP_threshold_, map<string, double> inputDelays)
+		: Operator(target), wE(wE_), wF(wF_), k(k_), d(d_), g(guardBits), DSPThreshold(DSP_threshold_)
 	{
 
 #ifndef HAVE_SOLLYA
@@ -188,7 +206,7 @@ namespace flopoco{
 			REPORT(DETAILED, "sizeExpY=" << sizeExpY);		
 		}
 		else if (wF<=23) {
-			REPORT(DETAILED, "We will split Y into A and Z, but we may use a magic table");
+			REPORT(DETAILED, "We will split Y into A and Z, using a magic table");
 			g=3;
 			k=9;
 			sizeY=wF+g;
@@ -243,6 +261,7 @@ namespace flopoco{
 			}
 			
 			REPORT(DETAILED, "Generic case with k=" << k << " and degree d=" << d);
+			// redefine all the parameters because g depends on the branch
 			sizeY=wF+g;
 			sizeExpY = wF+g+1; // e^Y has MSB weight 1
 			sizeExpA = sizeExpY; 
@@ -597,36 +616,43 @@ namespace flopoco{
 			} // now we have in expZminus1 e^Z-1
 
 			setCycleFromSignal("expA", getSignalDelay("expA"));
-#if 1			// Rounding, not truncation to save one half ulp
-			vhdl << tab << "-- Rounding expA to the same accuracy as expZminus1" << endl;
-			IntAdder* expArounded0 = new IntAdder( target, sizeMultIn+1, inDelayMap( "X", target->RAMToLogicWireDelay() + getCriticalPath()) );
-			addSubComponent(expArounded0);
-	 
-			inPortMapCst(expArounded0, "X", "expA"+range(sizeExpA-1, sizeExpA-sizeMultIn-1));
-			inPortMapCst(expArounded0, "Y", zg(sizeMultIn+1,0));
-			inPortMapCst( expArounded0, "Cin" , " '1' ");
-			outPortMap( expArounded0, "R", "expArounded0");
-			vhdl << instance( expArounded0, "Adder_expArounded0");
-			syncCycleFromSignal("expArounded0", expArounded0->getOutputDelay("R") );
+
+			// Now, if we want g=3 (needed for the magic table to fit a BRAM for single prec)
+			// we need to keep max error below 4 ulp.
+			// Every half-ulp counts, in particular we need to round expA instead of truncating it...
+			// The following "if" is because I have tried several alternatives to get rid of this addition.
+			if(useMagicTableExpZm1 || useMagicTableExpZmZm1) {
+				vhdl << tab << "-- Rounding expA to the same accuracy as expZminus1" << endl;
+				vhdl << tab << "--   (truncation would not be accurate enough and require one more guard bit)" << endl;
+				IntAdder* expArounded0 = new IntAdder( target, sizeMultIn+1, inDelayMap( "X", target->RAMToLogicWireDelay() + getCriticalPath()) );
+				addSubComponent(expArounded0);
+				
+				inPortMapCst(expArounded0, "X", "expA"+range(sizeExpA-1, sizeExpA-sizeMultIn-1));
+				inPortMapCst(expArounded0, "Y", zg(sizeMultIn+1,0));
+				inPortMapCst( expArounded0, "Cin" , " '1' ");
+				outPortMap( expArounded0, "R", "expArounded0");
+				vhdl << instance( expArounded0, "Adder_expArounded0");
+				syncCycleFromSignal("expArounded0", expArounded0->getOutputDelay("R") );
 		
-			vhdl << tab << declare("expArounded", sizeMultIn) << " <= expArounded0" << range(sizeMultIn, 1) << ";" << endl;
-#else
-			vhdl << tab << "-- Truncating expA to the same accuracy as expZminus1" << endl;
-			vhdl << tab << declare("expArounded", sizeMultIn) << " <= expA" << range(sizeExpA-1, sizeExpA-sizeMultIn) << ";" << endl;
-			
-#endif	
+				vhdl << tab << declare("expArounded", sizeMultIn) << " <= expArounded0" << range(sizeMultIn, 1) << ";" << endl;
+			}
+			else{ // if  generic we have a faithful expZmZm1, not a CR one: we need g=4, so anyway we do not need to worry
+				vhdl << tab << "-- Truncating expA to the same accuracy as expZminus1" << endl;
+				vhdl << tab << declare("expArounded", sizeMultIn) << " <= expA" << range(sizeExpA-1, sizeExpA-sizeMultIn) << ";" << endl;
+			}
 			if(useMagicTableExpZm1)
 				syncCycleFromSignal( "expZminus1");
 			else
 				syncCycleFromSignal( "expZminus1", addexpZminus1->getOutputDelay("R"));
 		
+#if 0 // full product, truncated
 			int sizeProd;
-			Operator* lowProd;
 			sizeProd = sizeMultIn + sizeExpZm1;
+			Operator* lowProd;
 			lowProd = new IntMultiplier(target, sizeMultIn, sizeExpZm1,  
 			                            0,  // untruncated
 			                            false,  /*unsigned*/
-			                            0.9, // DSP threshold
+			                            DSPThreshold, // DSP threshold
 			                            inDelayMap("X", target->LogicToDSPWireDelay() + getCriticalPath() ) );
 			addSubComponent(lowProd);
 			
@@ -637,18 +663,50 @@ namespace flopoco{
 			vhdl << instance(lowProd, "TheLowerProduct")<<endl;
 			syncCycleFromSignal("lowerProduct", lowProd->getOutputDelay("R") );
 			nextCycle(); // needed for the 1-DSP case TODO: fix in IntMultiplier instead 
-
-			if(target->normalizedFrequency()>=0.5){ // TODO instead of this ugly hack, do something clever
+#if 0 // Should be fixed in IntMultiplier
+			if(target->normalizedFrequency()>=0.5 && sizeProd>12){ 
 				nextCycle(); // TODO should be something cleaner, fix in IntMultiplier instead
 			}
+#endif
+			vhdl << tab << declare("extendedLowerProduct",sizeExpY) << " <= (" << rangeAssign(sizeExpY-1, sizeExpY-k+1, "'0'") 
+			     << " & lowerProduct" << range(sizeProd-1, sizeProd - (sizeExpY-k+1)) << ");" << endl;
+
+
+#else // using a truncated multiplier
+
+			int sizeProd;
+			sizeProd = sizeExpZm1+1;
+#if 0 // Should be fixed in IntMultiplier
+			if(target->normalizedFrequency()>=0.5 && sizeProd>12){ 
+				nextCycle(); // TODO should be something cleaner, fix in IntMultiplier instead
+			}
+#endif
+			Operator* lowProd;
+			lowProd = new IntMultiplier(target, sizeMultIn, sizeExpZm1,  
+			                            sizeProd,  // truncated
+			                            false,  /*unsigned*/
+			                            DSPThreshold, // DSP threshold
+			                            inDelayMap("X", target->LogicToDSPWireDelay() + getCriticalPath() ) );
+			addSubComponent(lowProd);
+			
+			inPortMap(lowProd, "X", "expArounded");
+			inPortMap(lowProd, "Y", "expZminus1");
+			outPortMap(lowProd, "R", "lowerProduct");
+			
+			vhdl << instance(lowProd, "TheLowerProduct")<<endl;
+			syncCycleFromSignal("lowerProduct", lowProd->getOutputDelay("R") );
+			nextCycle(); // needed for the 1-DSP case TODO: fix in IntMultiplier instead 
+			vhdl << tab << declare("extendedLowerProduct",sizeExpY) << " <= (" << rangeAssign(sizeExpY-1, sizeExpY-k+1, "'0'") 
+			     << " & lowerProduct" << range(sizeProd-1, 0) << ");" << endl;
+
+#endif
+
 
 			vhdl << tab << "-- Final addition -- the product MSB bit weight is -k+2 = "<< -k+2 << endl;
 			// remember that sizeExpA==sizeExpY
 			IntAdder *finalAdder = new IntAdder(target, sizeExpY, inDelayMap( "X", target->localWireDelay() + getCriticalPath()));
 			addSubComponent(finalAdder);
 			
-			vhdl << tab << declare("extendedLowerProduct",sizeExpY) << " <= (" << rangeAssign(sizeExpY-1, sizeExpY-k+1, "'0'") 
-			     << " & lowerProduct" << range(sizeProd-1, sizeProd - (sizeExpY-k+1)) << ");" << endl;
 			
 			inPortMap(finalAdder, "X", "expA");
 			inPortMap(finalAdder, "Y", "extendedLowerProduct");

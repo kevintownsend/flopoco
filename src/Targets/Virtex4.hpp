@@ -43,10 +43,10 @@ namespace flopoco{
 			lutInputs_ 				= 4;
 			nrDSPs_ 				= 220; // XC4VLX15 has 1 column of 32 DSPs, 60 is for testing purposes	
 			
-			DSPMultiplierDelay_		= 2.970e-9;
+			DSPMultiplierDelay_		= 2.954e-9;
 			DSPAdderDelay_			= 1.820e-9;
 			DSPCascadingWireDelay_	= 0.266e-9;
-			DSPToLogicWireDelay_	= 0.436e-9;
+			DSPToLogicWireDelay_	= 0.361e-9;
 			//0.631;
 			
 			RAMDelay_				= 1.647e-9; 

@@ -182,16 +182,16 @@ namespace flopoco {
 
 	// The virtual constructor 
 	IntMultiplier::IntMultiplier (Operator* parentOp_, BitHeap* bitHeap_, Signal* x_, Signal* y_, int wX_, 
-	                              int wY_, int wOut_, int lsbWeight_, bool negate_, bool signedIO_, float ratio_):
+	                              int wY_, int wOut_, int lsbWeight_, bool negate_, bool signedIO_, float DSPThreshold_):
 		Operator (  parentOp_->getTarget()), 
-		wxDSP(0), wyDSP(0), wXdecl(wX_), wYdecl(wY_), wX(0), wY(0), wOut(wOut_), ratio(ratio_),  maxError(0.0), 
+		wxDSP(0), wyDSP(0), wXdecl(wX_), wYdecl(wY_), wX(0), wY(0), wOut(wOut_), DSPThreshold(DSPThreshold_),  maxError(0.0), 
 		parentOp(parentOp_), bitHeap(bitHeap_), lsbWeight(lsbWeight_),
 		x(x_), y(y_), negate(negate_), signedIO(signedIO_) 
 	{
 
 		multiplierUid=parentOp->getNewUId();
 		srcFileName="IntMultiplier";
-		useDSP = (ratio>=0) &&  parentOp->getTarget()->hasHardMultipliers();
+		useDSP = (DSPThreshold>=0) &&  parentOp->getTarget()->hasHardMultipliers();
 
 		ostringstream name;
 		name <<"VirtualIntMultiplier";
@@ -228,15 +228,15 @@ namespace flopoco {
 
 
 	// The constructor for a stand-alone operator
-	IntMultiplier::IntMultiplier (Target* target_, int wX_, int wY_, int wOut_, bool signedIO_, float ratio_, map<string, double> inputDelays_, bool enableSuperTiles_):
-		Operator ( target_, inputDelays_ ), wxDSP(0), wyDSP(0), wXdecl(wX_), wYdecl(wY_), wX(0), wY(0), wOut(wOut_), wFull(0), ratio(ratio_),  maxError(0.0), negate(false), signedIO(signedIO_),enableSuperTiles(enableSuperTiles_), target(target_)
+	IntMultiplier::IntMultiplier (Target* target_, int wX_, int wY_, int wOut_, bool signedIO_, float DSPThreshold_, map<string, double> inputDelays_, bool enableSuperTiles_):
+		Operator ( target_, inputDelays_ ), wxDSP(0), wyDSP(0), wXdecl(wX_), wYdecl(wY_), wX(0), wY(0), wOut(wOut_), wFull(0), DSPThreshold(DSPThreshold_),  maxError(0.0), negate(false), signedIO(signedIO_),enableSuperTiles(enableSuperTiles_), target(target_)
 	{
 		srcFileName="IntMultiplier";
 		setCopyrightString ( "Florent de Dinechin, Kinga Illyes, Bogdan Popa, Bogdan Pasca, 2012" );
 
 		// useDSP or not? 
-		//useDSP = (ratio>0) && target->hasHardMultipliers();
-		useDSP = (ratio>=0)&&target->hasHardMultipliers();
+		//useDSP = (DSPThreshold>0) && target->hasHardMultipliers();
+		useDSP = (DSPThreshold>=0)&&target->hasHardMultipliers();
 
 
 		{
@@ -398,10 +398,10 @@ namespace flopoco {
 		// Multiplications that fit directly into a DSP
 		int dspXSize, dspYSize;
 		
-		if(parentOp != NULL)
-			parentOp->getTarget()->getDSPWidths(dspXSize, dspYSize, signedIO);
-		else
-			getTarget()->getDSPWidths(dspXSize, dspYSize, signedIO);
+		//		if(parentOp != NULL) Test commented out by Florent because the following parentOp->getTarget was not protected the same way
+		parentOp->getTarget()->getDSPWidths(dspXSize, dspYSize, signedIO);
+		//		else
+		//getTarget()->getDSPWidths(dspXSize, dspYSize, signedIO);
 			
 		//correct the DSP sizes for Altera targets
 		if(parentOp->getTarget()->getVendor() == "Altera")
@@ -426,7 +426,7 @@ namespace flopoco {
 		//	the multiplication in a DSP, without passing through a bitheap
 		//	the last three conditions ensure that the multiplier can actually fit in a DSP
 		//if((1.0*wX*wY >= 1.0*SMALL_MULT_RATIO*dspXSize*dspYSize) && (1.0*wX*wY < 1.0*dspXSize*dspYSize) && (wX <= dspXSize) && (wY <= dspYSize))
-		if(checkThreshold(wX, wY, 0, 0, dspXSize, dspYSize) && (wX <= dspXSize) && (wY <= dspYSize))
+		if(worthUsingOneDSP(wX, wY, 0, 0, dspXSize, dspYSize) && (wX <= dspXSize) && (wY <= dspYSize))
 		{
 			ostringstream s, zerosXString, zerosYString, zerosYNegString;
 			int zerosX = dspXSize - wX + (signedIO ? 0 : 1);
@@ -999,9 +999,8 @@ namespace flopoco {
 
 
 	/** 
-	 * checks against the ratio the given block and adds a DSP or logic
+	 * checks against the DSPThreshold the given block and adds a DSP or logic
 	*/
-	//FIXME: the use of the ratio is ambiguous 
 	void IntMultiplier::addExtraDSPs(int topX, int topY, int botx, int boty,int wxDSP,int wyDSP)
 	{
 		REPORT(DEBUG, "in addExtraDSPs at sizeX=" << wxDSP << " and sizeY=" << wyDSP << ": topX=" << topX << " topY=" << topY << " botX=" << botx << " botY=" << boty);
@@ -1038,8 +1037,8 @@ namespace flopoco {
 			}	
 		}
 
-		//now check against the ratio
-		if(checkThreshold(topx,topy,botx,boty,wxDSP,wyDSP))
+		//now check against the DSPThreshold
+		if(worthUsingOneDSP(topx,topy,botx,boty,wxDSP,wyDSP))
 		{
 			//worth using DSP
 			stringstream inx,iny;
@@ -1055,8 +1054,9 @@ namespace flopoco {
 			m->setPrevious(NULL);			
 			localSplitVector.push_back(m);
 			bitHeap->addMultiplierBlock(m);
+			REPORT(DEBUG, "in addExtraDSPs, adding a multiplier block of size wxDSP=" << wxDSP << " and wyDSP=" << wyDSP 
+			       << ": topX=" << topx << " topY=" << topy << " weightShift=" << weightShift << " weight=" << m->getWeight());
 			
-			REPORT(DEBUG, "in addExtraDSPs, adding a multiplier block of size wxDSP=" << wxDSP << " and wyDSP=" << wyDSP << ": topX=" << topx << " topY=" << topy << " weightShift=" << weightShift << " weight=" << m->getWeight());
 		}
 		else
 		{
@@ -1075,7 +1075,7 @@ namespace flopoco {
 	//FIXME: the unused area of the DSP is not necessarly an isosceles triangle
 	//			in fact, it's not necessarly a triangle
 	/*
-	bool IntMultiplier::checkThreshold(int topX, int topY, int botX, int botY,int wxDSP,int wyDSP)
+	bool IntMultiplier::worthUsingOneDSP(int topX, int topY, int botX, int botY,int wxDSP,int wyDSP)
 	{
 	
 		REPORT(DEBUG, "in checktreshhold at coordinates: topX="<<topX<<" topY="<<topY<<" botX="<<botX<<" botY"<<botY);
@@ -1116,7 +1116,7 @@ namespace flopoco {
 				y2++;	
 			
 			blockArea = (widthX>wxDSP ? wxDSP : widthX) * (widthY>wyDSP ? wyDSP : widthY);
-			REPORT(DEBUG, "in checkThreshold: full blocArea=" << blockArea << " x="<<x1<<" topCornerX="<<((topX < botX-wxDSP) ? topX : botX-wxDSP) << " y="<<y2<<" topCornerY="<<((topY < botY-wyDSP) ? topY : botY-wyDSP));
+			REPORT(DEBUG, "in worthUsingOneDSP: full blocArea=" << blockArea << " x="<<x1<<" topCornerX="<<((topX < botX-wxDSP) ? topX : botX-wxDSP) << " y="<<y2<<" topCornerY="<<((topY < botY-wyDSP) ? topY : botY-wyDSP));
 			
 			//computing the triangle's area
 			if(topX+topY<=wFull-wOut-g)
@@ -1126,8 +1126,8 @@ namespace flopoco {
 			
 			//the final area which is used
 			blockArea = blockArea-triangle;
-			REPORT(DEBUG, "in checkThreshold: usable blockArea=" << blockArea);
-			REPORT(DEBUG, "in checkThreshold: dspArea=" << dspArea);
+			REPORT(DEBUG, "in worthUsingOneDSP: usable blockArea=" << blockArea);
+			REPORT(DEBUG, "in worthUsingOneDSP: dspArea=" << dspArea);
 			
 			//checking according to ratio/area
 			if(blockArea>=(1.0-ratio)*dspArea)
@@ -1139,14 +1139,23 @@ namespace flopoco {
 	*/
 	
 	/** 
-	 * Checks the area usage of a DSP, according to a given block and ratio(threshold)
-	 * 		- ratio(threshold) = says what percentage of 1 DSP area is allowed to be lost
+	 * Checks the area usage of a DSP, according to a given block and DSPThreshold(threshold)
+	 * 		- DSPThreshold(threshold) = says what percentage of 1 DSP area is allowed to be lost
 	 * Algorithm: compute the area which is used out of a DSP, and compute 
 	 * the unused ratio from this. The used area can be a triangle, a trapeze or 
 	 * a pentagon, in the truncated case, or a rectangle in the case of a full 
 	 * multiplier.
 	 **/
-	bool IntMultiplier::checkThreshold(int topX, int topY, int botX, int botY,int wxDSP,int wyDSP)
+	/*
+	  Definition of the DSP use threshold t:
+	  Consider a submultiplier block, by definition smaller than (or equal to) a DSP in both dimensions
+	  let r=(submultiplier area)/(DSP area); r is between 0 and 1
+	  if r >= 1-t   then use a DSP for this block 
+	  So: t=0 means: any submultiplier that does not fill a DSP goes to logic
+        t=1 means: any submultiplier, even very small ones, go to DSP
+	*/
+
+	bool IntMultiplier::worthUsingOneDSP(int topX, int topY, int botX, int botY,int wxDSP,int wyDSP)
 	{
 		REPORT(DEBUG, "in checktreshhold at coordinates: topX="<<topX<<" topY="<<topY<<" botX="<<botX<<" botY"<<botY);
 		
@@ -1159,18 +1168,26 @@ namespace flopoco {
 		//if the truncation line passes above the top on the DSP
 		if((wFull == wOut) || (topX+topY > wFull-wOut-g))
 		{
-			int x = topX>botX-wxDSP ? topX : botX-wxDSP;
+			REPORT(DEBUG, "in worthUsingOneDSP: full multiplication case, truncation line does not pass through this block");
+#if 0
+			int x = topX>botX-wxDSP ? topX : botX-wxDSP; // ????  max (topX, botX-WxDSP
 			int y = topY>botY-wyDSP ? topY : botY-wyDSP;
+			REPORT(DEBUG, "*********** x=" << x << "  y=" << y);
 			
 			usefulDSPArea = 1.0 * x*y;
+#else
+			int x = min(topX-botX, wxDSP);
+			int y = min(topY-botY, wyDSP);
+			//			REPORT(DEBUG, "*********** x=" << x << "  y=" << y);
+			
+			usefulDSPArea = x*y;
+#endif
 			totalDSPArea = wxDSP*wyDSP;
 			
-			REPORT(DEBUG, "in checkThreshold: full multiplication case");
-			REPORT(DEBUG, "in checkThreshold: usable blockArea=" << usefulDSPArea);
-			REPORT(DEBUG, "in checkThreshold: dspArea=" << totalDSPArea);
+			REPORT(DEBUG, "in worthUsingOneDSP: usable blockArea=" << usefulDSPArea << "   dspArea=" << totalDSPArea);
 			
 			//checking according to ratio/area
-			if(usefulDSPArea >= (1.0-ratio)*totalDSPArea)
+			if(usefulDSPArea >= (1.0-DSPThreshold)*totalDSPArea)
 					return true;
 			else
 					return false;
@@ -1255,13 +1272,13 @@ namespace flopoco {
 		usefulDSPArea = ((1.0*botX-intersectX1 + 1.0*botX-intersectX2)*(intersectY2-intersectY1)/2.0) + (1.0*botY-intersectY2)*(botX-intersectX2);
 		totalDSPArea = wxDSP*wyDSP;
 		
-		REPORT(DEBUG, "in checkThreshold: truncated multiplication case");
-		REPORT(DEBUG, "in checkThreshold: usable blockArea=" << usefulDSPArea);
-		REPORT(DEBUG, "in checkThreshold: dspArea=" << totalDSPArea);
-		REPORT(DEBUG, "in checkThreshold: intersectX1=" << intersectX1 << " intersectY1=" << intersectY1 << " intersectX2=" << intersectX2 << " intersectY2=" << intersectY2);
+		REPORT(DEBUG, "in worthUsingOneDSP: truncated multiplication case");
+		REPORT(DEBUG, "in worthUsingOneDSP: usable blockArea=" << usefulDSPArea);
+		REPORT(DEBUG, "in worthUsingOneDSP: dspArea=" << totalDSPArea);
+		REPORT(DEBUG, "in worthUsingOneDSP: intersectX1=" << intersectX1 << " intersectY1=" << intersectY1 << " intersectX2=" << intersectX2 << " intersectY2=" << intersectY2);
 		
-		//test if the DSP ratio is satisfied
-		if(usefulDSPArea >= (1.0-ratio)*totalDSPArea)
+		//test if the DSP DSPThreshold is satisfied
+		if(usefulDSPArea >= (1.0-DSPThreshold)*totalDSPArea)
 				return true;
 		else
 				return false;
@@ -1323,14 +1340,14 @@ namespace flopoco {
 			
 			if((widthX==0) && (widthY==0))
 			{
-				//if both DSP dimensions are larger, the DSP block might still fit the ratio
-				if(checkThreshold(blockTopX, blockTopY, blockBottomX, blockBottomY, dspSizeX, dspSizeY))
+				//if both DSP dimensions are larger, the DSP block might still fit the DSPThreshold
+				if(worthUsingOneDSP(blockTopX, blockTopY, blockBottomX, blockBottomY, dspSizeX, dspSizeY))
 				{
-					//ratio fulfilled; search is over
+					//DSPThreshold fulfilled; search is over
 					dspSizeNotFound = false;
 				}else
 				{
-					//ratio not fulfilled; pass on to the next smaller DSP size
+					//DSPThreshold not fulfilled; pass on to the next smaller DSP size
 					if(newMultIndex == multWidthsSize-1)
 					{
 						dspSizeNotFound = false;
@@ -1354,14 +1371,14 @@ namespace flopoco {
 					int tx = ((widthX==0 || widthY==0) ? blockBottomX-dspSizeX : blockTopX), ty = ((widthX==0 || widthY==0) ? blockBottomY-dspSizeY : blockTopY);
 					int bx = blockBottomX, by = blockBottomY;
 					
-					//if(checkThreshold(tx, ty, bx, by, dspSizeX, dspSizeY))
-					if(checkThreshold((tx<blockTopX ? blockTopX : tx), (ty<blockTopY ? blockTopY : ty), bx, by, dspSizeX, dspSizeY))
+					//if(worthUsingOneDSP(tx, ty, bx, by, dspSizeX, dspSizeY))
+					if(worthUsingOneDSP((tx<blockTopX ? blockTopX : tx), (ty<blockTopY ? blockTopY : ty), bx, by, dspSizeX, dspSizeY))
 					{
-						//ratio fulfilled; search is over
+						//DSPThreshold fulfilled; search is over
 						dspSizeNotFound = false;
 					}else
 					{
-						//ratio not fulfilled; pass on to the next smaller DSP size
+						//DSPThreshold not fulfilled; pass on to the next smaller DSP size
 						if(newMultIndex == multWidthsSize-1)
 						{
 							dspSizeNotFound = false;
@@ -1499,14 +1516,14 @@ namespace flopoco {
 					}else
 					{
 						//the regular case; just add a new DSP
-						if(checkThreshold((topX<0 ? blockTopX : topX), (topY<0 ? blockTopY : topY), (botX<0 ? blockTopX : botX), (botY<0 ? blockTopY : botY), dspSizeX, dspSizeY))
+						if(worthUsingOneDSP((topX<0 ? blockTopX : topX), (topY<0 ? blockTopY : topY), (botX<0 ? blockTopX : botX), (botY<0 ? blockTopY : botY), dspSizeX, dspSizeY))
 						{
-							REPORT(DEBUG, "" << tab << tab << "ratio satisfied - adding DSP at coordinates topX=" << topX << " topY=" << topY << " botX=" << botX << " botY=" << botY << " dspSizeX=" << dspSizeX << " dspSizeY=" << dspSizeY);
+							REPORT(DEBUG, "" << tab << tab << "DSPThreshold satisfied - adding DSP at coordinates topX=" << topX << " topY=" << topY << " botX=" << botX << " botY=" << botY << " dspSizeX=" << dspSizeX << " dspSizeY=" << dspSizeY);
 							addExtraDSPs(topX, topY, botX, botY, dspSizeX, dspSizeY);
 						}
 						else
 						{
-							REPORT(DEBUG, "" << tab << tab << "ratio not satisfied - recursive call at coordinates topX=" << topX << " topY=" << topY << " botX=" << botX << " botY=" << botY << " dspSizeX=" << dspSizeX << " dspSizeY=" << dspSizeY << (signedX ? " signed" : " unsigned") << " by " << (signedY ? "signed" : "unsigned"));
+							REPORT(DEBUG, "" << tab << tab << "DSPThreshold not satisfied - recursive call at coordinates topX=" << topX << " topY=" << topY << " botX=" << botX << " botY=" << botY << " dspSizeX=" << dspSizeX << " dspSizeY=" << dspSizeY << (signedX ? " signed" : " unsigned") << " by " << (signedY ? "signed" : "unsigned"));
 							if(newMultIndex == multWidthsSize-1)
 							{
 								REPORT(DEBUG, "" << tab << tab << tab << "size cannot be decreased anymore; will add DSP at this size");
