@@ -1169,20 +1169,11 @@ namespace flopoco {
 		if((wFull == wOut) || (topX+topY > wFull-wOut-g))
 		{
 			REPORT(DEBUG, "in worthUsingOneDSP: full multiplication case, truncation line does not pass through this block");
-#if 0
-			int x = topX>botX-wxDSP ? topX : botX-wxDSP; // ????  max (topX, botX-WxDSP
-			int y = topY>botY-wyDSP ? topY : botY-wyDSP;
-			REPORT(DEBUG, "*********** x=" << x << "  y=" << y);
+			int x = max(topX,botX-wxDSP);
+			int y = max(topY,botY-wyDSP);
+			// REPORT(DEBUG, "*********** x=" << x << "  y=" << y);
 			
-			usefulDSPArea = 1.0 * x*y;
-#else
-			int x = min(topX-botX, wxDSP);
-			int y = min(topY-botY, wyDSP);
-			//			REPORT(DEBUG, "*********** x=" << x << "  y=" << y);
-			
-			usefulDSPArea = x*y;
-#endif
-			totalDSPArea = wxDSP*wyDSP;
+			usefulDSPArea = (botX-x)*(botY-y);
 			
 			REPORT(DEBUG, "in worthUsingOneDSP: usable blockArea=" << usefulDSPArea << "   dspArea=" << totalDSPArea);
 			
