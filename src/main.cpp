@@ -872,6 +872,7 @@ bool parseCommandLine(int argc, char* argv[]){
 				}
 			}
 		}
+		
 		else if(opname=="IntIntKCM"){
 			int nargs = 4;
 			if (i+nargs > argc)
@@ -883,20 +884,6 @@ bool parseCommandLine(int argc, char* argv[]){
 				int useBitheap = checkBoolean(argv[i++], argv[0]);
 
 				op = new IntIntKCM(target, w, mpc, signedInput, useBitheap);
-				addOperator(op);
-			}        
-		}
-		
-		else if(opname=="IntIntKCMBH"){
-			int nargs = 3;
-			if (i+nargs > argc)
-				usage(argv[0],opname);
-			else {
-				int w = atoi(argv[i++]);
-				mpz_class mpc(argv[i++]);
-				int signedInput = checkBoolean(argv[i++], argv[0]);
-
-				op = new IntIntKCMBH(target, w, mpc, signedInput);
 				addOperator(op);
 			}        
 		}
