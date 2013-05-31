@@ -547,7 +547,7 @@ namespace flopoco{
 		setCriticalPath(0.0);
 		for (i=1; i<= stages; i++) {
 			manageCriticalPath( target->LogicToRAMWireDelay() + target->RAMDelay(), false );
-			if( (target->getID()=="Virtex5" && target->frequencyMHz() > 250)  ) {
+			if( target->normalizedFrequency() > 0.5  ) { // we targetting a deeply pipelined operator
 					nextCycle(); nextCycle();// gets absorbed in the BRams, and reinits the critical paths, and we have plenty of cycles to live in 
 			}
 			IntAdder * adderS = new IntAdder( target, lt0->wOut, inDelayMap("X", target->RAMToLogicWireDelay() + getCriticalPath() ));
@@ -556,8 +556,10 @@ namespace flopoco{
 		}	
 		profilingDepth=getCurrentCycle();
 
+		// End of the dummy pipeline construction. Now go to the real one
+
 		setCycleFromSignal("Log1p_normal", false);
-		setCycle(getCurrentCycle() - profilingDepth , true); 
+		setCycle(getCurrentCycle() - profilingDepth , true);
 		setCriticalPath(0.0);
 		vhdl << tab << "-- First log table" << endl;
 		oplist.push_back(lt0);
@@ -568,6 +570,7 @@ namespace flopoco{
 		vhdl << tab << declare("S1", lt0->wOut) << " <= L0;"<<endl;
 		
 		for (i=1; i<= stages; i++) {
+#if 0
 			if (i==1){
 				setCycleFromSignal("Log1p_normal", false);
 				setCycle(getCurrentCycle() - profilingDepth , true); 
@@ -576,6 +579,13 @@ namespace flopoco{
 			}else{
 				manageCriticalPath( target->LogicToDSPWireDelay() + target->RAMDelay() );
 			}
+#else
+			if (i>1){
+				manageCriticalPath( target->LogicToDSPWireDelay() + target->RAMDelay() );
+			}
+
+#endif
+
 			OtherLogTable* lti = new OtherLogTable(target, a[i], target_prec - p[i], i, a[i], p[i]); 
 			oplist.push_back(lti);
 			inPortMap       (lti, "X", join("A", i));
@@ -585,8 +595,7 @@ namespace flopoco{
 		
 			vhdl << tab << declare(join("sopX",i), lt0->wOut) << " <= (" << rangeAssign(lt0->wOut-1, lti->wOut,  "'0'") << " & " << join("L",i) <<");"<<endl;
 			
-			// One of these target-specific ifs we wish we wouldn't have to write
-			if( (target->getID()=="Virtex5" && target->frequencyMHz() > 250)  ) {
+			if( target->normalizedFrequency() > 0.5  ) { // we targetting a deeply pipelined operator
 				nextCycle(); nextCycle();// gets absorbed in the BRams, and reinits the critical paths, and we have plenty of cycles to live in 
 			}
 			IntAdder * adderS = new IntAdder( target, lt0->wOut, inDelayMap("X", target->RAMToLogicWireDelay()+  getCriticalPath()));
