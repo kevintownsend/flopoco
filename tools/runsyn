@@ -37,8 +37,8 @@ fi
 
 
 resultsPath=$HOME/Results
-settingsFilename=settings32.sh 
-pf=$XILINX/$settingsFilename
+settingsFilename=settings64.sh 
+pf=$XILINX/../$settingsFilename
 
 #if results are to be outputed to a file or not
 out2file=1
