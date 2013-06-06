@@ -19,7 +19,7 @@
 #include <gmp.h>
 #include <mpfr.h>
 #include <gmpxx.h>
-#include "../sollya.h"
+#include <sollya.h>
 #include "../utils.hpp"
 #include "../Operator.hpp"
 
@@ -39,7 +39,7 @@ namespace flopoco{
 		srcFileName="FPRealKCM";
 
 		/* Convert the input string into a sollya evaluation tree */
-		sollya_node_t node;
+		sollya_obj_t node;
 		node = parseString(constant.c_str());	/* If conversion did not succeed (i.e. parse error) */
 		if (node == 0) {
 			ostringstream error;

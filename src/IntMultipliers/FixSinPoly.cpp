@@ -15,9 +15,7 @@
 */
 
 #include "FixSinPoly.hpp"
-
-#ifdef HAVE_SOLLYA
-#include "../sollya.h"
+ 
 
 using namespace std;
 
@@ -430,5 +428,3 @@ namespace flopoco{
 
 
 
-
-#endif //HAVE_SOLLYA

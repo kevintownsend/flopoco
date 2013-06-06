@@ -6,7 +6,7 @@
 
 #include "HOTBM/Util.hh"
 
-#include "../sollya.h"
+#include <sollya.h>
 
 using namespace std;
 
@@ -21,11 +21,11 @@ namespace flopoco{
 		string getName() const;
 		double eval(double x) const;
 		void eval(mpfr_t r, mpfr_t x) const;
-		sollya_node_t getSollyaNode() const;
+		sollya_obj_t getSollyaNode() const;
 
 	private:
 		string name;
-		sollya_node_t node;
+		sollya_obj_t node;
 	
 	}
 		;

@@ -59,7 +59,7 @@ namespace flopoco{
 	
 	mpz_class FunctionTable::function(int x){
 		int precision=10*(wIn+wOut);
-		setToolPrecision(precision);
+		sollya_lib_set_prec(sollya_lib_constant_from_int(precision));
 		mpz_class r ; 
 
 		mpz_class svX = x;

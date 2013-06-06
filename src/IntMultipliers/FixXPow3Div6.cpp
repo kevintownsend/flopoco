@@ -16,9 +16,6 @@
 
 #include "FixXPow3Div6.hpp"
 
-#ifdef HAVE_SOLLYA
-#include "../sollya.h"
-
 using namespace std;
 
 namespace flopoco{
@@ -168,5 +165,3 @@ namespace flopoco{
 
 
 
-
-#endif //HAVE_SOLLYA

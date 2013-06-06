@@ -20,7 +20,7 @@
 #include <gmp.h>
 #include <mpfr.h>
 #include <gmpxx.h>
-#include "../sollya.h"
+#include <sollya.h>
 #include "../utils.hpp"
 #include "../Operator.hpp"
 #ifdef HAVE_SOLLYA
@@ -38,7 +38,7 @@ namespace flopoco{
 		constant (_constant) 
 	{
 #if 0
-		sollya_node_t node;
+		sollya_obj_t node;
 		mpfr_t mpR;
 		mpz_t zz;
 

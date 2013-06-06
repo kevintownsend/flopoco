@@ -50,7 +50,7 @@ namespace flopoco{
 		for (int i=0; i< n; i++)
 		{
 			// parse the coeffs from the string, with Sollya parsing
-			sollya_node_t node;
+			solla_obj_t node;
 			mpfr_t mpC;
 			
 			node = parseString(coeff[i].c_str());

@@ -21,7 +21,7 @@ namespace flopoco{
 	Function::Function(string name_, double xmin, double xmax, double scale)
 	{
 		/* Convert the input string into a sollya evaluation tree */
-		sollya_node_t sF = parseString(name_.c_str());
+		sollya_obj_t sF = sollya_lib_parse_string(name_.c_str());
 
 		// Name HAS to be unique!
 		// will cause weird bugs otherwise
@@ -36,13 +36,13 @@ namespace flopoco{
 		
 		/* Map the input to the [0,1[ range */
 		// g(y) = scale * f(y * (xmax - xmin) + xmin)
-		sollya_node_t sXW = makeConstantDouble(xmax - xmin);
-		sollya_node_t sXMin = makeConstantDouble(xmin);
+		sollya_obj_t sXW = sollya_lib_constant_from_double(xmax - xmin);
+		sollya_obj_t sXMin = sollya_lib_constant_from_double(xmin);
 	
-		sollya_node_t sX = makeAdd(makeMul(makeVariable(), sXW), sXMin);
-		sollya_node_t sG = substitute(sF, sX);
+		sollya_obj_t sX = SOLLYA_ADD(SOLLYA_MUL(SOLLYA_X_, sXW), sXMin);
+		sollya_obj_t sG = sollya_lib_substitute(sF, sX);
 	
-		node = makeMul(makeConstantDouble(scale), sG);
+		node = SOLLYA_MUL(sollya_lib_constant_from_double(scale), sG);
 		if (node == 0)
 			throw "Sollya error when performing range mapping.";
 	
@@ -51,7 +51,7 @@ namespace flopoco{
 
 	Function::~Function()
 	{
-		free_memory(node);
+	  sollya_lib_free(node); // Not sure of this one
 	}
 
 	string Function::getName() const
@@ -61,7 +61,7 @@ namespace flopoco{
 
 	void Function::eval(mpfr_t r, mpfr_t x) const
 	{
-		evaluateFaithful(r, node, x, getToolPrecision());
+		sollya_lib_evaluate_function_at_point(r, node, x, NULL);
 	}
 
 	double Function::eval(double x) const
@@ -71,14 +71,14 @@ namespace flopoco{
 
 		mpfr_inits(mpX, mpR, NULL);
 		mpfr_set_d(mpX, x, GMP_RNDN);
-		evaluateFaithful(mpR, node, mpX, getToolPrecision());
+		sollya_lib_evaluate_function_at_point(mpR, node, mpX, NULL);
 		r = mpfr_get_d(mpR, GMP_RNDN);
 		mpfr_clears(mpX, mpR, NULL);
 
 		return r;
 	}
 
-	sollya_node_t Function::getSollyaNode() const
+	sollya_obj_t Function::getSollyaNode() const
 	{
 		return node;
 	}

@@ -25,7 +25,7 @@
 #include <mpfr.h>
 #include <gmpxx.h>
 #include "../utils.hpp"
-#include "../sollya.h"
+#include <sollya.h>
 #include "../Operator.hpp"
 #include "FPConstMult.hpp"
 #include "../FPNumber.hpp"
@@ -329,7 +329,7 @@ namespace flopoco{
 		Operator(target), 
 		wE_in(wE_in_), wF_in(wF_in_), wE_out(wE_out_), wF_out(wF_out_), cstWidth(wF_C), mantissa_is_one(false), constant_is_zero(false)
 	{
-		sollya_node_t node;
+		sollya_obj_t node;
 
 		srcFileName="FPConstMult";
 		/* Convert the input string into a sollya evaluation tree */
