@@ -235,14 +235,14 @@ void usage(char *name, string opName = ""){
 		cerr << "      The multiplier might or might not us bit heaps, based on the value of the useBitheap parameter\n";
 	}
 	
-	if ( full || opName == "FixedPointFIR"){
-		OP("FixedPointFIR","p useBitheap taps [coeff list]");
+	if ( full || opName == "FixFIR"){
+		OP("FixFIR","p useBitheap taps [coeff list]");
 		cerr << "      A faithful FIR on an (1,p) fixed-point format\n";
 		cerr << "      The filter may, or may not use bit heaps\n";
 	}
 	
-	if ( full || opName == "FixedPointDCT"){
-		OP("FixedPointDCT","p taps current_index");
+	if ( full || opName == "FixDCT"){
+		OP("FixDCT","p taps current_index");
 		cerr << "      A DCT2 on an (1,p) fixed-point format using bit heaps\n";
 		cerr << "      The filter uses bit heaps\n";
 	}
@@ -1350,7 +1350,7 @@ bool parseCommandLine(int argc, char* argv[]){
 		}
 		
 
-		else if(opname=="FixedPointFIR")
+		else if(opname=="FixFIR")
 		{
 			if (i+3 > argc)
 				usage(argv[0],opname);
@@ -1366,13 +1366,13 @@ bool parseCommandLine(int argc, char* argv[]){
 						{
 							coeff.push_back(argv[i++]);
 						}
-					op = new FixedPointFIR(target, p, coeff, useBitheap);
+					op = new FixFIR(target, p, coeff, useBitheap);
 					addOperator(op);
 				}
 			}
 		}
 		
-		else if(opname=="FixedPointDCT")
+		else if(opname=="FixDCT")
 		{
 			int nargs = 3;
 			if (i+nargs > argc)
@@ -1382,7 +1382,7 @@ bool parseCommandLine(int argc, char* argv[]){
 				int taps 	= checkStrictlyPositive(argv[i++], argv[0]);
 				int k 		= checkPositiveOrNull(argv[i++], argv[0]);
 				
-				op = new FixedPointDCT(target, p, taps, k, true);
+				op = new FixDCT(target, p, taps, k, true);
 				addOperator(op);
 			}
 		}
@@ -2599,7 +2599,7 @@ bool parseCommandLine(int argc, char* argv[]){
 				usage(argv[0],opname); // and exit
 			int w = checkStrictlyPositive(argv[i++], argv[0]); // must be >=2 actually
 			int degree = atoi(argv[i++]); 
-			Operator* tg = new FixedPointSinOrCos(target, w, degree);
+			Operator* tg = new FixSinOrCos(target, w, degree);
 			addOperator(tg);
 		}
 

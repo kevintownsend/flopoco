@@ -262,41 +262,42 @@ src/ConstMult/IntConstDiv3
 
 # Fixed-point function evaluation -----------------------------------
 #--------------------------------------------------------------------
- src/FixedPointFunctions/Function
- src/FixedPointFunctions/PiecewiseFunction
+ src/FixFunctions/Function
+ src/FixFunctions/PiecewiseFunction
 
- src/FixedPointFunctions/FunctionTable
+ src/FixFunctions/FunctionTable
 
-# src/FixedPointFunctions/Multipartite
+# src/FixFunctions/Multipartite
 
- src/FixedPointFunctions/PolyCoeffTable
- src/FixedPointFunctions/PolynomialEvaluator
- src/FixedPointFunctions/FunctionEvaluator
+ src/FixFunctions/PolyCoeffTable
+ src/FixFunctions/PolynomialEvaluator
+ src/FixFunctions/FunctionEvaluator
+ src/FixFunctions/GenericEvaluator
 
- src/FixedPointFunctions/HOTBM.cpp
- src/FixedPointFunctions/HOTBM/HOTBMInstance.cc
- src/FixedPointFunctions/HOTBM/Param.cc
- src/FixedPointFunctions/HOTBM/Exhaustive.cc
- src/FixedPointFunctions/HOTBM/Util.cc
- src/FixedPointFunctions/HOTBM/PWPolynomial.cc
- src/FixedPointFunctions/HOTBM/Polynomial.cc
- src/FixedPointFunctions/HOTBM/MPPolynomial.cc
- src/FixedPointFunctions/HOTBM/Power.cc
- src/FixedPointFunctions/HOTBM/PowerAdHoc.cc
- src/FixedPointFunctions/HOTBM/TermROM.cc
- src/FixedPointFunctions/HOTBM/Term.cc
- src/FixedPointFunctions/HOTBM/Minimax.cc
- src/FixedPointFunctions/HOTBM/PowerROM.cc
- src/FixedPointFunctions/HOTBM/TermPowMult.cc 
+ src/FixFunctions/HOTBM.cpp
+ src/FixFunctions/HOTBM/HOTBMInstance.cc
+ src/FixFunctions/HOTBM/Param.cc
+ src/FixFunctions/HOTBM/Exhaustive.cc
+ src/FixFunctions/HOTBM/Util.cc
+ src/FixFunctions/HOTBM/PWPolynomial.cc
+ src/FixFunctions/HOTBM/Polynomial.cc
+ src/FixFunctions/HOTBM/MPPolynomial.cc
+ src/FixFunctions/HOTBM/Power.cc
+ src/FixFunctions/HOTBM/PowerAdHoc.cc
+ src/FixFunctions/HOTBM/TermROM.cc
+ src/FixFunctions/HOTBM/Term.cc
+ src/FixFunctions/HOTBM/Minimax.cc
+ src/FixFunctions/HOTBM/PowerROM.cc
+ src/FixFunctions/HOTBM/TermPowMult.cc 
 
 # Fixed-point operators ---------------------------------------------
 #--------------------------------------------------------------------
- src/FixSinCos.cpp
- src/CORDIC/FixedPointSinOrCos.cpp
- src/CORDIC/CordicSinCos
- src/FixedPointFIR
- 
- src/FixedPointDCT
+ src/FixSinCos/FixSinCos
+ src/FixSinCos/FixSinOrCos
+ src/FixSinCos/CordicSinCos
+
+ src/FixFIR
+ src/FixDCT
 
 # Floating-Point ----------------------------------------------------
 #--------------------------------------------------------------------
@@ -330,10 +331,10 @@ src/ConstMult/IntConstDiv3
  src/IntConstDiv 
  src/FPConstDiv 
 
- src/fplogarithm/FirstInvTable
- src/fplogarithm/FirstLogTable
- src/fplogarithm/OtherLogTable
- src/FPLog
+ src/FPLog/FirstInvTable
+ src/FPLog/FirstLogTable
+ src/FPLog/OtherLogTable
+ src/FPLog.cpp
 
  src/FPExp 
  src/FPPow
@@ -364,7 +365,6 @@ src/Complex/FixedComplexMultiplier
  src/LNS/LNSDiv
  src/LNS/LNSSqrt
  src/LNS/AtanPow
- src/FixedPointFunctions/GenericEvaluator
  src/LNS/LogSinCos
 
 

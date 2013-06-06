@@ -4,7 +4,7 @@
 #include "../Operator.hpp"
 #include <memory>
 #include "LNSAdd.hpp"
-#include "../FixedPointFunctions/HOTBM.hpp"
+#include "../FixFunctions/HOTBM.hpp"
 #include "Cotran.hpp"
 //#include <boost/shared_pointer>
 

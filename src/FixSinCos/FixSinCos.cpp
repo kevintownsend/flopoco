@@ -1,6 +1,6 @@
 #include "ConstMult/FixRealKCM.hpp"
 #include "IntMultiplier.hpp"
-#include "FixedPointFunctions/FunctionTable.hpp"
+#include "FixFunctions/FunctionTable.hpp"
 #include "IntConstDiv.hpp"
 #include "BitHeap.hpp"
 #include "IntMultipliers/FixSinPoly.hpp"

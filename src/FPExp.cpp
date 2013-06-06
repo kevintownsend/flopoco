@@ -23,8 +23,8 @@
 #include "ConstMult/FixRealKCM.hpp"
 #include "Shifters.hpp"
 #include "IntMultiplier.hpp"
-#include "FixedPointFunctions/FunctionEvaluator.hpp"
-#include "FixedPointFunctions/FunctionTable.hpp"
+#include "FixFunctions/FunctionEvaluator.hpp"
+#include "FixFunctions/FunctionTable.hpp"
 #include "utils.hpp"
 #include "IntAdder.hpp"
 

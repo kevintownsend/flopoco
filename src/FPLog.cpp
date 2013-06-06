@@ -24,9 +24,9 @@
 #include "FPNumber.hpp"
 #include "utils.hpp"
 #include "IntSquarer.hpp"
-#include "fplogarithm/FirstInvTable.hpp"
-#include "fplogarithm/FirstLogTable.hpp"
-#include "fplogarithm/OtherLogTable.hpp"
+#include "FPLog/FirstInvTable.hpp"
+#include "FPLog/FirstLogTable.hpp"
+#include "FPLog/OtherLogTable.hpp"
 #include "ConstMult/IntIntKCM.hpp"
 
 

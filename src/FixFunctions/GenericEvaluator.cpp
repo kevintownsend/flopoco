@@ -14,8 +14,8 @@
 */
 
 #include "GenericEvaluator.hpp"
-#include "../FixedPointFunctions/HOTBM.hpp"
-#include "../FixedPointFunctions/FunctionEvaluator.hpp"
+#include "../FixFunctions/HOTBM.hpp"
+#include "../FixFunctions/FunctionEvaluator.hpp"
 #include <string>
 #include <sstream>
 

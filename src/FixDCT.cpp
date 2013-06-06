@@ -4,20 +4,20 @@
 
 #ifdef HAVE_SOLLYA
 
-#include "FixedPointDCT.hpp"
+#include "FixDCT.hpp"
 
 using namespace std;
 
 namespace flopoco{
 
 
-	FixedPointDCT::FixedPointDCT(Target* target, int p_, int N_, int k_, bool signedInput_, map<string, double> inputDelays) :
+	FixDCT::FixDCT(Target* target, int p_, int N_, int k_, bool signedInput_, map<string, double> inputDelays) :
 		Operator(target, inputDelays), p(p_), N(N_), k(k_), signedInput(signedInput_)
 	{
-		srcFileName="FixedPointDCT";
+		srcFileName="FixDCT";
 					
 		ostringstream name;
-		name << "FixedPointDCT_" << p << "_uid" << getNewUId(); 
+		name << "FixDCT_" << p << "_uid" << getNewUId(); 
 		setName(name.str()); 
 	
 		setCopyrightString("Florent de Dinechin, Matei Istoan (2013)");
@@ -95,7 +95,7 @@ namespace flopoco{
 		REPORT(INFO, "Sum size with KCM guard bits is: "<< size);
 		
 		// Creating the FIR filter that will compute the DCT2
-		FixedPointFIR* filter = new FixedPointFIR(target, 		// the target FPGA
+		FixFIR* filter = new FixFIR(target, 		// the target FPGA
 														p, 			// the size of the inputs
 														coeff,		// the constants
 														true		// use bit heaps
@@ -114,7 +114,7 @@ namespace flopoco{
 	
 	
 	//generate the i-th coefficient
-	long double FixedPointDCT::getDCT2FilterCoeff(int i)
+	long double FixDCT::getDCT2FilterCoeff(int i)
 	{
 		mpfr_t coeffValue, temp;
 		long double result;
@@ -137,7 +137,7 @@ namespace flopoco{
 	};
 	
 	//create the string that generates the i-th coefficient using Sollya
-	string FixedPointDCT::getDCT2FilterCoeffString(int i)
+	string FixDCT::getDCT2FilterCoeffString(int i)
 	{
 		ostringstream result;
 		
@@ -148,7 +148,7 @@ namespace flopoco{
 
 	
 	//TODO: redo the emulate function
-	void FixedPointDCT::emulate(TestCase * tc)
+	void FixDCT::emulate(TestCase * tc)
 	{
 		// Not completely safe: we compute everything on 10 times the required precision, and hope that rounding this result is equivalent to rounding the exact result
 
@@ -198,7 +198,7 @@ namespace flopoco{
 
 
 	// please fill me with regression tests or corner case tests
-	void FixedPointDCT::buildStandardTestCases(TestCaseList * tcl)
+	void FixDCT::buildStandardTestCases(TestCaseList * tcl)
 	{
 		TestCase *tc;
 

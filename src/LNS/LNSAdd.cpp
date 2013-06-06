@@ -17,7 +17,7 @@
 #include "LNSAdd.hpp"
 #include <sstream>
 #include <vector>
-#include "../FixedPointFunctions/HOTBM.hpp"
+#include "../FixFunctions/HOTBM.hpp"
 #include "../utils.hpp"
 
 using namespace std;

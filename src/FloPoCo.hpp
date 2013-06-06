@@ -107,23 +107,22 @@
 #ifndef _WIN32
 
 #ifdef HAVE_SOLLYA
-#include "FixedPointFunctions/HOTBM.hpp"
-#include "FixedPointFunctions/FunctionTable.hpp"
-#include "FixedPointFunctions/PolyCoeffTable.hpp"
-#include "FixedPointFunctions/FunctionEvaluator.hpp"
-#include "FixedPointFunctions/PolynomialEvaluator.hpp"
+#include "FixFunctions/HOTBM.hpp"
+#include "FixFunctions/FunctionTable.hpp"
+#include "FixFunctions/PolyCoeffTable.hpp"
+#include "FixFunctions/FunctionEvaluator.hpp"
+#include "FixFunctions/PolynomialEvaluator.hpp"
 #endif
 #endif
 
 /* fixed-point ----------------------------------------------- */
 #ifdef HAVE_SOLLYA
-#include "FixSinCos.hpp"
-#include "CORDIC/FixedPointSinOrCos.hpp"
-#include "CORDIC/CordicSinCos.hpp"
+#include "FixSinCos/FixSinCos.hpp"
+#include "FixSinCos/FixSinOrCos.hpp"
+#include "FixSinCos/CordicSinCos.hpp"
 
-#include "FixedPointFIR.hpp"
-
-#include "FixedPointDCT.hpp"
+#include "FixFIR.hpp"
+#include "FixDCT.hpp"
 
 #endif
 

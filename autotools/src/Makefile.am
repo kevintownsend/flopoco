@@ -129,29 +129,29 @@ noinst_HEADERS = \
           LongAcc.hpp LZOC.hpp \
           OutputIEEE.hpp \
           Shifters.hpp \
-          FixedPointFunctions/Function.hpp \
-          FixedPointFunctions/PiecewiseFunction.hpp \
-          FixedPointFunctions/FunctionTable.hpp \
-          FixedPointFunctions/PolyCoeffTable.hpp \
-          FixedPointFunctions/PolynomialEvaluator.hpp \
-          FixedPointFunctions/FunctionEvaluator.hpp \
-          FixedPointFunctions/HOTBM.hpp \
-          FixedPointFunctions/HOTBM/Component.hh \
-          FixedPointFunctions/HOTBM/HOTBMInstance.hh\
-          FixedPointFunctions/HOTBM/Param.hh\
-          FixedPointFunctions/HOTBM/Exhaustive.hh\
-          FixedPointFunctions/HOTBM/Util.hh\
-          FixedPointFunctions/HOTBM/PWPolynomial.hh\
-          FixedPointFunctions/HOTBM/Polynomial.hh\
-          FixedPointFunctions/HOTBM/MPPolynomial.hh\
-          FixedPointFunctions/HOTBM/Power.hh\
-          FixedPointFunctions/HOTBM/PowerAdHoc.hh\
-          FixedPointFunctions/HOTBM/TermROM.hh\
-          FixedPointFunctions/HOTBM/Term.hh\
-          FixedPointFunctions/HOTBM/Minimax.hh\
-          FixedPointFunctions/HOTBM/PowerROM.hh\
-          FixedPointFunctions/HOTBM/TermPowMult.hh \
-          FixedPointFunctions/GenericEvaluator.hpp \
+          FixFunctions/Function.hpp \
+          FixFunctions/PiecewiseFunction.hpp \
+          FixFunctions/FunctionTable.hpp \
+          FixFunctions/PolyCoeffTable.hpp \
+          FixFunctions/PolynomialEvaluator.hpp \
+          FixFunctions/FunctionEvaluator.hpp \
+          FixFunctions/HOTBM.hpp \
+          FixFunctions/HOTBM/Component.hh \
+          FixFunctions/HOTBM/HOTBMInstance.hh\
+          FixFunctions/HOTBM/Param.hh\
+          FixFunctions/HOTBM/Exhaustive.hh\
+          FixFunctions/HOTBM/Util.hh\
+          FixFunctions/HOTBM/PWPolynomial.hh\
+          FixFunctions/HOTBM/Polynomial.hh\
+          FixFunctions/HOTBM/MPPolynomial.hh\
+          FixFunctions/HOTBM/Power.hh\
+          FixFunctions/HOTBM/PowerAdHoc.hh\
+          FixFunctions/HOTBM/TermROM.hh\
+          FixFunctions/HOTBM/Term.hh\
+          FixFunctions/HOTBM/Minimax.hh\
+          FixFunctions/HOTBM/PowerROM.hh\
+          FixFunctions/HOTBM/TermPowMult.hh \
+          FixFunctions/GenericEvaluator.hpp \
           Complex/FixedComplexAdder.hpp \
           Complex/FixedComplexMultiplier.hpp \
           Table.hpp \
@@ -161,11 +161,11 @@ noinst_HEADERS = \
           UserDefinedOperator.hpp \
           Wrapper.hpp \
           FPSumOfSquares.hpp \
-          FixSinCos.hpp \
-          CORDIC/FixedPointSinOrCos.hpp \
-          CORDIC/CordicSinCos.hpp \
-          FixedPointFIR.hpp \
-          FixedPointDCT.hpp \
+          FixSinCos/FixSinCos.hpp \
+          FixSinCos/FixSinOrCos.hpp \
+          FixSinCos/CordicSinCos.hpp \
+          FixFIR.hpp \
+          FixDCT.hpp \
           FPAddSub.hpp \
           random/urng/LutSrRng.hpp
 
@@ -240,32 +240,32 @@ libflopoco_la_SOURCES = \
                         LZOC.cpp \
                         LZOCShifterSticky.cpp \
                         Shifters.cpp \
-                        FixedPointFunctions/Function.cpp \
-                        FixedPointFunctions/PiecewiseFunction.cpp \
-                        FixedPointFunctions/FunctionTable.cpp \
-                        FixedPointFunctions/PolyCoeffTable.cpp \
-                        FixedPointFunctions/PolynomialEvaluator.cpp \
-                        FixedPointFunctions/FunctionEvaluator.cpp \
-                        FixedPointFunctions/HOTBM.cpp \
-                        FixedPointFunctions/HOTBM/HOTBMInstance.cc\
-                        FixedPointFunctions/HOTBM/Param.cc\
-                        FixedPointFunctions/HOTBM/Exhaustive.cc\
-                        FixedPointFunctions/HOTBM/Util.cc\
-                        FixedPointFunctions/HOTBM/PWPolynomial.cc\
-                        FixedPointFunctions/HOTBM/Polynomial.cc\
-                        FixedPointFunctions/HOTBM/MPPolynomial.cc\
-                        FixedPointFunctions/HOTBM/Power.cc\
-                        FixedPointFunctions/HOTBM/PowerAdHoc.cc\
-                        FixedPointFunctions/HOTBM/TermROM.cc\
-                        FixedPointFunctions/HOTBM/Term.cc\
-                        FixedPointFunctions/HOTBM/Minimax.cc\
-                        FixedPointFunctions/HOTBM/PowerROM.cc\
-                        FixedPointFunctions/HOTBM/TermPowMult.cc \
-                        FixSinCos.cpp \
-                        CORDIC/FixedPointSinOrCos.cpp \
-                        CORDIC/CordicSinCos.cpp \
-                        FixedPointFIR.cpp \
-                        FixedPointDCT.cpp \
+                        FixFunctions/Function.cpp \
+                        FixFunctions/PiecewiseFunction.cpp \
+                        FixFunctions/FunctionTable.cpp \
+                        FixFunctions/PolyCoeffTable.cpp \
+                        FixFunctions/PolynomialEvaluator.cpp \
+                        FixFunctions/FunctionEvaluator.cpp \
+                        FixFunctions/HOTBM.cpp \
+                        FixFunctions/HOTBM/HOTBMInstance.cc\
+                        FixFunctions/HOTBM/Param.cc\
+                        FixFunctions/HOTBM/Exhaustive.cc\
+                        FixFunctions/HOTBM/Util.cc\
+                        FixFunctions/HOTBM/PWPolynomial.cc\
+                        FixFunctions/HOTBM/Polynomial.cc\
+                        FixFunctions/HOTBM/MPPolynomial.cc\
+                        FixFunctions/HOTBM/Power.cc\
+                        FixFunctions/HOTBM/PowerAdHoc.cc\
+                        FixFunctions/HOTBM/TermROM.cc\
+                        FixFunctions/HOTBM/Term.cc\
+                        FixFunctions/HOTBM/Minimax.cc\
+                        FixFunctions/HOTBM/PowerROM.cc\
+                        FixFunctions/HOTBM/TermPowMult.cc \
+                        FixSinCos/FixSinCos.cpp \
+                        FixSinCos/FixSinOrCos.cpp \
+                        FixSinCos/CordicSinCos.cpp \
+                        FixFIR.cpp \
+                        FixDCT.cpp \
                         FPAdderDualPath.cpp \
                         FPAdderSinglePath.cpp \
                         FPAdder3Input.cpp \
@@ -311,7 +311,7 @@ libflopoco_la_SOURCES = \
                         LNS/LNSDiv.cpp \
                         LNS/LNSSqrt.cpp \
                         LNS/AtanPow.cpp \
-                        FixedPointFunctions/GenericEvaluator.cpp \
+                        FixFunctions/GenericEvaluator.cpp \
                         Complex/FixedComplexAdder.cpp \
                         Complex/FixedComplexMultiplier.cpp \
                         LNS/LogSinCos.cpp \

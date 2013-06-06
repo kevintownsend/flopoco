@@ -1,5 +1,5 @@
-#ifndef FixedPointFIR_HPP
-#define FixedPointFIR_HPP
+#ifndef FixFIR_HPP
+#define FixFIR_HPP
 
 #include "Operator.hpp"
 #include "utils.hpp"
@@ -15,7 +15,7 @@
 namespace flopoco{
 
 	// new operator class declaration
-	class FixedPointFIR : public Operator {
+	class FixFIR : public Operator {
 	public:
 		int p;							/**< The precision of inputs and outputs */ 
 		int n;							/**< number of taps */
@@ -33,10 +33,10 @@ namespace flopoco{
 		// definition of some function for the operator    
 
 		// constructor, defined there with two parameters
-		FixedPointFIR(Target* target, int p_, vector<string> coeff_, bool useBitheap = false, map<string, double> inputDelays = emptyDelayMap);
+		FixFIR(Target* target, int p_, vector<string> coeff_, bool useBitheap = false, map<string, double> inputDelays = emptyDelayMap);
 
 		// destructor
-		~FixedPointFIR() {};
+		~FixFIR() {};
 
 
 		// Below all the functions needed to test the operator

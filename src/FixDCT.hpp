@@ -1,5 +1,5 @@
-#ifndef FixedPointDCT_HPP
-#define FixedPointDCT_HPP
+#ifndef FIXDCT_HPP
+#define FIXDCT_HPP
 
 #include "Operator.hpp"
 #include "utils.hpp"
@@ -20,22 +20,22 @@
 #include "BitHeap.hpp"
 #include "ConstMult/FixRealKCM.hpp"
 
-#include "FixedPointFIR.hpp"
+#include "FixFIR.hpp"
 
 namespace flopoco{
 
-	class FixedPointDCT : public Operator
+	class FixDCT : public Operator
 	{
 	public:
 
-		FixedPointDCT(Target* target, int p_, int N_, int k_, bool signedInput_ = false, map<string, double> inputDelays = emptyDelayMap);
+		FixDCT(Target* target, int p_, int N_, int k_, bool signedInput_ = false, map<string, double> inputDelays = emptyDelayMap);
 		
 		/*
-		FixedPointDCT(Operator* parentOp, Target* target, int p_, int N_, int k_,
+		FixDCT(Operator* parentOp, Target* target, int p_, int N_, int k_,
 							 BitHeap* bitheap,
 							 bool signedInput_ = false, map<string, double> inputDelays = emptyDelayMap);
 		*/
-		~FixedPointDCT(){};
+		~FixDCT(){};
 
 		// Overloading the virtual functions of Operator
 		/* the emulate function is used to simulate in software the operator

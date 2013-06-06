@@ -4,25 +4,25 @@
 #include "gmp.h"
 #include "mpfr.h"
 
-#include "FixedPointSinOrCos.hpp"
+#include "FixSinOrCos.hpp"
 
 using namespace std;
 
 namespace flopoco{
 
 
-	FixedPointSinOrCos::FixedPointSinOrCos(Target* target, int w_, int degree_, map<string, double> inputDelays) 
+	FixSinOrCos::FixSinOrCos(Target* target, int w_, int degree_, map<string, double> inputDelays) 
 		: Operator(target), w(w_), degree(degree_)
 	{
 
-		srcFileName="FixedPointSinOrCos";
+		srcFileName="FixSinOrCos";
 		ostringstream name;
 
 		setCopyrightString ( "Matei Istoan, Florent de Dinechin (2008-2012)" );
 		if(target->isPipelined())
-			name << "FixedPointSinOrCos_" << w <<"_f"<< target->frequencyMHz() << "_uid" << getNewUId();
+			name << "FixSinOrCos_" << w <<"_f"<< target->frequencyMHz() << "_uid" << getNewUId();
 		else
-			name << "FixedPointSinOrCos_" << w << "_uid" << getNewUId();
+			name << "FixSinOrCos_" << w << "_uid" << getNewUId();
 		setName( name.str() );
 
 		// declaring inputs
@@ -93,11 +93,11 @@ namespace flopoco{
 
 
 
-	 FixedPointSinOrCos::~FixedPointSinOrCos(){
+	 FixSinOrCos::~FixSinOrCos(){
 		mpfr_clear(scale);
 	 };
 
-	void FixedPointSinOrCos::emulate(TestCase * tc) 
+	void FixSinOrCos::emulate(TestCase * tc) 
 	{
 		/* Get I/O values */
 		mpz_class svZ = tc->getInputValue("X");
@@ -149,7 +149,7 @@ namespace flopoco{
 	}
 
 
-	void FixedPointSinOrCos::buildStandardTestCases(TestCaseList * tcl) 
+	void FixSinOrCos::buildStandardTestCases(TestCaseList * tcl) 
 	{
 		TestCase* tc;
 		mpf_t zinit;
