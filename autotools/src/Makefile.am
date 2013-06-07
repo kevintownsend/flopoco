@@ -42,9 +42,9 @@ noinst_HEADERS = \
           IntConstDiv.hpp \
           FPConstDiv.hpp \
           FPPow.hpp \
-          fplogarithm/FirstInvTable.hpp \
-          fplogarithm/FirstLogTable.hpp \
-          fplogarithm/OtherLogTable.hpp \
+          FPLog/FirstInvTable.hpp \
+          FPLog/FirstLogTable.hpp \
+          FPLog/OtherLogTable.hpp \
           LNS/AtanPow.hpp \
           LNS/Cotran.hpp \
           LNS/CotranHybrid.hpp \
@@ -126,7 +126,7 @@ noinst_HEADERS = \
           IntMultipliers/FixXPow3Div6.hpp \
           ConstMult/IntConstDiv3.hpp \
           LongAcc2FP.hpp \
-          LongAcc.hpp LZOC.hpp \
+          LongAcc.hpp LZOC.hpp LZOCShifterSticky.hpp\
           OutputIEEE.hpp \
           Shifters.hpp \
           FixFunctions/Function.hpp \
@@ -290,9 +290,9 @@ libflopoco_la_SOURCES = \
                         ConstMult/FPRealKCM.cpp \
                         IntConstDiv.cpp\
                         FPConstDiv.cpp\
-                        fplogarithm/FirstInvTable.cpp \
-                        fplogarithm/FirstLogTable.cpp \
-                        fplogarithm/OtherLogTable.cpp \
+                        FPLog/FirstInvTable.cpp \
+                        FPLog/FirstLogTable.cpp \
+                        FPLog/OtherLogTable.cpp \
                         FPLog.cpp \
                         FPExp.cpp \
                         FPPow.cpp \
