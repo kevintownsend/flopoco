@@ -1,6 +1,8 @@
 Version 2.5.0
 Fixed low-precision FPExp at last.
-Added FIR generators
+Added FIR and DCT generators
+Many bug fixes and improvements to the bit heap framework.
+Some operators have been renamed for better consistency.
 
 Version 2.4.0
 This version introduces a generic framework for bit heaps. 
