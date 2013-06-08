@@ -13,6 +13,8 @@
 
 */
 
+#ifdef HAVE_SOLLYA
+
 #include "Function.hpp"
 #include <sstream>
 
@@ -84,3 +86,4 @@ namespace flopoco{
 	}
 
 }
+#endif //HAVE_SOLLYA	

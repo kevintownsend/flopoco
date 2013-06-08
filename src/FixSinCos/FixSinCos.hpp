@@ -1,8 +1,6 @@
 #ifndef _FIXSINCOS_H
 #define _FIXSINCOS_H
 
-// works only with Sollya
-#ifdef HAVE_SOLLYA
 
 #include "Operator.hpp"
 
@@ -32,7 +30,6 @@ class FixSinCos: public Operator {
 
 };
 
-#endif // HAVE_SOLLYA
 
 #endif // header guard
 

@@ -104,7 +104,6 @@
 #include "IntMultipliers/MultiplierBlock.hpp"
 
 /* fixed-point function evaluation---------------------------- */
-#ifndef _WIN32
 
 #ifdef HAVE_SOLLYA
 #include "FixFunctions/HOTBM.hpp"
@@ -113,17 +112,14 @@
 #include "FixFunctions/FunctionEvaluator.hpp"
 #include "FixFunctions/PolynomialEvaluator.hpp"
 #endif
-#endif
 
 /* fixed-point ----------------------------------------------- */
+#include "FixSinCos/CordicSinCos.hpp"
 #ifdef HAVE_SOLLYA
 #include "FixSinCos/FixSinCos.hpp"
 #include "FixSinCos/FixSinOrCos.hpp"
-#include "FixSinCos/CordicSinCos.hpp"
-
 #include "FixFIR.hpp"
 #include "FixDCT.hpp"
-
 #endif
 
 /* floating-point -------------------------------------------- */ 
@@ -131,10 +127,8 @@
 #include "FPMultiplierKaratsuba.hpp"
 #include "FPSquarer.hpp"
 
-#ifndef _WIN32
 #ifdef HAVE_SOLLYA
 #include "ConstMult/CRFPConstMult.hpp"
-#endif
 #endif
 
 #include "FPAdderDualPath.hpp"
@@ -194,7 +188,6 @@ use withing matrix-multiplication scenarios ------------------ */
 #include "apps/FPJacobi.hpp"
 
 /* logarithmic number system  -------------------------------- */ 
-#ifndef _WIN32
 #ifdef HAVE_LNS
 #include "LNS/LNSAddSub.hpp"
 #include "LNS/LNSAdd.hpp"
@@ -206,7 +199,6 @@ use withing matrix-multiplication scenarios ------------------ */
 #include "LNS/LNSSqrt.hpp"
 #include "LNS/AtanPow.hpp"
 #include "LNS/LogSinCos.hpp"
-#endif
 #endif
 
 /* misc ------------------------------------------------------ */

@@ -440,20 +440,20 @@ void usage(char *name, string opName = ""){
 		OP( "InputIEEE","wEI wFI wEO wFO");
 		cerr << "      Conversion from IEEE-754-like to FloPoCo floating-point formats\n";
 	}
-#ifdef HAVE_SOLLYA
 	if ( full ){
 		cerr << "    ____________ FIXED-POINT OPERATORS __________________________________________\n";
 	}
-	if ( full || opName == "FixSinCos" || opName == "FixSinOrCos" || opName == "SinCos"){
-		NEWOP( "FixSinCos","w");
-		cerr << "      For a fixed-point 2's complement input x in [-1,1[, calculates\n";
-		cerr << "      (1-2^(-w))*{sin,cos}(pi*x); w is the precision not counting the sign bit\n";
-	}
+#ifdef HAVE_SOLLYA
 	if ( full || opName == "CordicSinCos" || opName == "FixSinOrCos" || opName == "SinCos"){
 		NEWOP( "CordicSinCos","wIn wOut reduced");
 		cerr << "      Computes (1-2^(-w)) sin(pi*x) and (1-2^(-w)) cos(pi*x) for x in -[1,1[, ;\n";
 		cerr << "      wIn and wOut are the fixed-point precision of inputs and outputs (not counting the sign bit)\n";
 		cerr << "      reduced : if 1,  reduced number of iterations at the cost of two multiplications \n";
+	}
+	if ( full || opName == "FixSinCos" || opName == "FixSinOrCos" || opName == "SinCos"){
+		NEWOP( "FixSinCos","w");
+		cerr << "      For a fixed-point 2's complement input x in [-1,1[, calculates\n";
+		cerr << "      (1-2^(-w))*{sin,cos}(pi*x); w is the precision not counting the sign bit\n";
 	}
 	if ( full || opName == "CordicSinCos" || opName == "FixSinOrCos" || opName == "SinCos"){
 		NEWOP( "FixSinOrCos","w d");
@@ -1350,6 +1350,7 @@ bool parseCommandLine(int argc, char* argv[]){
 		}
 		
 
+#ifdef HAVE_SOLLYA
 		else if(opname=="FixFIR")
 		{
 			if (i+3 > argc)
@@ -1387,6 +1388,7 @@ bool parseCommandLine(int argc, char* argv[]){
 			}
 		}
 		
+#endif
 
 		/* Exploration of other fast adders */
 		else if(opname=="IntAdderSpecific"){ //Hidden
@@ -2104,7 +2106,6 @@ bool parseCommandLine(int argc, char* argv[]){
 				addOperator(op);
 			}
 		}
-#ifndef _WIN32
 		// hidden and undocumented
 		else if(opname=="DotProdPrecTest"){
 			int nargs = 7; // same as LongAcc, plus an iteration count
@@ -2122,7 +2123,6 @@ bool parseCommandLine(int argc, char* argv[]){
 				op->test_precision(n);
 			}    
 		}
-#endif
 		else if(opname=="DotProduct"){
 			int nargs = 6;
 			if (i+nargs > argc)
@@ -2161,7 +2161,6 @@ bool parseCommandLine(int argc, char* argv[]){
 //			}
 //		}
 				
-#ifndef _WIN32
 #ifdef HAVE_SOLLYA
 		else if (opname == "HOTBM") {
 			int nargs = 4;
@@ -2215,8 +2214,6 @@ bool parseCommandLine(int argc, char* argv[]){
 		}
 		
 #endif // HAVE_SOLLYA
-
-#endif
 
 		else if (opname == "FPExp")
 		{
@@ -2368,7 +2365,7 @@ bool parseCommandLine(int argc, char* argv[]){
 			op = new IntPower(target, wIn, n);
 			addOperator(op);
 		}
-#ifndef _WIN32
+
 #ifdef HAVE_LNS
 		else if (opname == "LNSAddSub")
 		{
@@ -2507,8 +2504,6 @@ bool parseCommandLine(int argc, char* argv[]){
 			addOperator(op);
 		}
 #endif
-
-#endif //ifndef _WIN32
 		else if (opname == "Wrapper") {
 			int nargs = 0;
 			if (i+nargs > argc)
@@ -2523,7 +2518,6 @@ bool parseCommandLine(int argc, char* argv[]){
 				addOperator(op);
 			}
 		}
-#ifdef HAVE_SOLLYA
 #if 0
 		else if (opname == "PolyTableGenerator") {
 			int nargs = 4;
@@ -2537,6 +2531,9 @@ bool parseCommandLine(int argc, char* argv[]){
 			
 		}
 #endif		
+
+
+#ifdef HAVE_SOLLYA
 
 		else if (opname == "FunctionTable") {
 			int nargs = 4;
@@ -2573,7 +2570,9 @@ bool parseCommandLine(int argc, char* argv[]){
 			Operator* tg = new FPPipeline(target, filename, wE, wF);
 			addOperator(tg);
 		}
+#endif
 
+#ifdef HAVE_SOLLYA
 		else if (opname == "FixSinCos") {
 			int nargs = 1;
 			if (i+nargs > argc)

@@ -4,6 +4,7 @@ Added FIR and DCT generators
 Many bug fixes and improvements to the bit heap framework.
 Some operators have been renamed for better consistency.
 
+======================================================================
 Version 2.4.0
 This version introduces a generic framework for bit heaps. 
 In the process, the multiplier synthesis code has been overhauled. 

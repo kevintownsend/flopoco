@@ -1,3 +1,5 @@
+// works only with sollya
+#ifdef HAVE_SOLLYA
 #include "ConstMult/FixRealKCM.hpp"
 #include "IntMultiplier.hpp"
 #include "FixFunctions/FunctionTable.hpp"
@@ -8,8 +10,6 @@
 // TODOs 
 // Compare not-ing Y and negating it properly
 
-// works only with sollya
-#ifdef HAVE_SOLLYA
 
 #include <iostream>
 #include <sstream>

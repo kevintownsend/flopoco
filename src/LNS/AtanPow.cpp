@@ -16,6 +16,8 @@
 
 */
 
+// works only with sollya
+#ifdef HAVE_SOLLYA
 #include "AtanPow.hpp"
 #include <sstream>
 #include <vector>
@@ -94,3 +96,4 @@ namespace flopoco{
 	}
 
 }
+#endif// HAVE_SOLLYA
