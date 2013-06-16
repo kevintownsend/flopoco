@@ -183,7 +183,7 @@ namespace flopoco{
 		
 		if(x<0){
 			std::ostringstream o;
-			o <<  "Error, negative input to unsignedFixPointNumber :" << printMPFR(x,15);
+			o <<  "Error, negative input to unsignedFixPointNumber :" << printMPFR(x);
 			throw o.str();
 		}
 		
@@ -201,12 +201,13 @@ namespace flopoco{
 	}
 
 
-	string printMPFR(mpfr_t x, int n){
+	string printMPFR(mpfr_t x){
 		ostringstream s;
-		s << setprecision(n) << mpfr_get_d(x, GMP_RNDN);
-		// TODO: sth like the following
-		//		mpfr_out_str (s.get_stream(), 10, n, x, GMP_RNDN);
-
+		mpz_class sig;
+		int e;
+		e = mpfr_get_z_exp (sig.get_mpz_t(), x);
+		//		s <<  mpfr_get_d(x, GMP_RNDN);
+		s << sig << "b" << e;
 		return s.str();
 	}
 

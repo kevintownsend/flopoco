@@ -40,6 +40,10 @@
 #include "Targets/CycloneIV.hpp"
 #include "Targets/CycloneV.hpp"
 
+
+#include "FixFunctions/FixFunction.hpp"
+
+#if 0
 /* shifters + lzoc ------------------------------------------- */
 #include "Shifters.hpp"
 #include "LZOC.hpp"
@@ -102,7 +106,6 @@
 
 
 #include "IntMultipliers/MultiplierBlock.hpp"
-
 /* fixed-point function evaluation---------------------------- */
 #ifndef _WIN32
 
@@ -114,7 +117,6 @@
 #include "FixedPointFunctions/PolynomialEvaluator.hpp"
 #endif
 #endif
-
 /* fixed-point ----------------------------------------------- */
 #ifdef HAVE_SOLLYA
 #include "FixSinCos.hpp"
@@ -209,6 +211,7 @@ use withing matrix-multiplication scenarios ------------------ */
 #include "LNS/LogSinCos.hpp"
 #endif
 #endif
+#endif /////////////////////////////////////////////////////0
 
 /* misc ------------------------------------------------------ */
 #include "Wrapper.hpp"

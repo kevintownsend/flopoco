@@ -187,47 +187,6 @@ ADD_LIBRARY(FloPoCoLib STATIC
  src/Targets/CycloneIV 
  src/Targets/CycloneV 
 
-
- src/Table 
- src/DualTable 
- src/DualTable2
- 
- src/FPExpressions/ExpressionParserData
- ExpressionParser 
- ExpressionScanner
- src/FPPipeline
-
- src/Wrapper
- src/TestBench 
- src/UserDefinedOperator
- 
-# Addition related --------------------------------------------------
-#--------------------------------------------------------------------
- src/IntAdder 
- 
- src/IntAddition/IntAdderClassical 
- src/IntAddition/IntAdderAlternative 
- src/IntAddition/IntAdderShortLatency
-
-# ---------- First generation of fast adders ------------------------
- src/IntAddition/LongIntAdderAddAddMuxGen1 
- src/IntAddition/LongIntAdderCmpCmpAddGen1 
- src/IntAddition/LongIntAdderCmpAddIncGen1
-
-# ---------- Second Generation of fast adders -----------------------
- src/IntAddition/IntAdderSpecific 
- src/IntAddition/IntComparatorSpecific 
- src/IntAddition/CarryGenerationCircuit 
- src/IntAddition/LongIntAdderAddAddMuxGen2 
- src/IntAddition/LongIntAdderCmpCmpAddGen2 
- src/IntAddition/LongIntAdderCmpAddIncGen2
-
- src/IntAddition/LongIntAdderMuxNetwork
-
-# ---------- Multioperand -------------------------------------------
- src/IntMultiAdder src/IntAddition/IntNAdder  src/IntAddition/IntCompressorTree
- src/IntAddition/PopCount src/IntAddition/NewCompressorTree
- src/IntAddition/BasicCompressor
  src/BitHeap
 src/WeightedBit
  src/IntComparator
@@ -241,158 +200,16 @@ src/Plotter
 # Multiplication related --------------------------------------------
 #--------------------------------------------------------------------
  src/IntMultiplier
- src/IntMultipliers/IntKaratsuba
- src/IntSquarer
  src/FixMultAdd
- src/IntMultipliers/FormalBinaryProduct
- src/IntMultipliers/GenericBinaryPolynomial
- src/IntMultipliers/IntPower
 
 src/IntMultipliers/MultiplierBlock
 
-src/IntMultipliers/FixSinPoly
-src/IntMultipliers/FixXPow3Div6
-src/ConstMult/IntConstDiv3
 
-# Shifters/LZOC related ---------------------------------------------
-#--------------------------------------------------------------------
- src/LZOC 
- src/LZOCShifterSticky
- src/Shifters
-
-# Fixed-point function evaluation -----------------------------------
-#--------------------------------------------------------------------
- src/FixedPointFunctions/Function
- src/FixedPointFunctions/PiecewiseFunction
-
- src/FixedPointFunctions/FunctionTable
-
-# src/FixedPointFunctions/Multipartite
-
- src/FixedPointFunctions/PolyCoeffTable
- src/FixedPointFunctions/PolynomialEvaluator
- src/FixedPointFunctions/FunctionEvaluator
-
- src/FixedPointFunctions/HOTBM.cpp
- src/FixedPointFunctions/HOTBM/HOTBMInstance.cc
- src/FixedPointFunctions/HOTBM/Param.cc
- src/FixedPointFunctions/HOTBM/Exhaustive.cc
- src/FixedPointFunctions/HOTBM/Util.cc
- src/FixedPointFunctions/HOTBM/PWPolynomial.cc
- src/FixedPointFunctions/HOTBM/Polynomial.cc
- src/FixedPointFunctions/HOTBM/MPPolynomial.cc
- src/FixedPointFunctions/HOTBM/Power.cc
- src/FixedPointFunctions/HOTBM/PowerAdHoc.cc
- src/FixedPointFunctions/HOTBM/TermROM.cc
- src/FixedPointFunctions/HOTBM/Term.cc
- src/FixedPointFunctions/HOTBM/Minimax.cc
- src/FixedPointFunctions/HOTBM/PowerROM.cc
- src/FixedPointFunctions/HOTBM/TermPowMult.cc 
-
-# Fixed-point operators ---------------------------------------------
-#--------------------------------------------------------------------
- src/FixSinCos.cpp
- src/CORDIC/FixedPointSinOrCos.cpp
- src/CORDIC/CordicSinCos
- src/FixedPointFIR
+ src/Table 
+ src/DualTable 
+ src/DualTable2
  
- src/FixedPointDCT
-
-# Floating-Point ----------------------------------------------------
-#--------------------------------------------------------------------
- src/FPAdderDualPath
- src/FPAdderSinglePath
- src/FPAdder3Input
- src/FPAddSub
-
- src/FPMultiplier
- src/FPMultiplierKaratsuba
- src/FPSquarer
-
- src/FPDiv
- 
- src/FPSqrt
- src/FPSqrtPoly
- src/squareroot/PolynomialTable 
- src/squareroot/PolynomialTableCorrectRounded
-
-# src/FP2DNorm
- 
- src/DotProduct 
- 
- src/ConstMult/IntConstMult src/ConstMult/ShiftAddOp src/ConstMult/ShiftAddDag 
- src/ConstMult/IntIntKCM src/ConstMult/KCMTable
- src/ConstMult/FPConstMult 
- src/ConstMult/CRFPConstMult 
- src/ConstMult/FixRealKCM
- src/ConstMult/FPRealKCM
-
- src/IntConstDiv 
- src/FPConstDiv 
-
- src/fplogarithm/FirstInvTable
- src/fplogarithm/FirstLogTable
- src/fplogarithm/OtherLogTable
- src/FPLog
-
- src/FPExp 
- src/FPPow
- 
- src/LongAcc
- src/LongAcc2FP
-
- src/FPSumOfSquares
-
-# ---------- Complex arithmetic --------------------------------------------- 
-src/Complex/FixedComplexAdder
-src/Complex/FixedComplexMultiplier
-
-# ---------- Conversion --------------------------------------------- 
-
- src/FP2Fix
- src/Fix2FP
- src/InputIEEE
- src/OutputIEEE
-
-#---------------------LNS arithmetic--------------------------------
- src/LNS/LNSAdd
- src/LNS/Cotran
- src/LNS/CotranHybrid
- src/LNS/CotranTables
- src/LNS/LNSAddSub
- src/LNS/LNSMul
- src/LNS/LNSDiv
- src/LNS/LNSSqrt
- src/LNS/AtanPow
- src/FixedPointFunctions/GenericEvaluator
- src/LNS/LogSinCos
-
-
-# Applications ------------------------------------------------------
-#--------------------------------------------------------------------
-
-# src/apps/CoilInductance/CoilInductance
-# src/apps/CoilInductance/CoordinatesTableX
-# src/apps/CoilInductance/CoordinatesTableZ
-# src/apps/CoilInductance/CoordinatesTableY
-
- src/apps/Collision
- 
- src/apps/FPFMAcc
- src/apps/FPJacobi
-
-# src/apps/TaMaDiCore 
-# src/apps/TaMaDiPriorityEncoder 
-# src/apps/TaMaDiDecoder 
-# src/apps/TaMaDiFIFO 
-# src/apps/TaMaDiShiftRegister 
-# src/apps/TaMaDiModule 
-# src/apps/TaMaDiModuleDummyWrapper
-# src/apps/TaMaDiModuleWrapperInterface
-# src/apps/TaMaDiDispatcherInterface
-# src/apps/TaMaDiDeserializer
-# src/apps/TaMaDiSystem
-
+ src/FixFunctions/FixFunction
 # TestBench-related -------------------------------------------------
 #--------------------------------------------------------------------
  src/TestCase
@@ -420,15 +237,6 @@ ADD_EXECUTABLE(flopoco
 
 TARGET_LINK_LIBRARIES(
   flopoco  
-	${FLOPOCO_LIB}
-  )
-
-
-ADD_EXECUTABLE(fpadder_example
- src/main_minimal 
-)
-TARGET_LINK_LIBRARIES(
-  fpadder_example  
 	${FLOPOCO_LIB}
   )
 

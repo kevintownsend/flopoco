@@ -89,8 +89,8 @@ namespace flopoco{
 	 */
 	void printBinNumGMP(ostream& o, mpz_class number, int size);
 
-	/** returns a string for a mpfr_t*/
-	string printMPFR(mpfr_t x, int n);
+	/** returns a string for a mpfr_t on n digits in radix r*/
+	string printMPFR(mpfr_t x);
 
 	/** Prints the binary representation of a positive integer on size bits
 	 * @param o the output stream

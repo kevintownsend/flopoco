@@ -16,7 +16,7 @@ Copyright © ENS-Lyon, INRIA, CNRS, UCBL,
 #include <string>
 #include <sstream>
 #include <cstdlib>
-#include "Operator.hpp"
+#include "Operator.hpp"  // Useful only for reporting. TODO split out the REPORT and THROWERROR #defines from Operator to another include.
 #include "utils.hpp"
 
 
