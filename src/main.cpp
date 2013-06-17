@@ -463,9 +463,16 @@ void usage(char *name, string opName = ""){
 	}
 	if ( full ){
 		cerr << "    ____________ GENERIC FUNCTION EVALUATORS ____________________________________\n";
-		cerr << "      We provide two methods to evaluate a fixed-point function on [0,1]\n";
+		cerr << "      We provide several methods to evaluate a fixed-point function\n";
 	}
-	if ( full || opName == "FunctionEvaluator"){					
+	if ( full || opName == "FunctionTable" || opName == "FixFunction"){					
+		OP( "FunctionTable","function wI lsbO msbO");
+		cerr << "      Simple tabulation of a function defined on [0,1)\n";
+		cerr << "      wI: input width (also weight of input LSB), \n";
+		cerr << "      lsbO and msbO: weights of output LSB and MSB,\n";
+		cerr << "      function: sollya-syntaxed function to implement, e.g. \"sin(x*Pi/2)\" \n";
+	}
+	if ( full || opName == "FunctionEvaluator" || opName == "FixFunction"){					
 		OP( "FunctionEvaluator","function wI lsbO degree");
 		cerr << "      Horner polynomial approximation, DSP based if available\n";
 		cerr << "      wI - input width (also weight of input LSB), lsbO - weight of output LSB,\n";
@@ -473,18 +480,18 @@ void usage(char *name, string opName = ""){
 		cerr << "      function - sollya-syntaxed function to implement, between double quotes\n";
 		cerr << "      example: flopoco FunctionEvaluator \"sin(x*Pi/2)\" 16 16 3\n";
 	}
-	if ( full || opName == "HOTBM"){					
+	if ( full || opName == "HOTBM" || opName == "FixFunction"){					
 		OP( "HOTBM","function wI wO degree");
 		cerr << "      High-Order Table-Based Method for fixed-point functions (NPY)\n";
 		cerr << "      wI - input width, wO - output width, degree - degree of polynomial approx\n";
 		cerr << "      function - sollya-syntaxed function to implement, between double quotes\n";
 	}
-	if ( full || opName == "HOTBM" || opName == "HOTBMFX"){					
+	if ( full || opName == "HOTBM" || opName == "HOTBMFX" || opName == "FixFunction"){					
 		OP( "HOTBMFX","function wE_in wF_in wE_out wF_out degree");
 		cerr << "      Same as HOTBM, with explicit fixed-point formats (NPY)\n";
 		cerr << "      Note: input is unsigned, output is signed.\n";
 	}
-	if ( full || opName == "HOTBM" || opName == "HOTBMRange"){					
+	if ( full || opName == "HOTBM" || opName == "HOTBMRange" || opName == "FixFunction"){					
 		OP( "HOTBMRange","function wI wO degree xmin xmax scale");
 		cerr << "      Same as HOTBM, with explicit range and scale (NPY)\n";
 		cerr << "      xmin xmax - bounds of the input range, mapped to [0,1[\n";
