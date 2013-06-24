@@ -51,6 +51,11 @@ namespace flopoco{
 
 	void FixFunction::finishConstruction(string sollyaString_)
 	{
+
+		mpfr_t temp;
+		mpfr_init2(temp, 1024); // Should be more than enough for anybody
+
+		mpfr_clear(temp);
 		// A bit of bookkepping
 		verbose=4;
  		ostringstream completeDescription;
