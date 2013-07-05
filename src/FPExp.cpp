@@ -51,6 +51,17 @@ Clean up poly eval and bitheapize it
 namespace flopoco{
 
 
+	FPExp::magicTable::magicTable(Target* target, int sizeExpA_, int sizeExpZPart_, bool storeExpZmZm1_) : 
+		DualTable(target, 9, sizeExpA_+sizeExpZPart_, 0, 511),
+		sizeExpA(sizeExpA_), sizeExpZPart(sizeExpZPart_), storeExpZmZm1(storeExpZmZm1_) {
+				ostringstream name; 
+				srcFileName="FPExp::MagicSPExpTable";
+				name <<"MagicSPExpTable";
+				setName(name.str());
+	};
+
+
+
 	mpz_class FPExp::magicTable::function(int x){
 		mpz_class h, l;
 		mpfr_t a, yh,yl, one;
@@ -103,6 +114,15 @@ namespace flopoco{
 
 
 
+	FPExp::ExpYTable::ExpYTable(Target* target, int wIn, int wOut) : 
+		Table(target, wIn, wOut) {
+		ostringstream name; 
+		srcFileName="FPExp::ExpYTable";
+		name <<"ExpYTable_" << wIn << "_" << wOut;
+		setName(name.str());
+		
+		outDelayMap["Y"] = target->RAMDelay();
+	};
 
 	mpz_class FPExp::ExpYTable::function(int x){
 		mpz_class h;
