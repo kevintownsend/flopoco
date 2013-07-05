@@ -20,7 +20,7 @@ namespace flopoco{
 		Virtex6() : Target()	{
 			id_             		= "Virtex6";
 			vendor_         		= "Xilinx";
-			sizeOfBlock_ 			= 18432;	// the size of a primitive block is 2^11 * 9
+			sizeOfBlock_ 			= 36 << 10 ;	// the size of a primitive block is 36Kbit
 			maxFrequencyMHz_		= 500;
 			// all these values are set more or less randomly, to match  virtex 6 more or less
 			fastcarryDelay_ 		= 0.015e-9; //s   

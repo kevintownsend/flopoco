@@ -1,4 +1,5 @@
 Version 2.5.0
+Added a clock enable option.
 Fixed low-precision FPExp at last.
 Added FIR and DCT generators
 Many bug fixes and improvements to the bit heap framework.

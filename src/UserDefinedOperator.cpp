@@ -99,6 +99,13 @@ namespace flopoco {
 		vhdl << "S <= (R" << of(param0 +1) << " & ";
 		// and then we place the last param1 bits
 		vhdl << "R" << range(param1 - 1,0) << ");" << endl;
+		
+    for(int i=0; i < 1000; i++)
+    {
+    	vhdl << declare(join("a",i)) << " <= '1';" << endl;
+		}
+
+		
 	};
 
 	
