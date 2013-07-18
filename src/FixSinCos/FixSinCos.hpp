@@ -44,6 +44,8 @@ private:
 	int w;
 	mpfr_t scale;              /**< 1-2^(wOut-1)*/
 	mpfr_t constPi;
+	SinCosTable* scT;
+	Operator *pi_mult; // may be a FixRealKCM or an IntConstMult
 };
 
 #endif // HAVE_SOLLYA
