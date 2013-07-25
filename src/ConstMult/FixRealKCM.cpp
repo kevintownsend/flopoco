@@ -133,8 +133,6 @@ namespace flopoco{
 			diSize[counter] = wIn - (currentSize - diSize[counter]);
 		}
 		
-		REPORT(INFO, "Constant multiplication in "<< nbOfTables << " tables");
-		
 		//manage the critical path
 		setCriticalPath(getMaxInputDelays(inputDelays));
 		
@@ -183,6 +181,8 @@ namespace flopoco{
 		else
 		{
 			///////////////////////////////////   Generic Case  ////////////////////////////////////
+				
+			REPORT(INFO, "Constant multiplication in "<< nbOfTables << " tables");
 
 			// How many guard bits? ulp=2^lsbOut, and we want to ensure targetUlpError
 			// One half-ulp for the final rounding, and nbOfTables tables with an error of 2^(lsbOut-g-1) each 

@@ -2,6 +2,9 @@
 // TODOs 
 // Move FixSinPoly here!
 // Compare not-ing Y and negating it properly
+// FixSinCosTable has constant sign bit as soon as there is argument reduction. As we just hit 36 output bits, this is important
+// The upper test for order-one seems wrong, I get a 38-Kbit table for ./flopoco -pipeline=no  -verbose=2 FixSinCos 15 TestBenchFile 10
+
 
 // works only with sollya
 #ifdef HAVE_SOLLYA
@@ -32,12 +35,20 @@ using namespace flopoco;
 
 
 ////////////////////////////////////// SinCosTable ///////////////////
-// argRedCase=1 for full table, 4 for quadrant
-FixSinCos::SinCosTable::SinCosTable(Target* target, int wIn, int wOut, int argRedCase_, FixSinCos* parent_):
-	Table(target, wIn, wOut),argRedCase(argRedCase_), parent(parent_){
+// argRedCase=1 for full table, 4 for quadrant, 8 for octant
+// 
+FixSinCos::SinCosTable::SinCosTable(Target* target_, int wIn_, int lsbOut_, int g_, int argRedCase_, FixSinCos* parent_):
+	Table(target_, wIn_, 2*(lsbOut_+g_+(argRedCase_==1?1:0))), 
+	lsbOut(lsbOut_),
+	g(g_),
+	argRedCase(argRedCase_), 
+	parent(parent_)
+{
 	ostringstream name;
 	srcFileName = "FixSinCos::SinCosTable";
-	name << "SinCosTable_" << wIn << "_" << wOut;
+	name << "SinCosTable_" << wIn << "_2x" << lsbOut;
+	if (g>0) 
+		name << "p" << g;
 	setName(name.str());
 	//	outDelayMap["Y"]=target->RMADelay();
 }
@@ -48,7 +59,7 @@ FixSinCos::SinCosTable::~SinCosTable(){
 
 
 mpz_class FixSinCos::SinCosTable::function (int x){
-	mpz_class sin,cos,testSin, testCos;
+	mpz_class sin,cos;
 	mpfr_t a, c, s;
 
 	mpfr_init2(c, LARGE_PREC); // cosine
@@ -78,9 +89,12 @@ mpz_class FixSinCos::SinCosTable::function (int x){
 		//REPORT(0,"a divided by 2^"<<wIn<<" a="<<printMPFR(a,10));
 	}
 
-	else	{
+	else if (argRedCase==8)	{ // octant 
 		mpfr_div_2si(a,a,wIn+2, GMP_RNDN);
 	}
+	else 
+		THROWERROR("Bad value for argRedCase in FixSinCos::SinCosTable: " << argRedCase);
+
 	mpfr_mul(a, a, parent->constPi, GMP_RNDN);
 
 	mpfr_sin_cos(s, c, a, GMP_RNDN); //function evaluation on point x
@@ -90,34 +104,36 @@ mpz_class FixSinCos::SinCosTable::function (int x){
 
 	//REPORT(0," s="<<printMPFR(s,10)<<"; c="<<printMPFR(c,10));
 
-	mpfr_mul_2si(s,s,wOut/2-1, GMP_RNDN); //get the true value
-	mpfr_mul_2si(c,c,wOut/2-1, GMP_RNDN); //get the true value
+	mpfr_mul_2si(s, s, lsbOut+g, GMP_RNDN); //scale to int
+	mpfr_mul_2si(c, c, lsbOut+g, GMP_RNDN); 
 
-	mpfr_get_z(sin.get_mpz_t(),s, GMP_RNDN); //rounding into mpz
-	mpfr_get_z(cos.get_mpz_t(),c, GMP_RNDN);
+	mpfr_get_z(sin.get_mpz_t(), s, GMP_RNDN); //rounding into mpz
+	mpfr_get_z(cos.get_mpz_t(), c, GMP_RNDN);
+
+  if(g){ // add the round bit
+		sin += (mpz_class(1)<<(g-1));
+		cos += (mpz_class(1)<<(g-1));
+	}
 
 	//REPORT(0,"Calculated values before 2's complement test: sin="<<sin.get_mpz_t()<<"; cos="<<cos.get_mpz_t());
 
 	// no more need intermediates a, c, and s
 	mpfr_clears(a, c, s, NULL);
 
-	// prepare 2's complement: testSin/testCos set to the heaviest bit of sin or cos	
-	mpz_div_2exp(testSin.get_mpz_t(),sin.get_mpz_t(), (wOut/2)-1);
-	mpz_div_2exp(testCos.get_mpz_t(),cos.get_mpz_t(), (wOut/2)-1);
-
-	// check if negative, then 2's complement
-	if(mpz_cmp_si(sin.get_mpz_t(),0)<0){
-		//		mpz_com(sin.get_mpz_t(),sin.get_mpz_t());
-		sin+=mpz_class(1)<<wOut/2; 
-	}
-
-	if (mpz_cmp_si(cos.get_mpz_t(),0)<0){
-		//mpz_com(cos.get_mpz_t(),cos.get_mpz_t());
-		cos+=mpz_class(1)<<wOut/2; 
+	if(argRedCase==1) { // Full table: need to manage two's complement
+		
+		// check if negative, then 2's complement
+		if(sin<0){
+			sin+=mpz_class(1)<<(wOut/2); 
+		}
+		
+		if (cos<0){
+			cos+=mpz_class(1)<<(wOut/2); 
+		}
 	}
 
 	// REPORT(0," function() returns. Value: "<<(sin+(cos<<wIn))<<" ( sin=" << sin<<" , cos="<<cos<<  " )");
-	return ( cos  + ( sin << wOut/2 ) ); 
+	return ( cos  + ( sin << (wOut/2) ) ); 
 
 }
 
@@ -198,7 +214,7 @@ FixSinCos::FixSinCos(Target * target, int w_, float ratio):Operator(target), w(w
 	if (wSmallerThanBorder1 || (!wSmallerThanBorder2 && wSmallerThanBorder3))
 	{
 		REPORT(DETAILED, "Simpler architecture: Using plain table" );
-		scT= new SinCosTable(target, w+1, 2*(w+1), 1, this);
+		scT= new SinCosTable(target, w+1, w, 0, 1, this);
 
 		addSubComponent(scT); // adding the table
 
@@ -216,7 +232,6 @@ FixSinCos::FixSinCos(Target * target, int w_, float ratio):Operator(target), w(w
 		vhdl << tab<< "S <= Sine;"<<endl;
 		vhdl << tab<< "C <= Cosine;"<<endl;
 
-		//REPORT(0, " scT deleted successfully");
 	}
 
 	else if (wSmallerThanBorder2 || (!wSmallerThanBorder3 && wSmallerThanBorder4)) 	{
@@ -227,45 +242,40 @@ FixSinCos::FixSinCos(Target * target, int w_, float ratio):Operator(target), w(w
 		// 2's complement: 0 is always positive
 		vhdl << tab << declare ("X_sgn") << " <= X" << of (w) << ";" << endl;
 		vhdl << tab << declare ("Q") << " <= X" << of (w-1) << ";" << endl;
-		vhdl << tab << declare ("Y_remain",w-1) << " <= X " << range (w-2,0) << ";" << endl;
-
-		vhdl << tab << declare ("Exch") << " <= Q;" << endl;
+		vhdl << tab << declare ("X_in",w-1) << " <= X " << range (w-2,0) << ";" << endl;
 
 		vhdl << tab << declare("C_sgn")
 			<< " <= Q xor X_sgn;" << endl; //sign of cosin
 
-		vhdl << tab << declare ("Y_in",w-1) << " <= Y_remain;" << endl;
-
 		/*********************************** REDUCED TABLE **************************************/
-		scT= new SinCosTable(target, w-1, 2*(w+1), 4, this);
+		scT= new SinCosTable(target, w-1, w, 0, 4, this);
 
 		addSubComponent(scT); // adding the table to vhdl component list
 
 		//int sinCosSize = 2*(w-2); // size of output (sine plus cosine in a same number, sine on high weight bits)
-		vhdl << tab << declare("sinCosRedTabIn", w-1) << " <=  Y_in;" << endl;// signal declaration
 
-		inPortMap(scT, "X", "sinCosRedTabIn");
+		inPortMap(scT, "X", "X_in");
 		outPortMap(scT, "Y", "SC_red"); // ports mapping
 
 		vhdl << instance(scT, "sinCosRedTable" ); //instanciation
 		//vhdl << instance(scT, "cosTable" );
 
-		vhdl << tab << declare("S_out", w+1) << " <= SC_red " << range( 2*(w+1)-1 , w+1 ) << ";" << endl;// signal declaration
-		vhdl << tab << declare("C_out", w+1) << " <= SC_red " << range( w, 0 ) << ";" << endl;// signal declaration
+		vhdl << tab << declare("S_out", w) << " <= SC_red " << range( 2*w-1 , w ) << ";" << endl;// signal declaration
+		vhdl << tab << declare("C_out", w) << " <= SC_red " << range( w-1, 0 ) << ";" << endl;// signal declaration
 		//delete (scT);
 
 		/*********************************** Reconstruction of both sine and cosine **************************************/
 
-		vhdl << tab << declare ("S_wo_sgn", w+1)
-			<< " <= C_out when Exch = '1' else S_out;" << endl; //swap sine and cosine if q xor o.
-		vhdl << tab << declare ("C_wo_sgn", w+1)
-			<< " <= S_out when Exch = '1' else C_out;" << endl;
+		vhdl << tab << declare ("S_wo_sgn", w)
+			<< " <= C_out when Q = '1' else S_out;" << endl; //swap sine and cosine if q.
+		vhdl << tab << declare ("C_wo_sgn", w)
+			<< " <= S_out when Q = '1' else C_out;" << endl;
 
 
 		vhdl << tab << declare ("S_wo_sgn_ext", w+1)
-			<< " <= S_wo_sgn;" << endl
+			<< " <= '0' & S_wo_sgn;" << endl
 			<< tab << declare ("C_wo_sgn_ext", w+1)
-			<< " <= C_wo_sgn;" << endl; //S_wo_sgn_ext and C_wo_sgn are the positive versions of the sine and cosine
+			<< " <= '0' & C_wo_sgn;" << endl; //S_wo_sgn_ext and C_wo_sgn are the positive versions of the sine and cosine
 
 		vhdl << tab << declare ("S_wo_sgn_neg", w+1)
 			<< " <= (not S_wo_sgn_ext) + 1;" << endl;
@@ -277,15 +287,13 @@ FixSinCos::FixSinCos(Target * target, int w_, float ratio):Operator(target), w(w
 			<< " else S_wo_sgn_neg;" << endl
 			<< tab << "C <= C_wo_sgn_ext when C_sgn = '0'"
 			<< " else C_wo_sgn_neg;" << endl; //set the correspondant value to C and S according to input sign
-
-
 	}
 
 
 
 
-	else { // From now on we will have an argument reduction
-		/*********************************** RANGE REDUCTION **************************************/ 
+	else { // From now on we will have a table-based argument reduction
+ 		/*********************************** RANGE REDUCTION **************************************/ 
 		addComment("The argument is reduced into (0,1/4)");
 		vhdl << tab << declare ("X_sgn") << " <= X" << of (w) << ";  -- sign" << endl;
 		vhdl << tab << declare ("Q") << " <= X" << of (w-1) << ";  -- quadrant" << endl;
@@ -293,15 +301,6 @@ FixSinCos::FixSinCos(Target * target, int w_, float ratio):Operator(target), w(w
 		vhdl << tab << declare ("Y",w-2) << " <= X " << range (w-3,0) << ";" << endl;
 
 		// now X -> X_sgn + Q*.5 + O*.25 + Y where Q,O \in {0,1} and Y \in {0,.25}
-
-		// notY = .25 - y
-		//  ?
-		// It saves one carry-propagate latency (one cycle)
-		// but enlarges the constant multiplier input by g bits
-		// and adds one ulp of error
-		addComment("Computing .25-Y :  we do a logic NOT, at a cost of 1 ulp");
-		manageCriticalPath(target->localWireDelay(w-2) + target->lutDelay());
-		vhdl << tab << declare ("notY", w-2) << " <= " << "not Y;" << endl;
 
 
 
@@ -312,36 +311,41 @@ FixSinCos::FixSinCos(Target * target, int w_, float ratio):Operator(target), w(w
 
 				// now we know which value for g
 				g = gOrder1Arch; 
+
 				int wYIn=w-2+g;
 				
-				vhdl << tab << declare ("Y_in", wYIn) << " <= notY & "
-						 << '"' << std::string (g, '1') << '"' << " when O='1' else Y & "
-						 << '"' << std::string (g, '0') << '"' << ";"
-						 << endl;
+				vhdl << tab << declare ("Yneg", wYIn) << " <= ((not Y) & " << '"' << std::string (g, '1') << '"' << ") when O='1' "
+						 << "else (Y & " << '"' << std::string (g, '0') << '"' << ");" << endl;
 
 				int wY = wYIn-wA; // size of Y_red
 
-				vhdl << tab << declare ( "A", wA) << " <= Y_in " << range(wYIn-1, wYIn-wA) << ";" << endl;
-				vhdl << tab << declare ("Y_red", wY) << " <= Y_in" << range (wYIn-wA-1,0) << ";" << endl;
+				vhdl << tab << declare ( "A", wA) << " <= Yneg " << range(wYIn-1, wYIn-wA) << ";" << endl;
+				vhdl << tab << declare ("Y_red", wY) << " <= Yneg" << range (wYIn-wA-1,0) << ";" << endl; // wYin-wA=wY: OK
 
 				//------------------------------------SinCosTable building for A -------------------------------------
-				scT= new SinCosTable(target, wA, 2*(w+1+g), 8, this);
+				scT= new SinCosTable(target, wA, w, g, 8, this);
 				addSubComponent(scT); // adding the table to vhdl component list
 				inPortMap(scT, "X", "A");
 				outPortMap(scT, "Y", "SCA");
 				vhdl << instance(scT, "sinCosATable" ); 
 
-				vhdl << tab << declare("SA", w+1+g) << " <= SCA " << range( 2*(w+1+g)-1 , w+1+g ) << ";" << endl;
-				vhdl << tab << declare("CA", w+1+g) << " <= SCA " << range( w+g, 0 ) << ";" << endl;
+				vhdl << tab << declare("SA", w+g) << " <= SCA " << range( 2*(w+g)-1 , w+g ) << ";" << endl;
+				vhdl << tab << declare("CA", w+g) << " <= SCA " << range( w+g-1, 0 ) << ";" << endl;
 
 				//-------------------------------- MULTIPLIER BY PI ---------------------------------------
 
 				map<string, double> pi_mult_inputDelays;
 				pi_mult_inputDelays["X"] = getCriticalPath();
-				int wZ=w-wA+g;
+				int wZ=w-wA+g; // see alignment below. Actually w-2-wA+2  (-2 because Q&O bits, +2 because mult by Pi)
 
-				// the 2 extra bits to Z are added by the KCM multiplier
-				pi_mult = new FixRealKCM (target,-w-g,-2-wA-1, false, -w-g , "pi", 1.0, pi_mult_inputDelays); //lsbOut=-7 because we add 6 bits between entrance and exit. 
+				pi_mult = new FixRealKCM (target,
+																	-w-g,     // lsbIn
+																	-2-wA-1,  // msbIn
+																	false,    // signedInput
+																	-w-g ,    // lsbOut
+																	"pi",     // constant 
+																	1.0,      // targetUlpError
+																	pi_mult_inputDelays); 
 				oplist.push_back (pi_mult);
 				inPortMap (pi_mult, "X", "Y_red");
 				outPortMap (pi_mult, "R", "Z");
@@ -351,22 +355,30 @@ FixSinCos::FixSinCos(Target * target, int w_, float ratio):Operator(target), w(w
 
 				//----------------- 1-Y_red ( = cos(Y_red) ) -----------------
 
-				//		vhdl << declare("Z_op", Y_red_sqr_size) << "<= '0' & "<< og(Y_red_sqr_size-1)<< " - ( '0' & Y_red_sqr" << range(Y_red_sqr_size-1,1) << " );" << endl;
-				int m=4;
+				int m=2; // another number of guard bits, this time on the truncation of CA and SA
+
+				// TODO the bug is in the sine computation only
 				//---------------------------- Sine computation ------------------------
-				vhdl << tab <<  declare("SinACosY_red",w+1+g) << " <= SA;"<<endl;
-				vhdl << tab << declare("CosASinY_red", 2*wZ+m ) << " <= CA" << range( w+g, w+1+g-wZ-m ) <<"*Z;" <<endl;
-				vhdl << tab << declare("PreSinX", w+1+g) << " <= SinACosY_red + ( " << zg(wA-2+1) << " & CosASinY_red" << range( 2*wZ+m-1, wZ+m-1 ) << " );"<<endl;
+				vhdl << tab <<  declare("SinACosZ",w+g) << " <= SA; -- For these sizes  CosZ approx 1"<<endl; // msb is -1; 
+				vhdl << tab << declare("CAtrunc", wZ+m ) << " <= CA" << range( w+g-1, w+g-wZ-m ) <<";" <<endl; // 
+				vhdl << tab << declare("CosASinZ", 2*wZ+m ) << " <= CAtrunc*Z;  -- For these sizes  SinZ approx Z" <<endl; //
+				// msb of CosASinZ is that of Z, plus 2 (due to multiplication by Pi)
+				//   for g=2 and wA=4:          :  .QOAAAAYYYYgg
+				//                                      ZZZZZZZZ
+				// to align with sinACosZ:         .XXXXXXXXXXgg we need to add wA+2-2 zeroes. 
+				// and truncate cosAsinZ to the size of Z, too
+				vhdl << tab << declare("PreSinX", w+g) << " <= SinACosZ + ( " << zg(wA) << " & (CosASinZ" << range( 2*wZ+m-1, 2*wZ+m - (w+g - wA) ) << ") );"<<endl;
 
 				//---------------------------- Cosine computation -------------------------------
-				vhdl << tab << declare("CosACosY_red", w+1+g ) << " <= CA;" << endl;
-				vhdl << tab << declare("SinASinY_red", 2*wZ+m ) << " <= SA" << range( w+g, w+1+g-wZ-m ) << "*Z;" << endl;
-				vhdl << tab << declare("PreCosX", w+1+g) << " <= CosACosY_red - ( " << zg(wA-2+1) << " & SinASinY_red" << range( 2*wZ+m-1, wZ+m-1 )<< " );" << endl;
+				vhdl << tab << declare("CosACosZ", w+g ) << " <= CA; -- For these sizes  CosZ approx 1" << endl;
+				vhdl << tab << declare("SAtrunc", wZ+m ) << " <= SA" << range( w+g-1, w+g-wZ-m ) <<";" <<endl; // 
+				vhdl << tab << declare("SinASinZ", 2*wZ+m ) << " <= SAtrunc*Z;  -- For these sizes  SinZ approx Z" <<endl; //
+				vhdl << tab << declare("PreCosX", w+g) << " <= CosACosZ - ( " << zg(wA) << " & (SinASinZ" << range( 2*wZ+m-1, 2*wZ+m - (w+g - wA) )<< ") );" << endl;
 
-			
-				// Something suspiscious here, we do not use the last guard bit.
-				vhdl << tab << declare ("C_out", w) << " <= PreCosX" << range (w+g, g+1) << ';' << endl;
-				vhdl << tab << declare ("S_out", w) << " <= PreSinX" << range (w+g, g+1) << ';' << endl;
+				// Reconstruction expects a positive C_out and S_out, without their sign bits
+				// TODO remove sign bit when tables are fixed. 
+				vhdl << tab << declare ("C_out", w) << " <= PreCosX" << range (w+g-1, g) << ';' << endl;
+				vhdl << tab << declare ("S_out", w) << " <= PreSinX" << range (w+g-1, g) << ';' << endl;
 			}
 
 
@@ -377,12 +389,12 @@ FixSinCos::FixSinCos(Target * target, int w_, float ratio):Operator(target), w(w
 		g=gOrder2Arch; // TODO check
 		int wIn = w-2+g;
 
-		// Y_in = / notY if O=1
+		// Yneg = / notY if O=1
 		//        \ Y if O=0
 		// and we extend the precision to make it look as if notY was
 		// 0.[1, wIn times] - Y: 1/2**g error reduction in notY
 		// (which should be arithmetic 1-Y)
-		vhdl << tab << declare ("Y_in",wIn) << " <= notY & "
+		vhdl << tab << declare ("Yneg",wIn) << " <= notY & "
 			<< '"' << std::string (g, '1') << '"' << " when O='1' else Y & "
 			<< '"' << std::string (g, '0') << '"' << ";"
 			<< endl;
@@ -391,13 +403,13 @@ FixSinCos::FixSinCos(Target * target, int w_, float ratio):Operator(target), w(w
 		int wY = wIn-wA; // size of Y_red
 		int wZ = wY+2; // size 
 
-		vhdl << tab << declare ( "A", wA) << " <= Y_in " << range(wIn-1, wIn-wA) << ";" << endl;
-		vhdl << tab << declare ("Y_red", wY) << " <= Y_in" << range (wIn-wA-1,0) << ';' << endl;
+		vhdl << tab << declare ( "A", wA) << " <= Yneg " << range(wIn-1, wIn-wA) << ";" << endl;
+		vhdl << tab << declare ("Y_red", wY) << " <= Yneg" << range (wIn-wA-1,0) << ';' << endl;
 
 		//------------------------------------SinCosTable building for A -------------------------------------
 
 		/*********************************** REDUCED TABLE **************************************/
-		scT= new SinCosTable(target, wA, w+ g, 8, this);
+		scT= new SinCosTable(target, wA, w, g, 8, this);
 
 		addSubComponent(scT); // adding the table to vhdl component list
 
@@ -408,8 +420,7 @@ FixSinCos::FixSinCos(Target * target, int w_, float ratio):Operator(target), w(w
 		outPortMap(scT, "Y", "SCA"); // ports mapping
 
 		vhdl << instance(scT, "sinCosATable" ); //instanciation
-		//vhdl << instance(scT, "cosTable" );
-
+		// TODO wA in the following lines should be w+g, etc.
 		vhdl << tab << declare("SA", wA+1) << " <= SCA " << range( 2*(wA+1)-1 , wA+1 ) << ";" << endl;// signal declaration
 		vhdl << tab << declare("CA", wA+1) << " <= SCA " << range( wA, 0 ) << ";" << endl;// signal declaration
 		//delete (scT);
@@ -482,7 +493,7 @@ FixSinCos::FixSinCos(Target * target, int w_, float ratio):Operator(target), w(w
 		else	{
 			REPORT(DETAILED,"Generic case: Using third-order Taylor");
 
-			// we need to know the number of guard bits _now_ to have a good Y_in
+			// we need to know the number of guard bits _now_ to have a good Yneg
 			// some precision is lost with the optimized multipliers
 			g=4;
 			//const int g=4; //guard bits
@@ -491,9 +502,17 @@ FixSinCos::FixSinCos(Target * target, int w_, float ratio):Operator(target), w(w
 			//another half final ulp
 			int wIn = w-2+g;
 
-			vhdl << tab << declare ("Y_in",wIn) << " <= notY & "
-					 << '"' << std::string (g, '1') << '"' << " when O='1' else Y & "
-					 << '"' << std::string (g, '0') << '"' << ";"
+		// notY = .25 - y
+		//  ?
+		// It saves one carry-propagate latency (one cycle)
+		// but enlarges the constant multiplier input by g bits
+		// and adds one ulp of error
+		addComment("Computing .25-Y :  we do a logic NOT, at a cost of 1 ulp");
+		manageCriticalPath(target->localWireDelay(w-2) + target->lutDelay());
+
+			vhdl << tab << declare ("Yneg",wIn) << " <= (not Y & "
+					 << '"' << std::string (g, '1') << '"' << ") when O='1' else (Y & "
+					 << '"' << std::string (g, '0') << '"' << ");"
 					 << endl;
 
 
@@ -502,7 +521,7 @@ FixSinCos::FixSinCos(Target * target, int w_, float ratio):Operator(target), w(w
 			// sin (4*pi*y) = y' - y'³/6
 			// cos (4*pi*y) = 1 - y'²/2
 			// this works if y' (or y) is small enough
-			// to accomplish this we decompose x (==Y_in in the vhdl) to x = a + y
+			// to accomplish this we decompose x (==Yneg in the vhdl) to x = a + y
 			// where a \in [0,1/4[ and {sin,cos} (pi*a) is tabulated
 			// and y \in [0,1b-n[ is a small enough argument 
 			// then we use the addition formulae (where Sin(x)=sin(pi*x)):
@@ -537,9 +556,9 @@ FixSinCos::FixSinCos(Target * target, int w_, float ratio):Operator(target), w(w
 #endif
 			int wY = wIn-wA;
 			int wZ = wY+2;
-			// vhdl:split (Y_in -> A & Y_red)
-			vhdl << tab << declare ("A",wA) << " <= Y_in" << range (wIn-1,wIn-wA) << ";" << endl;
-			vhdl << tab << declare ("Y_red",wY) << " <= Y_in" << range (wIn-wA-1,0) << ';' << endl;
+			// vhdl:split (Yneg -> A & Y_red)
+			vhdl << tab << declare ("A",wA) << " <= Yneg" << range (wIn-1,wIn-wA) << ";" << endl;
+			vhdl << tab << declare ("Y_red",wY) << " <= Yneg" << range (wIn-wA-1,0) << ';' << endl;
 			// vhdl:lut (A -> A_cos_pi_tbl, SinPiA)
 			FunctionTable *sin_table, *cos_table;
 			{
@@ -697,8 +716,8 @@ FixSinCos::FixSinCos(Target * target, int w_, float ratio):Operator(target), w(w
 			
 
 
-			// and now, evaluate Sin Y_in and Cos Y_in
-			// Cos Y_in:
+			// and now, evaluate Sin Yneg and Cos Yneg
+			// Cos Yneg:
 			// vhdl:slr (Z2o2 -> Z2o2)
 			
 			
@@ -875,7 +894,7 @@ FixSinCos::FixSinCos(Target * target, int w_, float ratio):Operator(target), w(w
 
 			/*********************************** Reconstruction of sine **************************************/
 			//Bit heap computing   SinPiA - Z2o2*sinPiA + sinZ*CosPiA
-			// Sin Y_in:
+			// Sin Z:
 			
 			// First get back to the cycle of Z2 (same as Cos_y_red):
 			// it is certainly later than SinPiA

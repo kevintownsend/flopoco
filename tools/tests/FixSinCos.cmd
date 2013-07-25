@@ -1,0 +1,14 @@
+flopoco -pipeline=no -target=Virtex5 FixSinCos 5 
+flopoco -pipeline=no -target=Virtex5 FixSinCos 6 
+flopoco -pipeline=no -target=Virtex5 FixSinCos 7 
+flopoco -pipeline=no -target=Virtex5 FixSinCos 8 
+flopoco -pipeline=no -target=Virtex5 FixSinCos 9 
+flopoco -pipeline=no -target=Virtex5 FixSinCos 10
+flopoco -pipeline=no -target=Virtex5 FixSinCos 11
+flopoco -pipeline=no -target=Virtex5 FixSinCos 12
+flopoco -pipeline=no -target=Virtex5 FixSinCos 13
+flopoco -pipeline=no -target=Virtex5 FixSinCos 14
+flopoco -pipeline=no -target=Virtex5 FixSinCos 15
+flopoco -pipeline=no -target=Virtex5 FixSinCos 16
+flopoco -pipeline=no -target=Virtex5 FixSinCos 17
+flopoco -pipeline=no -target=Virtex5 FixSinCos 18

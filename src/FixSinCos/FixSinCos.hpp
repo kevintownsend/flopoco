@@ -19,11 +19,19 @@ class FixSinCos: public Operator {
 public:
 	class SinCosTable: public Table {
 	public:
-		SinCosTable(Target* target, int a, int g, int argRedCase_, FixSinCos* parent);
+		/**< Builds a table returning  sin(Addr) and cos(Addr) accurate to 2^(-lsbOut-g)
+			 (beware, lsbOut is positive) where Addr is on a bits. 
+			 If g is not null, a rounding bit is added at weight 2^((-lsbOut-1)
+			 argRedCase=1 for full table, 4 for quadrant reduction, 8 for octant reduction.
+			 Result is signed if argRedCase=1 (msbWeight=0=sign bit), unsigned positive otherwise (msbWeight=-1).
+			 */
+		SinCosTable(Target* target, int a, int lsbOut, int g, int argRedCase_, FixSinCos* parent);
 		~SinCosTable();
 	private:
 		mpz_class function(int x);
-		int argRedCase;     /**< argRedCase=1 for full table, 4 for quadrant */
+		int lsbOut;
+		int g;
+		int argRedCase;     /**< argRedCase=1 for full table, 4 for quadrant, 8 for octant reduction */
 		FixSinCos* parent;
 	};
 
