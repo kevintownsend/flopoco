@@ -2651,10 +2651,10 @@ bool parseCommandLine(int argc, char* argv[]){
 				simlibs="--ieee=synopsys ";
 			if(op->getStdLibType()==1)
 				simlibs="--ieee=standard ";
-			cerr << tab << "ghdl -a " << simlibs << "-fexplicit "<< filename <<endl;
-			cerr << tab << "ghdl -e " << simlibs << "-fexplicit " << op->getName() <<endl;
-			cerr << tab << "ghdl -r " << simlibs << op->getName() << " --vcd=" << op->getName() << ".vcd" <<endl;
-			cerr << tab << "gtkwave " << op->getName() << ".vcd" << endl;
+			cerr <<  "ghdl -a " << simlibs << "-fexplicit "<< filename <<endl;
+			cerr <<  "ghdl -e " << simlibs << "-fexplicit " << op->getName() <<endl;
+			cerr <<  "ghdl -r " << simlibs << op->getName() << " --vcd=" << op->getName() << ".vcd" <<endl;
+			cerr <<  "gtkwave " << op->getName() << ".vcd" << endl;
 		}
 		
 		else if (opname == "TestBenchFile") {
@@ -2684,10 +2684,10 @@ bool parseCommandLine(int argc, char* argv[]){
 				simlibs="--ieee=synopsys ";
 			if(op->getStdLibType()==1)
 				simlibs="--ieee=standard ";
-			cerr << tab << "ghdl -a " << simlibs << "-fexplicit "<< filename <<endl;
-			cerr << tab << "ghdl -e " << simlibs << "-fexplicit " << op->getName() <<endl;
-			cerr << tab << "ghdl -r " << simlibs << op->getName() << " --vcd=" << op->getName() << ".vcd" <<endl;
-			cerr << tab << "gtkwave " << op->getName() << ".vcd" << endl;
+			cerr <<  "ghdl -a " << simlibs << "-fexplicit "<< filename <<endl;
+			cerr <<  "ghdl -e " << simlibs << "-fexplicit " << op->getName() <<endl;
+			cerr <<  "ghdl -r " << simlibs << op->getName() << " --vcd=" << op->getName() << ".vcd" <<endl;
+			cerr <<  "gtkwave " << op->getName() << ".vcd" << endl;
 		}
 		else  {
 			cerr << "ERROR: Problem parsing input line, exiting";
