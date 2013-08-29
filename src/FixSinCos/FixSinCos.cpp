@@ -6,6 +6,9 @@
 // The upper test for order-one seems wrong, I get a 38-Kbit table for ./flopoco -pipeline=no  -verbose=2 FixSinCos 15 TestBenchFile 10
 
 // One optim for 24 bits would be to compute z² for free by a table using the second unused port of the blockram
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
 // works only with sollya
 #ifdef HAVE_SOLLYA

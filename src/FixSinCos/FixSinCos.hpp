@@ -1,6 +1,10 @@
 #ifndef _FIXSINCOS_H
 #define _FIXSINCOS_H
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 // works only with Sollya
 #ifdef HAVE_SOLLYA
 
