@@ -10,6 +10,7 @@ AC_PROG_CXX
 AC_PROG_CC
 AC_PROG_CPP
 AC_PROG_INSTALL
+AM_PROG_AR
 AC_PROG_LIBTOOL
 AM_PROG_LEX
 AC_PROG_YACC
@@ -37,10 +38,6 @@ AC_ARG_ENABLE(	[exec],
 		[EXEC=$disableval],
 		[EXEC=$enableval])
 AM_CONDITIONAL(BUILD_FLOPOCO_EXEC, test "x$EXEC" = xyes)
-
-dnl Detect whether target OS is Windows
-AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <windows.h>]], [[HANDLE h; DWORD d;]])], [OS_WIN32="yes"], [OS_WIN32="no"])
-AM_CONDITIONAL(no_WIN32, test "x$OS_WIN32" = xno)
 
 dnl Check for libraries.
 AC_CHECK_LIB([gmpxx], [main], [], [AC_MSG_ERROR(libgmpxx is missing.)])
