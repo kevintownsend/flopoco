@@ -269,7 +269,9 @@ FixSinCos::FixSinCos(Target * target, int w_, float ratio):Operator(target), w(w
 		outPortMap(scT, "Y", "SC"); // ports mapping
 
 		vhdl << instance(scT, "sinCosTable" ); //instanciation
+		syncCycleFromSignal("SC");
 
+		
 		vhdl << tab << declare("Sine", w+1) << " <= SC" << range(2*(w+1)-1, w+1) << ";" << endl;// signal declaration
 		vhdl << tab << declare("Cosine", w+1) << " <= SC" << range(w, 0) << ";" << endl;// signal declaration
 		//delete (scT);
@@ -302,6 +304,8 @@ FixSinCos::FixSinCos(Target * target, int w_, float ratio):Operator(target), w(w
 		outPortMap(scT, "Y", "SC_red"); // ports mapping
 
 		vhdl << instance(scT, "sinCosRedTable" ); //instanciation
+		syncCycleFromSignal("SC_red");
+
 		//vhdl << instance(scT, "cosTable" );
 
 		vhdl << tab << declare("S_out", w) << " <= SC_red " << range( 2*w-1 , w ) << ";" << endl;// signal declaration
@@ -366,7 +370,8 @@ FixSinCos::FixSinCos(Target * target, int w_, float ratio):Operator(target), w(w
 		inPortMap(scT, "X", "A");
 		outPortMap(scT, "Y", "SCA");
 		vhdl << instance(scT, "sinCosPiATable" ); 
-		
+		syncCycleFromSignal("SCA");
+
 		vhdl << tab << declare("SinPiA", w+g) << " <= SCA " << range( 2*(w+g)-1 , w+g ) << ";" << endl;
 		vhdl << tab << declare("CosPiA", w+g) << " <= SCA " << range( w+g-1, 0 ) << ";" << endl;
 		
@@ -506,6 +511,7 @@ FixSinCos::FixSinCos(Target * target, int w_, float ratio):Operator(target), w(w
 			inPortMap (sqr_z, "X", "Z_truncToZ2");
 			outPortMap (sqr_z, "R", "Z2o2");
 			vhdl << instance (sqr_z, "sqr_z");
+			syncCycleFromSignal("Z2o2");
 
 
 			/*********************************** Z-Z^3/6 **************************************/
@@ -525,10 +531,10 @@ FixSinCos::FixSinCos(Target * target, int w_, float ratio):Operator(target), w(w
 				inPortMap (z3o6Table, "X", "Z_truncToZ3o6");
 				outPortMap (z3o6Table, "Y", "Z3o6");
 				vhdl << instance (z3o6Table, "z3o6Table");
+				syncCycleFromSignal("Z3o6");
 
 				manageCriticalPath(target->adderDelay(wZ));
-				vhdl << tab << declare ("SinZ", wZ)
-						 << " <= Z - Z3o6;" << endl;
+				vhdl << tab << declare ("SinZ", wZ) << " <= Z - Z3o6;" << endl;
 				setSignalDelay("SinZ", getCriticalPath());
 				
 			}
@@ -545,6 +551,8 @@ FixSinCos::FixSinCos(Target * target, int w_, float ratio):Operator(target), w(w
 				inPortMap (fsp, "X", "Z");
 				outPortMap(fsp, "R", "SinZ");
 				vhdl << instance (fsp, "ZminusZ3o6");
+				syncCycleFromSignal("SinZ");
+
 			}
 
 

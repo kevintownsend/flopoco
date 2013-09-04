@@ -121,12 +121,13 @@ namespace flopoco{
 
 	Table::Table(Target* target) : 
 		Operator(target){
-		setCopyrightString("Florent de Dinechin, Bogdan Pasca (2007, 2010)");
+		setCopyrightString("Florent de Dinechin, Bogdan Pasca (2007, 2010, 2013)");
 	}
 
 	// We have to define this method because the constructor of Table cannot use the (pure virtual) function()
 	void Table::outputVHDL(std::ostream& o, std::string name) {
 
+		REPORT(DEBUG, "entering Table::outputVHDL with logicTable=" << logicTable); 
 		licence(o);
 			o << "library ieee; " << endl;
 			o << "use ieee.std_logic_1164.all;" << endl;
