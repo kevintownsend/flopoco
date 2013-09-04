@@ -245,8 +245,12 @@ public:
 		return stdLibType_; 
 	};
 
-	/** Sets Operator name to givenName.
-	 * Sets the name of the operator to operatorName.
+	/** Sets Operator name to given name, with either the frequency appended, or "comb" for combinatorial.
+	 * @param operatorName new name of the operator
+	*/
+	void setNameWithFreq(std::string operatorName = "UnknownOperator");
+
+	/** Sets Operator name to given name.
 	 * @param operatorName new name of the operator
 	*/
 	void setName(std::string operatorName = "UnknownOperator");

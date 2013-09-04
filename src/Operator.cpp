@@ -237,6 +237,15 @@ namespace flopoco{
 		uniqueName_ = operatorName;
 	}
 	
+	void Operator::setNameWithFreq(std::string operatorName){
+		std::ostringstream o;
+		o <<  operatorName <<  "_" ;
+		if(target_->isPipelined()) 
+			o << target_->frequencyMHz() ;
+		else
+			o << "comb";
+		uniqueName_ = o.str();
+	}
 	
 	void  Operator::changeName(std::string operatorName){
 		commentedName_ = uniqueName_;

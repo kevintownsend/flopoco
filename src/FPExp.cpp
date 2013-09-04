@@ -166,17 +166,11 @@ namespace flopoco{
 		throw e.str();
 #endif
 
+		// Paperwork
 
-		/* Generate unique name */
-		{
-			std::ostringstream o;
-			o << "FPExp_" << wE << "_" << wF << "_" ;
-			if(target->isPipelined()) 
-				o << target->frequencyMHz() ;
-			else
-				o << "comb";
-			uniqueName_ = o.str();
-		}
+		std::ostringstream name;
+		name << "FPExp_" << wE << "_" << wF ;
+		setNameWithFreq(name.str());
 
 		setCopyrightString("F. de Dinechin, Bogdan Pasca (2008-2013)");
 		srcFileName="FPExp";
