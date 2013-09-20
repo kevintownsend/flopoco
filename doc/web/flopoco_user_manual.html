@@ -413,8 +413,6 @@ are flushed to zero.
 
 <h3>Floating-point pipelined datapath generation </h3> 
 
-Current FloPoCo release is proud to offer in <i>early alpha</i> version:
-
   <dt><code style="color: blue;">FPPipeline filename wE wF</code></dt>
     <dd> The operator receives the <i>filename</i> containing an
     untimed, untyped description (Python-like) of the datapath to be
@@ -450,6 +448,10 @@ Current FloPoCo release is proud to offer in <i>early alpha</i> version:
 	<br/>
 	The currently supported operators are: +,-,*,/, sqr(), sqrt(), exp(), log(). For more than one output, use  <code>output x y z</code>.
     </dd>
+
+FPPipeline is mostly a demonstrator of how FloPoCo could be used to assemble a correct-by-conclusion complex pipeline. Therefore this feature is not complete, doesn't include all the FloPoCo operators, doesn't implement even the most basic optimizations, etc.	<br/>
+
+ For more power at barely more development cost, consider writing your pipeline as a FloPoCo class using the FloPoCo library.  <a href="flopoco_developer_manual.pdf">Documentation for this is here.</a>
 
 <h3>Long fixed-point accumulator, and derivatives</h3>
 These operators are described in all the gory details
