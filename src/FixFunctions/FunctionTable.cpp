@@ -49,7 +49,7 @@ namespace flopoco{
 		REPORT(INFO, "The input precision of x is: " << wInX << " with x in [0,1[");
 		REPORT(INFO, "The LSB weight of the output is: "<<lsbOut);
 		
-		f = new Function(func);
+		f = new FixFunction(func);
 	 			
 	}
 

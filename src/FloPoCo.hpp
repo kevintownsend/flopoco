@@ -42,6 +42,10 @@
 
 
 #include "FixFunctions/FixFunction.hpp"
+#include "FixFunctions/FunctionTable.hpp"
+#include "FixFunctions/PolyApprox.hpp"
+
+#include "TestBench.hpp"
 
 #if 0
 /* shifters + lzoc ------------------------------------------- */

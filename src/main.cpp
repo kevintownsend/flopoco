@@ -76,8 +76,21 @@ void usage(char *name, string opName = ""){
 		cerr << "Each operator specification is one of: \n";
 	}
 	if ( full || opName == "FixFunction"){					
-		OP( "FixFunction","function a b target_accuracy");
+		OP( "FixFunction","function");
 		cerr << "      function - sollya-syntaxed function to implement, between double quotes\n";
+	}
+
+	if ( full || opName == "FixFunctionEval"){					
+		OP( "FixFunction","function x");	
+		cerr << "      function - sollya-syntaxed function to implement, between double quotes\n";
+		cerr << "      x - arbitrary precision value\n";
+	}
+	if ( full || opName == "FunctionTable" || opName == "FixFunction"){					
+		OP( "FunctionTable","function wI lsbO msbO");
+		cerr << "      Simple tabulation of a function defined on [0,1)\n";
+		cerr << "      wI: input width (also weight of input LSB), \n";
+		cerr << "      lsbO and msbO: weights of output LSB and MSB,\n";
+		cerr << "      function: sollya-syntaxed function to implement, e.g. \"sin(x*Pi/2)\" \n";
 	}
 
 	if ( full || opName=="options"){
@@ -259,24 +272,121 @@ bool parseCommandLine(int argc, char* argv[]){
 			}
 		}
 		else if (opname == "FixFunction") {
+			int nargs = 1;
+			if (i+nargs > argc)
+				usage(argv[0],opname); // and exit
+			string func = argv[i++];
+			FixFunction *toto = new FixFunction(func);
+			//			toto -> buildPolyApprox(acc);
+		}
+
+		// Hidden and undocumented for now
+		else if (opname == "PolyApprox") {
+			int nargs = 3;
+			if (i+nargs > argc)
+				usage(argv[0],opname); // and exit
+			string func = argv[i++];
+			double targetAcc = atof(argv[i++]);
+			int g =  atof(argv[i++]);
+			PolyApprox *toto = new PolyApprox(func, targetAcc, g);
+			cout << "Computed degree is " << toto->getDegree();
+			//			toto -> buildPolyApprox(acc);
+		}
+
+
+		else if (opname == "FixFunctionEval") {
+			int nargs = 2;
+			if (i+nargs > argc)
+				usage(argv[0],opname); // and exit
+			FixFunction *f = new FixFunction(argv[i++]);
+			double x = strtod(argv[i++], NULL);
+			double r = f -> eval(x);
+			cout << "\n r=" << r << endl;  
+		}
+
+
+		else if (opname == "FunctionTable") {
 			int nargs = 4;
 			if (i+nargs > argc)
 				usage(argv[0],opname); // and exit
 			string func = argv[i++];
-			double a = atof(argv[i++]);
-			double b = atof(argv[i++]);
-			double acc = atof(argv[i++]);
-			// int wI = checkStrictlyPositive(argv[i++], argv[0]);
-			// int wO = atoi(argv[i++]);
-			// int n  = checkStrictlyPositive(argv[i++], argv[0]);
-			FixFunction *toto = new FixFunction(func, a,b);
-			toto -> buildPolyApprox(acc);
+			int wI = checkStrictlyPositive(argv[i++], argv[0]);
+			int lsbO = atoi(argv[i++]);
+			int msbO = atoi(argv[i++]);
+			Operator* tg = new FunctionTable(target, func, wI, lsbO, msbO);
+			addOperator(tg);
+		}
+		else if (opname == "TestBench") {
+			int nargs = 1;
+			if (i+nargs > argc)
+				usage(argv[0],opname); // and exit
+			if(target->getGlobalOpListRef()->empty()){
+				cerr<<"ERROR: TestBench has no operator to wrap (it should come after the operator it wraps)"<<endl;
+				usage(argv[0],opname); // and exit
+			}
+			int n = checkPositiveOrNull(argv[i++], argv[0]);
+			Operator* toWrap = target->getGlobalOpListRef()->back();
+			Operator* op = new TestBench(target, toWrap, n);
+			addOperator(op);
+			cerr << "To run the simulation using ModelSim, type the following in 'vsim -c':" <<endl;
+			cerr << tab << "vdel -all -lib work" <<endl;
+			cerr << tab << "vlib work" <<endl;
+			cerr << tab << "vcom " << filename <<endl;
+			cerr << tab << "vsim " << op->getName() <<endl;
+			cerr << tab << "add wave -r *" <<endl;
+			cerr << tab << "run " << ((TestBench*)op)->getSimulationTime() <<"ns" << endl;
+			cerr << "To run the simulation using gHDL, type the following in a shell prompt:" <<endl;
+			string simlibs;
+			if(op->getStdLibType()==0 || op->getStdLibType()==-1)
+				simlibs="--ieee=synopsys ";
+			if(op->getStdLibType()==1)
+				simlibs="--ieee=standard ";
+			cerr <<  "ghdl -a " << simlibs << "-fexplicit "<< filename <<endl;
+			cerr <<  "ghdl -e " << simlibs << "-fexplicit " << op->getName() <<endl;
+			cerr <<  "ghdl -r " << simlibs << op->getName() << " --vcd=" << op->getName() << ".vcd" <<endl;
+			cerr <<  "gtkwave " << op->getName() << ".vcd" << endl;
+		}
+		
+		else if (opname == "TestBenchFile") {
+			/* Using a file to store IO */
+			int nargs = 1;
+			if (i+nargs > argc)
+				usage(argv[0],opname); // and exit
+			if(target->getGlobalOpListRef()->empty()){
+				cerr<<"ERROR: TestBench has no operator to wrap (it should come after the operator it wraps)"<<endl;
+				usage(argv[0],opname); // and exit
+			}
+			int n = atoi(argv[i++]);//checkPositiveOrNull(argv[i++], argv[0]);
+			Operator* toWrap = target->getGlobalOpListRef()->back();
+			Operator* op = new TestBench(target, toWrap, n, true);
+			cerr << "> TestBench for " << toWrap->getName()<<endl;
+			addOperator(op);
+			cerr << "To run the simulation using ModelSim, type the following in 'vsim -c':" <<endl;
+			cerr << tab << "vdel -all -lib work" <<endl;
+			cerr << tab << "vlib work" <<endl;
+			cerr << tab << "vcom " << filename <<endl;
+			cerr << tab << "vsim " << op->getName() <<endl;
+			cerr << tab << "add wave -r *" <<endl;
+			cerr << tab << "run " << ((TestBench*)op)->getSimulationTime() << "ns" << endl;
+			cerr << "To run the simulation using gHDL, type the following in a shell prompt:" <<endl;
+			string simlibs;
+			if(op->getStdLibType()==0 || op->getStdLibType()==-1)
+				simlibs="--ieee=synopsys ";
+			if(op->getStdLibType()==1)
+				simlibs="--ieee=standard ";
+			cerr <<  "ghdl -a " << simlibs << "-fexplicit "<< filename <<endl;
+			cerr <<  "ghdl -e " << simlibs << "-fexplicit " << op->getName() <<endl;
+			cerr <<  "ghdl -r " << simlibs << op->getName() << " --vcd=" << op->getName() << ".vcd" <<endl;
+			cerr <<  "gtkwave " << op->getName() << ".vcd" << endl;
 		}
 
 		else  {
 			cerr << "ERROR: Problem parsing input line, exiting";
 			usage(argv[0]);
 		}
+
+
+
 	} while (i<argc);
 	return true;
 }

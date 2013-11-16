@@ -7,7 +7,7 @@
 #include <gmpxx.h>
 
 #include "../Table.hpp"
-#include "Function.hpp"
+#include "FixFunction.hpp"
 
 namespace flopoco{
 
@@ -35,7 +35,7 @@ namespace flopoco{
 
 	protected:
 		
-		Function *f;
+		FixFunction *f;
 		unsigned wR;
 		int wInX_;   
 		int lsbOut_;

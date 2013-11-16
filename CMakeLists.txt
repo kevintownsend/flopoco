@@ -210,11 +210,16 @@ src/IntMultipliers/MultiplierBlock
  src/DualTable2
  
  src/FixFunctions/FixFunction
+ src/FixFunctions/FunctionTable
+ src/FixFunctions/PolyApprox
+
 # TestBench-related -------------------------------------------------
 #--------------------------------------------------------------------
  src/TestCase
  src/FPNumber
  src/IEEENumber
+ src/Wrapper
+ src/TestBench 
 
  src/UtilSollya
 )
