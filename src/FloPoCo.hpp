@@ -43,7 +43,7 @@
 
 #include "FixFunctions/FixFunction.hpp"
 #include "FixFunctions/FunctionTable.hpp"
-#include "FixFunctions/PolyApprox.hpp"
+#include "FixFunctions/BasicPolyApprox.hpp"
 
 #include "TestBench.hpp"
 

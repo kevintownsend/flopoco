@@ -211,7 +211,8 @@ src/IntMultipliers/MultiplierBlock
  
  src/FixFunctions/FixFunction
  src/FixFunctions/FunctionTable
- src/FixFunctions/PolyApprox
+ src/FixFunctions/BasicPolyApprox
+ src/FixConstant
 
 # TestBench-related -------------------------------------------------
 #--------------------------------------------------------------------

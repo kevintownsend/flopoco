@@ -1,5 +1,5 @@
-#ifndef _POLYAPPROX_HPP_
-#define _POLYAPPROX_HPP_
+#ifndef _BASICPOLYAPPROX_HPP_
+#define _BASICPOLYAPPROX_HPP_
 
 #include <string>
 #include <iostream>
@@ -7,19 +7,20 @@
 #include <sollya.h>
 #include <gmpxx.h>
 
-#include "Operator.hpp"
+#include "Operator.hpp" // mostly for reporting
 #include "FixFunction.hpp"
+#include "FixConstant.hpp"
 
 using namespace std;
 
 /* Stylistic convention here: all the sollya_obj_t have names that end with a capital S */
 namespace flopoco{
 	
-	/** The PolyApprox object builds and maintains a machine-efficient polynomial approximation to a fixed-point function over [0,1]
+	/** The BasicPolyApprox object builds and maintains a machine-efficient polynomial approximation to a fixed-point function over [0,1]
 			Fixed point, hence only absolute errors/accuracy targets.
 			Eventually there should be two constructors: 
-			one that inputs target accuracy and computes degree and achieved accuracy,
-			one that inputs degree and computes achieved accuracy.
+			one that inputs target accuracy and computes degree and approximation error,
+			one that inputs degree and computes approximation error.
 
 			The two are needed in the typical case of a domain split: we will first call the first for each subinterval,
 			then take the max of the degrees, and call the second with that.
@@ -42,42 +43,54 @@ namespace flopoco{
 			To implement a generic approximator we will need to lift these restrictions, but it is unclear that it needs to be in this class.
 	*/
 
-	class PolyApprox {
+	class BasicPolyApprox {
 	public:
 
-		/** A minimal constructor  
+		/** A minimal constructor inputting target accuracy
 				@param addGuardBitsToConstant: 
 				if >=0, add this number of bits to the LSB of the constant
 				if -1, add the bits needed for a Horner evaluation based on faithful (truncated) multipliers
 
 		 */
-		PolyApprox(string sollyaString, double targetAccuracy, int addGuardBitsToConstant=0);
+		BasicPolyApprox(FixFunction* f, double targetAccuracy, int addGuardBitsToConstant=0);
 
-		virtual ~PolyApprox();
+		/** A minimal constructor that parses a sollya string, inputting target accuracy
+				@param addGuardBitsToConstant: 
+				if >=0, add this number of bits to the LSB of the constant
+				if -1, add the bits needed for a Horner evaluation based on faithful (truncated) multipliers
 
-		string getDescription() const;
+		 */
+		BasicPolyApprox(string sollyaString, double targetAccuracy, int addGuardBitsToConstant=0);
+
+
+		/** A minimal constructor inputting degree
+		 */
+		BasicPolyApprox(FixFunction *f, int degree);
+
+
+		virtual ~BasicPolyApprox();
+
 		int getDegree() const;
 
-		// TODO do we need what follows? Is PolyApprox a FixFunction? Should it input a FixFunction, too? 
-		double eval(double x) const;
-		void eval(mpfr_t r, mpfr_t x) const;
 		sollya_obj_t getSollyaPolynomial() const;
 
 	private:
+		FixFunction *f;                   /**< The function to be approximated */
+		sollya_obj_t polynomialS;         /**< The polynomial approximating it */
+		int degree;                       /**< degree of the polynomial approximation */
+		vector<FixConstant*> coeff;  /**< polynomial coefficients in a hardware-ready form */
+		int LSB;                          /**< weight of the LSB of the polynomial approximation */
+		int constLSB;                     /**< weight of the LSB of the constant coeff, may be smaller than LSB for free */
+		double approxError;               /**< guaranteed upper bound on the approx error */
 
-		string description;
-		sollya_obj_t fS;
-		sollya_obj_t polynomialS;
 
 		string srcFileName; /**< useful only to enable same kind of reporting as for FloPoCo operators. */
 		string uniqueName_; /**< useful only to enable same kind of reporting as for FloPoCo operators. */
-		
-		int degree;  /**< degree of the polynomial approximation */
-		int lsb;     /**< lsb of the polynomial approximation, computed by adding enough bits to the lsb corresponding to targetAccuracy*/
-		double approxError; /**< guaranteed upper bound on the approx error */
+		bool needToFreeF;   /**< in an ideal world, this should not exist */
+		void buildApproxFromTargetAccuracy(double targetAccuracy, int addGuardBitsToConstant); /** < constructor code factored out */
+		void buildFixFormatVector(); /** < constructor code, factored out */
 
-		vector<int> weightLSB;
-		vector<int> weightMSB;
+
 	};
 
 }
@@ -85,28 +98,3 @@ namespace flopoco{
 
 
 // Garbage below
-
-
-#if 0
-	/** A fixed-point constant is an arbitrary precision integer scaled by a constant value*/
-	class FixCoefficient {
-	public:
-		FixCoefficient(sollya_obj_t x);
-		virtual ~FixCoefficient();
-
-	private:
-		mpz_class intSignificand;
-		int exponent;
-	};
-
-		/** Attempts to build a polynomial approximation on an interval. 
-				Returns degree if success, -1 if failure, but sometimes also never returns*/
-		int buildPolyApprox(double targetAccuracy, mpfr_t xmin, mpfr_t xmax); 
-		int polyApproxDegree;               /**< the degree of the polynomial approximation, if any */
-		sollya_obj_t polynomialS;           /**< the Sollya version of the polynomial, if any */
-		vector<FixCoefficient*> polyApprox;  /**< the civilized version of the polynomial approximation, if any */
-		double polyApproxError;             /**< the guaranteed approximation error (computed using Sollya's supnorm) */
-		sollya_obj_t rangeS;
-
-		void finishConstruction(string sollyaString) ;
-#endif

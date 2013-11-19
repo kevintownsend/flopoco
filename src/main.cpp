@@ -288,7 +288,7 @@ bool parseCommandLine(int argc, char* argv[]){
 			string func = argv[i++];
 			double targetAcc = atof(argv[i++]);
 			int g =  atof(argv[i++]);
-			PolyApprox *toto = new PolyApprox(func, targetAcc, g);
+			BasicPolyApprox *toto = new BasicPolyApprox(func, targetAcc, g);
 			cout << "Computed degree is " << toto->getDegree();
 			//			toto -> buildPolyApprox(acc);
 		}

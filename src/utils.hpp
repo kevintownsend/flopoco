@@ -74,6 +74,15 @@ namespace flopoco{
 */
 	std::string unsignedFixPointNumber(mpfr_t x, int msb, int lsb, int margins=0);
 
+	/** return the binary representation of an MPFR, with bits ranging from msb to lsb
+	 * (total size msb-lsb+1), sign bit at weight msb
+	 * @param x the number to be represented
+	 * @param msb the weight of the MSB. 
+	 * @param lsb the weight of the LSB
+	 * @param[in] margins	integer argument determining the position of the quotes in the output string. The options are: -2= no quotes; -1=left quote; 0=both quotes 1=right quote
+*/
+	std::string signedFixPointNumber(mpfr_t x, int msb, int lsb, int margins=0);
+
 
 	/** Prints the binary representation of a integer on size bits
 	 * @param o the output stream

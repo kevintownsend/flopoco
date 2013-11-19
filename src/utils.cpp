@@ -181,16 +181,35 @@ namespace flopoco{
 		int size = msb-lsb+1;
 		mpz_class h;
 		
-		if(x<0){
+		mpfr_mul_2si(x, x, -lsb, GMP_RNDN); // exact
+		mpfr_get_z(h.get_mpz_t(), x,  GMP_RNDN); // rounding takes place here     
+
+		if(h<0){
 			std::ostringstream o;
 			o <<  "Error, negative input to unsignedFixPointNumber :" << printMPFR(x);
 			throw o.str();
 		}
+		ostringstream result;
+		if(margins==0||margins==-1)
+			result<<"\"";
+		result << unsignedBinary(h, size);
+		if(margins==0||margins==1)
+			result<<"\"";
+		return result.str(); 
+	}
+
+
+	std::string signedFixPointNumber(mpfr_t x, int msb, int lsb, int margins)
+	{
+		int size = msb-lsb+1;
+		mpz_class h;
 		
 		mpfr_mul_2si(x, x, -lsb, GMP_RNDN); // exact
-		
 		mpfr_get_z(h.get_mpz_t(), x,  GMP_RNDN); // rounding takes place here     
 
+		if(h<0){
+			h+= (mpz_class(1)) << size;
+		}
 		ostringstream result;
 		if(margins==0||margins==-1)
 			result<<"\"";
