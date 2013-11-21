@@ -2,6 +2,7 @@
 Function: ??
 PiecewiseFunction: ???
 
+TODO: manage non-uniform errors; manage non-uniform segmentation 
 
 
 FixFunction

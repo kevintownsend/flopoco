@@ -44,6 +44,7 @@
 #include "FixFunctions/FixFunction.hpp"
 #include "FixFunctions/FunctionTable.hpp"
 #include "FixFunctions/BasicPolyApprox.hpp"
+#include "FixFunctions/PiecewisePolyApprox.hpp"
 
 #include "TestBench.hpp"
 

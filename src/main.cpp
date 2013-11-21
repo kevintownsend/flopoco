@@ -289,8 +289,17 @@ bool parseCommandLine(int argc, char* argv[]){
 			double targetAcc = atof(argv[i++]);
 			int g =  atof(argv[i++]);
 			BasicPolyApprox *toto = new BasicPolyApprox(func, targetAcc, g);
-			cout << "Computed degree is " << toto->getDegree();
+			cout << "Computed degree is " << toto->degree;
 			//			toto -> buildPolyApprox(acc);
+		}
+		else if (opname == "PiecewisePolyApprox") {
+			int nargs = 3;
+			if (i+nargs > argc)
+				usage(argv[0],opname); // and exit
+			string func = argv[i++];
+			double targetAcc = atof(argv[i++]);
+			int degree =  atof(argv[i++]);
+			PiecewisePolyApprox *toto = new PiecewisePolyApprox(func, targetAcc, degree);
 		}
 
 

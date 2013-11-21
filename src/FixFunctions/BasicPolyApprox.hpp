@@ -46,6 +46,10 @@ namespace flopoco{
 	class BasicPolyApprox {
 	public:
 
+		/**< A wrapper for Sollya guessdegree */
+		static	void guessDegree(sollya_obj_t fS, double targetAccuracy, int* degreeInfP, int* degreeSupP);
+
+
 		/** A minimal constructor inputting target accuracy
 				@param addGuardBitsToConstant: 
 				if >=0, add this number of bits to the LSB of the constant
@@ -63,25 +67,18 @@ namespace flopoco{
 		BasicPolyApprox(string sollyaString, double targetAccuracy, int addGuardBitsToConstant=0);
 
 
-		/** A minimal constructor inputting degree
-		 */
-		BasicPolyApprox(FixFunction *f, int degree);
-
-
 		virtual ~BasicPolyApprox();
 
-		int getDegree() const;
+		double approxErrorBound;          /**< guaranteed upper bound on the approx error of the approximation provided. Should be smaller than targetAccuracy */
 
-		sollya_obj_t getSollyaPolynomial() const;
+		vector<FixConstant*> coeff;       /**< polynomial coefficients in a hardware-ready form */
+		int degree;                       /**< degree of the polynomial approximation */
 
 	private:
 		FixFunction *f;                   /**< The function to be approximated */
 		sollya_obj_t polynomialS;         /**< The polynomial approximating it */
-		int degree;                       /**< degree of the polynomial approximation */
-		vector<FixConstant*> coeff;  /**< polynomial coefficients in a hardware-ready form */
 		int LSB;                          /**< weight of the LSB of the polynomial approximation */
 		int constLSB;                     /**< weight of the LSB of the constant coeff, may be smaller than LSB for free */
-		double approxError;               /**< guaranteed upper bound on the approx error */
 
 
 		string srcFileName; /**< useful only to enable same kind of reporting as for FloPoCo operators. */

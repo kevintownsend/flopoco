@@ -19,11 +19,11 @@
 
 namespace flopoco{
 
-
 	BasicPolyApprox::BasicPolyApprox(FixFunction *f_, double targetAccuracy, int addGuardBitsToConstant): 
 		f(f_)
 	{
 		needToFreeF = false;
+		srcFileName="BasicPolyApprox"; // should be somehow static but this is too much to ask me
 		buildApproxFromTargetAccuracy(targetAccuracy,  addGuardBitsToConstant);
 	}
 
@@ -33,12 +33,11 @@ namespace flopoco{
 		//  parsing delegated to FixFunction
 		f = new FixFunction(sollyaString_);
 		needToFreeF = true;
+		srcFileName="BasicPolyApprox"; // should be somehow static but this is too much to ask me
 		buildApproxFromTargetAccuracy(targetAccuracy,  addGuardBitsToConstant);
 	}
 
 
-
-	BasicPolyApprox::BasicPolyApprox(FixFunction* f_, int degree){};
 
 		
 	BasicPolyApprox::~BasicPolyApprox()
@@ -53,34 +52,44 @@ namespace flopoco{
 	}
 
 
-
-
-	void BasicPolyApprox::buildApproxFromTargetAccuracy(double targetAccuracy, int addGuardBitsToConstant)
-	{
-		sollya_obj_t fS = f->getSollyaObj(); // no need to free this one
-		// This will be the LSB of the constant (unless extended below)
-		LSB = floor(log2(targetAccuracy));
-		REPORT(DEBUG, "InitialLSB=" << LSB);
-		// a few constant objects
-		sollya_obj_t fixedS = sollya_lib_fixed();
-		sollya_obj_t absoluteS = sollya_lib_absolute();
-		sollya_obj_t rangeS = sollya_lib_parse_string("[0;1]");
-
+	void BasicPolyApprox::guessDegree(sollya_obj_t fS, double targetAccuracy, int* degreeInfP, int* degreeSupP) {
 		// Accuracy has to be converted to sollya objects
+		// a few constant objects
+		sollya_obj_t rangeS = sollya_lib_parse_string("[0;1]");
 		sollya_obj_t targetAccuracyS = sollya_lib_constant_from_double(targetAccuracy);
-
 
 		// initial evaluation of the required degree
 		//guessdegree(f,I,eps,w,bound ) : (function, range, constant, function, constant) → range
 		sollya_obj_t degreeIntervalS = sollya_lib_guessdegree(fS, rangeS, targetAccuracyS, NULL); 
-		sollya_obj_t degreeS = sollya_lib_inf(degreeIntervalS);
+		sollya_obj_t degreeInfS = sollya_lib_inf(degreeIntervalS);
 		sollya_obj_t degreeSupS = sollya_lib_sup(degreeIntervalS);
-		sollya_lib_get_constant_as_int(&degree, degreeS);
-		int degreeSup;
-		sollya_lib_get_constant_as_int(&degreeSup, degreeSupS);
+		sollya_lib_get_constant_as_int(degreeInfP, degreeInfS);
+		sollya_lib_get_constant_as_int(degreeSupP, degreeSupS);
 		if(DEBUG <= verbose)
-			sollya_lib_printf("> BasicPolyApprox::buildBasicPolyApprox: initial degree of poly approx is %b\n", degreeIntervalS);
+			sollya_lib_printf("> BasicPolyApprox::guessDegree(): initial degree of poly approx is %b\n", degreeIntervalS);
+	  sollya_lib_clear_obj(targetAccuracyS);
+		sollya_lib_clear_obj(degreeIntervalS);
+	  sollya_lib_clear_obj(degreeInfS);
+	  sollya_lib_clear_obj(degreeSupS);
+	  sollya_lib_clear_obj(rangeS);
+	}
 
+
+
+
+	void BasicPolyApprox::buildApproxFromTargetAccuracy(double targetAccuracy, int addGuardBitsToConstant)
+	{
+		// a few constant objects
+		sollya_obj_t fS = f->getSollyaObj(); // no need to free this one
+		sollya_obj_t fixedS = sollya_lib_fixed();
+		sollya_obj_t absoluteS = sollya_lib_absolute();
+		sollya_obj_t rangeS = sollya_lib_parse_string("[0;1]");
+		sollya_obj_t targetAccuracyS = sollya_lib_constant_from_double(targetAccuracy);
+
+		// This will be the LSB of the constant (unless extended below)
+		LSB = floor(log2(targetAccuracy));
+		REPORT(DEBUG, "InitialLSB=" << LSB);
+	
 		// A few lines to add guard bits to the constant, it will be for free in terms of evaluation
 		double constCoeffAccuracy = targetAccuracy;
 		if(-1 == addGuardBitsToConstant) {
@@ -93,12 +102,17 @@ namespace flopoco{
 		}
 		constLSB = floor(log2(constCoeffAccuracy));
 
+		// calling the class method guessDegree
+		int degreeSup;
+		guessDegree(fS, targetAccuracy, &degree, &degreeSup);
+		sollya_obj_t degreeS = sollya_lib_constant_from_int(degree);
+
 		bool success=false;
 		bool tryReducingLSB=true;
 		while(not success) {
 			REPORT(DEBUG, "Trying to build coefficients with LSB=" << LSB << "   (LSB of the constant=" << constLSB << ")");
-			// Managing memory with Sollya library sucks, it would probably be safer to we just do a big string and parse it. 
 			// Build the list of coefficient LSBs for fpminimax
+			// Sollya library is a bit painful, it is safer just build a big string and parse it. 
 			ostringstream s;
 			s << "[|";
 			for(int i=0; i<=degree ; i++) {
@@ -149,13 +163,13 @@ namespace flopoco{
 			sollya_lib_clear_obj(supNormAccS);
 			sollya_lib_clear_obj(supNormRangeS);
 
-			sollya_lib_get_constant_as_double(& approxError, supNormS);
+			sollya_lib_get_constant_as_double(& approxErrorBound, supNormS);
 			sollya_lib_clear_obj(supNormS);
 			
-			REPORT(DEBUG, "Polynomial accuracy is " << approxError);
+			REPORT(DEBUG, "Polynomial accuracy is " << approxErrorBound);
 
 			// Now comes the test: did we success in getting an accurate enough polynomial?
-			if(approxError < targetAccuracy) {
+			if(approxErrorBound < targetAccuracy) {
 				REPORT(DEBUG, "Polynomial is accurate enough");
 				success=true; 
 			}
@@ -192,10 +206,8 @@ namespace flopoco{
 	  sollya_lib_clear_obj(fixedS);
 	  sollya_lib_clear_obj(absoluteS);
 	  sollya_lib_clear_obj(targetAccuracyS);
-		sollya_lib_clear_obj(degreeIntervalS);
-	  sollya_lib_clear_obj(degreeS);
-	  sollya_lib_clear_obj(degreeSupS);
 	  sollya_lib_clear_obj(rangeS);
+	  sollya_lib_clear_obj(degreeS);
 
 		buildFixFormatVector();
 	}
@@ -248,16 +260,9 @@ namespace flopoco{
 	}		
 		ostringstream debugstring;
 		for (int i=0; i<=degree; i++){
-			debugstring << endl << "coeff " << i << ": (" << coeff[i]->getMSB() << ", " << coeff[i]->getLSB() << ")   " << coeff[i]->getBitVector();
+			debugstring << endl << ">    coeff " << i << ": (" << coeff[i]->getMSB() << ", " << coeff[i]->getLSB() << ")   " << coeff[i]->getBitVector();
 		}
 		REPORT(DEBUG, debugstring.str());
 	}
 
-	int BasicPolyApprox::getDegree() const	{
-		return degree;
-	}
-
-	sollya_obj_t BasicPolyApprox::getSollyaPolynomial() const	{
-		return polynomialS;
-	}
 } //namespace
