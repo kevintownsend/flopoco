@@ -58,6 +58,14 @@ namespace flopoco{
 		 */
 		BasicPolyApprox(FixFunction* f, double targetAccuracy, int addGuardBitsToConstant=0);
 
+		/** A minimal constructor that inputs a sollya_obj_t function, inputting target accuracy
+				@param addGuardBitsToConstant: 
+				if >=0, add this number of bits to the LSB of the constant
+				if -1, add the bits needed for a Horner evaluation based on faithful (truncated) multipliers
+
+		 */
+		BasicPolyApprox(sollya_obj_t fS, double targetAccuracy, int addGuardBitsToConstant=0);
+
 		/** A minimal constructor that parses a sollya string, inputting target accuracy
 				@param addGuardBitsToConstant: 
 				if >=0, add this number of bits to the LSB of the constant

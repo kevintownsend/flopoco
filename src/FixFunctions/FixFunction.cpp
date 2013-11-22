@@ -37,6 +37,11 @@ namespace flopoco{
 		REPORT(DEBUG, "Function: " << description << " successfully parsed");
 	}
 
+	FixFunction::FixFunction(sollya_obj_t fS_): fS(fS_)
+	{
+		srcFileName = "FixFunction";  // useful only for reporting
+	}
+
 
 
 		

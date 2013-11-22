@@ -25,6 +25,7 @@ namespace flopoco{
 	public:
 
 		FixFunction(string sollyaString);
+		FixFunction(sollya_obj_t fS);
 
 		virtual ~FixFunction();
 

@@ -39,6 +39,16 @@ namespace flopoco{
 
 
 
+	BasicPolyApprox::BasicPolyApprox(sollya_obj_t fS_, double targetAccuracy, int addGuardBitsToConstant)
+	{
+		f = new FixFunction(fS_);
+		needToFreeF = true;
+		srcFileName="BasicPolyApprox"; // should be somehow static but this is too much to ask me
+		buildApproxFromTargetAccuracy(targetAccuracy,  addGuardBitsToConstant);
+	}
+
+
+
 		
 	BasicPolyApprox::~BasicPolyApprox()
 	{
@@ -66,7 +76,7 @@ namespace flopoco{
 		sollya_lib_get_constant_as_int(degreeInfP, degreeInfS);
 		sollya_lib_get_constant_as_int(degreeSupP, degreeSupS);
 		if(DEBUG <= verbose)
-			sollya_lib_printf("> BasicPolyApprox::guessDegree(): initial degree of poly approx is %b\n", degreeIntervalS);
+			sollya_lib_printf("> BasicPolyApprox::guessDegree(): degree of poly approx should be in %b\n", degreeIntervalS);
 	  sollya_lib_clear_obj(targetAccuracyS);
 		sollya_lib_clear_obj(degreeIntervalS);
 	  sollya_lib_clear_obj(degreeInfS);
