@@ -54,7 +54,6 @@ namespace flopoco{
 				@param addGuardBitsToConstant: 
 				if >=0, add this number of bits to the LSB of the constant
 				if -1, add the bits needed for a Horner evaluation based on faithful (truncated) multipliers
-
 		 */
 		BasicPolyApprox(FixFunction* f, double targetAccuracy, int addGuardBitsToConstant=0);
 
@@ -62,9 +61,15 @@ namespace flopoco{
 				@param addGuardBitsToConstant: 
 				if >=0, add this number of bits to the LSB of the constant
 				if -1, add the bits needed for a Horner evaluation based on faithful (truncated) multipliers
-
 		 */
 		BasicPolyApprox(sollya_obj_t fS, double targetAccuracy, int addGuardBitsToConstant=0);
+
+
+		/** A minimal constructor that inputs a sollya_obj_t function, a degree and the weight of the LSBs.
+				This one is mostly for "internal" use by classes that compute degree separately, e.g. PiecewisePolyApprox  
+
+		 */
+		BasicPolyApprox(sollya_obj_t fS, int degree, int LSB);
 
 		/** A minimal constructor that parses a sollya string, inputting target accuracy
 				@param addGuardBitsToConstant: 
@@ -77,10 +82,11 @@ namespace flopoco{
 
 		virtual ~BasicPolyApprox();
 
-		double approxErrorBound;          /**< guaranteed upper bound on the approx error of the approximation provided. Should be smaller than targetAccuracy */
-
 		vector<FixConstant*> coeff;       /**< polynomial coefficients in a hardware-ready form */
 		int degree;                       /**< degree of the polynomial approximation */
+		double approxErrorBound;          /**< guaranteed upper bound on the approx error of the approximation provided. Should be smaller than targetAccuracy */
+		void buildApproxFromDegreeAndLSBs(); /**< build an approximation of a certain degree, LSB being already defined, then computes the approx error.
+																						Essentially a wrapper for Sollya fpminimax() followed by supnorm()*/
 
 	private:
 		FixFunction *f;                   /**< The function to be approximated */
@@ -89,12 +95,16 @@ namespace flopoco{
 		int constLSB;                     /**< weight of the LSB of the constant coeff, may be smaller than LSB for free */
 
 
-		string srcFileName; /**< useful only to enable same kind of reporting as for FloPoCo operators. */
-		string uniqueName_; /**< useful only to enable same kind of reporting as for FloPoCo operators. */
-		bool needToFreeF;   /**< in an ideal world, this should not exist */
-		void buildApproxFromTargetAccuracy(double targetAccuracy, int addGuardBitsToConstant); /** < constructor code factored out */
-		void buildFixFormatVector(); /** < constructor code, factored out */
+		string srcFileName;   /**< useful only to enable same kind of reporting as for FloPoCo operators. */
+		string uniqueName_;   /**< useful only to enable same kind of reporting as for FloPoCo operators. */
+		bool needToFreeF;     /**< in an ideal world, this should not exist */
+		void initialize();    /**< initialization of various constant objects for Sollya */
+		void buildApproxFromTargetAccuracy(double targetAccuracy, int addGuardBitsToConstant); /**< constructor code for the general case factored out. */
+		void buildFixFormatVector(); /**< Build coeff, the vector of coefficients, out of pS, the sollya polynomial. Constructor code, factored out */
 
+		sollya_obj_t fixedS;        /**< constant */
+		sollya_obj_t absoluteS;     /**< constant */
+		sollya_obj_t rangeS;        /**< constant */
 
 	};
 

@@ -109,14 +109,14 @@ namespace flopoco{
 		approxErrorBound = 0.0;
 		BasicPolyApprox *p;
 
+		REPORT(DETAILED, " Now computing the actual polynomials ");
 
 		for (int i=0; i<nbIntervals; i++) {
+			REPORT(DETAILED, " ----------Interval " << i << "-------------");
 			// Recompute the substitution. No big deal.
 			sollya_obj_t giS = buildSubIntervalFunction(fS, alpha, i);
-
-			// TODO Bug here, BasicPolyApprox recomputes guessDegree, takes the min and tries that,whereas we want the sup and does all sorts of optimizations, 
-			// define a simpler constructor
-			p = new BasicPolyApprox(giS, targetAccuracy);
+			LSB = floor(log2(targetAccuracy));
+			p = new BasicPolyApprox(giS, degree, LSB);
 			poly.push_back(p);
 			if (approxErrorBound < p->approxErrorBound){ 
 				REPORT(DEBUG, "   new approxErrorBound=" << p->approxErrorBound );
@@ -125,17 +125,11 @@ namespace flopoco{
 			
 		} // end for loop on i
 
-#if 0
-		// First try alpha=0, because it is a bit special
-		alpha=0; 
-		p = new BasicPolyApprox(f, targetAccuracy);
-		if (p->approxErrorBound <= targetAccuracy){
-			// Success at first try! Store it and return
-			return;
+		if (approxErrorBound < targetAccuracy){ 
+			REPORT(INFO, " *** Success! Final approxErrorBound=" << approxErrorBound << "  is smaller than target accuracy: " << targetAccuracy  );
 		}
-#endif
 
-
+		// NEXT TODO: compute max of MSBs, sign-extend all the coeffs, etc.
 	}
 	
 
