@@ -110,7 +110,11 @@ namespace flopoco{
 		BasicPolyApprox *p;
 
 		REPORT(DETAILED, " Now computing the actual polynomials ");
-
+		// initialize the vector of MSB weights
+		for (int j=0; j<=degree; j++) {
+			MSB.push_back(INT_MIN);
+		}
+		
 		for (int i=0; i<nbIntervals; i++) {
 			REPORT(DETAILED, " ----------Interval " << i << "-------------");
 			// Recompute the substitution. No big deal.
@@ -122,14 +126,28 @@ namespace flopoco{
 				REPORT(DEBUG, "   new approxErrorBound=" << p->approxErrorBound );
 				approxErrorBound = p->approxErrorBound;
 			}
-			
+
+			// Now check compute the englobing MSB and LSB for each coefficient	
+			for (int j=0; j<=degree; j++) {
+				// if the coeff is zero, we can set its MSB to anything, so we exclude this case
+				if (  (!p->coeff[j]->isZero())  &&  (p->coeff[j]->getMSB() > MSB[j])  )
+					MSB[j] = p->coeff[j]->getMSB();
+			}
+		
 		} // end for loop on i
 
 		if (approxErrorBound < targetAccuracy){ 
 			REPORT(INFO, " *** Success! Final approxErrorBound=" << approxErrorBound << "  is smaller than target accuracy: " << targetAccuracy  );
-		}
 
-		// NEXT TODO: compute max of MSBs, sign-extend all the coeffs, etc.
+			for (int j=0; j<=degree; j++) {
+				REPORT(DETAILED," *** MSB["<<j<<"] = " << MSB[j]);
+			}
+			
+
+		}
+		else{
+			throw("PiecewisePolyApprox: Failure, some polynomials are not accurate enough, should increase alpha and start over: TODO");
+		}
 	}
 	
 

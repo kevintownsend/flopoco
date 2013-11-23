@@ -36,14 +36,14 @@ namespace flopoco{
 		void build();
 
 		int degree;                       /**< degree of the polynomial approximations */
-		vector<BasicPolyApprox*> poly;     /**< The vector of polynomials, eventually should all be on the same format */
+		vector<BasicPolyApprox*> poly;    /**< The vector of polynomials, eventually should all be on the same format */
+		int LSB;                          /**< common weight of the LSBs of the polynomial approximations */
+		vector<int> MSB;                   /**< vector of MSB weights for each coefficient */
 		double approxErrorBound;           /**< guaranteed upper bound on the approx error of each approximation provided. Should be smaller than targetAccuracy */
 
 	private:
 		FixFunction *f;                   /**< The function to be approximated */
 		int alpha;                        /**< the input domain [0,1] is split in 2^alpha subdomains */
-		int LSB;                          /**< common weight of the LSBs of the polynomial approximation */
-		int constLSB;                     /**< common weight of the LSB of all the constant coeffs, may be smaller than LSB for free */
 		double targetAccuracy;            /**< please build an approximation at least as accurate as that */
 
 		string srcFileName; /**< useful only to enable same kind of reporting as for FloPoCo operators. */

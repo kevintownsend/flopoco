@@ -33,6 +33,11 @@ namespace flopoco{
 		/** Reports if the constant should be interpreted as a signed constant		 */		
 		bool isSigned();
 
+
+		/** Zeroes deserve special treatment, because their LSB and MSB can be anything.
+		    I don't think there is a universally good choice: currently, this should be managed by the outside world */
+		bool isZero();
+
 		int getMSB(); 
 		int getLSB();
 
@@ -43,7 +48,6 @@ namespace flopoco{
 		int MSB;                   /**< weight of the MSB*/
 		int LSB;                   /**< weight of the LSB*/
 		int width;                   /**< wMSB - wLSB +1*/
-		mpz_class intValue;         /**< the bit vector in an mpz_class */
 		mpfr_t fpValue;             /**< the mpfr_t value */
 	};
 

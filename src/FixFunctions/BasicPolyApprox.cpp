@@ -318,7 +318,12 @@ namespace flopoco{
 		ostringstream debugstring;
 		debugstring << "buildFixFormatVector:";
 		int lsb0 = coeff[0]->getLSB();
-		int bitwidth = coeff[0]->getMSB() - lsb0 + 3;
+		int maxmsb=coeff[degree]->getMSB();
+		for (int i=0; i<degree; i++){
+			if(coeff[i]->getMSB() > maxmsb)
+				maxmsb = coeff[i]->getMSB();
+		}
+		int bitwidth = maxmsb - lsb0 + 3;
 		for (int i=0; i<=degree; i++){
 			int lsb= coeff[i]->getLSB();
 			int msb= coeff[i]->getMSB();

@@ -74,6 +74,10 @@ namespace flopoco{
 		return isSignedFormat;
 	}
 
+	bool FixConstant::isZero() {
+		return (0==mpfr_sgn(fpValue));
+	}
+
 	int FixConstant::getMSB() {
 		return MSB;
 	}
