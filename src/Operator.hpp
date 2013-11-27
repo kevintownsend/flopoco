@@ -917,9 +917,11 @@ public:
 	}
 
 
-
+	// TODO this probably doesn't belong here.
+	/** Extend the sign of a signal of this operator given by name */
 	string signExtend(string name, int w);
 	
+	/** Extend a signal of this operator given by name, by left-padding with zeroes */
 	string zeroExtend(string name, int w);
 
 	int level; //printing issues
