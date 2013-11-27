@@ -6,9 +6,8 @@ Here and there, fix VHDL style issues needed for whimsical simulators or synthes
 
 
 Clean up src/ file hierarchy:
-- mv FixSinCos into CORDIC, and rename CORDIC to SinCos or something
 
-
+Add LUT-based integer comparators
 
 
 BitHeapization 
