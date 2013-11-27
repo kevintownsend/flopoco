@@ -90,9 +90,10 @@ namespace flopoco{
 		REPORT(DEBUG, "scale=" << printMPFR(scale, 15));
 		
 
-		// declaring inputs
-		addInput  ( "X"  , w, true );
+		// declaring inputs. 
+		// man atan2 says "atan2(y,x) is atan(y/x) so we will provide the inputs in the same order...
 		addInput  ( "Y"  , w, true );
+		addInput  ( "X"  , w, true );
 
 		// declaring output
 		addOutput  ( "A"  , w, 2 );
@@ -131,20 +132,24 @@ namespace flopoco{
 		mpfr_set_z (x, svX.get_mpz_t(), GMP_RNDN); //  exact
 		mpfr_set_z (y, svY.get_mpz_t(), GMP_RNDN); //  exact
 	
-		mpfr_atan2(a, x, y, GMP_RNDN); // a between -pi and pi
+		mpfr_atan2(a, y, x, GMP_RNDN); // a between -pi and pi
 		mpfr_div(a, a, constPi, GMP_RNDN); // a between -1 and 1
 
 		// Now convert a to fix point
 		// Align to fix point by adding 6 -- if we just add 4 there is a 1-bit shift in case a<0
 		mpfr_add_d(a, a, 6.0, GMP_RNDN);
-		mpfr_mul_2si (a, a, w, GMP_RNDN); // exact scaling 
+		mpfr_mul_2si (a, a, w-1, GMP_RNDN); // exact scaling 
+
+		mpz_class mask = (mpz_class(1)<<w) -1; 
 
 		mpfr_get_z (az.get_mpz_t(), a, GMP_RNDD); // there can be a real rounding here
-		az -= mpz_class(6)<<w;
+		az -= mpz_class(6)<<(w-1);
+		az &= mask; 
  		tc->addExpectedOutput ("A", az);
 
 		mpfr_get_z (az.get_mpz_t(), a, GMP_RNDU); // there can be a real rounding here
-		az -= mpz_class(6)<<w;
+		az -= mpz_class(6)<<(w-1);
+		az &= mask; 
  		tc->addExpectedOutput ("A", az);
 		
 		// clean up
