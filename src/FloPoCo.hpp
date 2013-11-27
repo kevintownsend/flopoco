@@ -115,6 +115,7 @@
 
 /* fixed-point ----------------------------------------------- */
 #include "FixSinCos/CordicSinCos.hpp"
+#include "FixSinCos/CordicAtan2.hpp"
 #ifdef HAVE_SOLLYA
 #include "FixSinCos/FixSinCos.hpp"
 #include "FixSinCos/FixSinOrCos.hpp"

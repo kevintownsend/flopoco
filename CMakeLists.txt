@@ -295,6 +295,7 @@ src/ConstMult/IntConstDiv3
  src/FixSinCos/FixSinCos
  src/FixSinCos/FixSinOrCos
  src/FixSinCos/CordicSinCos
+ src/FixSinCos/CordicAtan2
 
  src/FixFIR
  src/FixDCT

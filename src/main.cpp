@@ -444,9 +444,14 @@ void usage(char *name, string opName = ""){
 		cerr << "    ____________ FIXED-POINT OPERATORS __________________________________________\n";
 	}
 #ifdef HAVE_SOLLYA
+	if ( full || opName == "CordicAtan2"){
+		NEWOP( "CordicAtan2","w");
+		cerr << "      Computes atan(x/y) as a=(angle in radian)/pi so a in [-1,1[;\n";
+		cerr << "      w is the size of both inputs and outputs, all being two's complement signals\n";
+	}
 	if ( full || opName == "CordicSinCos" || opName == "FixSinOrCos" || opName == "SinCos"){
 		NEWOP( "CordicSinCos","wIn wOut reduced");
-		cerr << "      Computes (1-2^(-w)) sin(pi*x) and (1-2^(-w)) cos(pi*x) for x in -[1,1[, ;\n";
+		cerr << "      Computes (1-2^(-w)) sin(pi*x) and (1-2^(-w)) cos(pi*x) for x in [-1,1[, ;\n";
 		cerr << "      wIn and wOut are the fixed-point precision of inputs and outputs (not counting the sign bit)\n";
 		cerr << "      reduced : if 1,  reduced number of iterations at the cost of two multiplications \n";
 	}
@@ -2618,6 +2623,15 @@ bool parseCommandLine(int argc, char* argv[]){
 			int wOut = checkStrictlyPositive(argv[i++], argv[0]); // must be >=2 actually
 			int reducedIterations = checkPositiveOrNull(argv[i++], argv[0]); 
 			Operator* tg = new CordicSinCos(target, wIn, wOut, reducedIterations);
+			addOperator(tg);
+		}
+
+		else if (opname == "CordicAtan2") {
+			int nargs = 1;
+			if (i+nargs > argc)
+				usage(argv[0],opname); // and exit
+			int w = checkStrictlyPositive(argv[i++], argv[0]); // must be >=2 actually
+			Operator* tg = new CordicAtan2(target, w);
 			addOperator(tg);
 		}
 
