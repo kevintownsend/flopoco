@@ -334,8 +334,11 @@ namespace flopoco{
 	}
 
 	void FPPipeline::generateVHDL_c(node* n, bool top){
-		REPORT(DETAILED, "Generating VHDL ... ");
-				
+#if 0
+		REPORT(DETAILED, "Generating VHDL for node " << n->name );
+#else
+		REPORT(DETAILED, "Generating VHDL" );
+#endif				
 		if (n->type == 0){
 			//we start at cycle 0, for now
 			setCycle(0);
