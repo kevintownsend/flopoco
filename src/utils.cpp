@@ -180,16 +180,16 @@ namespace flopoco{
 	{
 		int size = msb-lsb+1;
 		mpz_class h;
-		
-		if(x<0){
-			std::ostringstream o;
-			o <<  "Error, negative input to unsignedFixPointNumber :" << printMPFR(x,15);
-			throw o.str();
-		}
-		
+				
 		mpfr_mul_2si(x, x, -lsb, GMP_RNDN); // exact
 		
 		mpfr_get_z(h.get_mpz_t(), x,  GMP_RNDN); // rounding takes place here     
+
+		if(h<0){
+			std::ostringstream o;
+			o <<  "Error, negative input to unsignedFixPointNumber :" << printMPFR(x, 40);
+			throw o.str();
+		}
 
 		ostringstream result;
 		if(margins==0||margins==-1)
