@@ -33,7 +33,7 @@ namespace flopoco{
 		
 
 
-#define ROUNDED_ROTATION 1 // 0:trunc 
+#define ROUNDED_ROTATION 0 // 0:trunc 
 
 #if ROUNDED_ROTATION
 		REPORT(DEBUG, "Using rounded rotation trick");
@@ -100,8 +100,11 @@ namespace flopoco{
 		//		manageCriticalPath( target->lutDelay());
 
 
-
-
+		mpfr_t  zatan;
+		mpfr_init2(zatan, 10*w);
+		int sizeZ=w+g; 
+		int zMSB=0;
+		int zLSB=-w-g+1;
 		///////////// VHDL GENERATION
 
 		// manage symmetries: we need to reduce (X,Y) to a quadrant (-pi/4, pi/4)
@@ -118,25 +121,29 @@ namespace flopoco{
 
 		vhdl << tab << "-- quadrant will also be the angle to add at the end" <<endl;
 		vhdl << tab << declare("quadrant", 2) << " <= " << endl;
-		vhdl << tab << tab << "\"00\"  when (not sgnX and not XltY and     mYltX)='1') else"    << endl;
-		vhdl << tab << tab << "\"01\"  when (not sgnY and     XltY and     mYltX)='1') else"    << endl;
-		vhdl << tab << tab << "\"10\"  when (    sgnX and     XltY and not mYltX)='1') else"    << endl;
-		vhdl << tab << tab << "\"11\"  when others;"    << endl;
+		vhdl << tab << tab << "\"00\"  when (not sgnX and not XltY and     mYltX)='1' else"    << endl;
+		vhdl << tab << tab << "\"01\"  when (not sgnY and     XltY and     mYltX)='1' else"    << endl;
+		vhdl << tab << tab << "\"10\"  when (    sgnX and     XltY and not mYltX)='1' else"    << endl;
+		vhdl << tab << tab << "\"11\";"    << endl;
 
-		vhdl << tab << declare("mX", w+g) << " <= not (X&" << zg(g)<< ");  -- negation by not, implies one ulp error." << endl;
-		vhdl << tab << declare("mY", w+g) << " <= not (Y&" << zg(g)<< ");  -- negation by not, implies one ulp error. " << endl;
+		vhdl << tab << declare("mX", w+g) << " <= (not X) & " << og(g)<< ";  -- negation by not, implies one ulp error." << endl;
+		vhdl << tab << declare("mY", w+g) << " <= (not Y) & " << og(g)<< ";  -- negation by not, implies one ulp error. " << endl;
 
 		vhdl << tab << declare("X1", w+g) << " <= " << endl;
 		vhdl << tab << tab << " X when quadrant=\"00\"   else " << endl;
 		vhdl << tab << tab << " Y when quadrant=\"01\"   else " << endl;
 		vhdl << tab << tab << "mX when quadrant=\"10\"   else " << endl;
-		vhdl << tab << tab << "mY  when others;"    << endl;
+		vhdl << tab << tab << "mY;"    << endl;
 
 		vhdl << tab << declare("Y1", w+g) << " <= " << endl;
 		vhdl << tab << tab << " Y when quadrant=\"00\"   else " << endl;
 		vhdl << tab << tab << "mX when quadrant=\"01\"   else " << endl;
 		vhdl << tab << tab << "mY when quadrant=\"10\"   else " << endl;
-		vhdl << tab << tab << " X  when others;"    << endl;
+		vhdl << tab << tab << " X;"    << endl;
+
+
+		vhdl << tab << declare("Z1", sizeZ) << " <= " << zg(sizeZ)<< ";   " << endl;
+
 
 
 		//CORDIC iterations
@@ -144,9 +151,8 @@ namespace flopoco{
 		for(stage=1; stage<=maxIterations; stage++){
 			//shift Xin and Yin with 2^n positions to the right
 			// From there on X is always positive, but Y may be negative and thus need sign extend
-			vhdl << tab << declare(join("XShift", stage), w+g) << " <= " << zg(stage) << " & X" << stage << range(w+g-1, stage) << ";" <<endl;
-		 
 			vhdl << tab << declare(join("sgnY", stage))  << " <= " <<  join("Y", stage)  <<  of(w+g-1) << ";" << endl; 
+			vhdl << tab << declare(join("XShift", stage), w+g) << " <= " << zg(stage) << " & X" << stage << range(w+g-1, stage) << ";" <<endl;			
 			vhdl << tab << declare(join("YShift", stage), w+g) 
 			     << " <= " << rangeAssign(w+g-1, w+g-stage, join("sgnY", stage))   
 			     << " & Y" << stage << range(w+g, stage) << ";" << endl;
@@ -157,35 +163,32 @@ namespace flopoco{
 			//manageCriticalPath(target->localWireDelay(w) + target->adderDelay(w) + target->lutDelay()));
 			// 			manageCriticalPath(target->localWireDelay(sizeZ) + target->adderDelay(sizeZ));
 			
-
-#if 0
-
+			
+			
 #if ROUNDED_ROTATION  // rounding of the shifted operand, should save 1 bit in each addition
 			vhdl << tab << declare(join("XShiftRoundBit", stage)) << " <= " << join("X", stage)  << of(stage-1) << ";" << endl;
 			vhdl << tab << declare(join("YShiftRoundBit", stage)) << " <= " << join("Y", stage) << of(stage-1) << ";" <<endl;
-			vhdl << tab << declare(join("XShiftNeg", stage), w+1) << " <= " << rangeAssign(w, 0, join("D", stage)) << " xor " << join("XShift", stage)   << " ;" << endl;
-			vhdl << tab << declare(join("YShiftNeg", stage), w+1) << " <= (not " << rangeAssign(w, 0, join("D", stage)) << ") xor " << join("YShift", stage)   << " ;" << endl;
+			vhdl << tab << declare(join("XShiftNeg", stage), w+1) << " <= " << rangeAssign(w, 0, join("sgnY", stage)) << " xor " << join("XShift", stage)   << " ;" << endl;
+			vhdl << tab << declare(join("YShiftNeg", stage), w+1) << " <= (not " << rangeAssign(w, 0, join("sgnY", stage)) << ") xor " << join("YShift", stage)   << " ;" << endl;
 
 			vhdl << tab << declare(join("X", stage+1), w+1) << " <= " 
-			     << join("X", stage) << " + " << join("YShiftNeg", stage) << " +  not (" << join("D", stage) << " xor " << join("YShiftRoundBit", stage) << ") ;" << endl;
+			     << join("X", stage) << " + " << join("YShiftNeg", stage) << " +  not (" << join("sgnY", stage) << " xor " << join("YShiftRoundBit", stage) << ") ;" << endl;
 
 			vhdl << tab << declare(join("Y", stage+1), w+1) << " <= " 
-			     << join("Y", stage) << " + " << join("XShiftNeg", stage) << " + (" << join("D", stage) << " xor " << join("XShiftRoundBit", stage) << ") ;" << endl;
+			     << join("Y", stage) << " + " << join("XShiftNeg", stage) << " + (" << join("sgnY", stage) << " xor " << join("XShiftRoundBit", stage) << ") ;" << endl;
 
 #else
 // truncation of the shifted operand
 			vhdl << tab << declare(join("X", stage+1), w+1) << " <= " 
-			     << join("X", stage) << " - " << join("YShift", stage) << " when " << join("D", stage) << "=\'0\' else "
+			     << join("X", stage) << " - " << join("YShift", stage) << " when " << join("sgnY", stage) << "=\'0\' else "
 			     << join("X", stage) << " + " << join("YShift", stage) << " ;" << endl;
-
+			
 			vhdl << tab << declare(join("Y", stage+1), w+1) << " <= " 
-			     << join("Y", stage) << " + " << join("XShift", stage) << " when " << join("D", stage) << "=\'0\' else "
+			     << join("Y", stage) << " + " << join("XShift", stage) << " when " << join("sgnY", stage) << "=\'0\' else "
 			     << join("Y", stage) << " - " << join("XShift", stage) << " ;" << endl;
 #endif			
 			
 			//create the constant signal for the arctan
-			mpfr_init2(zatan, 10*w);
-			
 			mpfr_set_d(zatan, 1.0, GMP_RNDN);
 			mpfr_div_2si(zatan, zatan, stage, GMP_RNDN);
 			mpfr_atan(zatan, zatan, GMP_RNDN);
@@ -193,31 +196,24 @@ namespace flopoco{
 			REPORT(DEBUG, "stage=" << stage << "  atancst=" << printMPFR(zatan, 15));		
 			//create the arctangent factor to be added to Zin
 									
-			REPORT(DEBUG, "  sizeZ=" << sizeZ << "   zMSB="<<zMSB );
-
-			if(stage<maxIterations || reducedIterations == 1) {
-				// LSB is always -w 
-				vhdl << tab << declare(join("atan2PowStage", stage), sizeZ) << " <= " << unsignedFixPointNumber(zatan, zMSB, zLSB) << ";" <<endl;
-				
-				vhdl << tab << declare(join("fullZ", stage+1), sizeZ) << " <= " 
-				     << join("Z", stage) << " + " << join("atan2PowStage", stage) << " when " << join("D", stage) << "=\'1\' else "
-				     << join("Z", stage) << " - " << join("atan2PowStage", stage) << " ;" << endl;
-				vhdl << tab << declare(join("Z", stage+1), sizeZ-1) << " <= "<< join("fullZ", stage+1) << range(sizeZ-2, 0) << ";" << endl; 
-				vhdl << tab << declare(join("D", (stage+1))) << " <= fullZ" << stage+1 << "(" << sizeZ-1 <<");" <<endl;
-			}
-			//decrement the size of Z
-			sizeZ--;
-			zMSB--;
+			vhdl << tab << declare(join("atan2PowStage", stage), sizeZ) << " <= " << unsignedFixPointNumber(zatan, zMSB, zLSB) << ";" <<endl;
+			
+			vhdl << tab << declare(join("Z", stage+1), sizeZ) << " <= " 
+					 << join("Z", stage) << " + " << join("atan2PowStage", stage) << " when " << join("sgnY", stage) << "=\'1\' else "
+					 << join("Z", stage) << " - " << join("atan2PowStage", stage) << " ;" << endl;
 		}
 		
 		// Give the time to finish the last rotation
-		manageCriticalPath( target->localWireDelay(w+1) + target->adderDelay(w+1) // actual CP delay
-		                    - (target->localWireDelay(sizeZ+1) + target->adderDelay(sizeZ+1))); // CP delay that was already added
+		// manageCriticalPath( target->localWireDelay(w+1) + target->adderDelay(w+1) // actual CP delay
+		//                     - (target->localWireDelay(sizeZ+1) + target->adderDelay(sizeZ+1))); // CP delay that was already added
 
-#endif
 		// reconstruction
-	}		
-};
+
+		vhdl << tab << "A <= (quadrant & " << zg(w-2) << ")   + ("
+				 << join("Z", maxIterations) << of(sizeZ-1) << " & " << join("Z", maxIterations) << of(sizeZ-1) // sign extension 
+				 << " & "<<join("Z", maxIterations) << range(sizeZ-1, sizeZ-w+2) << ");" << endl;
+		
+	};
 
 
 	CordicAtan2::~CordicAtan2(){
