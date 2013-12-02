@@ -41,7 +41,8 @@ namespace flopoco{
 	private:
 		int w;                     /**< input and output size (two's complement each, including a sign bit) */
 		int	maxIterations;         /**< index at which iterations stop */
-		int g;                     /**< number of guard bits*/
+		int gXY;                   /**< number of guard bits on the (X,Y) datapath */
+		int gA;                    /**< number of guard bits on the Angle datapath */
 		mpfr_t scale;              /**< 1-2^(wOut-1)*/
 		mpfr_t constPi;
 		mpfr_t kfactor;            /**< */
