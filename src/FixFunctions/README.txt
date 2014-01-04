@@ -29,4 +29,7 @@ SimpleBitHeapApproximator: an Operator plugging BasicPolyApprox to a bit heap ba
 PiecewisePolyApproximator:
 								the flopoco operator corresponding to the previous FunctionEvaluator
 
+
 				
+GenericEvaluator:
+	A wrapper class written by Sylvain that should be able to instantiate any of the others.
