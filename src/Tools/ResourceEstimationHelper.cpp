@@ -755,7 +755,7 @@ namespace flopoco{
 		result << "Top level entity name                : " << parentOp->getName() << endl;
 		result << "Top level entity is pipelined        : " << ((target->isPipelined()) ? "True" : "False") << endl;
 		result << "Top level entity target frequency    : " << ((target->isPipelined()) ? join("", target->frequencyMHz()) : "N/A") << endl;
-		result << "Top level entity uses DSP blocks     : " << ((target->hasHardMultipliers()) ? "True" : "False") << endl;
+		result << "Top level entity uses DSP blocks     : " << ((target->useHardMultipliers()) ? "True" : "False") << endl;
 		result << endl;
 		result << "Number of Flip-Flops                 : " << ((estimatedCountFF) ? join("", estimatedCountFF) : "None") << endl;
 		result << "Number of Function Generators        : " << ((estimatedCountLUT) ? join("", estimatedCountLUT) : "None") << endl;

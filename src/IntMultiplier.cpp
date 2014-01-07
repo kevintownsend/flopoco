@@ -191,7 +191,7 @@ namespace flopoco {
 
 		multiplierUid=parentOp->getNewUId();
 		srcFileName="IntMultiplier";
-		useDSP = (DSPThreshold>=0) &&  parentOp->getTarget()->hasHardMultipliers();
+		useDSP = (DSPThreshold>=0) &&  parentOp->getTarget()->useHardMultipliers() && parentOp->getTarget()->useHardMultipliers();
 
 		ostringstream name;
 		name <<"VirtualIntMultiplier";
@@ -235,8 +235,8 @@ namespace flopoco {
 		setCopyrightString ( "Florent de Dinechin, Kinga Illyes, Bogdan Popa, Bogdan Pasca, 2012" );
 
 		// useDSP or not? 
-		//useDSP = (DSPThreshold>0) && target->hasHardMultipliers();
-		useDSP = (DSPThreshold>=0)&&target->hasHardMultipliers();
+		//useDSP = (DSPThreshold>0) && target->useHardMultipliers();
+		useDSP = (DSPThreshold>=0) && target->useHardMultipliers();
 
 
 		{

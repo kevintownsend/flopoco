@@ -787,7 +787,7 @@ bool parseCommandLine(int argc, char* argv[]){
 					}
 					// if previous options had changed it
 					target->setFrequency(oldTarget->frequency());
-					target->setUseHardMultipliers(oldTarget->hasHardMultipliers());
+					target->setUseHardMultipliers(oldTarget->useHardMultipliers());
 					if (oldTarget->isPipelined()) 
 						target->setPipelined();
 					else 
