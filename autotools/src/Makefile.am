@@ -264,6 +264,7 @@ libflopoco_la_SOURCES = \
                         FixSinCos/FixSinCos.cpp \
                         FixSinCos/FixSinOrCos.cpp \
                         FixSinCos/CordicSinCos.cpp \
+                        FixSinCos/CordicAtan2.cpp\
                         FixFIR.cpp \
                         FixDCT.cpp \
                         FPAdderDualPath.cpp \

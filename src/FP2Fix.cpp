@@ -191,8 +191,9 @@ namespace flopoco{
          else
          {
             manageCriticalPath(target->localWireDelay() + target->lutDelay());
-            vhdl << tab << declare("overFl1") << " <= fA4" << of(wFO-1) << " xor I" << of(wEI+wFI) << ";"<<endl;
-         }
+            vhdl << tab << declare("notZeroTest") << " <= '1' when fA4 /= conv_std_logic_vector(0," << wFO <<")"<< " else '0';"<<endl;
+            vhdl << tab << declare("overFl1") << " <= (fA4" << of(wFO-1) << " xor I" << of(wEI+wFI) << ") and notZeroTest;"<<endl;
+        }
       }
       else
       {
