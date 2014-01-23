@@ -164,6 +164,7 @@ noinst_HEADERS = \
           FixSinCos/FixSinCos.hpp \
           FixSinCos/FixSinOrCos.hpp \
           FixSinCos/CordicSinCos.hpp \
+          FixSinCos/CordicAtan2.hpp\
           FixFIR.hpp \
           FixDCT.hpp \
           FPAddSub.hpp \
