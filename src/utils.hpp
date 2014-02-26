@@ -65,8 +65,7 @@ namespace flopoco{
 	 */
 	string fp2bin(mpfr_t x, int wE, int wF);
 
-	/** return the binary representation of an MPFR, with bits ranging from msb to lsb
-	 * (total size msb-lsb+1) 
+	/** return the  bits ranging from msb to lsb of an MPFR, (total size msb-lsb+1) 
 	 * @param x the number to be represented
 	 * @param msb the weight of the MSB. 
 	 * @param lsb the weight of the LSB
