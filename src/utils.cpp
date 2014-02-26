@@ -176,20 +176,32 @@ namespace flopoco{
 	}
 
 
+	//this function should not change it's parameter
 	std::string unsignedFixPointNumber(mpfr_t x, int msb, int lsb, int margins)
 	{
 		int size = msb-lsb+1;
 		mpz_class h;
+
+		//create a clone of x
+		mpfr_t xClone;
+		mpfr_prec_t xPrec;
+
+		xPrec = mpfr_get_prec(x);
+		mpfr_init2(xClone, xPrec);
+		mpfr_set(xClone, x, GMP_RNDN);
 				
-		mpfr_mul_2si(x, x, -lsb, GMP_RNDN); // exact
+		//mpfr_mul_2si(x, x, -lsb, GMP_RNDN); // exact
+		mpfr_mul_2si(xClone, xClone, -lsb, GMP_RNDN); // exact
 		
-		mpfr_get_z(h.get_mpz_t(), x,  GMP_RNDN); // rounding takes place here     
+		mpfr_get_z(h.get_mpz_t(), xClone,  GMP_RNDN); // rounding takes place here
 
 		if(h<0){
 			std::ostringstream o;
-			o <<  "Error, negative input to unsignedFixPointNumber :" << printMPFR(x, 40);
+			o <<  "Error, negative input to unsignedFixPointNumber :" << printMPFR(xClone, 40);
 			throw o.str();
 		}
+
+		mpfr_clear(xClone);
 
 		ostringstream result;
 		if(margins==0||margins==-1)
