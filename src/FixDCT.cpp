@@ -11,13 +11,13 @@ using namespace std;
 namespace flopoco{
 
 
-	FixDCT::FixDCT(Target* target, int p_, int N_, int k_, bool signedInput_, map<string, double> inputDelays) :
+	FixDCT2::FixDCT2(Target* target, int p_, int N_, int k_, bool signedInput_, map<string, double> inputDelays) :
 		Operator(target, inputDelays), p(p_), N(N_), k(k_), signedInput(signedInput_)
 	{
-		srcFileName="FixDCT";
+		srcFileName="FixDCT2";
 					
 		ostringstream name;
-		name << "FixDCT_" << p << "_uid" << getNewUId(); 
+		name << "FixDCT2_" << p << "_uid" << getNewUId();
 		setName(name.str()); 
 	
 		setCopyrightString("Florent de Dinechin, Matei Istoan (2013)");
@@ -114,7 +114,7 @@ namespace flopoco{
 	
 	
 	//generate the i-th coefficient
-	long double FixDCT::getDCT2FilterCoeff(int i)
+	long double FixDCT2::getDCT2FilterCoeff(int i)
 	{
 		mpfr_t coeffValue, temp;
 		long double result;
@@ -137,7 +137,7 @@ namespace flopoco{
 	};
 	
 	//create the string that generates the i-th coefficient using Sollya
-	string FixDCT::getDCT2FilterCoeffString(int i)
+	string FixDCT2::getDCT2FilterCoeffString(int i)
 	{
 		ostringstream result;
 		
@@ -148,7 +148,7 @@ namespace flopoco{
 
 	
 	//TODO: redo the emulate function
-	void FixDCT::emulate(TestCase * tc)
+	void FixDCT2::emulate(TestCase * tc)
 	{
 		// Not completely safe: we compute everything on 10 times the required precision, and hope that rounding this result is equivalent to rounding the exact result
 
@@ -198,7 +198,7 @@ namespace flopoco{
 
 
 	// please fill me with regression tests or corner case tests
-	void FixDCT::buildStandardTestCases(TestCaseList * tcl)
+	void FixDCT2::buildStandardTestCases(TestCaseList * tcl)
 	{
 		TestCase *tc;
 

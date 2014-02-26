@@ -241,11 +241,33 @@ void usage(char *name, string opName = ""){
 		cerr << "      The filter may, or may not use bit heaps\n";
 	}
 	
-	if ( full || opName == "FixDCT"){
-		OP("FixDCT","p taps current_index");
-		cerr << "      A DCT2 on an (1,p) fixed-point format using bit heaps\n";
+	if ( full || opName == "FixDCT2"){
+		OP("FixDCT2","p taps current_index");
+		cerr << "      A DCT2 on a (1,p) fixed-point format\n";
 		cerr << "      The filter uses bit heaps\n";
 	}
+
+	if ( full || opName == "FixHalfSine"){
+		OP("FixHalfSine","p taps");
+		cerr << "      An half sine filter on a (1,p) fixed-point format\n";
+		cerr << "      The filter uses bit heaps\n";
+	}
+
+	if ( full || opName == "FixRCF"){
+		OP("FixRCF","p taps alpha");
+		cerr << "      A Raised Cosine filter on a (1,p) fixed-point format, with a roll-off factor alpha\n";
+		cerr << "	   alpha=1 by default";
+		cerr << "      The filter uses bit heaps\n";
+	}
+
+	if ( full || opName == "FixRRCF"){
+		OP("FixRRCF","p taps alpha");
+		cerr << "      A Root Raised Cosine filter on a (1,p) fixed-point format, with a roll-off factor alpha\n";
+		cerr << "	   alpha=1 by default";
+		cerr << "      The filter uses bit heaps\n";
+	}
+
+
 #endif // HAVE_SOLLYA
 
 
@@ -1385,7 +1407,7 @@ bool parseCommandLine(int argc, char* argv[]){
 			}
 		}
 		
-		else if(opname=="FixDCT")
+		else if(opname=="FixDCT2")
 		{
 			int nargs = 3;
 			if (i+nargs > argc)
@@ -1395,11 +1417,56 @@ bool parseCommandLine(int argc, char* argv[]){
 				int taps 	= checkStrictlyPositive(argv[i++], argv[0]);
 				int k 		= checkPositiveOrNull(argv[i++], argv[0]);
 				
-				op = new FixDCT(target, p, taps, k, true);
+				op = new FixDCT2(target, p, taps, k, true);
 				addOperator(op);
 			}
 		}
 		
+		else if(opname=="FixHalfSine")
+		{
+			int nargs = 2;
+			if (i+nargs > argc)
+				usage(argv[0],opname);
+			else {
+				int p 		= checkStrictlyPositive(argv[i++], argv[0]);
+				int taps 	= checkStrictlyPositive(argv[i++], argv[0]);
+
+				op = new FixHalfSine(target, p, taps, true);
+				addOperator(op);
+			}
+		}
+
+		else if(opname=="FixRCF")
+		{
+			int nargs = 3;
+			if (i+nargs > argc)
+				usage(argv[0],opname);
+			else {
+				int p 			= checkStrictlyPositive(argv[i++], argv[0]);
+				int taps 		= checkStrictlyPositive(argv[i++], argv[0]);
+				double alpha	= atof(argv[i++]);
+
+				op = new FixRCF(target, p, taps, alpha, true);
+				addOperator(op);
+			}
+		}
+
+		else if(opname=="FixRRCF")
+		{
+			int nargs = 3;
+			if (i+nargs > argc)
+				usage(argv[0],opname);
+			else {
+				int p 			= checkStrictlyPositive(argv[i++], argv[0]);
+				int taps 		= checkStrictlyPositive(argv[i++], argv[0]);
+				double alpha	= atof(argv[i++]);
+
+				op = new FixRRCF(target, p, taps, alpha, true);
+				addOperator(op);
+			}
+		}
+
+
 #endif
 
 		/* Exploration of other fast adders */

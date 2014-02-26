@@ -24,18 +24,18 @@
 
 namespace flopoco{
 
-	class FixDCT : public Operator
+	class FixDCT2 : public Operator
 	{
 	public:
 
-		FixDCT(Target* target, int p_, int N_, int k_, bool signedInput_ = false, map<string, double> inputDelays = emptyDelayMap);
+		FixDCT2(Target* target, int p_, int N_, int k_, bool signedInput_ = false, map<string, double> inputDelays = emptyDelayMap);
 		
 		/*
 		FixDCT(Operator* parentOp, Target* target, int p_, int N_, int k_,
 							 BitHeap* bitheap,
 							 bool signedInput_ = false, map<string, double> inputDelays = emptyDelayMap);
 		*/
-		~FixDCT(){};
+		~FixDCT2(){};
 
 		// Overloading the virtual functions of Operator
 		/* the emulate function is used to simulate in software the operator

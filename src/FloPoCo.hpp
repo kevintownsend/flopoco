@@ -121,6 +121,10 @@
 #include "FixSinCos/FixSinOrCos.hpp"
 #include "FixFIR.hpp"
 #include "FixDCT.hpp"
+#include "FixHalfSine.hpp"
+#include "FixRCF.hpp"
+#include "FixRRCF.hpp"
+
 #endif
 
 /* floating-point -------------------------------------------- */ 
