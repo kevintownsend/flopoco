@@ -99,6 +99,8 @@ namespace flopoco{
 	void BasicPolyApprox::guessDegree(sollya_obj_t fS, double targetAccuracy, int* degreeInfP, int* degreeSupP) {
 		// Accuracy has to be converted to sollya objects
 		// a few constant objects
+		if(DEBUG <= verbose)
+			sollya_lib_printf("> BasicPolyApprox::guessDegree() for function %b at target accuracy %1.5e\n", fS, targetAccuracy);
 		sollya_obj_t rangeS = sollya_lib_parse_string("[0;1]");
 		sollya_obj_t targetAccuracyS = sollya_lib_constant_from_double(targetAccuracy);
 
@@ -317,18 +319,20 @@ namespace flopoco{
 		// printing debug string out of the final vector
 		ostringstream debugstring;
 		debugstring << "buildFixFormatVector:";
-		int lsb0 = coeff[0]->getLSB();
-		int maxmsb=coeff[degree]->getMSB();
+		int maxmsb=coeff[degree]->MSB;
+		int lsb0 = coeff[0]->LSB;
 		for (int i=0; i<degree; i++){
-			if(coeff[i]->getMSB() > maxmsb)
-				maxmsb = coeff[i]->getMSB();
+			if(coeff[i]->MSB > maxmsb)
+				maxmsb = coeff[i]->MSB;
 		}
 		int bitwidth = maxmsb - lsb0 + 3;
 		for (int i=0; i<=degree; i++){
-			int lsb= coeff[i]->getLSB();
-			int msb= coeff[i]->getMSB();
-			debugstring <<  endl << ">    coeff " << right << setw(4)<< i << ": (" << setw(4)<< msb << ", " << setw(4)<< lsb << ")   " 
-									<< setw(bitwidth + lsb0-lsb) << coeff[i]->getBitVector();
+			int lsb= coeff[i]->LSB;
+			int msb= coeff[i]->MSB;
+			debugstring <<  endl << ">    coeff " << right << setw(4) << i << ": " 
+									<< " (" << setw(4)<< msb << ", " << setw(4)<< lsb << ")   " 
+									<< setw(bitwidth + lsb0-lsb) << coeff[i]->getBitVector()
+									<< setw(10) << printMPFR(coeff[i]->fpValue) ;
 		}
 		REPORT(DEBUG, debugstring.str());
 	}

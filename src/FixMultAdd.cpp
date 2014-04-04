@@ -65,10 +65,7 @@ namespace flopoco {
 
 
 
-	// The constructor for a stand-alone operator
-	// The parameters are quite messy, yes.
-	// All the lsbs and msbs are given with respect to the lsb of the result 
-	// (0 means: aligned with the LSB of the result) 
+	// The constructor for a stand-alone operator, see the .hpp for parameter explanation
 	FixMultAdd::FixMultAdd(Target* target, int wX_, int wY_, int wA_, int wOut_, 
 	                       int msbP_, int lsbA_, 
 	                       bool signedIO_,
@@ -77,7 +74,7 @@ namespace flopoco {
 		Operator ( target, inputDelays_ ),
 		wX(wX_), wY(wY_), wA(wA_), wOut(wOut_),
 		msbP(msbP_),
-		lsbPfull(msbP - wX -wY),
+		lsbPfull(msbP - wX -wY), // True for signed inputs?
  		lsbA(lsbA_),
 		signedIO(signedIO_),
 		ratio(ratio_), 
@@ -144,12 +141,8 @@ namespace flopoco {
 		// initialize the critical path
 		setCriticalPath(getMaxInputDelays ( inputDelays_ ));
 
-
-
 		// TODO if it fits in a DSP block just write A*B+C
 		
-		
-
 		fillBitHeap();
 
 		bitHeap -> generateCompressorVHDL();			
@@ -171,7 +164,7 @@ namespace flopoco {
 		//  throw the product to the bit heap
 		int lsbWeight = msbP+1 - wOutP;
 		// TODO we could read wX and wY from the signal.
-		mult = new IntMultiplier (this, bitHeap, getSignalByName("X"), getSignalByName("Y"), wX, wY, wOutP, lsbWeight, false /*negate*/, signedIO, 0.75);
+		mult = new IntMultiplier (this, bitHeap, getSignalByName("X"), getSignalByName("Y"), wX, wY, wOutP, lsbWeight, false /*negate*/, signedIO, ratio);
 	}
 
 

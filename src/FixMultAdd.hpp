@@ -30,8 +30,12 @@ namespace flopoco {
 	    X*Y may be placed anywhere with respect to A;
 	    the product will be truncated when relevant.
 	    The result is specified as its LSB, MSB.
-	    
+
+			Note on signed numbers:
+			* The bit heap manages signed addition in any case, so wether the addend is signed or not is irrelevant
+			* The product may be signed, or not. 
 	*/
+
 	class FixMultAdd : public Operator {
 
 	public:
@@ -40,10 +44,11 @@ namespace flopoco {
 		 * @param[in] target            target device
 		 * @param[in] wX                X multiplier size (including sign bit if any)
 		 * @param[in] wY                Y multiplier size (including sign bit if any)
-		 * @param[in] prodMSB           weight of the MSB of the product
-		 * @param[in] resultLSB         weight of the LSB of the result
-		 * @param[in] addendLSB         weight of the LSB of A
-		 * @param[in] addendMSB         weight of the MSB of A
+		 * @param[in] wA                addend size 
+		 * @param[in] wOut              size of the truncated product 
+		 * @param[in] msbP              weight of the MSB of the product.
+ 			  In the signed case, this MSB has to be understood as the MSB of the signal, not the weight of the value which will be 1 bit less.
+		 * @param[in] lsbA              weight of the LSB of A
 		 * @param[in] signedIO          false=unsigned, true=signed
 		 * @param[in] ratio             DSP block use ratio
 		 * @param[in] enableSuperTiles  if true, supertiles will decrease resource consumption but increase latency

@@ -1,35 +1,37 @@
 
-Function: ??
-PiecewiseFunction: ???
+The attic directory is full of old stuff.
 
 TODO: manage non-uniform errors; manage non-uniform segmentation 
 
 
 FixFunction
-    could be mostly useless. Currently centralizes Sollya parsing and evaluation to various formats.
+    Centralizes Sollya parsing and evaluation to various formats, including some day an emulate() that works for all FixFunctionBy*
 
-FunctionTable: a flopoco operator that is the most basic implementation of a Function
+FixFunctionByTable: a flopoco operator that is the most basic implementation of a FixFunction
 
 
-BasicPolyApprox
-				Two constructors:
-				- the simple one that inputs only target accuracy, and manages all the rest
-				- the one that input degree and computes approximation error, to be used by PiecewisePolyApprox
+BasicPolyApprox: mostly Sollya stuff to compute optimal coeff sizes, the machine-efficient polynomials.
+DONE
 
-PiecewisePolyApprox: roughly the approximation part of previous FunctionEvaluator
 
-FixPolynomialHornerEvaluator: an operator that inputs an X in [0,1] and a vector of coefficients, and evaluates the corresponding polynomial.
+PiecewisePolyApprox: Iterates over the previous to build a regular piecewise polynomial approximation. Roughly the approximation part of previous FunctionEvaluator
+DONE
 
-SimplePolyApproximator: a flopoco operator plugging  BasicPolyApprox to FixPolynomialHornerEvaluator
+FixPolynomialHornerEvaluator: an operator that inputs an X in [0,1] and a vector of coefficients, and evaluates the corresponding polynomial with truncated multipliers.
+REM a trunc mult faithful to lsb will compute weights to LSB+g 
 
-SimpleBitHeapApproximator: an Operator plugging BasicPolyApprox to a bit heap back-end.
+FixFunctionBySimplePoly: a flopoco operator plugging  BasicPolyApprox to FixPolynomialHornerEvaluator
+
+FixFunctionBySimpleBitHeap: an Operator plugging BasicPolyApprox to a bit heap back-end.
 													 (with bit heaps you don't do piecewise polynomials, or you do it the HOTBM way)
 
 
-PiecewisePolyApproximator:
+FixFunctionByPiecewisePoly:
 								the flopoco operator corresponding to the previous FunctionEvaluator
+								It plugs PiecewisePolyApprox to FixPolynomialHornerEvaluator
 
 
 				
 GenericEvaluator:
 	A wrapper class written by Sylvain that should be able to instantiate any of the others.
+	Still in the src but currently disabled, and to be renamed.

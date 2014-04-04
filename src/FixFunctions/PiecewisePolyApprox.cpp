@@ -102,52 +102,59 @@ namespace flopoco{
 		if (alphaOK)
 			REPORT(DETAILED, " Found alpha=" << alpha << " OK");
 
+		// Still have to do a while loop because we can't trust guessdegree, damn 
+		bool success=false;
+		while(!success) {
+			// Now fill the vector of polynomials, computing the coefficient parameters along.
+			//		LSB=INT_MAX; // very large
+			// MSB=INT_MIN; // very small
+			approxErrorBound = 0.0;
+			BasicPolyApprox *p;
 
-		// Now fill the vector of polynomials, computing the coefficient parameters along.
-		//		LSB=INT_MAX; // very large
-		// MSB=INT_MIN; // very small
-		approxErrorBound = 0.0;
-		BasicPolyApprox *p;
+			REPORT(DETAILED, " Now computing the actual polynomials ");
+			// initialize the vector of MSB weights
+			for (int j=0; j<=degree; j++) {
+				MSB.push_back(INT_MIN);
+			}
+		
+			for (int i=0; i<nbIntervals; i++) {
+				REPORT(DETAILED, " ----------Interval " << i << "-------------");
+				// Recompute the substitution. No big deal.
+				sollya_obj_t giS = buildSubIntervalFunction(fS, alpha, i);
+				LSB = floor(log2(targetAccuracy));
+				p = new BasicPolyApprox(giS, degree, LSB);
+				poly.push_back(p);
+				if (approxErrorBound < p->approxErrorBound){ 
+					REPORT(DEBUG, "   new approxErrorBound=" << p->approxErrorBound );
+					approxErrorBound = p->approxErrorBound;
+				}
 
-		REPORT(DETAILED, " Now computing the actual polynomials ");
-		// initialize the vector of MSB weights
+				// Now check compute the englobing MSB and LSB for each coefficient	
+				for (int j=0; j<=degree; j++) {
+					// if the coeff is zero, we can set its MSB to anything, so we exclude this case
+					if (  (!p->coeff[j]->isZero())  &&  (p->coeff[j]->MSB > MSB[j])  )
+						MSB[j] = p->coeff[j]->MSB;
+				}
+		
+			} // end for loop on i
+
+
+			if (approxErrorBound < targetAccuracy) {
+				REPORT(INFO, " *** Success! Final approxErrorBound=" << approxErrorBound << "  is smaller than target accuracy: " << targetAccuracy  );
+				success=true;
+			}
+			else {
+				REPORT(INFO, " guessDegree mislead us, measured approx error:" << approxErrorBound << " is larger than target accuracy: " << targetAccuracy << ". Now increasing alpha and starting over, thank you for your patience");
+				alpha++;
+				nbIntervals=1<<alpha;
+			}
+		} // end while(!success)
+
+		// A bit of reporting
 		for (int j=0; j<=degree; j++) {
-			MSB.push_back(INT_MIN);
+			REPORT(DETAILED," *** MSB["<<j<<"] = " << MSB[j]);
 		}
-		
-		for (int i=0; i<nbIntervals; i++) {
-			REPORT(DETAILED, " ----------Interval " << i << "-------------");
-			// Recompute the substitution. No big deal.
-			sollya_obj_t giS = buildSubIntervalFunction(fS, alpha, i);
-			LSB = floor(log2(targetAccuracy));
-			p = new BasicPolyApprox(giS, degree, LSB);
-			poly.push_back(p);
-			if (approxErrorBound < p->approxErrorBound){ 
-				REPORT(DEBUG, "   new approxErrorBound=" << p->approxErrorBound );
-				approxErrorBound = p->approxErrorBound;
-			}
 
-			// Now check compute the englobing MSB and LSB for each coefficient	
-			for (int j=0; j<=degree; j++) {
-				// if the coeff is zero, we can set its MSB to anything, so we exclude this case
-				if (  (!p->coeff[j]->isZero())  &&  (p->coeff[j]->getMSB() > MSB[j])  )
-					MSB[j] = p->coeff[j]->getMSB();
-			}
-		
-		} // end for loop on i
-
-		if (approxErrorBound < targetAccuracy){ 
-			REPORT(INFO, " *** Success! Final approxErrorBound=" << approxErrorBound << "  is smaller than target accuracy: " << targetAccuracy  );
-
-			for (int j=0; j<=degree; j++) {
-				REPORT(DETAILED," *** MSB["<<j<<"] = " << MSB[j]);
-			}
-			
-
-		}
-		else{
-			throw("PiecewisePolyApprox: Failure, some polynomials are not accurate enough, should increase alpha and start over: TODO");
-		}
 	}
 	
 

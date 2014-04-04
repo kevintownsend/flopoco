@@ -33,8 +33,8 @@
 #define OPER 32
 #define NEWOPER 32
 #define PARAM 34
-#define OP(op,paramList)             {cerr << "    "; printf("%c[%d;%dm",27,1,OPER); cerr <<  op; printf("%c[%dm",27,0); cerr<< " "; printf("%c[%d;%dm",27,1,PARAM); cerr << paramList; printf("%c[%dm\n",27,0); } 
-#define NEWOP(op,paramList)          {cerr << "    "; printf("%c[%d;%dm",27,1,NEWOPER); cerr <<  op; printf("%c[%dm",27,0); cerr<< " "; printf("%c[%d;%dm",27,1,PARAM); cerr << paramList; printf("%c[%dm\n",27,0); } 
+#define OP(op,paramList)             {cerr << "  "; printf("%c[%d;%dm",27,1,OPER); cerr <<  op; printf("%c[%dm",27,0); cerr<< " "; printf("%c[%d;%dm",27,1,PARAM); cerr << paramList; printf("%c[%dm\n",27,0); } 
+#define NEWOP(op,paramList)          {cerr << "  "; printf("%c[%d;%dm",27,1,NEWOPER); cerr <<  op; printf("%c[%dm",27,0); cerr<< " "; printf("%c[%d;%dm",27,1,PARAM); cerr << paramList; printf("%c[%dm\n",27,0); } 
 
 
 using namespace std;
@@ -75,22 +75,48 @@ void usage(char *name, string opName = ""){
 		cerr << "\nUsage: "<<name<<" <operator specification list>\n" ;
 		cerr << "Each operator specification is one of: \n";
 	}
-	if ( full || opName == "FixFunction"){					
-		OP( "FixFunction","function");
-		cerr << "      function - sollya-syntaxed function to implement, between double quotes\n";
-	}
 
 	if ( full || opName == "FixFunctionEval"){					
-		OP( "FixFunction","function x");	
+		OP( "FixFunctionEval", "function x");	
+		cerr << "  ** Helper/debug feature, does not generate VHDL **\n";
+		cerr << "  Evaluates a function in arbitrary precision\n";
 		cerr << "      function - sollya-syntaxed function to implement, between double quotes\n";
 		cerr << "      x - arbitrary precision value\n";
 	}
-	if ( full || opName == "FunctionTable" || opName == "FixFunction"){					
-		OP( "FunctionTable","function wI lsbO msbO");
-		cerr << "      Simple tabulation of a function defined on [0,1)\n";
-		cerr << "      wI: input width (also weight of input LSB), \n";
-		cerr << "      lsbO and msbO: weights of output LSB and MSB,\n";
-		cerr << "      function: sollya-syntaxed function to implement, e.g. \"sin(x*Pi/2)\" \n";
+
+	if ( full || opName == "BasicPolyApprox"){					
+		OP( "BasicPolyApprox", "function targetAcc addGuardBitsToConstant");	
+		cerr << "  ** Helper/debug feature, does not generate VHDL **\n";
+		cerr << "  Builds a polynomial approximation of a function, accurate to targetAcc on the interval [0,1) \n";
+		cerr << "    function - sollya-syntaxed function to implement, between double quotes\n";
+		cerr << "    targetAcc - real number, e.g. 0.00001\n";
+		cerr << "    addGuardBitsToConstant: if -1, will do something sensible (relax the size of the constant by the number of guard bits that will be added to ensure faithful evaluation)\n";
+		cerr << "                          : if >=0, this number of extra LSB bits will be added to the minimal size of the constant\n";
+	}
+
+	if ( full || opName == "PiecewisePolyApprox"){					
+		OP( "PiecewisePolyApprox", "function targetAcc degree");	
+		cerr << "  ** Helper/debug feature, does not generate VHDL **\n";
+		cerr << "  Builds a piecewise polynomial approximation of a function, accurate to targetAcc on the interval [0,1) \n";
+		cerr << "    function - sollya-syntaxed function to implement, between double quotes\n";
+		cerr << "    targetAcc - real number, e.g. 0.00001\n";
+		cerr << "    degree: degree of the polynomial approximation\n";
+	}
+
+	if ( full || opName == "FixFunctionByTable" || opName == "FixFunction"){					
+		OP( "FixFunctionByTable","function wI  msbO lsbO");
+		cerr << "  Simple tabulation of a function defined on [0,1)\n";
+		cerr << "    wI: input width (also weight of input LSB), \n";
+		cerr << "    msbO and lsbO: weights of output MSB and LSB,\n";
+		cerr << "    function: sollya-syntaxed function to implement, e.g. \"sin(x*Pi/2)\" \n";
+	}
+
+	if ( full || opName == "FixFunctionBySimplePoly" || opName == "FixFunction"){					
+		OP( "FixFunctionByTable","function wI msbO lsbO ");
+		cerr << "  A function evaluator using a single polynomial on the interval [0,1), evaluated with Horner scheme \n";
+		cerr << "    function: sollya-syntaxed function to implement, e.g. \"sin(x*Pi/2)\" \n";
+		cerr << "    wI: input width (also weight of input LSB), \n";
+		cerr << "    msbO and lsbO: weights of output MSB and LSB,\n";
 	}
 
 	if ( full || opName=="options"){
@@ -271,17 +297,7 @@ bool parseCommandLine(int argc, char* argv[]){
 				}
 			}
 		}
-		else if (opname == "FixFunction") {
-			int nargs = 1;
-			if (i+nargs > argc)
-				usage(argv[0],opname); // and exit
-			string func = argv[i++];
-			FixFunction *toto = new FixFunction(func);
-			//			toto -> buildPolyApprox(acc);
-		}
-
-		// Hidden and undocumented for now
-		else if (opname == "PolyApprox") {
+		else if (opname == "BasicPolyApprox") {
 			int nargs = 3;
 			if (i+nargs > argc)
 				usage(argv[0],opname); // and exit
@@ -313,18 +329,30 @@ bool parseCommandLine(int argc, char* argv[]){
 			cout << "\n r=" << r << endl;  
 		}
 
-
-		else if (opname == "FunctionTable") {
+		else if (opname == "FixFunctionByTable") {
 			int nargs = 4;
 			if (i+nargs > argc)
 				usage(argv[0],opname); // and exit
 			string func = argv[i++];
 			int wI = checkStrictlyPositive(argv[i++], argv[0]);
-			int lsbO = atoi(argv[i++]);
 			int msbO = atoi(argv[i++]);
-			Operator* tg = new FunctionTable(target, func, wI, lsbO, msbO);
+			int lsbO = atoi(argv[i++]);
+			Operator* tg = new FixFunctionByTable(target, func, wI, msbO, lsbO);
 			addOperator(tg);
 		}
+
+		else if (opname == "FixFunctionBySimplePoly") {
+			int nargs = 4;
+			if (i+nargs > argc)
+				usage(argv[0],opname); // and exit
+			string func = argv[i++];
+			int wI = checkStrictlyPositive(argv[i++], argv[0]);
+			int msbO = atoi(argv[i++]);
+			int lsbO = atoi(argv[i++]);
+			Operator* tg = new FixFunctionBySimplePoly(target, func, wI, msbO, lsbO);
+			addOperator(tg);
+		}
+
 		else if (opname == "TestBench") {
 			int nargs = 1;
 			if (i+nargs > argc)

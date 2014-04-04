@@ -8,8 +8,8 @@ using namespace std;
 namespace flopoco{
 
 
-	FixConstant::FixConstant(const int MSB_, const int LSB_, const bool signed_, const mpfr_t val_) : 
-		MSB(MSB_), LSB(LSB_), width(MSB_-LSB_+1), isSignedFormat(signed_) {
+	FixConstant::FixConstant(const int MSB_, const int LSB_, const bool isSigned_, const mpfr_t val_) : 
+		MSB(MSB_), LSB(LSB_), width(MSB_-LSB_+1), isSigned(isSigned_) {
 		mpfr_init2(fpValue, width);
 		mpfr_set(fpValue, val_, GMP_RNDN); // TODO check no error?
 	}
@@ -19,14 +19,14 @@ namespace flopoco{
 
 #if 0 // Warning the following code is unfinished and untested
 	FixConstant::FixConstant(const bool signed_, const mpfr_t val_) : 
-		isSignedFormat(signed_) {
+		isSigned(signed_) {
 
 		bool sign;
 		mpz_class zval;
 		LSB =  mpfr_get_z_exp (zval.get_mpz_t(),val_);
 
 		// conversion to (sign, absval)
-		if(isSignedFormat) {
+		if(isSigned) {
 			if(zval<0) {
 				sign=true; 
 				zval=-zval;
@@ -54,7 +54,7 @@ namespace flopoco{
 			MSB++;			
 		}
 
-		if(isSignedFormat)
+		if(isSigned)
 			MSB++;
 		/* -1 s'écrit */
 
@@ -70,27 +70,32 @@ namespace flopoco{
 	} 
 	
 
-	bool FixConstant::isSigned() {
-		return isSignedFormat;
-	}
-
-	bool FixConstant::isZero() {
-		return (0==mpfr_sgn(fpValue));
-	}
-
-	int FixConstant::getMSB() {
-		return MSB;
-	}
-	int FixConstant::getLSB() {
-		return LSB;
-	}
-
 
 	std::string FixConstant::getBitVector(int margins){
+		//		cout <<  "in FixConstant::getBitVector, fpValue=" << printMPFR(fpValue) << endl;
 		// use the function in utils.hpp
-		if(isSignedFormat)
+		if(isSigned)
 			return signedFixPointNumber(fpValue, MSB, LSB);
 		else
 			return unsignedFixPointNumber(fpValue, MSB, LSB);
 	}
+
+	bool FixConstant::isZero(){
+		return mpfr_zero_p(fpValue);
+	}
+
+	void FixConstant::changeMSB(int newMSB){
+		MSB=newMSB;
+		if(newMSB>=MSB){
+			// Nothing to do! the new size includes the old one
+		}
+		else{
+			// TODO: check that the number fits its new size, and bork otherwise. 
+		}
+	}
+
+	void FixConstant::changeLSB(int newLSB){
+		throw("FixConstant::changeLSB: TODO");
+	}
+
 }

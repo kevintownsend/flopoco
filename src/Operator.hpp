@@ -132,7 +132,7 @@ public:
 		addInput (name, 1, false);
 	}
 
-	/** Adds an output signal to the operator.
+	/** Adds  signal to the operator.
 	 * Adds a signal of type Signal::out to the the I/O signal list.
 	 * @param name  the name of the signal
 	 * @param width the number of bits of the signal.
@@ -263,6 +263,12 @@ public:
 	 *                formed with the operator internal parameters
 	*/
 	void setName(std::string prefix, std::string postfix);
+
+
+	/** Adds a comment before the entity declaration, along with the copyright string etc.
+			The "comment" string should include -- at the beginning of each line.
+	*/
+	void addHeaderComment(std::string comment);
 		
 	/** Return the operator name. 
 	 * Returns a string value representing the name of the operator. 
@@ -1394,6 +1400,7 @@ private:
 	bool                   hasRegistersWithAsyncReset_; 	/**< True if the operator has registers having an asynch reset */
 	bool                   hasRegistersWithSyncReset_;  	/**< True if the operator has registers having a synch reset */
 	string                 commentedName_;              	/**< Usually is the default name of the architecture.  */
+	string                 headerComment_;              	/**< Optional comment that gets added to the header. Possibly multiline.  */
 	string                 copyrightString_;            	/**< Authors and years.  */
 	int                    currentCycle_;               	/**< The current cycle, when building a pipeline */
 	double                 criticalPath_;               	/**< The current delay of the current pipeline stage */

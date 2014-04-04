@@ -41,12 +41,13 @@
 #include "Targets/CycloneV.hpp"
 
 
-#include "FixFunctions/FixFunction.hpp"
-#include "FixFunctions/FunctionTable.hpp"
-#include "FixFunctions/BasicPolyApprox.hpp"
-#include "FixFunctions/PiecewisePolyApprox.hpp"
 
 #include "TestBench.hpp"
+#include "FixFunctions/FixFunction.hpp"
+#include "FixFunctions/BasicPolyApprox.hpp"
+#include "FixFunctions/PiecewisePolyApprox.hpp"
+#include "FixFunctions/FixFunctionByTable.hpp"
+#include "FixFunctions/FixFunctionBySimplePoly.hpp"
 
 #if 0
 /* shifters + lzoc ------------------------------------------- */
@@ -115,11 +116,6 @@
 #ifndef _WIN32
 
 #ifdef HAVE_SOLLYA
-#include "FixedPointFunctions/HOTBM.hpp"
-#include "FixedPointFunctions/FunctionTable.hpp"
-#include "FixedPointFunctions/PolyCoeffTable.hpp"
-#include "FixedPointFunctions/FunctionEvaluator.hpp"
-#include "FixedPointFunctions/PolynomialEvaluator.hpp"
 #endif
 #endif
 /* fixed-point ----------------------------------------------- */

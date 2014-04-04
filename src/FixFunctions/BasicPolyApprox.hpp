@@ -87,12 +87,12 @@ namespace flopoco{
 		double approxErrorBound;          /**< guaranteed upper bound on the approx error of the approximation provided. Should be smaller than targetAccuracy */
 		void buildApproxFromDegreeAndLSBs(); /**< build an approximation of a certain degree, LSB being already defined, then computes the approx error.
 																						Essentially a wrapper for Sollya fpminimax() followed by supnorm()*/
+		int LSB;                          /**< weight of the LSB of the polynomial approximation */
+		int constLSB;                     /**< weight of the LSB of the constant coeff, may be smaller than LSB for free */
 
 	private:
 		FixFunction *f;                   /**< The function to be approximated */
 		sollya_obj_t polynomialS;         /**< The polynomial approximating it */
-		int LSB;                          /**< weight of the LSB of the polynomial approximation */
-		int constLSB;                     /**< weight of the LSB of the constant coeff, may be smaller than LSB for free */
 
 
 		string srcFileName;   /**< useful only to enable same kind of reporting as for FloPoCo operators. */

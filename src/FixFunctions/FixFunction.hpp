@@ -6,8 +6,7 @@
 
 #include <sollya.h>
 #include <gmpxx.h>
-
-#include "Operator.hpp"
+#include "../TestCase.hpp"
 
 using namespace std;
 
@@ -24,7 +23,20 @@ namespace flopoco{
 	class FixFunction {
 	public:
 
-		FixFunction(string sollyaString);
+
+		/**
+			 The FixFunctionByTable constructor
+			 @param[string] func    a string representing the function, input range should be [0,1]
+			 @param[int]    wInX    input size, also opposite of input LSB weight
+			 @param[int]    lsbOut  output LSB weight
+			 @param[int]    msbOut  output MSB weight, used to determine wOut
+			 
+			 One could argue that MSB weight is redundant, as it can be deduced from an analysis of the function. 
+			 This would require quite a lot of work for non-trivial functions (isolating roots of the derivative etc).
+			 So this is currently left to the user.
+			 There are defaults for lsbOut and msbOut for situations when they are computed afterwards.
+		 */
+		FixFunction(string sollyaString, int wIn=0, int lsbOut=0, int msbOut=0);
 		FixFunction(sollya_obj_t fS);
 
 		virtual ~FixFunction();
@@ -32,18 +44,19 @@ namespace flopoco{
 		string getDescription() const;
 		double eval(double x) const;
 		void eval(mpfr_t r, mpfr_t x) const;
+		void eval(mpz_class x, mpz_class &rd, mpz_class &ru, bool correctlyRounded=false) const;
+
 		sollya_obj_t getSollyaObj() const;
 
+		void emulate(TestCase * tc,	bool correctlyRounded=false /**< if false, faithful function */);
 	private:
 
+		int wIn;   
+		int msbOut;
+		int lsbOut;
+		int wOut;
 		string description;
 		sollya_obj_t fS;
-
-		string srcFileName; /**< useful only to enable same kind of reporting as for FloPoCo operators. */
-		string uniqueName_; /**< useful only to enable same kind of reporting as for FloPoCo operators. */
-		
-		//		int verbose; /**< Flopoco-like verbosity level, from 0 to 4*/
-
 
 	};
 

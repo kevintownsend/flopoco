@@ -4,7 +4,8 @@
   Authors: Florent de Dinechin
 
   This file is part of the FloPoCo project
-  developed by the Arenaire team at Ecole Normale Superieure de Lyon
+  developed by the Aric team at Ecole Normale Superieure de Lyon
+	then by the Socrate team at INSA de Lyon
   
   Initial software.
   Copyright © ENS-Lyon, INRIA, CNRS, UCBL,  
@@ -19,27 +20,25 @@
 namespace flopoco{
 
 
-	FixFunction::FixFunction(string sollyaString_)
+	FixFunction::FixFunction(string sollyaString_, int wIn_, int msbOut_, int lsbOut_):
+		wIn(wIn_), msbOut(msbOut_), lsbOut(lsbOut_), wOut(msbOut_-lsbOut+1)
 	{
  		ostringstream completeDescription;
-		completeDescription << sollyaString_  ; // << " on [" << printMPFR(xmin) << ", " << printMPFR(xmax) << "]"; 
+		completeDescription << sollyaString_  << " on[0,1)";
+		if(wIn!=0) // we have an IO specification
+			completeDescription << " for wIn=" << wIn << ", msbout=" << msbOut << ", lsbOut=" << lsbOut ;
 		description = completeDescription.str();
-		srcFileName = "FixFunction";  // useful only for reporting
-		uniqueName_=description;  // useful only for reporting
 
 		// Now do the parsing in Sollya
 		fS= sollya_lib_parse_string(sollyaString_.c_str());
 
 		/* If  parse error throw an exception */
 		if (sollya_lib_obj_is_error(fS))
-			THROWERROR("Unable to parse input function.");
-
-		REPORT(DEBUG, "Function: " << description << " successfully parsed");
+			throw("FixFunction: Unable to parse input function.");
 	}
 
 	FixFunction::FixFunction(sollya_obj_t fS_): fS(fS_)
 	{
-		srcFileName = "FixFunction";  // useful only for reporting
 	}
 
 
@@ -60,23 +59,73 @@ namespace flopoco{
 		sollya_lib_evaluate_function_at_point(r, fS, x, NULL);
 	}
 
+
 	double FixFunction::eval(double x) const
 	{
 		mpfr_t mpX, mpR;
 		double r;
 
-		mpfr_inits(mpX, mpR, NULL);
+ 		mpfr_inits(mpX, mpR, NULL);
 		mpfr_set_d(mpX, x, GMP_RNDN);
 		sollya_lib_evaluate_function_at_point(mpR, fS, mpX, NULL);
 		r = mpfr_get_d(mpR, GMP_RNDN);
-		mpfr_clears(mpX, mpR, NULL);
 
+		mpfr_clears(mpX, mpR, NULL);
 		return r;
 	}
+
+
+	void FixFunction::eval(mpz_class x, mpz_class &rd, mpz_class &ru, bool correctlyRounded) const
+	{
+		int precision=10*(wIn+wOut);
+		sollya_lib_set_prec(sollya_lib_constant_from_int(precision));
+
+		mpfr_t mpX, mpR;
+		mpfr_init2(mpX,wIn+2);
+		mpfr_init2(mpR,precision);
+
+		/* Convert x to an mpfr_t in [0,1[ */
+		mpfr_set_z(mpX, x.get_mpz_t(), GMP_RNDN);
+		mpfr_div_2si(mpX, mpX, wIn, GMP_RNDN);
+	
+		/* Compute the function */
+		eval(mpR, mpX);
+		//		REPORT(FULL,"function() input is:"<<sPrintBinary(mpX)); 
+		//		REPORT(FULL,"function() output before rounding is:"<<sPrintBinary(mpR)); 
+		/* Compute the signal value */
+		mpfr_mul_2si(mpR, mpR, -lsbOut, GMP_RNDN);
+
+		/* So far we have a highly accurate evaluation. Rounding to target size happens only now
+		 */
+		if(correctlyRounded){
+			mpfr_get_z(ru.get_mpz_t(), mpR, GMP_RNDN); 
+			mpfr_get_z(rd.get_mpz_t(), mpR, GMP_RNDN);
+		}
+		else{
+			mpfr_get_z(ru.get_mpz_t(), mpR, GMP_RNDU);
+			mpfr_get_z(rd.get_mpz_t(), mpR, GMP_RNDD);
+		}
+
+		//		REPORT(FULL,"function() output r = ["<<rd<<", " << ru << "]"); 
+		mpfr_clear(mpX);
+		mpfr_clear(mpR);
+	}
+
 
 	sollya_obj_t FixFunction::getSollyaObj() const
 	{
 		return fS;
 	}
 
+
+
+	
+	void FixFunction::emulate(TestCase * tc, bool correctlyRounded){
+			mpz_class x = tc->getInputValue("X");
+			mpz_class rd,ru;
+			eval(x,rd,ru,correctlyRounded);
+			tc->addExpectedOutput("Y", rd);
+			if(!correctlyRounded)
+				tc->addExpectedOutput("Y", ru);
+	}
 } //namespace

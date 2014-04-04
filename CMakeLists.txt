@@ -210,10 +210,11 @@ src/IntMultipliers/MultiplierBlock
  src/DualTable2
  
  src/FixFunctions/FixFunction
- src/FixFunctions/FunctionTable
+ src/FixFunctions/FixFunctionByTable
  src/FixFunctions/BasicPolyApprox
  src/FixFunctions/PiecewisePolyApprox
- src/FixFunctions/FixHornerPolynomialEvaluator
+ src/FixFunctions/FixHornerEvaluator
+ src/FixFunctions/FixFunctionBySimplePoly
  src/FixConstant
 
 # TestBench-related -------------------------------------------------

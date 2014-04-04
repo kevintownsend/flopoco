@@ -237,6 +237,11 @@ namespace flopoco{
 		uniqueName_ = operatorName;
 	}
 	
+
+
+	void Operator::addHeaderComment(std::string comment){
+		headerComment_ +=  comment;
+	}
 	
 	void  Operator::changeName(std::string operatorName){
 		commentedName_ = uniqueName_;
@@ -358,7 +363,7 @@ namespace flopoco{
 			if(commentedName_.size()<74) s = (74-commentedName_.size())/2; else s=0;
 			o<<"--"; for(i=0; i<s; i++) o<<" "; o << "(" << commentedName_ << ")" << endl; 
 		}
-		
+		o<< headerComment_; 
 		o<<"-- This operator is part of the Infinite Virtual Library FloPoCoLib"<<endl;
 		o<<"-- All rights reserved "<<endl;
 		o<<"-- Authors: " << authorsyears <<endl;

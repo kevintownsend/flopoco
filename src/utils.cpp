@@ -54,7 +54,7 @@ namespace flopoco{
 		}
 		po2 = ((mpz_class) 1)<<size;
 		number=x;
-		
+		//		cout << "***** "<< po2 << " " << x <<endl;
 		for (int i = 0; i < size ; i++) {
 			po2 = po2>>1;
 			if (number >= po2) {
@@ -176,11 +176,14 @@ namespace flopoco{
 	}
 
 
-	std::string unsignedFixPointNumber(mpfr_t x, int msb, int lsb, int margins)
+	std::string unsignedFixPointNumber(mpfr_t xx, int msb, int lsb, int margins)
 	{
 		int size = msb-lsb+1;
 		mpz_class h;
-		
+		mpfr_t x;
+		// make a copy! The first version of this function was destructive, and this was a bug
+		mpfr_init2(x, mpfr_get_prec(xx));
+		mpfr_set(x,xx,GMP_RNDN);
 		mpfr_mul_2si(x, x, -lsb, GMP_RNDN); // exact
 		mpfr_get_z(h.get_mpz_t(), x,  GMP_RNDN); // rounding takes place here     
 
@@ -189,6 +192,7 @@ namespace flopoco{
 			o <<  "Error, negative input to unsignedFixPointNumber :" << printMPFR(x);
 			throw o.str();
 		}
+		mpfr_clear(x);
 		ostringstream result;
 		if(margins==0||margins==-1)
 			result<<"\"";
@@ -199,23 +203,28 @@ namespace flopoco{
 	}
 
 
-	std::string signedFixPointNumber(mpfr_t x, int msb, int lsb, int margins)
+	std::string signedFixPointNumber(mpfr_t xx, int msb, int lsb, int margins)
 	{
 		int size = msb-lsb+1;
 		mpz_class h;
-		
+		mpfr_t x;
+		// make a copy! The first version of this function was destructive, and this was a bug
+		mpfr_init2(x, mpfr_get_prec(xx));
+		mpfr_set(x, xx, GMP_RNDN);
 		mpfr_mul_2si(x, x, -lsb, GMP_RNDN); // exact
 		mpfr_get_z(h.get_mpz_t(), x,  GMP_RNDN); // rounding takes place here     
 
 		if(h<0){
 			h+= (mpz_class(1)) << size;
 		}
+		mpfr_clear(x);
 		ostringstream result;
 		if(margins==0||margins==-1)
 			result<<"\"";
 		result << unsignedBinary(h, size);
 		if(margins==0||margins==1)
 			result<<"\"";
+
 		return result.str(); 
 	}
 
