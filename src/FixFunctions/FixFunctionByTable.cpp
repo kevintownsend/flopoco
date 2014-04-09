@@ -37,7 +37,7 @@ namespace flopoco{
 	FixFunctionByTable::FixFunctionByTable(Target* target, string func, int wIn, int msbOut, int lsbOut, int logicTable, map<string, double> inputDelays):
 		Table(target, wIn, msbOut-lsbOut+1, 0, -1, logicTable){
 
-		f=new FixFunction(func, wIn, lsbOut, msbOut);
+		f=new FixFunction(func, wIn, msbOut, lsbOut);
 		ostringstream name;
 		srcFileName="FixFunctionByTable";
 		
