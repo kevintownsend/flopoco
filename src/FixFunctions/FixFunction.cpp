@@ -20,13 +20,13 @@
 namespace flopoco{
 
 
-	FixFunction::FixFunction(string sollyaString_, int wIn_, int msbOut_, int lsbOut_):
-		wIn(wIn_), msbOut(msbOut_), lsbOut(lsbOut_), wOut(msbOut_-lsbOut+1)
+	FixFunction::FixFunction(string sollyaString_, int lsbIn_, int msbOut_, int lsbOut_):
+		lsbIn(lsbIn_),wIn(-lsbIn_), msbOut(msbOut_), lsbOut(lsbOut_), wOut(msbOut_-lsbOut+1)
 	{
  		ostringstream completeDescription;
 		completeDescription << sollyaString_  << " on[0,1)";
-		if(wIn!=0) // we have an IO specification
-			completeDescription << " for wIn=" << wIn << ", msbout=" << msbOut << ", lsbOut=" << lsbOut ;
+		if(lsbIn!=0) // we have an IO specification
+			completeDescription << " for lsbIn=" << lsbIn << " (wIn=" << wIn << "), msbout=" << msbOut << ", lsbOut=" << lsbOut ;
 		description = completeDescription.str();
 
 		// Now do the parsing in Sollya

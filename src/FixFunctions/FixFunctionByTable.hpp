@@ -19,7 +19,7 @@ namespace flopoco{
 			 The FixFunctionByTable constructor. For the meaning of the parameters, see FixFunction.hpp
 		 */
 
-		FixFunctionByTable(Target* target, string func, int wInX, int msbOut, int lsbOut, int logicTable=1, map<string, double> inputDelays = emptyDelayMap);
+		FixFunctionByTable(Target* target, string func, int lsbIn, int msbOut, int lsbOut, int logicTable=1, map<string, double> inputDelays = emptyDelayMap);
 
 		/**
 		 * FixFunctionByTable destructor

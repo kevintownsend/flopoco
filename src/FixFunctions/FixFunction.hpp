@@ -27,7 +27,7 @@ namespace flopoco{
 		/**
 			 The FixFunctionByTable constructor
 			 @param[string] func    a string representing the function, input range should be [0,1]
-			 @param[int]    wInX    input size, also opposite of input LSB weight
+			 @param[int]    lsbX    input LSB weight (-lsbX is the input size)
 			 @param[int]    lsbOut  output LSB weight
 			 @param[int]    msbOut  output MSB weight, used to determine wOut
 			 
@@ -36,7 +36,7 @@ namespace flopoco{
 			 So this is currently left to the user.
 			 There are defaults for lsbOut and msbOut for situations when they are computed afterwards.
 		 */
-		FixFunction(string sollyaString, int wIn=0, int lsbOut=0, int msbOut=0);
+		FixFunction(string sollyaString, int lsbIn=0, int lsbOut=0, int msbOut=0);
 		FixFunction(sollya_obj_t fS);
 
 		virtual ~FixFunction();
@@ -51,6 +51,7 @@ namespace flopoco{
 		void emulate(TestCase * tc,	bool correctlyRounded=false /**< if false, faithful function */);
 	private:
 
+		int lsbIn;   
 		int wIn;   
 		int msbOut;
 		int lsbOut;

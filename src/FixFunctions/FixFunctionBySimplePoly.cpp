@@ -37,9 +37,9 @@ namespace flopoco{
 #define DEBUGVHDL 0
 
 
-	FixFunctionBySimplePoly::FixFunctionBySimplePoly(Target* target, string func, int wIn, int lsbOut, int msbOut, bool finalRounding_, map<string, double> inputDelays):
+	FixFunctionBySimplePoly::FixFunctionBySimplePoly(Target* target, string func, int lsbIn, int msbOut, int lsbOut, bool finalRounding_, map<string, double> inputDelays):
 		Operator(target, inputDelays), finalRounding(finalRounding_){
-		f=new FixFunction(func, wIn, lsbOut, msbOut);
+		f=new FixFunction(func, lsbIn, lsbOut, msbOut);
 		
 		srcFileName="FixFunctionBySimplePoly";
 		
@@ -61,7 +61,6 @@ namespace flopoco{
 
 		//Building the vector of sizes for FixHornerEvaluator
 		// a0 is a bit special
-
 
 		// Now building the corresponding VHDL signals
 		vhdl << tab << "-- With the following polynomial, approx error bound is " << approxErrorBound << " ("<< log2(approxErrorBound) << " bits)" << endl;

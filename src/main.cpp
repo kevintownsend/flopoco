@@ -104,18 +104,18 @@ void usage(char *name, string opName = ""){
 	}
 
 	if ( full || opName == "FixFunctionByTable" || opName == "FixFunction"){					
-		OP( "FixFunctionByTable","function wI  msbO lsbO");
+		OP( "FixFunctionByTable","function lsbI  msbO lsbO");
 		cerr << "  Simple tabulation of a function defined on [0,1)\n";
-		cerr << "    wI: input width (also weight of input LSB), \n";
+		cerr << "    lsbI: weight of input LSB, for instance -8 for an 8-bit input (bit weights from -1 to -8)\n";
 		cerr << "    msbO and lsbO: weights of output MSB and LSB,\n";
 		cerr << "    function: sollya-syntaxed function to implement, e.g. \"sin(x*Pi/2)\" \n";
 	}
 
 	if ( full || opName == "FixFunctionBySimplePoly" || opName == "FixFunction"){					
-		OP( "FixFunctionByTable","function wI msbO lsbO ");
+		OP( "FixFunctionBySimplePoly","function wI msbO lsbO ");
 		cerr << "  A function evaluator using a single polynomial on the interval [0,1), evaluated with Horner scheme \n";
 		cerr << "    function: sollya-syntaxed function to implement, e.g. \"sin(x*Pi/2)\" \n";
-		cerr << "    wI: input width (also weight of input LSB), \n";
+		cerr << "    lsbI: weight of input LSB, for instance -8 for an 8-bit input (bit weights from -1 to -8)\n";
 		cerr << "    msbO and lsbO: weights of output MSB and LSB,\n";
 	}
 
@@ -334,10 +334,10 @@ bool parseCommandLine(int argc, char* argv[]){
 			if (i+nargs > argc)
 				usage(argv[0],opname); // and exit
 			string func = argv[i++];
-			int wI = checkStrictlyPositive(argv[i++], argv[0]);
+			int lsbI = atoi(argv[i++]);
 			int msbO = atoi(argv[i++]);
 			int lsbO = atoi(argv[i++]);
-			Operator* tg = new FixFunctionByTable(target, func, wI, msbO, lsbO);
+			Operator* tg = new FixFunctionByTable(target, func, lsbI, msbO, lsbO);
 			addOperator(tg);
 		}
 
@@ -346,10 +346,10 @@ bool parseCommandLine(int argc, char* argv[]){
 			if (i+nargs > argc)
 				usage(argv[0],opname); // and exit
 			string func = argv[i++];
-			int wI = checkStrictlyPositive(argv[i++], argv[0]);
+			int lsbI = atoi(argv[i++]);
 			int msbO = atoi(argv[i++]);
 			int lsbO = atoi(argv[i++]);
-			Operator* tg = new FixFunctionBySimplePoly(target, func, wI, msbO, lsbO);
+			Operator* tg = new FixFunctionBySimplePoly(target, func, lsbI, msbO, lsbO);
 			addOperator(tg);
 		}
 
