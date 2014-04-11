@@ -7,15 +7,24 @@ using namespace std;
 namespace flopoco{
 
 
+	// plain logic vector, or wire
 	Signal::Signal(const string name, const Signal::SignalType type, const int width, const bool isBus) : 
 		name_(name), type_(type), width_(width), numberOfPossibleValues_(1), lifeSpan_(0),  cycle_(0),	
-		isFP_(false), isIEEE_(false), wE_(0), wF_(0), isBus_(isBus), delay_(0.0) {
+		isFP_(false), isFix_(false), isIEEE_(false), wE_(0), wF_(0), isBus_(isBus), delay_(0.0) {
+	}
+
+	// fixed point constructor
+	Signal::Signal(const string name, const Signal::SignalType type, const bool isSigned, const int MSB, const int LSB) : 
+		name_(name), type_(type), width_(MSB-LSB+1), numberOfPossibleValues_(1), 
+		lifeSpan_(0), cycle_(0),
+		isFP_(false), isFix_(true), isSigned_(isSigned),  MSB_(MSB), LSB_(LSB), isBus_(true), delay_(0.0)
+	{
 	}
 
 	Signal::Signal(const string name, const Signal::SignalType type, const int wE, const int wF, const bool ieeeFormat) : 
 		name_(name), type_(type), width_(wE+wF+3), numberOfPossibleValues_(1), 
 		lifeSpan_(0), cycle_(0),
-		isFP_(true), isIEEE_(false), wE_(wE), wF_(wF), isBus_(false), delay_(0.0)
+		isFP_(true), isFix_(false), isIEEE_(false), wE_(wE), wF_(wF), isBus_(false), delay_(0.0)
 	{
 		if(ieeeFormat) { // correct some of the initializations above
 			width_=wE+wF+1;
@@ -37,7 +46,15 @@ namespace flopoco{
 
 	int Signal::wF() const {return(wF_);}
 	
+	int Signal::MSB() const {return(MSB_);}
+	
+	int Signal::LSB() const {return(LSB_);}
+	
 	bool Signal::isFP() const {return isFP_;}
+
+	bool Signal::isFix() const {return isFix_;}
+
+	bool Signal::isSigned() const {return isFix_ && isSigned_;}
 
 	bool Signal::isIEEE() const {return isIEEE_;}
 

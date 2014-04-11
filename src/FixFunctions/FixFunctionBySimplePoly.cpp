@@ -50,7 +50,8 @@ namespace flopoco{
 		setCopyrightString("Florent de Dinechin (2014)");
 		addHeaderComment("-- Evaluator for " +  f-> getDescription() + "\n"); 
 		addInput("X"  , -lsbIn);
-		addOutput("Y" , msbOut-lsbOut+1, 2);
+		int outputSize = msbOut-lsbOut+1;
+		addOutput("Y" ,outputSize , 2);
 
 
 		// Polynomial approximation
@@ -77,17 +78,22 @@ namespace flopoco{
 		bool plainStupidVHDL=true;
 
 		if(plainStupidVHDL) {
-			int g=3;
-			
 			// Here we assume all the coefficients already include the proper number of guard bits
-			vhdl << tab << declare(join("Sigma", 0), coeffSize[degree]) << " <= A" << degree << ";" << endl;
-			int sizeSigma=coeffSize[degree];
+			int sigmaMSB=coeffMSB[degree];
+			int sigmaLSB=coeffLSB[degree];
+			vhdl << tab << declareFixPoint(join("Sigma", 0), true, sigmaMSB, sigmaLSB) 
+					 << " <= " << join("A", degree)  << ";" << endl;
 
 			for(int i=1; i<=degree; i++) {
+				vhdl << tab << declareFixPoint(join("P", i), true, 0/*MSB*/,  sigmaLSB - sigmaMSB + f->lsbIn/*LSB*/) 
+						 <<  " <= X*Sigma" << i-1 << ";" << endl;
 				
-				vhdl << tab << declare(join("Pfull", i), f->wIn + sizeSigma) <<  " <= X*Sigma" << i-1 << endl;
-				sizeSigma = coeffSize[i];
-				vhdl << tab << declare(join("Ptrunc", i), f->wIn + sizeSigma) <<  " <= X*Sigma" << i-1 << endl;
+				sigmaMSB = coeffMSB[degree-i];
+				sigmaLSB = coeffLSB[degree-i];
+				resizeFixPoint(join("Ptrunc", i), join("P", i), sigmaMSB, sigmaLSB);
+				
+				vhdl << tab << declareFixPoint(join("Sigma", i), true, sigmaMSB, sigmaLSB) 
+						 << " <= " << join("A", degree-i) << " + " << join("Ptrunc", i) << ";" << endl;
 			}
 		}
 
@@ -96,9 +102,7 @@ namespace flopoco{
 		// a0 is a bit special
 
 
-#if 1
-#endif
-		vhdl << tab << "-- " << endl;
+		vhdl << tab << "Y <= " << join("Sigma", degree) << range(coeffSize[0]-1,  coeffSize[0] - outputSize) << ";" << endl;
 	}
 
 

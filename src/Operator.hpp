@@ -382,7 +382,7 @@ public:
 	double getSignalDelay(string name);
 
 
-	/** Declares a signal implicitely by having it appearing on the Left Hand Side of a VHDL assignment
+	/** Declares a signal appearing on the Left Hand Side of a VHDL assignment
 	 * @param name is the name of the signal
 	 * @param width is the width of the signal (optional, default 1)
 	 * @param isbus: a signal of width 1 is declared as std_logic when false, as std_logic_vector when true (optional, default false)
@@ -400,6 +400,22 @@ public:
 	string declare(string name, Signal::SignalType regType = Signal::wire ) {
 		return declare(name, 1, false, regType);
 	}
+
+	/** Declares a fixed-point signal on the Left Hand Side of a VHDL assignment
+	 * @param name is the name of the signal
+	 * @return name
+	 */
+	string declareFixPoint(string name, const bool isSigned, const int MSB, const int LSB, Signal::SignalType regType = Signal::wire );
+
+	/** Resizes a fixed-point signal and assigns it to a new declared signal.
+			May zero-extend, sign-extend, or truncate.
+			Warns at high debug levels when truncating. Warns at all levels when truncating MSBs.  
+	 * @param lhsName is the name of the new (resized) signal
+	 * @param rhsName is the name of the old (to be resized) signal
+	 * @return name
+	 */
+	void resizeFixPoint(string lhsName, string rhsName, const int MSB, const int LSB, const int indentLevel=1);
+
 
 	// TODO: add methods that allow for signals with reset (when rewriting LongAcc for the new framework)
 

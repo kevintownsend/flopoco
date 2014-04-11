@@ -1,2 +1,6 @@
 - Interface to FunctionTable has changed deeply, manually convert everything
 -reverse MSB and LSB in LongAcc etc
+
+
+- Check all these registered etc nonsense in Signal. Is it really used?
+- get rid of use() in Operator

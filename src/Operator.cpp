@@ -730,6 +730,7 @@ namespace flopoco{
 	
 	double Operator::getOutputDelay(string s) {return outDelayMap[s];}  // TODO add checks
 	
+
 	string Operator::declare(string name, const int width, bool isbus, Signal::SignalType regType) {
 		Signal* s;
 		ostringstream e;
@@ -738,15 +739,18 @@ namespace flopoco{
 			e << srcFileName << " (" << uniqueName_ << "): ERROR in declare(), signal " << name<< " already exists";
 			throw e.str();
 		}
-		// construct the signal (lifeSpan and cycle are reset to 0 by the constructor)
-		s = new Signal(name, regType, width, isbus);
+
 		if((regType==Signal::registeredWithoutReset) || (regType==Signal::registeredWithZeroInitialiser))
 			hasRegistersWithoutReset_ = true;
 		if(regType==Signal::registeredWithSyncReset)
 			hasRegistersWithSyncReset_ = true;
 		if(regType==Signal::registeredWithAsyncReset)
 			hasRegistersWithAsyncReset_ = true;
-		
+
+		// construct the signal (lifeSpan and cycle are reset to 0 by the constructor)
+		s = new Signal(name, regType, width, isbus);
+
+
 		// define its cycle 
 		if(isSequential())
 			s->setCycle(this->currentCycle_);
@@ -759,6 +763,76 @@ namespace flopoco{
 		signalMap_[name] = s ;
 		return name;
 	}
+
+	// TODO: factor code between next and previous methods
+	string Operator::declareFixPoint(string name, const bool isSigned, const int MSB, const int LSB, Signal::SignalType regType){
+		Signal* s;
+		ostringstream e;
+		// check the signals doesn't already exist
+		if(signalMap_.find(name) !=  signalMap_.end()) {
+			e << srcFileName << " (" << uniqueName_ << "): ERROR in declareFixPoint(), signal " << name<< " already exists";
+			throw e.str();
+		}
+
+		// construct the signal (lifeSpan and cycle are reset to 0 by the constructor)
+		s = new Signal(name, regType, isSigned, MSB, LSB);
+
+		// define its cycle 
+		if(isSequential())
+			s->setCycle(this->currentCycle_);
+		
+		// add this signal to the declare table
+		declareTable[name] = s->getCycle();
+		
+		// add the signal to signalMap and signalList
+		signalList_.push_back(s);    
+		signalMap_[name] = s ;
+		return name;
+	}
+
+	/** Resizes a fixed-point signal and assigns it to a new declared signal.
+			May zero-extend, sign-extend, or truncate.
+			Warns at high debug levels when truncating. Warns at all levels when truncating MSBs.  
+	 */
+	void  Operator::resizeFixPoint(string lhsName, string rhsName, const int MSB, const int LSB, const int indentLevel){
+		Signal* rhsSignal=getSignalByName(rhsName); 
+		bool isSigned = rhsSignal->isSigned();
+		int oldMSB = rhsSignal->MSB();
+		int oldLSB = rhsSignal->LSB();
+		REPORT(DEBUG, "Resizing signal " << rhsName << " from (" << oldMSB << ", " << oldLSB << ") to (" << MSB << ", " << LSB << ")"); 
+
+		for (int i=0; i<indentLevel; i++)
+			vhdl << tab;
+		vhdl << declareFixPoint(lhsName, isSigned, MSB, LSB) << " <= ";
+
+		int leftmostBit; // the left bit to take from the std_vector
+		// First sign or zero extension
+		if (MSB>oldMSB)	{
+			leftmostBit=oldMSB-oldLSB;
+			if(isSigned) 	{
+				for(int i=0; i<(MSB-oldMSB); i++)
+					vhdl << rhsName << of(leftmostBit) << " & "; // sign extension
+			}
+			else {
+				vhdl << zg(MSB-oldMSB) << " & ";
+			}
+		}
+		if (MSB<oldMSB)	{
+			REPORT (0, "Warning, truncating " << (oldMSB - MSB) << "MSB bits when resizing " << rhsName << " to " << lhsName);
+			leftmostBit = oldMSB-oldLSB  -(oldMSB - MSB);
+		} 
+		
+
+		if(oldLSB > LSB) {//No truncation, some padding
+			vhdl << rhsName << range(leftmostBit, 0) << " & " << zg(LSB-oldLSB);
+		}
+		else { // oldLSB<=LSB
+			vhdl << rhsName << range(leftmostBit, LSB-oldLSB);
+		}
+		
+		vhdl << "; -- fix resize from (" << oldMSB << ", " << oldLSB << ") to (" << MSB << ", " << LSB << ")" << endl;
+	}
+
 	
 	
 	#if 1
