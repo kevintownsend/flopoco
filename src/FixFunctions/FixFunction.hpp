@@ -44,11 +44,13 @@ namespace flopoco{
 		string getDescription() const;
 		double eval(double x) const;
 		void eval(mpfr_t r, mpfr_t x) const;
-		void eval(mpz_class x, mpz_class &rd, mpz_class &ru, bool correctlyRounded=false) const;
+
+		/** if correctlyRounded is true, compute the CR result in rNorD; otherwise computes the RD in rNorD and the RU in ru */
+		void eval(mpz_class x, mpz_class &rNorD, mpz_class &ru, bool correctlyRounded=false) const;
 
 		sollya_obj_t getSollyaObj() const;
 
-		void emulate(TestCase * tc,	bool correctlyRounded=false /**< if false, faithful function */);
+		void emulate(TestCase * tc,	bool correctlyRounded=false /**< if true, correctly rounded RN; if false, faithful function */);
 	private:
 
 		int lsbIn;   

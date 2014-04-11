@@ -39,7 +39,7 @@ namespace flopoco{
 
 	FixFunctionBySimplePoly::FixFunctionBySimplePoly(Target* target, string func, int lsbIn, int msbOut, int lsbOut, bool finalRounding_, map<string, double> inputDelays):
 		Operator(target, inputDelays), finalRounding(finalRounding_){
-		f=new FixFunction(func, lsbIn, lsbOut, msbOut);
+		f=new FixFunction(func, lsbIn, msbOut, lsbOut);
 		
 		srcFileName="FixFunctionBySimplePoly";
 		
@@ -49,6 +49,8 @@ namespace flopoco{
 
 		setCopyrightString("Florent de Dinechin (2014)");
 		addHeaderComment("-- Evaluator for " +  f-> getDescription() + "\n"); 
+		addInput("X"  , -lsbIn);
+		addOutput("Y" , msbOut-lsbOut+1, 2);
 
 
 		// Polynomial approximation
@@ -87,7 +89,7 @@ namespace flopoco{
 
 
 	void FixFunctionBySimplePoly::emulate(TestCase* tc){
-		f->emulate(tc, true /*correctly rounded*/);
+		f->emulate(tc);
 	}
 }
 	

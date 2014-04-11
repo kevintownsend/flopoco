@@ -62,7 +62,7 @@ namespace flopoco{
 
 
 	void FixFunctionByTable::emulate(TestCase* tc){
-		f->emulate(tc);
+		f->emulate(tc, true /* correct rounding */); 
 	}
 }
 	

@@ -75,7 +75,7 @@ namespace flopoco{
 	}
 
 
-	void FixFunction::eval(mpz_class x, mpz_class &rd, mpz_class &ru, bool correctlyRounded) const
+	void FixFunction::eval(mpz_class x, mpz_class &rNorD, mpz_class &ru, bool correctlyRounded) const
 	{
 		int precision=10*(wIn+wOut);
 		sollya_lib_set_prec(sollya_lib_constant_from_int(precision));
@@ -98,12 +98,11 @@ namespace flopoco{
 		/* So far we have a highly accurate evaluation. Rounding to target size happens only now
 		 */
 		if(correctlyRounded){
-			mpfr_get_z(ru.get_mpz_t(), mpR, GMP_RNDN); 
-			mpfr_get_z(rd.get_mpz_t(), mpR, GMP_RNDN);
+			mpfr_get_z(rNorD.get_mpz_t(), mpR, GMP_RNDN);
 		}
 		else{
+			mpfr_get_z(rNorD.get_mpz_t(), mpR, GMP_RNDD);
 			mpfr_get_z(ru.get_mpz_t(), mpR, GMP_RNDU);
-			mpfr_get_z(rd.get_mpz_t(), mpR, GMP_RNDD);
 		}
 
 		//		REPORT(FULL,"function() output r = ["<<rd<<", " << ru << "]"); 
@@ -122,9 +121,9 @@ namespace flopoco{
 	
 	void FixFunction::emulate(TestCase * tc, bool correctlyRounded){
 			mpz_class x = tc->getInputValue("X");
-			mpz_class rd,ru;
-			eval(x,rd,ru,correctlyRounded);
-			tc->addExpectedOutput("Y", rd);
+			mpz_class rNorD,ru;
+			eval(x,rNorD,ru,correctlyRounded);
+			tc->addExpectedOutput("Y", rNorD);
 			if(!correctlyRounded)
 				tc->addExpectedOutput("Y", ru);
 	}
