@@ -306,7 +306,7 @@ bool parseCommandLine(int argc, char* argv[]){
 			int g =  atof(argv[i++]);
 			BasicPolyApprox *toto = new BasicPolyApprox(func, targetAcc, g);
 			cout << "Computed degree is " << toto->degree;
-			//			toto -> buildPolyApprox(acc);
+			cout << "Accuracy is " << toto->approxErrorBound << " ("<< log2(toto->approxErrorBound) << " bits)";
 		}
 		else if (opname == "PiecewisePolyApprox") {
 			int nargs = 3;

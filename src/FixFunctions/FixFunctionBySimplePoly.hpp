@@ -47,6 +47,7 @@ namespace flopoco{
 
 		vector<int> coeffMSB; 
 		vector<int> coeffLSB; 
+		vector<int> coeffSize; 
 	};
 
 }

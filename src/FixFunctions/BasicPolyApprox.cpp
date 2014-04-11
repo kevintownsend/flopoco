@@ -6,6 +6,7 @@
 
   This file is part of the FloPoCo project
   developed by the Arenaire team at Ecole Normale Superieure de Lyon
+	then the Socrate team at INSA de Lyon
   
   Initial software.
   Copyright © INSA-Lyon, ENS-Lyon, INRIA, CNRS, UCBL
@@ -21,39 +22,39 @@
 namespace flopoco{
 
 
-	BasicPolyApprox::BasicPolyApprox(FixFunction *f_, double targetAccuracy, int addGuardBitsToConstant): 
+	BasicPolyApprox::BasicPolyApprox(FixFunction *f_, double targetAccuracy, int addGuardBits): 
 		f(f_)
 	{
 		needToFreeF = false;
 		initialize();
-		buildApproxFromTargetAccuracy(targetAccuracy,  addGuardBitsToConstant);
+		buildApproxFromTargetAccuracy(targetAccuracy,  addGuardBits);
 		buildFixFormatVector();
 	}
 
 
-	BasicPolyApprox::BasicPolyApprox(string sollyaString_, double targetAccuracy, int addGuardBitsToConstant)
+	BasicPolyApprox::BasicPolyApprox(string sollyaString_, double targetAccuracy, int addGuardBits)
 	{
 		//  parsing delegated to FixFunction
 		f = new FixFunction(sollyaString_);
 		needToFreeF = true;
 		initialize();
-		buildApproxFromTargetAccuracy(targetAccuracy,  addGuardBitsToConstant);
+		buildApproxFromTargetAccuracy(targetAccuracy,  addGuardBits);
 		buildFixFormatVector();
 	}
 
 
 
-	BasicPolyApprox::BasicPolyApprox(sollya_obj_t fS_, double targetAccuracy, int addGuardBitsToConstant)
+	BasicPolyApprox::BasicPolyApprox(sollya_obj_t fS_, double targetAccuracy, int addGuardBits)
 	{
 		f = new FixFunction(fS_);
 		needToFreeF = true;
 		initialize();
-		buildApproxFromTargetAccuracy(targetAccuracy,  addGuardBitsToConstant);
+		buildApproxFromTargetAccuracy(targetAccuracy,  addGuardBits);
 		buildFixFormatVector();
 	}
 
 	BasicPolyApprox::BasicPolyApprox(sollya_obj_t fS_, int degree_, int lsb_): 
-		degree(degree_), LSB(lsb_), constLSB(lsb_) // TODO reassess constLSB, but I never observed an improvement with it
+		degree(degree_), LSB(lsb_)
 	{
 		f = new FixFunction(fS_);
 		needToFreeF = true;
@@ -123,7 +124,7 @@ namespace flopoco{
 
 
 
-	void BasicPolyApprox::buildApproxFromTargetAccuracy(double targetAccuracy, int addGuardBitsToConstant)
+	void BasicPolyApprox::buildApproxFromTargetAccuracy(double targetAccuracy, int addGuardBits)
 	{
 		// a few constant objects
 		sollya_obj_t fS = f->getSollyaObj(); // no need to free this one
@@ -135,22 +136,23 @@ namespace flopoco{
 
 		// This will be the LSB of the constant (unless extended below)
 		LSB = floor(log2(targetAccuracy));
-		REPORT(DEBUG, "InitialLSB=" << LSB);
+		REPORT(DEBUG, "LSB without guard bits is " << LSB);
 		
 		// A few lines to add guard bits to the constant, it will be for free in terms of evaluation
 		double constCoeffAccuracy = targetAccuracy;
 
-		if (-1==addGuardBitsToConstant) {
+		if (-1==addGuardBits) {
 			double maxEvalErrorInUlps = degree; // this assumes faithful multipliers in Horner scheme
-			constCoeffAccuracy /= (degree);
+			constCoeffAccuracy /= maxEvalErrorInUlps;
 		}
-		else if (addGuardBitsToConstant>0) {
-			// the caller provided the number of bits to add in addGuardBitsToConstants
-			constCoeffAccuracy /= addGuardBitsToConstant;
+		else if (addGuardBits>0) {
+			// the caller provided the number of bits to add in addGuardBitss
+			for (int i=0; i<addGuardBits; i++)
+				constCoeffAccuracy /= 2;
 		}
-		constLSB = floor(log2(constCoeffAccuracy));
+		LSB = floor(log2(constCoeffAccuracy));
+		REPORT(DEBUG, "Initial LSB with guard bits is " << LSB);
 
-		
 		sollya_obj_t degreeS = sollya_lib_constant_from_int(degree);
 
 
@@ -174,7 +176,6 @@ namespace flopoco{
 
 				if(tryReducingLSB) {
 					LSB-=1;
-					constLSB-=1;
 					tryReducingLSB=false;
 					REPORT(DEBUG, "  ... pushing LSB to " << LSB << " and starting over");
 				}
@@ -182,7 +183,6 @@ namespace flopoco{
 					if (degreeSup>degree){
 						// restore LSB
 						LSB+=1;
-						constLSB+=1;
 						// and increase degree
 						degree++;
 						sollya_lib_clear_obj(degreeS);
@@ -207,13 +207,13 @@ namespace flopoco{
 		sollya_obj_t fS = f->getSollyaObj(); // no need to free this one
 		sollya_obj_t degreeS = sollya_lib_constant_from_int(degree);
 
-		REPORT(DEBUG, "Trying to build coefficients with LSB=" << LSB << "   (LSB of the constant=" << constLSB << ")");
+		REPORT(DEBUG, "Trying to build coefficients with LSB=" << LSB);
 		// Build the list of coefficient LSBs for fpminimax
 		// Sollya library is a bit painful, it is safer just build a big string and parse it. 
 		ostringstream s;
 		s << "[|";
 		for(int i=0; i<=degree ; i++) {
-			s << (i==0? -constLSB :  -LSB);
+			s << -LSB;
 			if(i<degree) s<< ",";
 		}
 		s << "|]";
@@ -296,7 +296,7 @@ namespace flopoco{
 			else{
 				msb = floor(log2(fabs(dcoeff)));  // ex. 2.01
 				msb++; // For the sign
-				lsb = ((i==0? constLSB :  LSB));
+				lsb = LSB;
 				// now we may safely allocate the proper size for the mpfr_t. Add two bits for sign + rounding.
 				mpfr_init2(mpcoeff, msb-lsb+3);  
 				mpfr_init2(mptmp, msb-lsb+3);  

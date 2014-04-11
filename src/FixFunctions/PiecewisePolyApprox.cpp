@@ -121,7 +121,11 @@ namespace flopoco{
 				REPORT(DETAILED, " ----------Interval " << i << "-------------");
 				// Recompute the substitution. No big deal.
 				sollya_obj_t giS = buildSubIntervalFunction(fS, alpha, i);
-				LSB = floor(log2(targetAccuracy));
+				// Now compute the LSB of each coefficient.
+				// It should be at least floor(log2(targetAccuracy)); 
+				// However we can get a bit extra accuracy/slack because the evaluation will use log2(degree) guard bits.
+				// Adding these to the constants is almost for free: let's do it.  
+				LSB = floor(log2(targetAccuracy/degree));
 				p = new BasicPolyApprox(giS, degree, LSB);
 				poly.push_back(p);
 				if (approxErrorBound < p->approxErrorBound){ 
@@ -129,7 +133,7 @@ namespace flopoco{
 					approxErrorBound = p->approxErrorBound;
 				}
 
-				// Now check compute the englobing MSB and LSB for each coefficient	
+				// Now compute the englobing MSB and LSB for each coefficient	
 				for (int j=0; j<=degree; j++) {
 					// if the coeff is zero, we can set its MSB to anything, so we exclude this case
 					if (  (!p->coeff[j]->isZero())  &&  (p->coeff[j]->MSB > MSB[j])  )

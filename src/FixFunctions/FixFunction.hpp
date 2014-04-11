@@ -51,14 +51,14 @@ namespace flopoco{
 		sollya_obj_t getSollyaObj() const;
 
 		void emulate(TestCase * tc,	bool correctlyRounded=false /**< if true, correctly rounded RN; if false, faithful function */);
-	private:
-
 		int lsbIn;   
 		int wIn;   
 		int msbOut;
 		int lsbOut;
 		int wOut;
 		string description;
+	private:
+
 		sollya_obj_t fS;
 
 	};

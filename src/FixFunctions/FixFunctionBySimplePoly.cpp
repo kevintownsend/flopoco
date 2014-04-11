@@ -61,18 +61,39 @@ namespace flopoco{
 		int degree = poly->degree;
 		REPORT(DEBUG, "Degree is " << degree);
 
-		//Building the vector of sizes for FixHornerEvaluator
-		// a0 is a bit special
-
 		// Now building the corresponding VHDL signals
 		vhdl << tab << "-- With the following polynomial, approx error bound is " << approxErrorBound << " ("<< log2(approxErrorBound) << " bits)" << endl;
 		for(int i=0; i<=degree; i++) {
 			FixConstant* ai = poly->coeff[i];
+			coeffMSB.push_back (ai->MSB);
+			coeffLSB.push_back (ai->LSB);
+			coeffSize.push_back(ai->MSB - ai->LSB +1);
 			//			REPORT(DEBUG, " a" << i << " = " << ai->getBitVector() << "  " << printMPFR(ai->fpValue)  );
-			vhdl << tab << declare(join("A",i), ai->MSB - ai->LSB +1)
+			vhdl << tab << declare(join("A",i), coeffSize[i])
 					 << " <= " << ai->getBitVector(0 /*both quotes*/) << ";" 
 					 << endl;
 		}
+
+		bool plainStupidVHDL=true;
+
+		if(plainStupidVHDL) {
+			int g=3;
+			
+			// Here we assume all the coefficients already include the proper number of guard bits
+			vhdl << tab << declare(join("Sigma", 0), coeffSize[degree]) << " <= A" << degree << ";" << endl;
+			int sizeSigma=coeffSize[degree];
+
+			for(int i=1; i<=degree; i++) {
+				
+				vhdl << tab << declare(join("Pfull", i), f->wIn + sizeSigma) <<  " <= X*Sigma" << i-1 << endl;
+				sizeSigma = coeffSize[i];
+				vhdl << tab << declare(join("Ptrunc", i), f->wIn + sizeSigma) <<  " <= X*Sigma" << i-1 << endl;
+			}
+		}
+
+
+		//Building the vector of sizes for FixHornerEvaluator
+		// a0 is a bit special
 
 
 #if 1
