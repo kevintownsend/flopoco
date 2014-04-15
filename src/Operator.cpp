@@ -29,7 +29,7 @@ namespace flopoco{
 	int verbose=0;
 	
 	Operator::Operator(Target* target, map<string, double> inputDelays){
-		stdLibType_                 = 0; // unfortunately this is the historical default.
+		stdLibType_                 = 1; // unfortunately this is the historical default.
 		target_                     = target;
 		numberOfInputs_             = 0;
 		numberOfOutputs_            = 0;
@@ -805,29 +805,55 @@ namespace flopoco{
 			vhdl << tab;
 		vhdl << declareFixPoint(lhsName, isSigned, MSB, LSB) << " <= ";
 
-		int leftmostBit; // the left bit to take from the std_vector
-		// First sign or zero extension
-		if (MSB>oldMSB)	{
-			leftmostBit=oldMSB-oldLSB;
+		// Cases (old is input, new is output)
+    //            1            2W             3W        4         5E         6 E 
+		// Old:      ooooooo   oooooooo      oooooooooo    oooo     ooo               ooo
+		// New:  nnnnnnnn        nnnnnnnn     nnnnnn      nnnnnnn       nnnn      nnn
+
+		bool paddLeft, paddRight; 
+		int m,l, paddLeftSize, paddRightSize, oldSize; 	// eventually we take the slice m downto l of the input bit vector
+		
+		paddLeft      = MSB>oldMSB;
+		paddLeftSize  = MSB-oldMSB; // in case paddLeft is true
+		paddRight     = LSB<oldLSB;
+		paddRightSize = oldLSB-LSB; // in case paddRight is true
+		oldSize       = oldMSB-oldLSB+1;
+
+		// Take input vector downto what ?
+		if (LSB>=oldLSB) { // case 1 or 3
+			l = LSB-oldLSB;
+		}
+		else {             // case 2 or 4 
+			l=0;
+		}		
+
+		// and from what bit?
+		if (MSB>oldMSB) { // cases 1 or 4
+			m = oldSize-1;
+		}
+		else { // oldMSB>=MSB, cases 2 or 3
+			REPORT(INFO, "Warning: resizeFixPoint() is cutting off some MSBs");	
+			m = oldSize-(oldMSB-MSB)-1;
+		}
+
+		// Now do the work.
+		// Possible left padding/sign extension
+		if(paddLeft) {
 			if(isSigned) 	{
-				for(int i=0; i<(MSB-oldMSB); i++)
-					vhdl << rhsName << of(leftmostBit) << " & "; // sign extension
+				for(int i=0; i<paddLeftSize; i++)
+					vhdl << rhsName << of(oldSize-1) << " & "; // sign extension
 			}
 			else {
-				vhdl << zg(MSB-oldMSB) << " & ";
+				vhdl << zg(paddLeftSize) << " & ";
 			}
 		}
-		if (MSB<oldMSB)	{
-			REPORT (0, "Warning, truncating " << (oldMSB - MSB) << "MSB bits when resizing " << rhsName << " to " << lhsName);
-			leftmostBit = oldMSB-oldLSB  -(oldMSB - MSB);
-		} 
-		
 
-		if(oldLSB > LSB) {//No truncation, some padding
-			vhdl << rhsName << range(leftmostBit, 0) << " & " << zg(LSB-oldLSB);
-		}
-		else { // oldLSB<=LSB
-			vhdl << rhsName << range(leftmostBit, LSB-oldLSB);
+		// copy the relevant bits
+		vhdl << rhsName << range(m, l);
+
+		// right padding
+		if(paddRight) {
+			vhdl << " & " << zg(paddRightSize);
 		}
 		
 		vhdl << "; -- fix resize from (" << oldMSB << ", " << oldLSB << ") to (" << MSB << ", " << LSB << ")" << endl;

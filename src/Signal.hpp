@@ -30,6 +30,17 @@ namespace flopoco{
 			registeredWithZeroInitialiser    /**< if the signal is registered, the it has a zero initialiser (but no reset) */
 		} SignalType;
 
+#if 0 // all these flags could be replaced with something like that
+		/** The possible arithmetic types of a bit vector*/
+		typedef enum {
+			unsigned_integer,          /**<  */
+			signed_integer,          /**<  */
+			unsigned_fixpoint,          /**<  */
+			signed_fixpoint,          /**<  */
+			floating_point          /**<  */
+		} ArithType;
+#endif
+
 		/** Signal constructor.
 		 * The standard constructor for signals which are not floating-point.
 		 * @param name      the name of the signal
@@ -113,9 +124,13 @@ namespace flopoco{
 		 */	
 		SignalType type() const;
 	
-		/** outputs the VHDL code for declaring this signal 
+		/** outputs the VHDL code for declaring this signal. TODO should be obsoleted?
 		 */	
 		std::string toVHDL();
+
+		/** outputs the VHDL code for the type of this signal 
+		 */	
+		std::string toVHDLType();
 
 		/** obtain the name of a signal delayed by n cycles
 		 * @param delay in cycles */
@@ -203,8 +218,8 @@ namespace flopoco{
 		int           wE_;          /**< The width of the exponent. Used for FP signals */
 		int           wF_;          /**< The width of the fraction. Used for FP signals */
 		int           MSB_;         /**< MSB. Used for fixed-point signals */
-		bool          isSigned_;    /**< true if this a signed fixed-point signals, false otherwise */
 		int           LSB_;         /**< LSB. Used for fixed-point signals */
+		bool          isSigned_;    /**< true if this a signed fixed-point signals, false otherwise */
 		bool          isBus_;       /**< True is the signal is a bus (std_logic_vector)*/
 		double        delay_;       /**<  the delay of the signal, starting from a previous register level */
 

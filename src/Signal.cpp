@@ -62,6 +62,28 @@ namespace flopoco{
 
 	Signal::SignalType Signal::type() const {return type_;}
 	
+	string Signal::toVHDLType() {
+		ostringstream o; 
+		if ((1==width())&&(!isBus_)) 
+			o << " std_logic" ;
+		else 
+			if(isFP_) 
+				o << " std_logic_vector(" << wE() <<"+"<<wF() << "+2 downto 0)";
+			else if(isFix_){
+				o << (isSigned_?" signed":" unsigned") << "(" << MSB_;
+				if(LSB_<0)
+					o  << "+" << -LSB_;
+				else
+					o << "-" << LSB_;
+				o << " downto 0)";
+			} 
+			else
+				o << " std_logic_vector(" << width()-1 << " downto 0)";
+		return o.str();
+	}
+
+
+	
 	string Signal::toVHDL() {
 		ostringstream o; 
 		if(type()==Signal::wire || type()==Signal::registeredWithoutReset || type()==Signal::registeredWithAsyncReset || type()==Signal::registeredWithSyncReset || type()==Signal::registeredWithZeroInitialiser) 
@@ -73,13 +95,7 @@ namespace flopoco{
 		if(type()==Signal::out)
 			o << "out ";
 	
-		if ((1==width())&&(!isBus_)) 
-			o << "std_logic" ;
-		else 
-			if(isFP_) 
-				o << " std_logic_vector(" << wE() <<"+"<<wF() << "+2 downto 0)";
-			else
-				o << " std_logic_vector(" << width()-1 << " downto 0)";
+		o << toVHDLType();
 		return o.str();
 	}
 
@@ -114,19 +130,14 @@ namespace flopoco{
 			o << ", " << getName() << "_d" << i;
 		}
 		o << " : ";
-		if ((1==width())&&(!isBus_)) {
-			o << "std_logic" ;
-			if(type()==Signal::registeredWithZeroInitialiser){
+		
+		o << toVHDLType();
+
+		if (type()==Signal::registeredWithZeroInitialiser) {
+			if( (1==width()) && (!isBus_) )
 				o << " := '0'";
-			}
-		}else {
-			if(isFP_) 
-				o << " std_logic_vector(" << wE() <<"+"<<wF() << "+2 downto 0)";
 			else
-				o << " std_logic_vector(" << width()-1 << " downto 0)";
-			if(type()==Signal::registeredWithZeroInitialiser){
 				o << ":= (others=>'0')";
-			}
 		}
 		o << ";";
 		return o.str();

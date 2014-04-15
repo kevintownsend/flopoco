@@ -52,7 +52,7 @@ namespace flopoco{
 		addInput("X"  , -lsbIn);
 		int outputSize = msbOut-lsbOut+1;
 		addOutput("Y" ,outputSize , 2);
-
+		useNumericStd();
 
 		// Polynomial approximation
 		double targetApproxError = pow(2,lsbOut-1); 
@@ -70,10 +70,11 @@ namespace flopoco{
 			coeffLSB.push_back (ai->LSB);
 			coeffSize.push_back(ai->MSB - ai->LSB +1);
 			//			REPORT(DEBUG, " a" << i << " = " << ai->getBitVector() << "  " << printMPFR(ai->fpValue)  );
-			vhdl << tab << declare(join("A",i), coeffSize[i])
+			vhdl << tab << declareFixPoint(join("A",i), true, ai->MSB, ai->LSB)
 					 << " <= " << ai->getBitVector(0 /*both quotes*/) << ";" 
 					 << endl;
 		}
+		vhdl << tab << declareFixPoint("Xs", true, 0, lsbIn) << " <= signed('0' & X);  -- sign extension of X" << endl; 
 
 		bool plainStupidVHDL=true;
 
@@ -85,8 +86,8 @@ namespace flopoco{
 					 << " <= " << join("A", degree)  << ";" << endl;
 
 			for(int i=1; i<=degree; i++) {
-				vhdl << tab << declareFixPoint(join("P", i), true, 0/*MSB*/,  sigmaLSB - sigmaMSB + f->lsbIn/*LSB*/) 
-						 <<  " <= X*Sigma" << i-1 << ";" << endl;
+				vhdl << tab << declareFixPoint(join("P", i), true, 0/*MSB*/,  sigmaLSB - sigmaMSB + f->lsbIn-1 /*LSB*/) 
+						 <<  " <= Xs * Sigma" << i-1 << ";" << endl;
 				
 				sigmaMSB = coeffMSB[degree-i];
 				sigmaLSB = coeffLSB[degree-i];
@@ -102,7 +103,7 @@ namespace flopoco{
 		// a0 is a bit special
 
 
-		vhdl << tab << "Y <= " << join("Sigma", degree) << range(coeffSize[0]-1,  coeffSize[0] - outputSize) << ";" << endl;
+		vhdl << tab << "Y <= " << "std_logic_vector(" << join("Sigma", degree) << range(coeffSize[0]-1,  coeffSize[0] - outputSize) << ");" << endl;
 	}
 
 
