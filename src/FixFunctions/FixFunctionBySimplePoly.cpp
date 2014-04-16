@@ -54,33 +54,39 @@ namespace flopoco{
 		addOutput("Y" ,outputSize , 2);
 		useNumericStd();
 
+		vhdl << tab << declareFixPoint("Xs", true, 0, lsbIn) << " <= signed('0' & X);  -- sign extension of X" << endl; 
+
 		// Polynomial approximation
 		double targetApproxError = pow(2,lsbOut-1); 
 		poly = new BasicPolyApprox(f, targetApproxError, -1);
 		double approxErrorBound = poly->approxErrorBound;
 
 		int degree = poly->degree;
-		REPORT(DEBUG, "Degree is " << degree);
-
-		// Now building the corresponding VHDL signals
-		vhdl << tab << "-- With the following polynomial, approx error bound is " << approxErrorBound << " ("<< log2(approxErrorBound) << " bits)" << endl;
-		for(int i=0; i<=degree; i++) {
-			FixConstant* ai = poly->coeff[i];
-			coeffMSB.push_back (ai->MSB);
-			coeffLSB.push_back (ai->LSB);
-			coeffSize.push_back(ai->MSB - ai->LSB +1);
-			//			REPORT(DEBUG, " a" << i << " = " << ai->getBitVector() << "  " << printMPFR(ai->fpValue)  );
-			vhdl << tab << declareFixPoint(join("A",i), true, ai->MSB, ai->LSB)
-					 << " <= " << ai->getBitVector(0 /*both quotes*/);
-			if(i==0) {
-				// add the final round bit that transforms the final truncation into a round
-				vhdl << " + \"" << unsignedBinary(mpz_class(1)<<(lsbOut-ai->LSB-1),  ai->MSB - ai->LSB +1) << "\"; -- final round bit" <<endl;
-
-			}
-			else 
-				vhdl << ";" << endl;
+		if(msbOut<poly->coeff[0]->MSB) {
+			REPORT(INFO, "user-provided msbO smaller that the MSB of the constant coefficient, I am worried it won't work");
 		}
-		vhdl << tab << declareFixPoint("Xs", true, 0, lsbIn) << " <= signed('0' & X);  -- sign extension of X" << endl; 
+		vhdl << tab << "-- With the following polynomial, approx error bound is " << approxErrorBound << " ("<< log2(approxErrorBound) << " bits)" << endl;
+
+		// Adding the round bit to the degree-0 coeff
+		poly->coeff[0]->addRoundBit(lsbOut-1);
+
+		for(int i=0; i<=degree; i++) {
+			coeffMSB.push_back(poly->coeff[i]->MSB);
+			coeffLSB.push_back(poly->coeff[i]->LSB);
+			coeffSize.push_back(poly->coeff[i]->MSB - poly->coeff[i]->LSB +1);
+		}
+
+		for(int i=degree; i>=0; i--) {
+			FixConstant* ai = poly->coeff[i];
+			//			REPORT(DEBUG, " a" << i << " = " << ai->getBitVector() << "  " << printMPFR(ai->fpValue)  );
+			//vhdl << tab << "-- " << join("A",i) <<  ": " << ai->report() << endl;
+			vhdl << tab << declareFixPoint(join("A",i), true, coeffMSB[i], coeffLSB[i])
+					 << " <= " << ai->getBitVector(0 /*both quotes*/)
+					 << ";  --" << ai->report();
+			if(i==0) 
+				vhdl << "  ... includes the final round bit";
+			vhdl << endl;
+		}
 
 		bool plainStupidVHDL=true;
 
@@ -88,21 +94,21 @@ namespace flopoco{
 			// Here we assume all the coefficients already include the proper number of guard bits
 			int sigmaMSB=coeffMSB[degree];
 			int sigmaLSB=coeffLSB[degree];
-			vhdl << tab << declareFixPoint(join("Sigma", 0), true, sigmaMSB, sigmaLSB) 
+			vhdl << tab << declareFixPoint(join("Sigma", degree), true, sigmaMSB, sigmaLSB) 
 					 << " <= " << join("A", degree)  << ";" << endl;
 
-			for(int i=1; i<=degree; i++) {
+			for(int i=degree-1; i>=0; i--) {
 				// When multiplying two unsigned, the MSB is the sum of the MSBs
 				// But when multiplying two signed, the MSB is the sum plus one (only used in the ultrare case -max*-max)
 				vhdl << tab << declareFixPoint(join("P", i), true, sigmaMSB+0+1,  sigmaLSB  + f->lsbIn /*LSB*/) 
-						 <<  " <= Xs * Sigma" << i-1 << ";" << endl;
+						 <<  " <= Xs * Sigma" << i+1 << ";" << endl;
 				
-				sigmaMSB = coeffMSB[degree-i]+1; // +1 to absorb addition overflow
-				sigmaLSB = coeffLSB[degree-i];
+				sigmaMSB = coeffMSB[i]+1; // +1 to absorb addition overflow
+				sigmaLSB = coeffLSB[i];
 				resizeFixPoint(join("Ptrunc", i), join("P", i), sigmaMSB, sigmaLSB);
 				
 				vhdl << tab << declareFixPoint(join("Sigma", i), true, sigmaMSB, sigmaLSB)  // sign extend the coeff
-						 << " <= (" << join("A", degree-i) << of(coeffSize[degree-i]-1) << "&" << join("A", degree-i) << ") + " << join("Ptrunc", i) << ";" << endl;
+						 << " <= (" << join("A", i) << of(coeffSize[i]-1) << " & " << join("A", i) << ") + " << join("Ptrunc", i) << ";" << endl;
 			}
 		}
 
@@ -110,7 +116,7 @@ namespace flopoco{
 		//Building the vector of sizes for FixHornerEvaluator
 		// a0 is a bit special
 
-		resizeFixPoint("Ys", join("Sigma", degree),  msbOut, lsbOut);
+		resizeFixPoint("Ys", "Sigma0",  msbOut, lsbOut);
 
 		vhdl << tab << "Y <= " << "std_logic_vector(Ys);" << endl;
 	}

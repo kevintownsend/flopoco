@@ -331,7 +331,7 @@ namespace flopoco{
 			debugstring <<  endl << ">    coeff " << right << setw(4) << i << ": " 
 									<< " (" << setw(4)<< msb << ", " << setw(4)<< lsb << ")   " 
 									<< setw(bitwidth + lsb0-lsb) << coeff[i]->getBitVector()
-									<< setw(10) << printMPFR(coeff[i]->fpValue) ;
+									<< "  " << setw(10) << printMPFR(coeff[i]->fpValue) ;
 		}
 		REPORT(DEBUG, debugstring.str());
 	}

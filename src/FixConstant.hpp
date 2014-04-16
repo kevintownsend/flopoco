@@ -28,7 +28,7 @@ namespace flopoco{
 
 #if 0
 		/** A constructor that deduces wLSB and wMSB from the value of the mpfr passed 
-		 This is where we need a convention for zero */
+				This is where we need a convention for zero */
 		FixConstant(const bool isSigned, const mpfr_t val);
 #endif
 
@@ -41,10 +41,11 @@ namespace flopoco{
 
 		std::string getBitVector(int margins=0);     /**< return the textual version of the constant. See utils.hpp for margins  */ 
 		bool isZero();        /**< as name suggests */
+		void addRoundBit(int weight);   /**< updates the value to add a bit of a certain weight */
 		void changeMSB(int newMSB);
 		void changeLSB(int newMSB);
-
-	private:
+		std::string report();
+		
 	};
 
 }

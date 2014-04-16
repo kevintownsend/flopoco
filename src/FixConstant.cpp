@@ -56,7 +56,6 @@ namespace flopoco{
 
 		if(isSigned)
 			MSB++;
-		/* -1 s'écrit */
 
 		mpfr_init2(fpValue, width);
 		mpfr_set(fpValue, val_, GMP_RNDN); // TODO check no error?
@@ -98,4 +97,32 @@ namespace flopoco{
 		throw("FixConstant::changeLSB: TODO");
 	}
 
+	void  FixConstant::addRoundBit(int weight){
+		if(weight<LSB) {
+			ostringstream e;
+			e << "in FixConstant::addRoundBit, weight of the round bit is "<< weight << ", lower than LSB=" << LSB;
+			throw e.str();
+		}
+		mpfr_t b,s;
+		mpfr_init2(b,16);
+		mpfr_init2(s,width+1);
+		mpfr_set_ui_2exp(b, 1, weight, GMP_RNDN); //exact
+		mpfr_add(s, fpValue, b, GMP_RNDN);
+		if(mpfr_get_exp(s) != mpfr_get_exp(fpValue)) {
+			//cerr << "FixConstant::addRoundBit has increased MSB";
+			MSB++;
+			width++;
+			mpfr_set_prec(fpValue, width);
+			mpfr_set(fpValue, s,  GMP_RNDN); //exact
+		}
+		mpfr_clears(s,b, NULL);
+	}
+
+	std::string FixConstant::report(){
+		ostringstream s;
+		s << "(MSB=" << MSB << ", LSB=" << LSB << ")   "<< printMPFR(fpValue);
+		return s.str();
+	}
+
+	
 }
