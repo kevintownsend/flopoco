@@ -40,6 +40,8 @@ namespace flopoco{
 		
 		void emulate(TestCase * tc);
 
+		void buildStandardTestCases(TestCaseList* tcl);
+
 	private:
 		FixFunction *f; 
 		BasicPolyApprox *poly;

@@ -71,8 +71,14 @@ namespace flopoco{
 			coeffSize.push_back(ai->MSB - ai->LSB +1);
 			//			REPORT(DEBUG, " a" << i << " = " << ai->getBitVector() << "  " << printMPFR(ai->fpValue)  );
 			vhdl << tab << declareFixPoint(join("A",i), true, ai->MSB, ai->LSB)
-					 << " <= " << ai->getBitVector(0 /*both quotes*/) << ";" 
-					 << endl;
+					 << " <= " << ai->getBitVector(0 /*both quotes*/);
+			if(i==0) {
+				// add the final round bit that transforms the final truncation into a round
+				vhdl << " + \"" << unsignedBinary(mpz_class(1)<<(lsbOut-ai->LSB-1),  ai->MSB - ai->LSB +1) << "\"; -- final round bit" <<endl;
+
+			}
+			else 
+				vhdl << ";" << endl;
 		}
 		vhdl << tab << declareFixPoint("Xs", true, 0, lsbIn) << " <= signed('0' & X);  -- sign extension of X" << endl; 
 
@@ -86,15 +92,17 @@ namespace flopoco{
 					 << " <= " << join("A", degree)  << ";" << endl;
 
 			for(int i=1; i<=degree; i++) {
-				vhdl << tab << declareFixPoint(join("P", i), true, 0/*MSB*/,  sigmaLSB - sigmaMSB + f->lsbIn-1 /*LSB*/) 
+				// When multiplying two unsigned, the MSB is the sum of the MSBs
+				// But when multiplying two signed, the MSB is the sum plus one (only used in the ultrare case -max*-max)
+				vhdl << tab << declareFixPoint(join("P", i), true, sigmaMSB+0+1,  sigmaLSB  + f->lsbIn /*LSB*/) 
 						 <<  " <= Xs * Sigma" << i-1 << ";" << endl;
 				
-				sigmaMSB = coeffMSB[degree-i];
+				sigmaMSB = coeffMSB[degree-i]+1; // +1 to absorb addition overflow
 				sigmaLSB = coeffLSB[degree-i];
 				resizeFixPoint(join("Ptrunc", i), join("P", i), sigmaMSB, sigmaLSB);
 				
-				vhdl << tab << declareFixPoint(join("Sigma", i), true, sigmaMSB, sigmaLSB) 
-						 << " <= " << join("A", degree-i) << " + " << join("Ptrunc", i) << ";" << endl;
+				vhdl << tab << declareFixPoint(join("Sigma", i), true, sigmaMSB, sigmaLSB)  // sign extend the coeff
+						 << " <= (" << join("A", degree-i) << of(coeffSize[degree-i]-1) << "&" << join("A", degree-i) << ") + " << join("Ptrunc", i) << ";" << endl;
 			}
 		}
 
@@ -102,8 +110,9 @@ namespace flopoco{
 		//Building the vector of sizes for FixHornerEvaluator
 		// a0 is a bit special
 
+		resizeFixPoint("Ys", join("Sigma", degree),  msbOut, lsbOut);
 
-		vhdl << tab << "Y <= " << "std_logic_vector(" << join("Sigma", degree) << range(coeffSize[0]-1,  coeffSize[0] - outputSize) << ");" << endl;
+		vhdl << tab << "Y <= " << "std_logic_vector(Ys);" << endl;
 	}
 
 
@@ -117,6 +126,22 @@ namespace flopoco{
 	void FixFunctionBySimplePoly::emulate(TestCase* tc){
 		f->emulate(tc);
 	}
+
+	void FixFunctionBySimplePoly::buildStandardTestCases(TestCaseList* tcl){
+		TestCase *tc;
+
+		tc = new TestCase(this); 
+		tc->addInput("X", 0);
+		emulate(tc);
+		tcl->add(tc);
+
+		tc = new TestCase(this); 
+		tc->addInput("X", (mpz_class(1) << f->wIn) -1);
+		emulate(tc);
+		tcl->add(tc);
+
+	}
+
 }
 	
 #endif //HAVE_SOLLYA	

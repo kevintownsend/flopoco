@@ -262,7 +262,6 @@ namespace flopoco{
 			
 		REPORT(DEBUG, "Polynomial accuracy is " << approxErrorBound);
 		// Please leave the memory in the state you would like to find it when entering
-	  sollya_lib_clear_obj(fixedS);
 	  sollya_lib_clear_obj(degreeS);
 	}
 
