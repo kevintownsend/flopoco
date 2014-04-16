@@ -1,0 +1,66 @@
+#ifndef IntSquarerBitheap_HPP
+#define IntSquarerBitheap_HPP
+#include <vector>
+#include <sstream>
+#include <gmp.h>
+#include <gmpxx.h>
+
+#include "utils.hpp"
+
+#include "Operator.hpp"
+#include "IntAdder.hpp"
+#include "IntMultiplier.hpp"
+
+#include "../BitHeap.hpp"
+
+namespace flopoco{
+
+	/** The IntSquarer class for experimenting with adders.
+	 */
+	class IntSquarerBitheap : public Operator
+	{
+	public:
+		/**
+		 * The IntSquarerBitheap constructor
+		 * @param[in] target the target device
+		 * @param[in] wIn    the with of the inputs and output
+		 * @param[in] inputDelays the delays for each input
+		 **/
+		IntSquarerBitheap(Target* target, int wIn, map<string, double> inputDelays = emptyDelayMap);
+
+		/**
+		 *  Destructor
+		 */
+		~IntSquarerBitheap();
+
+		/**
+		 * Method belonging to the Operator class overloaded by the IntSquarerBitheap class
+		 * @param[in,out] o     the stream where the current architecture will be outputed to
+		 * @param[in]     name  the name of the entity corresponding to the architecture generated in this method
+		 **/
+		void outputVHDL(std::ostream& o, std::string name);
+
+		void emulate(TestCase* tc);
+
+	protected:
+		int wIn_;                         /**< the width for X, Y and R*/
+
+	private:
+		map<string, double> inputDelays_; /**< a map between input signal names and their maximum delays */
+		int bufferedInputs;               /**< variable denoting an initial buffering of the inputs */
+		double maxInputDelay;             /**< the maximum delay between the inputs present in the map*/
+		int nbOfChunks;                   /**< the number of chunks that the addition will be split in */
+		int chunkSize_;                   /**< the suggested chunk size so that the addition can take place at the objective frequency*/
+		int *cSize;                       /**< array containing the chunk sizes for all nbOfChunks*/
+
+		/** A IntAdder subcomponent */
+
+		IntAdder* intadder;
+		IntAdder* intadd2;
+		IntSquarerBitheap *intsquarer;
+
+		BitHeap*	bitHeap;    			/**< The heap of weighted bits that will be used to do the additions */
+
+	};
+}
+#endif
