@@ -68,7 +68,9 @@ namespace flopoco{
 		vhdl << tab << "-- With the following polynomial, approx error bound is " << approxErrorBound << " ("<< log2(approxErrorBound) << " bits)" << endl;
 
 		// Adding the round bit to the degree-0 coeff
+		REPORT(DEBUG, "   A0 before adding round bit: " <<  poly->coeff[0]->report());
 		poly->coeff[0]->addRoundBit(lsbOut-1);
+		REPORT(DEBUG, "   A0 after adding round bit: " <<  poly->coeff[0]->report());
 
 		for(int i=0; i<=degree; i++) {
 			coeffMSB.push_back(poly->coeff[i]->MSB);
@@ -84,7 +86,7 @@ namespace flopoco{
 					 << " <= " << ai->getBitVector(0 /*both quotes*/)
 					 << ";  --" << ai->report();
 			if(i==0) 
-				vhdl << "  ... includes the final round bit";
+				vhdl << "  ... includes the final round bit at weight " << lsbOut-1;
 			vhdl << endl;
 		}
 
@@ -100,15 +102,16 @@ namespace flopoco{
 			for(int i=degree-1; i>=0; i--) {
 				// When multiplying two unsigned, the MSB is the sum of the MSBs
 				// But when multiplying two signed, the MSB is the sum plus one (only used in the ultrare case -max*-max)
-				vhdl << tab << declareFixPoint(join("P", i), true, sigmaMSB+0+1,  sigmaLSB  + f->lsbIn /*LSB*/) 
+				int PMSB=sigmaMSB+0 + 1;
+				vhdl << tab << declareFixPoint(join("P", i), true, PMSB,  sigmaLSB  + f->lsbIn /*LSB*/) 
 						 <<  " <= Xs * Sigma" << i+1 << ";" << endl;
-				
-				sigmaMSB = coeffMSB[i]+1; // +1 to absorb addition overflow
+				// However the bit of weight PMSB is a 0. We want to keep the bits from  PMSB-1
+				sigmaMSB = max(PMSB-1, coeffMSB[i]+1); // +1 to absorb addition overflow
 				sigmaLSB = coeffLSB[i];
 				resizeFixPoint(join("Ptrunc", i), join("P", i), sigmaMSB, sigmaLSB);
+				resizeFixPoint(join("Aext", i), join("A", i), sigmaMSB, sigmaLSB);
 				
-				vhdl << tab << declareFixPoint(join("Sigma", i), true, sigmaMSB, sigmaLSB)  // sign extend the coeff
-						 << " <= (" << join("A", i) << of(coeffSize[i]-1) << " & " << join("A", i) << ") + " << join("Ptrunc", i) << ";" << endl;
+				vhdl << tab << declareFixPoint(join("Sigma", i), true, sigmaMSB, sigmaLSB)   << " <= " << join("Aext", i) << " + " << join("Ptrunc", i) << ";" << endl;
 			}
 		}
 

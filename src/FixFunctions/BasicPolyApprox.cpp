@@ -139,18 +139,18 @@ namespace flopoco{
 		REPORT(DEBUG, "LSB without guard bits is " << LSB);
 		
 		// A few lines to add guard bits to the constant, it will be for free in terms of evaluation
-		double constCoeffAccuracy = targetAccuracy;
+		double coeffAccuracy = targetAccuracy;
 
 		if (-1==addGuardBits) {
 			double maxEvalErrorInUlps = degree; // this assumes faithful multipliers in Horner scheme
-			constCoeffAccuracy /= maxEvalErrorInUlps;
+			coeffAccuracy /= maxEvalErrorInUlps;
 		}
 		else if (addGuardBits>0) {
 			// the caller provided the number of bits to add in addGuardBitss
 			for (int i=0; i<addGuardBits; i++)
-				constCoeffAccuracy /= 2;
+				coeffAccuracy /= 2;
 		}
-		LSB = floor(log2(constCoeffAccuracy));
+		LSB = floor(log2(coeffAccuracy));
 		REPORT(DEBUG, "Initial LSB with guard bits is " << LSB);
 
 		sollya_obj_t degreeS = sollya_lib_constant_from_int(degree);

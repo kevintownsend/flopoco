@@ -113,8 +113,8 @@ namespace flopoco{
 			MSB++;
 			width++;
 			mpfr_set_prec(fpValue, width);
-			mpfr_set(fpValue, s,  GMP_RNDN); //exact
 		}
+		mpfr_set(fpValue, s,  GMP_RNDN); //exact
 		mpfr_clears(s,b, NULL);
 	}
 
