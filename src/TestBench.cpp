@@ -246,6 +246,7 @@ namespace flopoco{
 			if (s->isFP()) { 
 			    vhdl << tab << tab << tab << tab << "if not fp_equal(fp"<< s->width() << "'(" << s->getName() << ") ,to_stdlogicvector(V_" <<  s->getName() << ")) then " << endl;
 			    vhdl << tab << tab << tab << tab << tab << " errorCounter := errorCounter + 1;" << endl;
+					// TODO better aligned reporting: see model below
 			    vhdl << tab << tab << tab << tab << tab << "assert false report(\"Incorrect output for " << s->getName() 
 							 <<      ", expected value: \" & str(to_stdlogicvector(V_" << s->getName() 
 							 << ")) & \" result: \" & str(" << s->getName() 
@@ -261,6 +262,7 @@ namespace flopoco{
 			    vhdl << tab << tab << tab << tab << "end if;" << endl;
 			} else if ((s->width() == 1) && (!s->isBus())) { 
 			    vhdl << tab << tab << tab << tab << "if not (" << s->getName() << "= to_stdlogic(V_" << s->getName() << ")) then " << endl;
+					// TODO better aligned reporting: see model below
 			    vhdl << tab << tab << tab << tab << tab << "assert false report(\"Incorrect output for " << s->getName() 
 							 <<        ",expected value: \" & str(to_stdlogic(V_" << s->getName() 
 							 << ")) & \", result: \" & str(" 
@@ -270,6 +272,7 @@ namespace flopoco{
 						
 						} else {
 			    vhdl << tab << tab << tab << tab << "if not (" << s->getName() << "= to_stdlogicvector(V_" << s->getName() << ")) then " << endl;
+					// TODO better aligned reporting: see model below
 			    vhdl << tab << tab << tab << tab << tab << "assert false report(\"Incorrect output for " << s->getName() 
 							 <<        ",expected value: \" & str(to_stdlogicvector(V_" << s->getName() 
 							 << ")) & \", result: \" & str(" 
@@ -294,13 +297,16 @@ namespace flopoco{
 			vhdl << tab << tab << tab << tab << "end loop;" << endl;
 			vhdl << tab << tab << tab << tab << " if (localErrorCounter = 0) then " << endl;
 			vhdl << tab << tab << tab << tab << tab << "errorCounter := errorCounter + 1; -- incrementing global error counter" << endl;
-			vhdl << tab << tab << tab << tab << tab << "assert false report(\"Incorrect output for " << s->getName() << ", ";
+
+			// **** better aligned reporting here ****
+			vhdl << tab << tab << tab << tab << tab << "assert false report(\"Line \" & integer'image(counter) & \" of input file, incorrect output for " 
+					 << s->getName() << ": \" & lf & ";
 			if ((s->width() == 1) && ( !s->isBus()))
-				vhdl << "expected value: \" & str(to_stdlogic(V_" << s->getName() << ")) ";
+				vhdl << "\"  expected value: \" & str(to_stdlogic(V_" << s->getName() << ")) ";
 			else 
-				vhdl << "expected value : \" & str(to_stdlogicvector(V_" << s->getName() << ")) ";
-			vhdl << "& \"... (other values line \" & integer'image(counter) & \" of test.input),"
-					 <<   " result:  \" & str(" << s->getName() <<") &  \"|| line : \" & integer'image(counter) & \" of input file \") ;"<< endl;  
+				vhdl <<      "\"  expected value: \" & str(to_stdlogicvector(V_" << s->getName() << ")) ";
+			vhdl << "& lf & \"          result: \" & str(" << s->getName() <<")) ;"<< endl;  
+
 			vhdl << tab << tab << tab << tab << "end if;" << endl;
 			vhdl << tab << tab << tab << "end if;" << endl;
 			// TODO add test to increment global error counter
