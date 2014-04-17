@@ -224,8 +224,6 @@ src/IntMultipliers/MultiplierBlock
  src/IEEENumber
  src/Wrapper
  src/TestBench 
-
- src/UtilSollya
 )
 IF (SOLLYA_LIB)
 TARGET_LINK_LIBRARIES(
