@@ -106,7 +106,7 @@ namespace flopoco{
 				vhdl << tab << declareFixPoint(join("P", i), true, PMSB,  sigmaLSB  + f->lsbIn /*LSB*/) 
 						 <<  " <= Xs * Sigma" << i+1 << ";" << endl;
 				// However the bit of weight PMSB is a 0. We want to keep the bits from  PMSB-1
-				sigmaMSB = max(PMSB-1, coeffMSB[i]+1); // +1 to absorb addition overflow
+				sigmaMSB = max(PMSB-1, coeffMSB[i]) +1; // +1 to absorb addition overflow
 				sigmaLSB = coeffLSB[i];
 				resizeFixPoint(join("Ptrunc", i), join("P", i), sigmaMSB, sigmaLSB);
 				resizeFixPoint(join("Aext", i), join("A", i), sigmaMSB, sigmaLSB);

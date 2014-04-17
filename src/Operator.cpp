@@ -832,7 +832,8 @@ namespace flopoco{
 			m = oldSize-1;
 		}
 		else { // oldMSB>=MSB, cases 2 or 3
-			REPORT(INFO, "Warning: resizeFixPoint() is cutting off some MSBs");	
+			if(MSB<oldMSB)
+				REPORT(DETAILED, "Warning: cutting off some MSBs when resizing signal " << rhsName << " from (" << oldMSB << ", " << oldLSB << ") to (" << MSB << ", " << LSB << ")"); 
 			m = oldSize-(oldMSB-MSB)-1;
 		}
 
