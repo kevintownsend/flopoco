@@ -35,6 +35,19 @@ namespace flopoco{
 
 	Signal::~Signal(){}
 
+	void	Signal::promoteToFix(const bool isSigned, const int MSB, const int LSB){
+		if(MSB - LSB +1 != width_){
+			std::ostringstream o;
+			o << "Error in Signal::promoteToFix(" <<  getName() << "): width doesn't match";
+			throw o.str();
+		}	
+		isFix_ = true;
+		MSB_   = MSB;
+		LSB_   = LSB;
+		isSigned_ = isSigned;
+	}
+
+
 	const string& Signal::getName() const { 
 		return name_; 
 	}

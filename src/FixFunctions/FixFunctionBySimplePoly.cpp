@@ -27,6 +27,7 @@
 
 
 #include "FixFunctionBySimplePoly.hpp"
+#include "../FixMultAdd.hpp"
 
 #ifdef HAVE_SOLLYA
 
@@ -41,6 +42,7 @@ namespace flopoco{
 		Operator(target, inputDelays), finalRounding(finalRounding_){
 		f=new FixFunction(func, lsbIn, msbOut, lsbOut);
 		
+		bool plainStupidVHDL=false;
 		srcFileName="FixFunctionBySimplePoly";
 		
 		ostringstream name;
@@ -90,30 +92,41 @@ namespace flopoco{
 			vhdl << endl;
 		}
 
-		bool plainStupidVHDL=true;
 
-		if(plainStupidVHDL) {
-			// Here we assume all the coefficients already include the proper number of guard bits
-			int sigmaMSB=coeffMSB[degree];
-			int sigmaLSB=coeffLSB[degree];
-			vhdl << tab << declareFixPoint(join("Sigma", degree), true, sigmaMSB, sigmaLSB) 
-					 << " <= " << join("A", degree)  << ";" << endl;
+		// Here we assume all the coefficients already include the proper number of guard bits
+		int sigmaMSB=coeffMSB[degree];
+		int sigmaLSB=coeffLSB[degree];
+		vhdl << tab << declareFixPoint(join("Sigma", degree), true, sigmaMSB, sigmaLSB) 
+				 << " <= " << join("A", degree)  << ";" << endl;
 
-			for(int i=degree-1; i>=0; i--) {
-				// When multiplying two unsigned, the MSB is the sum of the MSBs
-				// But when multiplying two signed, the MSB is the sum plus one (only used in the ultrare case -max*-max)
-				int PMSB=sigmaMSB+0 + 1;
-				vhdl << tab << declareFixPoint(join("P", i), true, PMSB,  sigmaLSB  + f->lsbIn /*LSB*/) 
+		for(int i=degree-1; i>=0; i--) {
+			int pMSB=sigmaMSB+0 + 1;
+			sigmaMSB = max(pMSB-1, coeffMSB[i]) +1; // +1 to absorb addition overflow
+			sigmaLSB = coeffLSB[i];
+
+			if(plainStupidVHDL) {
+				vhdl << tab << declareFixPoint(join("P", i), true, pMSB,  sigmaLSB  + f->lsbIn /*LSB*/) 
 						 <<  " <= Xs * Sigma" << i+1 << ";" << endl;
-				// However the bit of weight PMSB is a 0. We want to keep the bits from  PMSB-1
-				sigmaMSB = max(PMSB-1, coeffMSB[i]) +1; // +1 to absorb addition overflow
-				sigmaLSB = coeffLSB[i];
+				// However the bit of weight pMSB is a 0. We want to keep the bits from  pMSB-1
 				resizeFixPoint(join("Ptrunc", i), join("P", i), sigmaMSB, sigmaLSB);
 				resizeFixPoint(join("Aext", i), join("A", i), sigmaMSB, sigmaLSB);
 				
 				vhdl << tab << declareFixPoint(join("Sigma", i), true, sigmaMSB, sigmaLSB)   << " <= " << join("Aext", i) << " + " << join("Ptrunc", i) << ";" << endl;
 			}
+
+			else { // using FixMultAdd
+				REPORT(DEBUG, "DDDDD i=" << i << "    " << sigmaMSB << " " << sigmaLSB << "  " << join("A", i));
+				FixMultAdd::newComponentAndInstance(this,
+																						join("Step",i),     // instance name
+																						"Xs",               // x
+																						join("Sigma", i+1), // y
+																						join("A", i),        // a
+																						join("Sigma", i),   // result 
+																						sigmaMSB, sigmaLSB
+																						);
+			}
 		}
+
 
 
 		//Building the vector of sizes for FixHornerEvaluator

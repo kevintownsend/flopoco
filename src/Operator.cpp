@@ -140,6 +140,37 @@ namespace flopoco{
 		//		declareTable[name] = s->getCycle();
 	}
 	
+#if 0
+	void Operator::addFixInput(const std::string name, const bool isSigned, const int msb, const int lsb) {
+		if (signalMap_.find(name) != signalMap_.end()) {
+			std::ostringstream o;
+			o << srcFileName << " (" << uniqueName_ << "): ERROR in addFixInput, signal " << name<< " seems to already exist";
+			throw o.str();
+		}
+		Signal *s = new Signal(name, Signal::in, isSigned, msb, lsb);
+		s->setCycle(0);
+		ioList_.push_back(s);
+		signalMap_[name] = s ;
+		numberOfInputs_ ++;
+		declareTable[name] = s->getCycle();
+	}
+	
+	void Operator::addFixOutput(const std::string name, const bool isSigned, const int msb, const int lsb, const int numberOfPossibleOutputValues) {
+		if (signalMap_.find(name) != signalMap_.end()) {
+			std::ostringstream o;
+			o << srcFileName << " (" << uniqueName_ << "): ERROR in addFixOutput, signal " << name<< " seems to already exist";
+			throw o.str();
+		}
+		Signal *s = new Signal(name, Signal::out, isSigned, msb, lsb) ;
+		s -> setNumberOfPossibleValues(numberOfPossibleOutputValues);
+		ioList_.push_back(s);
+		for(int i=0; i<numberOfPossibleOutputValues; i++) 
+			testCaseSignals_.push_back(s);
+		signalMap_[name] = s ;
+		numberOfOutputs_ ++;
+	}
+#endif
+	
 	void Operator::addFPInput(const std::string name, const int wE, const int wF) {
 		if (signalMap_.find(name) != signalMap_.end()) {
 			std::ostringstream o;
@@ -1076,9 +1107,15 @@ namespace flopoco{
 			
 			if (it!=op->portMap_.begin() || op->isSequential())				
 				o << "," << endl <<  tab << tab << "           ";
-				
-				o << (*it).first << " => "  << (*it).second;
-			
+
+			Signal* lhs = op->getSignalByName((*it).first);
+			Signal* rhs = getSignalByName((*it).second);
+			o << (*it).first << " => " ;
+			if (rhs->isFix() && lhs->type()==Signal::in)
+				o << std_logic_vector((*it).second);
+			else
+				o << (*it).second;
+		
 			if ( outputSignal && parsing ){
 				vhdl << o.str();
 				vhdl.flush(currentCycle_);

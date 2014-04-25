@@ -72,6 +72,10 @@ namespace flopoco{
 		/** Signal destructor.
 		 */		
 		~Signal();
+
+
+		/** When a signal was automatically created as a std_logic_vector, this enables to declare it as Fix */
+		void promoteToFix(const bool isSigned, const int MSB, const int LSB);
 	
 		/** Returns the name of the signal
 		 * @return the name of the signal

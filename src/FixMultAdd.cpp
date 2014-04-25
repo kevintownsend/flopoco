@@ -31,7 +31,7 @@ All rights reserved.
 using namespace std;
 
 namespace flopoco {
-
+#if 0
 #define vhdl parentOp->vhdl
 #define declare parentOp->declare
 #define inPortMap parentOp->inPortMap
@@ -41,7 +41,7 @@ namespace flopoco {
 #define getCriticalPath parentOp->getCriticalPath
 #define setCycle parentOp->setCycle
 #define oplist parentOp->getOpListR()
-
+#endif
 
 
 
@@ -65,33 +65,69 @@ namespace flopoco {
 
 
 
+
 	// The constructor for a stand-alone operator, see the .hpp for parameter explanation
-	FixMultAdd::FixMultAdd(Target* target, int wX_, int wY_, int wA_, int wOut_, 
-	                       int msbP_, int lsbA_, 
-	                       bool signedIO_,
-	                       float ratio_, bool enableSuperTiles_, 
-	                       map<string, double> inputDelays_):
+	FixMultAdd::FixMultAdd(Target* target, Signal* x_, Signal* y_, Signal* a_, int outMSB_, int outLSB_,
+												 float ratio_, bool enableSuperTiles_, map<string, double> inputDelays_):
 		Operator ( target, inputDelays_ ),
-		wX(wX_), wY(wY_), wA(wA_), wOut(wOut_),
-		msbP(msbP_),
-		lsbPfull(msbP - wX -wY), // True for signed inputs?
- 		lsbA(lsbA_),
-		signedIO(signedIO_),
+		x(x_), y(y_), a(a_),
+		// wX(wX_), wY(wY_), wA(wA_), 
+		wOut(outMSB_-outLSB_+1),
+		outMSB(outMSB_), 
+		outLSB(outLSB_), 
 		ratio(ratio_), 
 		enableSuperTiles(enableSuperTiles_) 
 {
 
 		srcFileName="FixMultAdd";
-		setCopyrightString ( "Florent de Dinechin, 2012" );
+		setCopyrightString ( "Florent de Dinechin, 2012-2014" );
 
+		signedIO = (x->isSigned() || y->isSigned());
+		// TODO manage the case when one is signed and not the other.
 		{
 			ostringstream name;
-			name <<"FixMultAdd";
-			name << wX << "x" << wY << "p" << wA << "r" << wOut << "" << (signedIO?"s":"u") << "uid"<<Operator::getNewUId();
+			name <<"FixMultAdd_";
+			// name << wX << "x" << wY << "p" << wA << "r" << wOut << "" << (signedIO?"s":"u");
+			name << Operator::getNewUId();
 			setName ( name.str() );
-			REPORT(INFO, "Building " << name.str() );
+			REPORT(DEBUG, "Building " << name.str() );
 		}
 
+		// Set up the VHDL library style
+		useNumericStd();
+
+		wX = x->MSB() - x->LSB() +1;
+		wY = y->MSB() - y->LSB() +1;
+		wA = a->MSB() - a->LSB() +1;
+		
+		// Set up the IO signals
+		xname="X";
+		yname="Y";
+		aname="A";
+
+		addInput ( xname,  wX);
+		addInput ( yname,  wY);
+		addInput ( aname,  wA);
+		addOutput ( "R",  wOut, possibleOutputs);
+
+		// Build internal fix-point signals
+		vhdl << tab << declareFixPoint("iX", x->isSigned(), x->MSB(), x->LSB()) << " <= " << (x->isSigned()? "signed":"unsigned" ) << "(X);" << endl;
+		vhdl << tab << declareFixPoint("iY", x->isSigned(), y->MSB(), y->LSB()) << " <= " << (x->isSigned()? "signed":"unsigned" ) << "(Y);" << endl;
+		vhdl << tab << declareFixPoint("iA", x->isSigned(), a->MSB(), a->LSB()) << " <= " << (x->isSigned()? "signed":"unsigned" ) << "(A);" << endl;
+
+
+		// Write the exact product
+		int pMSB = x->MSB() + y->MSB() + 1;
+		int pLSB = x->LSB() + y->LSB();
+
+		vhdl << tab << declareFixPoint("P", signedIO, pMSB, pLSB)   << " <= iX * iY;" << endl;
+		resizeFixPoint("Presized", "P", outMSB, outLSB);
+		resizeFixPoint("Aresized", "iA", outMSB, outLSB);
+			
+		vhdl << tab << declareFixPoint("iR", signedIO,  outMSB, outLSB) << " <= Aresized + Presized;" << endl; 
+		vhdl << tab << "R <= std_logic_vector(iR);" << endl; 
+
+#if 0
 		parentOp=this;
 
 		// TODO the following assumes that lsbA is positive
@@ -113,23 +149,6 @@ namespace flopoco {
 			REPORT(DETAILED, " Faithfully rounded architecture" )
 		}
 
-		// Set up the IO signals
-		xname="X";
-		yname="Y";
-		aname="A";
-
-		addInput ( xname  , wX, true );
-		addInput ( yname  , wY, true );
-		addInput ( aname  , wA, true );
-		addOutput ( "R"  , wOut, possibleOutputs , true );
-
-
-		// Set up the VHDL library style
-		if(signedIO)
-			useStdLogicSigned();
-		else
-			useStdLogicUnsigned();
-
 		// The bit heap
 		bitHeap = new BitHeap(this, wOut+g, enableSuperTiles);
 
@@ -147,24 +166,56 @@ namespace flopoco {
 
 		bitHeap -> generateCompressorVHDL();			
 		vhdl << tab << "R" << " <= " << bitHeap-> getSumName() << range(wOut+g-1, g) << ";" << endl;
+
+#endif
 	}
 
 
 
 
 	FixMultAdd::~FixMultAdd() {
-		free(mult);
+		if(mult) 
+			free(mult);
 	}
+
+
+	FixMultAdd* FixMultAdd::newComponentAndInstance(Operator* op,
+																									string instanceName,
+																									string xSignalName,
+																									string ySignalName,
+																									string aSignalName,
+																									string rSignalName,
+																									int rMSB, 
+																									int rLSB
+																									) {
+		FixMultAdd* f = new FixMultAdd(op->getTarget(), 
+																	 op->getSignalByName(xSignalName), 
+																	 op->getSignalByName(ySignalName), 
+																	 op->getSignalByName(aSignalName), 
+																	 rMSB, rLSB);   
+		op->addSubComponent(f);
+		op->inPortMap(f, "X", xSignalName);
+		op->inPortMap(f, "Y", ySignalName);
+		op->inPortMap(f, "A", aSignalName);
+		op->outPortMap(f, "R", join(rSignalName, "_slv"));
+		op->vhdl << op->instance(f, instanceName);
+		op->vhdl << tab << op->declareFixPoint(rSignalName,f->signedIO, rMSB, rLSB) << " <= " <<  "signed(" << (join(rSignalName, "_slv")) << ");" << endl;
+		//op->getSignalByName(rSignalName)->promoteToFix(f->signedIO, rMSB, rLSB);
+	}
+
+
 
 
 	void FixMultAdd::fillBitHeap() {
 		//  throw the addend to the bit heap
+#if 0
 		bitHeap -> addSignedBitVector(lsbA+g, aname, wA);
 		
 		//  throw the product to the bit heap
 		int lsbWeight = msbP+1 - wOutP;
 		// TODO we could read wX and wY from the signal.
 		mult = new IntMultiplier (this, bitHeap, getSignalByName("X"), getSignalByName("Y"), wX, wY, wOutP, lsbWeight, false /*negate*/, signedIO, ratio);
+#endif
 	}
 
 

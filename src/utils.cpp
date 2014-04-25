@@ -749,4 +749,12 @@ namespace flopoco{
 			r = x;
 		return r;
 	}
+
+
+	string std_logic_vector(const string& s ){
+		ostringstream o;
+		o << "std_logic_vector(" << s << ")";
+		return o.str();
+	};
+
 }

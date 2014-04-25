@@ -1,11 +1,11 @@
 
 The attic directory is full of old stuff.
 
-TODO: manage non-uniform errors; manage non-uniform segmentation 
+TODO: manage non-uniform errors; manage non-uniform segmentation; something for sin(sqrt(x))
 
 
 FixFunction
-    Centralizes Sollya parsing and evaluation to various formats, including some day an emulate() that works for all FixFunctionBy*
+    Centralizes Sollya parsing and evaluation to various formats, including an emulate() that works for all FixFunctionBy*
 
 FixFunctionByTable: a flopoco operator that is the most basic implementation of a FixFunction
 

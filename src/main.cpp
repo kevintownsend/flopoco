@@ -112,7 +112,7 @@ void usage(char *name, string opName = ""){
 	}
 
 	if ( full || opName == "FixFunctionBySimplePoly" || opName == "FixFunction"){					
-		OP( "FixFunctionBySimplePoly","function wI msbO lsbO ");
+		OP( "FixFunctionBySimplePoly","function lsbI msbO lsbO ");
 		cerr << "  A function evaluator using a single polynomial on the interval [0,1), evaluated with Horner scheme \n";
 		cerr << "    function: sollya-syntaxed function to implement, e.g. \"sin(x*Pi/2)\" \n";
 		cerr << "    lsbI: weight of input LSB, for instance -8 for an 8-bit input (bit weights from -1 to -8)\n";

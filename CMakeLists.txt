@@ -188,7 +188,7 @@ ADD_LIBRARY(FloPoCoLib STATIC
  src/Targets/CycloneV 
 
  src/BitHeap
-src/WeightedBit
+ src/WeightedBit
  src/IntComparator
  src/IntDualSub
 

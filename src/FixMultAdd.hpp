@@ -40,20 +40,17 @@ namespace flopoco {
 
 	public:
 		/**
-		 * The FixMultAdd generic constructor (TODO: provide simpler versions)
+		 * The FixMultAdd generic constructor computes x*y+a, faithful to outLSB. 
 		 * @param[in] target            target device
-		 * @param[in] wX                X multiplier size (including sign bit if any)
-		 * @param[in] wY                Y multiplier size (including sign bit if any)
-		 * @param[in] wA                addend size 
-		 * @param[in] wOut              size of the truncated product 
-		 * @param[in] msbP              weight of the MSB of the product.
- 			  In the signed case, this MSB has to be understood as the MSB of the signal, not the weight of the value which will be 1 bit less.
-		 * @param[in] lsbA              weight of the LSB of A
-		 * @param[in] signedIO          false=unsigned, true=signed
+		 * @param[in] x                 Signal (should be of fixed-point type)
+		 * @param[in] y                 Signal (should be of fixed-point type)
+		 * @param[in] a                 Signal (should be of fixed-point type) 
+		 * @param[in] outMSB            weight of the MSB of the product 
+		 * @param[in] outLSB            weight of the LSB of the product
 		 * @param[in] ratio             DSP block use ratio
 		 * @param[in] enableSuperTiles  if true, supertiles will decrease resource consumption but increase latency
 		 **/
-		FixMultAdd(Target* target, int wX, int wY, int wA, int wOut, int msbP, int lsbA, bool signedIO = true, 
+		FixMultAdd(Target* target, Signal* x, Signal* y, Signal* a, int outMSB, int outLSB,
 		           float ratio = 0.7, bool enableSuperTiles=true, map<string, double> inputDelays = emptyDelayMap);
 
 
@@ -82,6 +79,18 @@ namespace flopoco {
 		 */
 		~FixMultAdd();
 
+		/** Generates a component, and produces VHDL code for the instance inside an operator */
+		static FixMultAdd* newComponentAndInstance(Operator* op,
+																string instanceName,
+																string xSignalName,
+																string ySignalName,
+																string aSignalName,
+																string rSignalName,
+																int rMSB, 
+																int rLSB
+																);
+
+
 		void fillBitHeap();
 		/**
 		 * The emulate function.
@@ -91,16 +100,16 @@ namespace flopoco {
 
 		void buildStandardTestCases(TestCaseList* tcl);
 
-
-
-		int wX;                         /**< width of multiplicand X */
-		int wY;                         /**< width of multiplicand Y */
-		int wA;                     /**< width of addend A  */
-		int wOut;                      /**< size of the result */
-
-		// All the weights below are anchored on LSB of the result,  which has weight 0
-		// In the bit heap it will have weight g. 
-		int msbP;                    /**< weight +1 of the MSB product */
+		Signal* x;
+		Signal* y;
+		Signal* a;
+		int wX;                      /**<  */
+		int wY;                      /**<  */
+		int wA;                      /**<  */
+		int outMSB;                   /**<  */
+		int outLSB;                   /**<  */
+		int wOut;                   /**< size of the result */
+		int msbP;                   /**< weight +1 of the MSB product */
 		int lsbPfull;               /** equal to msbP - wX -wY */
 		int lsbA;                  /**< weight of the LSB of A */
 		bool signedIO;               /**< if true, inputs and outputs are signed. */

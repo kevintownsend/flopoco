@@ -154,6 +154,23 @@ public:
 		addOutput (name, 1, 1, false);
 	}
 
+#if 0
+	// This is disabled: fixed-point I/Os should always be plain std_logic_vectors.
+	// It just makes the framework simpler, and anyway typing is managed internally
+	// FP I/O need to be typed to manage the testbenches, e.g. FP equality does not resume to equality on the bit vectors.
+	// This is not the case for fixed-point
+	// (comment by F de Dinechin)
+
+	/** Adds a fixed-point input signal to the operator.
+	 */
+	void addFixInput(const std::string name, const bool isSigned, const int msb, const int lsb);
+
+
+	/** Adds a fixed-point output signal to the operator.
+	 */
+	void addFixOutput(const std::string name, const bool isSigned, const int msb, const int lsb, const int numberOfPossibleOutputValues=1);
+#endif
+
 	/** Adds a floating point (FloPoCo format) input signal to the operator.
 	 * Adds a signal of type Signal::in to the the I/O signal list, 
 	 * having the FP flag set on true. The total width of this signal will
@@ -409,7 +426,7 @@ public:
 
 	/** Resizes a fixed-point signal and assigns it to a new declared signal.
 			May zero-extend, sign-extend, or truncate.
-			Warns at high debug levels when truncating. Warns at all levels when truncating MSBs.  
+			Warns at debug level when truncating LSBs, and warns a bit louder when truncating MSBs.  
 	 * @param lhsName is the name of the new (resized) signal
 	 * @param rhsName is the name of the old (to be resized) signal
 	 * @return name

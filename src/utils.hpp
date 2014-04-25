@@ -347,6 +347,9 @@ namespace flopoco{
 
 	/** a function that converts a signed mpz_class to the corresponding bit vector represented as two's complement on size bits (sign bit included), to be used in the output of emulate() */
 	mpz_class signedToBitVector(mpz_class x, int size);
+
+	/** A function to help VHDL casts */
+	string std_logic_vector(const string& s );
 }
 
 
