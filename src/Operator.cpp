@@ -140,7 +140,7 @@ namespace flopoco{
 		//		declareTable[name] = s->getCycle();
 	}
 	
-#if 0
+#if 1
 	void Operator::addFixInput(const std::string name, const bool isSigned, const int msb, const int lsb) {
 		if (signalMap_.find(name) != signalMap_.end()) {
 			std::ostringstream o;
@@ -1111,9 +1111,11 @@ namespace flopoco{
 			Signal* lhs = op->getSignalByName((*it).first);
 			Signal* rhs = getSignalByName((*it).second);
 			o << (*it).first << " => " ;
+#if 0// no signed IO
 			if (rhs->isFix() && lhs->type()==Signal::in)
 				o << std_logic_vector((*it).second);
 			else
+#endif
 				o << (*it).second;
 		
 			if ( outputSignal && parsing ){

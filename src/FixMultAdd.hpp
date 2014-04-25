@@ -118,6 +118,7 @@ namespace flopoco {
 		string xname;              /**< VHDL name */
 		string yname;              /**< VHDL name */
 		string aname;              /**< VHDL name */
+		string rname;              /**< VHDL name */
 		int g ;                    /**< the number of guard bits if the product is truncated */
 		int maxWeight;             /**< The max weight for the bit heap of this multiplier, wOut + g*/
 		int wOutP;                 /**< size of the product (not counting the guard bits) */

@@ -64,7 +64,7 @@ namespace flopoco {
 
 
 
-
+#define USEFIXIO 1
 
 	// The constructor for a stand-alone operator, see the .hpp for parameter explanation
 	FixMultAdd::FixMultAdd(Target* target, Signal* x_, Signal* y_, Signal* a_, int outMSB_, int outLSB_,
@@ -104,28 +104,46 @@ namespace flopoco {
 		xname="X";
 		yname="Y";
 		aname="A";
+		rname="R";
 
+#if USEFIXIO
+		addFixInput ( xname, x->isSigned(), x->MSB(), x->LSB() );
+		addFixInput ( yname, y->isSigned(), y->MSB(), y->LSB() );
+		addFixInput ( aname, a->isSigned(), a->MSB(), a->LSB() );
+		addFixOutput (rname, signedIO, outMSB, outLSB, possibleOutputs);
+#else
 		addInput ( xname,  wX);
 		addInput ( yname,  wY);
 		addInput ( aname,  wA);
 		addOutput ( "R",  wOut, possibleOutputs);
-
 		// Build internal fix-point signals
 		vhdl << tab << declareFixPoint("iX", x->isSigned(), x->MSB(), x->LSB()) << " <= " << (x->isSigned()? "signed":"unsigned" ) << "(X);" << endl;
 		vhdl << tab << declareFixPoint("iY", x->isSigned(), y->MSB(), y->LSB()) << " <= " << (x->isSigned()? "signed":"unsigned" ) << "(Y);" << endl;
 		vhdl << tab << declareFixPoint("iA", x->isSigned(), a->MSB(), a->LSB()) << " <= " << (x->isSigned()? "signed":"unsigned" ) << "(A);" << endl;
 
+#endif
 
 		// Write the exact product
 		int pMSB = x->MSB() + y->MSB() + 1;
 		int pLSB = x->LSB() + y->LSB();
 
+#if USEFIXIO
+		vhdl << tab << declareFixPoint("P", signedIO, pMSB, pLSB)   << " <= X * Y;" << endl;
+		resizeFixPoint("Aresized", "A", outMSB, outLSB);
+#else
 		vhdl << tab << declareFixPoint("P", signedIO, pMSB, pLSB)   << " <= iX * iY;" << endl;
-		resizeFixPoint("Presized", "P", outMSB, outLSB);
 		resizeFixPoint("Aresized", "iA", outMSB, outLSB);
+#endif
+		resizeFixPoint("Presized", "P", outMSB, outLSB);
 			
 		vhdl << tab << declareFixPoint("iR", signedIO,  outMSB, outLSB) << " <= Aresized + Presized;" << endl; 
+#if USEFIXIO
+		vhdl << tab << "R <= iR;" << endl; 
+#else
 		vhdl << tab << "R <= std_logic_vector(iR);" << endl; 
+#endif
+
+
 
 #if 0
 		parentOp=this;
@@ -197,10 +215,15 @@ namespace flopoco {
 		op->inPortMap(f, "X", xSignalName);
 		op->inPortMap(f, "Y", ySignalName);
 		op->inPortMap(f, "A", aSignalName);
+#if USEFIXIO
+		op->outPortMap(f, "R", rSignalName);
+		op->vhdl << op->instance(f, instanceName);
+		op->getSignalByName(rSignalName)->promoteToFix(f->signedIO, rMSB, rLSB);
+#else
 		op->outPortMap(f, "R", join(rSignalName, "_slv"));
 		op->vhdl << op->instance(f, instanceName);
 		op->vhdl << tab << op->declareFixPoint(rSignalName,f->signedIO, rMSB, rLSB) << " <= " <<  "signed(" << (join(rSignalName, "_slv")) << ");" << endl;
-		//op->getSignalByName(rSignalName)->promoteToFix(f->signedIO, rMSB, rLSB);
+#endif
 	}
 
 

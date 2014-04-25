@@ -1,7 +1,15 @@
 
 The attic directory is full of old stuff.
 
-TODO: manage non-uniform errors; manage non-uniform segmentation; something for sin(sqrt(x))
+TODO short term: 
+Finish (or rewrite) FixMultAdd. 
+Probably need to add signed/unsigned IOs to IntMultiplier (?FixMultiplier?) -- prepare discussion
+Add signed/unsigned support to the test framework (IO conversions from/to std_logic_vector).
+Write FixPolynomialHornerEvaluator
+Write FixFunctionByPiecewisePoly
+
+
+TODO long term: manage non-uniform errors; manage non-uniform segmentation; something for sin(sqrt(x))
 
 
 FixFunction

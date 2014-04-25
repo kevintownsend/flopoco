@@ -154,8 +154,9 @@ public:
 		addOutput (name, 1, 1, false);
 	}
 
-#if 0
-	// This is disabled: fixed-point I/Os should always be plain std_logic_vectors.
+#if 1
+	// Test:
+	// One option is that fixed-point I/Os should always be plain std_logic_vectors.
 	// It just makes the framework simpler, and anyway typing is managed internally
 	// FP I/O need to be typed to manage the testbenches, e.g. FP equality does not resume to equality on the bit vectors.
 	// This is not the case for fixed-point
