@@ -100,17 +100,49 @@ namespace flopoco{
 		    @param c        the value to be added */
 		void addConstant(int weight, mpz_class c); 
 
-		/** add to the bit heap the value held by a signal, considered as an unsigned integer */
+		/**
+		 * add to the bit heap the value held by a signal, considered as an unsigned integer
+		 */
 		void addUnsignedBitVector(int weight, string x, unsigned size);
 		
-		/** add to the bit heap the opposite of the value held by a signal, considered as an unsigned integer */
+		/**
+		 * add to the bit heap the value held by a signal, considered as an unsigned integer
+		 * only add the bits between indices msb and lsb, including
+		 */
+		void addUnsignedBitVector(int weight, string x, unsigned size, int msb, int lsb);
+
+		/**
+		 * add to the bit heap the opposite of the value held by a signal, considered as an unsigned integer
+		 */
 		void subtractUnsignedBitVector(int weight, string x, unsigned size);
 
-		/** add to the bit heap the value held by a signal, considered as a signed integer. size includes the sign bit */
+		/**
+		 * add to the bit heap the opposite of the value held by a signal, considered as an unsigned integer
+		 * only subtract the bits between indices msb and lsb, including
+		 */
+		void subtractUnsignedBitVector(int weight, string x, unsigned size, int msb, int lsb);
+
+		/**
+		 * add to the bit heap the value held by a signal, considered as a signed integer. size includes the sign bit
+		 */
 		void addSignedBitVector(int weight, string x, unsigned size);
 
-		/** add to the bit heap the opposite of the value held by a signal, considered as a signed integer. size includes the sign bit */
+		/**
+		 * add to the bit heap the value held by a signal, considered as a signed integer. size includes the sign bit
+		 * only add bits of weight at least lsb
+		 */
+		void addSignedBitVector(int weight, string x, unsigned size, int lsb);
+
+		/**
+		 * add to the bit heap the opposite of the value held by a signal, considered as a signed integer. size includes the sign bit
+		 */
 		void subtractSignedBitVector(int weight, string x, unsigned size);
+
+		/**
+		 * add to the bit heap the opposite of the value held by a signal, considered as a signed integer. size includes the sign bit
+		 * only subtract bits of weight at least lsb
+		 */
+		void subtractSignedBitVector(int weight, string x, unsigned size, int lsb);
 
 
 		/** generate the VHDL for the bit heap. To be called last by operators using BitHeap.*/

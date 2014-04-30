@@ -129,15 +129,39 @@ namespace flopoco
 		constantBits += (c << weight);
 	};
 
-	void BitHeap::addUnsignedBitVector(int weight, string x, unsigned size)	{
+	void BitHeap::addUnsignedBitVector(int weight, string x, unsigned size)
+	{
 		if (weight<0)
 			THROWERROR("Negative weight (" << weight << ") in addUnsignedBitVector");
 		if(weight+size>maxWeight) {
-			REPORT(INFO, "in subtractUnsignedBitVector: Size of signal " << x << " is " << size <<
+			REPORT(INFO, "in addUnsignedBitVector: Size of signal " << x << " is " << size <<
 			       ", adding it at weight " << weight << " overflows the bit heap (maxWeight=" << maxWeight << ")");
 		}
 		op->setCycleFromSignal(x);
 		for (unsigned i=0; i<size; i++) {
+			ostringstream s;
+			s << x << of(i);
+			addBit(weight+i, s.str());
+		}
+	}
+
+	void BitHeap::addUnsignedBitVector(int weight, string x, unsigned size, int msb, int lsb)
+	{
+		if (weight<0)
+			THROWERROR("Negative weight (" << weight << ") in addUnsignedBitVector");
+		if(weight+size>maxWeight) {
+			REPORT(INFO, "in addUnsignedBitVector: Size of signal " << x << " is " << size <<
+					", adding it at weight " << weight << " overflows the bit heap (maxWeight=" << maxWeight << ")");
+		}
+		if(msb<lsb)
+			THROWERROR("MSB (" << msb << ") of sub-signal to add larger than LSB (" << lsb << ") in addUnsignedBitVector");
+		if(msb>size-1)
+			THROWERROR("MSB (" << msb << ") of sub-signal to add larger than signal's MSB (" << size-1 << ") in addUnsignedBitVector");
+		if(lsb<0)
+			THROWERROR("LSB (" << lsb << ") of sub-signal to add is negative; should be between 0 and " << size-1 << ", including, in addUnsignedBitVector");
+
+		op->setCycleFromSignal(x);
+		for (int i=lsb; i<=msb; i++) {
 			ostringstream s;
 			s << x << of(i);
 			addBit(weight+i, s.str());
@@ -154,6 +178,37 @@ namespace flopoco
 		}
 
 		for (unsigned i=0; i<size; i++) {
+			ostringstream s;
+			s << "not " << x << of(i);
+
+			addBit(weight+i, s.str(),"", 1);
+		}
+		addConstantOneBit(weight);
+		if (size+weight < maxWeight) {
+			// complement all the way to maxWeight
+			for (unsigned i=size+weight; i<maxWeight; i++) {
+				addConstantOneBit(i);
+			}
+		}
+
+	}
+
+	void BitHeap::subtractUnsignedBitVector(int weight, string x, unsigned size, int msb, int lsb)
+	{
+		if (weight<0)
+			THROWERROR("Negative weight (" << weight << ") in subtractUnsignedBitVector");
+		if(weight+size>maxWeight) {
+			REPORT(INFO, "in subtractUnsignedBitVector: Size of signal " << x << " is " << size <<
+					", adding it at weight " << weight << " overflows the bit heap (maxWeight=" << maxWeight << ")");
+		}
+		if(msb<lsb)
+			THROWERROR("MSB (" << msb << ") of sub-signal to add larger than LSB (" << lsb << ") in subtractUnsignedBitVector");
+		if(msb>size-1)
+			THROWERROR("MSB (" << msb << ") of sub-signal to add larger than signal's MSB (" << size-1 << ") in subtractUnsignedBitVector");
+		if(lsb<0)
+			THROWERROR("LSB (" << lsb << ") of sub-signal to add is negative; should be between 0 and " << size-1 << ", including, in subtractUnsignedBitVector");
+
+		for (int i=lsb; i<=msb; i++) {
 			ostringstream s;
 			s << "not " << x << of(i);
 
@@ -195,13 +250,85 @@ namespace flopoco
 		}
 	}
 
+	void BitHeap::addSignedBitVector(int weight, string x, unsigned size, int lsb)
+	{
+		if (weight<0)
+			THROWERROR("Negative weight (" << weight << ") in addSignedBitVector");
+		if(weight+size>maxWeight)
+		{
+			REPORT(INFO, "in addSignedBitVector: Size of signal " << x << " is " << size <<
+					", adding it at weight " << weight << " overflows the bit heap (maxWeight=" << maxWeight << ")");
+		}
+		if(lsb<0)
+			THROWERROR("LSB (" << lsb << ") of sub-signal to add is negative; should be between 0 and " << size-1 << ", including, in addSignedBitVector");
+
+		for(unsigned i=lsb; i<size; i++)
+		{
+			ostringstream rhs;
+			if(i==size-1) // complement for sign extension
+				rhs << "not ";
+			rhs << x << of(i);
+			addBit(weight + i, rhs.str());
+		}
+		// sign extension of the addend
+		for (unsigned i=size+weight-1; i<maxWeight; i++) {
+			addConstantOneBit(i);
+		}
+	}
+
 
 	void BitHeap::subtractSignedBitVector(int weight, string x, unsigned size)
 	{
 		if (weight<0)
 			THROWERROR("Negative weight (" << weight << ") in subtractSignedBitVector");
-		// TODO
-		THROWERROR("BitHeap::addSignedBitVector not yet implemented");
+		if(weight+size>maxWeight)
+		{
+			REPORT(INFO, "in subtractSignedBitVector: Size of signal " << x << " is " << size <<
+					", adding it at weight " << weight << " overflows the bit heap (maxWeight=" << maxWeight << ")");
+		}
+
+		for(unsigned i=0; i<size; i++)
+		{
+			ostringstream rhs;
+			if(i!=size-1) // complement the bits except the sign bit (which is complemented twice, thus keeps its value)
+				rhs << "not ";
+			rhs << x << of(i);
+			addBit(weight + i, rhs.str());
+		}
+		addConstantOneBit(weight);
+		// sign extension of the addend
+		for(unsigned i=size+weight-1; i<maxWeight; i++)
+		{
+			addConstantOneBit(i);
+		}
+	}
+
+	void BitHeap::subtractSignedBitVector(int weight, string x, unsigned size, int lsb)
+	{
+		if (weight<0)
+			THROWERROR("Negative weight (" << weight << ") in subtractSignedBitVector");
+		if(weight+size>maxWeight)
+		{
+			REPORT(INFO, "in subtractSignedBitVector: Size of signal " << x << " is " << size <<
+					", adding it at weight " << weight << " overflows the bit heap (maxWeight=" << maxWeight << ")");
+		}
+		if(lsb<0)
+			THROWERROR("LSB (" << lsb << ") of sub-signal to add is negative; should be between 0 and " << size-1 << ", including, in addSignedBitVector");
+
+		for(unsigned i=lsb; i<size; i++)
+		{
+			ostringstream rhs;
+			if(i!=size-1) // complement the bits except the sign bit (which is complemented twice, thus keeps its value)
+				rhs << "not ";
+			rhs << x << of(i);
+			addBit(weight + i, rhs.str());
+		}
+		addConstantOneBit(weight);
+		// sign extension of the addend
+		for(unsigned i=size+weight-1; i<maxWeight; i++)
+		{
+			addConstantOneBit(i);
+		}
 	}
 
 
