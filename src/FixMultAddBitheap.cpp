@@ -269,12 +269,12 @@ namespace flopoco {
 			//align the product and the addend
 			if(a->LSB() < pLSB)
 			{
-				svP = svP << pLSB-a->LSB();
+				svP = svP << (pLSB-a->LSB());
 				outShift = outLSB - a->LSB();
 			}
 			else
 			{
-				svA = svA >> a->LSB()-pLSB;
+				svA = svA >> (a->LSB()-pLSB);
 				outShift = outLSB - pLSB;
 			}
 
@@ -282,9 +282,15 @@ namespace flopoco {
 
 			//align the multiply-and-add with the output format
 			if(outShift > 0)
+			{
 				svR = svR >> outShift;
+				possibleOutputs = 2;
+			}
 			else
+			{
 				svR = svR << (-outShift);
+				possibleOutputs = 1;
+			}
 
 			//add only the bits corresponding to the output format
 			svRAux = svR & (twoToWR -1);
@@ -299,7 +305,7 @@ namespace flopoco {
 		}
 		else
 		{
-			//TODO
+			int outShift;
 
 			// Manage signed digits
 			mpz_class twoToWX = (mpz_class(1) << (wX));
@@ -319,28 +325,43 @@ namespace flopoco {
 				svA -= twoToWA;
 
 			svP = svX * svY; //signed
-			if(lsbPfull>=0)
+
+			//align the product and the addend
+			if(a->LSB() < pLSB)
 			{
-				// no truncation
-				svR = (svA << lsbA) + (svP << lsbPfull); // signed
-				// manage two's complement at output
-				if ( svR < 0)
-					svR += twoToWR;
-				tc->addExpectedOutput("R", svR);
-				return;
+				svP = svP << (pLSB-a->LSB());
+				outShift = outLSB - a->LSB();
 			}
 			else
 			{
-				//lsbPfull<0
-				int shift=-lsbPfull;
-				// fully accurate result, product-anchored
-				svR = (svA<<(lsbA + shift)) + svP;
-				// manage its two's complement
-				if ( svR < 0)
-					svR += (mpz_class(1) << (wOut+shift));
-				// shift back to place: truncation
-				svR = svR >> shift;
-				tc->addExpectedOutput("R", svR); // this was rounded down
+				svA = svA >> (a->LSB()-pLSB);
+				outShift = outLSB - pLSB;
+			}
+
+			svR = svP + svA;
+
+			//align the multiply-and-add with the output format
+			if(outShift > 0)
+			{
+				svR = svR >> outShift;
+				possibleOutputs = 2;
+			}
+			else
+			{
+				svR = svR << (-outShift);
+				possibleOutputs = 1;
+			}
+
+			// manage two's complement at output
+			if(svR < 0)
+				svR += twoToWR;
+
+			//add only the bits corresponding to the output format
+			svRAux = svR & (twoToWR -1);
+
+			tc->addExpectedOutput("R", svRAux);
+			if(possibleOutputs == 2)
+			{
 				svR++;
 				svR &= (twoToWR -1);
 				tc->addExpectedOutput("R", svR);
