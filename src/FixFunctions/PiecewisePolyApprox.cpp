@@ -155,9 +155,15 @@ namespace flopoco{
 		} // end while(!success)
 
 		// A bit of reporting
+		REPORT(INFO,"Final report: ");
+		REPORT(INFO,"  Degree=" << degree);
+ 		int totalOutputSize=0;
 		for (int j=0; j<=degree; j++) {
-			REPORT(DETAILED," *** MSB["<<j<<"] = " << MSB[j]);
+			int size=MSB[j]-LSB;
+			totalOutputSize+=size ;
+			REPORT(INFO,"      MSB["<<j<<"] = " << MSB[j] << "  size=" << size);
 		}
+		REPORT(INFO, "  Total size of the table is " << nbIntervals << " x " << totalOutputSize << " bits");
 
 	}
 	
