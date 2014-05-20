@@ -109,7 +109,7 @@ namespace flopoco{
 		 * add to the bit heap the value held by a signal, considered as an unsigned integer
 		 * only add the bits between indices msb and lsb, including
 		 */
-		void addUnsignedBitVector(int weight, string x, unsigned size, int msb, int lsb);
+		void addUnsignedBitVector(int weight, string x, unsigned size, int msb, int lsb, bool negativeWeight=false);
 
 		/**
 		 * add to the bit heap the opposite of the value held by a signal, considered as an unsigned integer
@@ -120,7 +120,7 @@ namespace flopoco{
 		 * add to the bit heap the opposite of the value held by a signal, considered as an unsigned integer
 		 * only subtract the bits between indices msb and lsb, including
 		 */
-		void subtractUnsignedBitVector(int weight, string x, unsigned size, int msb, int lsb);
+		void subtractUnsignedBitVector(int weight, string x, unsigned size, int msb, int lsb, bool negativeWeight=false);
 
 		/**
 		 * add to the bit heap the value held by a signal, considered as a signed integer. size includes the sign bit
@@ -131,7 +131,7 @@ namespace flopoco{
 		 * add to the bit heap the value held by a signal, considered as a signed integer. size includes the sign bit
 		 * only add bits of weight at least lsb
 		 */
-		void addSignedBitVector(int weight, string x, unsigned size, int lsb);
+		void addSignedBitVector(int weight, string x, unsigned size, int lsb, bool negativeWeight=false);
 
 		/**
 		 * add to the bit heap the opposite of the value held by a signal, considered as a signed integer. size includes the sign bit
@@ -142,14 +142,25 @@ namespace flopoco{
 		 * add to the bit heap the opposite of the value held by a signal, considered as a signed integer. size includes the sign bit
 		 * only subtract bits of weight at least lsb
 		 */
-		void subtractSignedBitVector(int weight, string x, unsigned size, int lsb);
+		void subtractSignedBitVector(int weight, string x, unsigned size, int lsb, bool negativeWeight=false);
 
 
 		/** generate the VHDL for the bit heap. To be called last by operators using BitHeap.*/
 		void generateCompressorVHDL();
 
+		/** round the resut of the bit heap compression. Must be called only after generateCompressorVHDL() has been called.
+		 *  @param lsb the precision to which to round the result of the compression
+		 */
+		void roundBitheap(int lsb=0);
+
 		/** returns the name of the compressed sum */
 		string getSumName();
+
+		/** returns the name of the compressed sum, with the range (msb, lsb)
+		 *  @param msb the msb for the range
+		 *  @param lsb the lsb for the range
+		 */
+		string getSumName(int msb, int lsb);
 
 		/** returns the current stage of the bitheap, given the global cycle and CP */
 		int computeStage();
@@ -327,6 +338,9 @@ namespace flopoco{
 		unsigned int minAdd3Length;					/**< The minimum length of a 3-input adder */
 		unsigned int maxAdd3Length;					/**< The maximum length of a 3-input adder */
 		bool enableSuperTiles;
+
+		bool bitheapCompressed;						/**< Has the bitheap already been compressed */
+		bool bitheapRounded;						/**< Has the bitheap already been rounded */
 	};
 
 

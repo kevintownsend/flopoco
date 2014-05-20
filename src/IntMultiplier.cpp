@@ -491,19 +491,19 @@ namespace flopoco {
 				if(w-startingIndex >= 0)
 				{
 					//no point of sign-extending for just one bit
-					if((wOut < (int)(bitHeap->getMaxWeight()-bitHeap->getMinWeight())) && (w == (endingIndex-1)) && (bitHeap->getMaxWeight()-(endingIndex-1-startingIndex) > 1))
+					if((wOut < (int)(bitHeap->getMaxWeight()-bitHeap->getMinWeight())) && (w == (endingIndex-1)) && (bitHeap->getMaxWeight()-(endingIndex-1-startingIndex) > 1) && signedIO)
 					{
 						s.str("");
 						s << "not DSP_mult_" << getuid();
 						
-						bitHeap->addBit(w-startingIndex, join(s.str(), of(w)));
+						bitHeap->addBit(w-startingIndex+lsbWeight, join(s.str(), of(w)));
 					}
 					else
-						bitHeap->addBit(w-startingIndex, join(s.str(), of(w)));
+						bitHeap->addBit(w-startingIndex+lsbWeight, join(s.str(), of(w)));
 				}
 						
 			//keep sign-extending, if necessary
-			if(bitHeap->getMaxWeight()-(endingIndex-1-startingIndex) > 1)
+			if((bitHeap->getMaxWeight()-(endingIndex-1-startingIndex) > 1) && signedIO)
 				for(int w=endingIndex-1-startingIndex; w<(int)bitHeap->getMaxWeight(); w++)
 					bitHeap->addConstantOneBit(w);
 			
@@ -1174,6 +1174,7 @@ namespace flopoco {
 			// REPORT(DEBUG, "*********** x=" << x << "  y=" << y);
 			
 			usefulDSPArea = (botX-x)*(botY-y);
+			totalDSPArea = wxDSP*wyDSP;
 			
 			REPORT(DEBUG, "in worthUsingOneDSP: usable blockArea=" << usefulDSPArea << "   dspArea=" << totalDSPArea);
 			

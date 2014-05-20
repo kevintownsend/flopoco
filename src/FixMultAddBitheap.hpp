@@ -13,27 +13,33 @@
 
 namespace flopoco {
 
+	/**
+	 * Checks the area usage of a DSP, according to a given block and DSPThreshold(threshold)
+	 * 		- DSPThreshold(threshold) = says what percentage of 1 DSP area is allowed to be lost
+	 * Algorithm: compute the area which is used out of a DSP, and compute
+	 * the unused ratio from this. The used area can be a triangle, a trapeze or
+	 * a pentagon, in the truncated case, or a rectangle in the case of a full
+	 * multiplier.
+	 **/
 	/*
-	  Definition of the DSP use threshold r:
+	  Definition of the DSP use threshold t:
 	  Consider a submultiplier block, by definition smaller than (or equal to) a DSP in both dimensions
-	  So: r=1 means any multiplier that does not fill a DSP goes to logic
-	  r=0       any multiplier, even very small ones, go to DSP
-
-	  (submultiplier area)/(DSP area) is between 0 and 1
-	  if (submultiplier area)/(DSP area) is larger than r then use a DSP for it
-	*/
-
+	  let r=(submultiplier area)/(DSP area); r is between 0 and 1
+	  if r >= 1-t   then use a DSP for this block
+	  So: t=0 means: any submultiplier that does not fill a DSP goes to logic
+		t=1 means: any submultiplier, even very small ones, go to DSP
+	 */
 
 
-
-	/** The FixMultAdd class computes A+X*Y
-	    X*Y may be placed anywhere with respect to A;
-	    the product will be truncated when relevant.
-	    The result is specified as its LSB, MSB.
-
-			Note on signed numbers:
-			* The bit heap manages signed addition in any case, so whether the addend is signed or not is irrelevant
-			* The product may be signed, or not.
+	/**
+	 * The FixMultAdd class computes A+X*Y
+	 * X*Y may be placed anywhere with respect to A;
+	 * the product will be truncated when relevant.
+	 * The result is specified as its LSB, MSB.
+	 *
+	 * Note on signed numbers:
+	 * The bit heap manages signed addition in any case, so whether the addend is signed or not is irrelevant
+	 * The product may be signed, or not.
 	*/
 
 	class FixMultAddBitheap : public Operator {
@@ -51,7 +57,7 @@ namespace flopoco {
 		 * @param[in] enableSuperTiles  if true, supertiles will decrease resource consumption but increase latency
 		 **/
 		FixMultAddBitheap(Target* target, Signal* x, Signal* y, Signal* a, int outMSB, int outLSB,
-		           float ratio = 0.7, bool enableSuperTiles=true, map<string, double> inputDelays = emptyDelayMap);
+		           float ratio = 0.95, bool enableSuperTiles=true, map<string, double> inputDelays = emptyDelayMap);
 
 
 		/**

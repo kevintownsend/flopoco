@@ -14,7 +14,6 @@ All rights reserved.
 */
 
 
-
 #include <cstdlib>
 #include <iostream>
 #include <sstream>
@@ -23,9 +22,10 @@ All rights reserved.
 #include <gmp.h>
 #include <mpfr.h>
 #include <gmpxx.h>
+
 #include "utils.hpp"
 #include "Operator.hpp"
-#include "FixMultAdd.hpp"
+#include "FixMultAddBitheap.hpp"
 #include "IntMultiplier.hpp"
 
 using namespace std;
@@ -38,18 +38,18 @@ namespace flopoco {
 												 float ratio_, bool enableSuperTiles_, map<string, double> inputDelays_):
 		Operator ( target, inputDelays_ ),
 		x(x_), y(y_), a(a_),
-		wOut(outMSB_- outLSB_ + 1),
 		outMSB(outMSB_),
 		outLSB(outLSB_),
+		wOut(outMSB_- outLSB_ + 1),
 		ratio(ratio_),
 		enableSuperTiles(enableSuperTiles_)
 {
 
-		srcFileName="FixMultAdd";
-		setCopyrightString ( "Florent de Dinechin, 2012-2014" );
+		srcFileName="FixMultAddBitheap";
+		setCopyrightString ( "Florent de Dinechin, Matei Istoan, 2012-2014" );
 
 		// Set up the VHDL library style
-		useNumericStd();
+		//useNumericStd();
 
 		wX = x->MSB() - x->LSB() +1;
 		wY = y->MSB() - y->LSB() +1;
@@ -65,7 +65,7 @@ namespace flopoco {
 		// Set the operator name
 		{
 			ostringstream name;
-			name <<"FixMultAdd_";
+			name <<"FixMultAddBitheap_";
 			name << wX << "x" << wY << "p" << wA << "r" << wOut << "" << (signedIO?"signed":"unsigned");
 			name << Operator::getNewUId();
 			setName(name.str());
@@ -77,12 +77,6 @@ namespace flopoco {
 		yname="Y";
 		aname="A";
 		rname="R";
-
-		//create the inputs and the outputs of the operator
-		addInput (xname,  wX);
-		addInput (yname,  wY);
-		addInput (aname,  wA);
-		addOutput(rname,  wOut, possibleOutputs);
 
 		// Determine the msb and lsb of the full product X*Y
 		pMSB = x->MSB() + y->MSB() + 1;
@@ -96,8 +90,6 @@ namespace flopoco {
 		{
 			//the result of the multiplication will be truncated
 			workPLSB = outLSB;
-			g = IntMultiplier::neededGuardBits(wX, wY, pMSB-pLSB+1-(outLSB-pLSB));
-			workPLSB += g;
 
 			possibleOutputs = 2;
 			REPORT(DETAILED, "Faithfully rounded architecture");
@@ -108,8 +100,8 @@ namespace flopoco {
 		}
 		else
 		{
-			//the result of the multiplication will be truncated
-			workPLSB = outLSB;
+			//the result of the multiplication will not be truncated
+			workPLSB = pLSB;
 			g = 0;
 
 			possibleOutputs = 1; // No faithful rounding
@@ -120,7 +112,7 @@ namespace flopoco {
 			REPORT(DETAILED, dbgMsg.str());
 		}
 		//msb
-		if(pMSB < outMSB)
+		if(pMSB <= outMSB)
 		{
 			//all msbs of the product are used
 			workPMSB = pMSB;
@@ -130,6 +122,9 @@ namespace flopoco {
 			//not all msbs of the product are used
 			workPMSB = outMSB;
 		}
+		//compute the needed guard bits and update the lsb
+		g = IntMultiplier::neededGuardBits(wX, wY, workPMSB-workPLSB+1);
+		workPLSB -= g;
 
 		// Determine the actual msb and lsb of the addend,
 		// from the output's msb and lsb
@@ -138,7 +133,7 @@ namespace flopoco {
 		if(a->LSB() < outLSB)
 		{
 			//truncate the addend
-			workALSB = (outLSB+g < a->LSB()) ? a->LSB() : outLSB+g;
+			workALSB = (outLSB-g < a->LSB()) ? a->LSB() : outLSB-g;
 		}
 		else
 		{
@@ -146,7 +141,7 @@ namespace flopoco {
 			workALSB = a->LSB();
 		}
 		//msb
-		if(a->MSB() < outMSB)
+		if(a->MSB() <= outMSB)
 		{
 			//all msbs of the addend are used
 			workAMSB = a->MSB();
@@ -156,6 +151,12 @@ namespace flopoco {
 			//not all msbs of the product are used
 			workAMSB = outMSB;
 		}
+
+		//create the inputs and the outputs of the operator
+		addInput (xname,  wX);
+		addInput (yname,  wY);
+		addInput (aname,  wA);
+		addOutput(rname,  wOut, possibleOutputs);
 
 		//create the bit heap
 		{
@@ -177,8 +178,8 @@ namespace flopoco {
 								 getSignalByName(yname),		//second input to the multiplier (a signal)
 								 wX,							//width of the first operator
 								 wY,							//width of the second operator
-								 pMSB-pLSB+1-(outLSB-pLSB),		//width of the result
-								 g,								//offset in the bit heap (info provided by neededGuardBits() method)
+								 workPMSB-(workPLSB+g)+1,		//width of the result
+								 g+(workPLSB-outLSB),			//offset in the bit heap (info provided by the neededGuardBits() method)
 								 false /*negate*/,				//whether to subtract the result of the multiplication from the bit heap
 								 signedIO,						//signed/unsigned operator
 								 ratio);						//DSP ratio
@@ -188,35 +189,54 @@ namespace flopoco {
 
 		//if the addend is truncated, no shift is needed
 		//	else, compute the shift from the output lsb
-		addendWeight = (a->LSB() < outLSB) ? 0 : outLSB - a->LSB();
+		//the offset for the signal in the bitheap can be either positive (signal's lsb < than bitheap's lsb), or negative
+		//	the case of a negative offset is treated with a correction term, as it makes more sense in the context of a bitheap
+		//addendWeight = (a->LSB() < outLSB) ? 0 : outLSB - a->LSB();
+		addendWeight = a->LSB()-(outLSB-g);
 		if(signedIO)
 		{
 			bitHeap->addSignedBitVector(addendWeight,			//weight of signal in the bit heap
 										aname,					//name of the signal
 										workAMSB-workALSB+1,	//size of the signal added
-										a->LSB()-workALSB);		//index of the lsb in the bit vector from which to add the bits of the addend
+										workALSB-a->LSB(),		//index of the lsb in the bit vector from which to add the bits of the addend
+										(addendWeight<0));		//if we are correcting the index in the bit vector with a negative weight
 		}
 		else
 		{
 			bitHeap->addUnsignedBitVector(addendWeight,			//weight of signal in the bit heap
 										  aname,				//name of the signal
 										  workAMSB-workALSB+1,	//size of the signal added
-										  a->LSB()-workAMSB,	//index of the msb in the actual bit vector from which to add the bits of the addend
-										  a->LSB()-workALSB);	//index of the lsb in the actual bit vector from which to add the bits of the addend
+										  (a->MSB()-a->LSB())-(workAMSB-a->MSB()),
+										  	  	  	  	  	  	//index of the msb in the actual bit vector from which to add the bits of the addend
+										  workALSB-a->LSB(),	//index of the lsb in the actual bit vector from which to add the bits of the addend
+										  (addendWeight<0));	//if we are correcting the index in the bit vector with a negative weight
 		}
 
 		//compress the bit heap
 		bitHeap -> generateCompressorVHDL();
 
-		vhdl << tab << rname << " <= " << bitHeap->getSumName() << range(wOut+g-1, g) << ";" << endl;
+		//final rounding, if needed
+		if(g >=1 )
+		{
+			vhdl << tab << declare(join(rname, "_int"), wOut+1) << " <= "
+					<< bitHeap->getSumName() << range(wOut+g-1, g-1) << " + (" << zg(wOut, 2) << " & \"1\");" << endl;
+			vhdl << tab << rname << " <= " << join(rname, "_int") << range(wOut, 1) << ";" << endl;
+		}
+		else
+		{
+			vhdl << tab << rname << " <= " << bitHeap->getSumName() << range(wOut-1, 0) << ";" << endl;
+		}
 	}
 
 
 
 
-	FixMultAddBitheap::~FixMultAddBitheap() {
+	FixMultAddBitheap::~FixMultAddBitheap()
+	{
 		if(mult)
 			free(mult);
+		if(plotter)
+			free(plotter);
 	}
 
 
@@ -230,11 +250,11 @@ namespace flopoco {
 																	int rLSB
 																)
 	{
-		FixMultAdd* f = new FixMultAdd(op->getTarget(),
-										op->getSignalByName(xSignalName),
-										op->getSignalByName(ySignalName),
-										op->getSignalByName(aSignalName),
-										rMSB, rLSB);
+		FixMultAddBitheap* f = new FixMultAddBitheap(op->getTarget(),
+													 op->getSignalByName(xSignalName),
+													 op->getSignalByName(ySignalName),
+													 op->getSignalByName(aSignalName),
+													 rMSB, rLSB);
 		op->addSubComponent(f);
 		op->inPortMap(f, "X", xSignalName);
 		op->inPortMap(f, "Y", ySignalName);
@@ -244,11 +264,13 @@ namespace flopoco {
 
 		op->vhdl << op->instance(f, instanceName);
 		op->vhdl << tab << op->declareFixPoint(rSignalName,f->signedIO, rMSB, rLSB) << " <= " <<  "signed(" << (join(rSignalName, "_slv")) << ");" << endl;
+
+		return f;
 	}
 
 
 	//FIXME: is this right? emulate function needs to be checked
-	//		 it makes no assumptions on the signals (only on their relative alignments),
+	//		 it makes no assumptions on the signals, except their relative alignments,
 	//		 so it should work for all combinations of the inputs
 	void FixMultAddBitheap::emulate ( TestCase* tc )
 	{
@@ -274,7 +296,7 @@ namespace flopoco {
 			}
 			else
 			{
-				svA = svA >> (a->LSB()-pLSB);
+				svA = svA << (a->LSB()-pLSB);
 				outShift = outLSB - pLSB;
 			}
 
