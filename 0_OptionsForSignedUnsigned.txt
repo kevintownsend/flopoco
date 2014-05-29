@@ -1,0 +1,14 @@
+Option 0: Do nothing, try to live with the Synopsys includes
+ 
+
+Option 1: 
+ * Keep only std_logic_vector as IO,
+ * Add an option to declare() for signed / unsigned / std_logic_vector
+    (Should the default be std_logic_vector or unsigned?)
+ * Manually edit _all_ the operators to add conversions.
+ * No need to edit the TestBench architecture
+
+Option 2
+ Same as Option 1, but allow signed/unsigned IOs
+ * Need to edit the TestBench architecture
+ * Cleaner but adds more coding. For instance, in Table, need to manage the types of IOs.

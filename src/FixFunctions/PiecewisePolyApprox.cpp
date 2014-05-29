@@ -156,7 +156,7 @@ namespace flopoco{
 
 		// A bit of reporting
 		REPORT(INFO,"Final report: ");
-		REPORT(INFO,"  Degree=" << degree);
+		REPORT(INFO,"  Degree=" << degree	<< "      maxApproxErrorBound=" << approxErrorBound);
  		int totalOutputSize=0;
 		for (int j=0; j<=degree; j++) {
 			int size = MSB[j]-LSB +1;
