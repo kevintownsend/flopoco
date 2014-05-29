@@ -167,6 +167,9 @@ noinst_HEADERS = \
           FixSinCos/CordicAtan2.hpp\
           FixFIR.hpp \
           FixDCT.hpp \
+          FixHalfSine.hpp \
+          FixRCF.hpp \
+          FixRRCF.hpp \
           FPAddSub.hpp \
           random/urng/LutSrRng.hpp
 
@@ -268,6 +271,9 @@ libflopoco_la_SOURCES = \
                         FixSinCos/CordicAtan2.cpp\
                         FixFIR.cpp \
                         FixDCT.cpp \
+                        FixHalfSine.cpp \
+                        FixRCF.cpp \
+                        FixRRCF.cpp \
                         FPAdderDualPath.cpp \
                         FPAdderSinglePath.cpp \
                         FPAdder3Input.cpp \
