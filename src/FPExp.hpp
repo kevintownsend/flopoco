@@ -65,7 +65,7 @@ namespace flopoco{
 		    * @param DSP_threshold is the DSP use threshold to be used by all the internal multipliers. Formal definition in IntMultiplier.hpp   
 		    */
 
-		FPExp(Target* target, int wE, int wF, int k, int d, int guardBits=-1, bool fullInput=false, float DSP_threshold=0.7,  map<string, double> inputDelays = emptyDelayMap);
+		FPExp(Target* target, int wE, int wF, int k, int d, int guardBits=-1, bool fullInput=false, float DSP_threshold=0.7f,  map<string, double> inputDelays = emptyDelayMap);
 		~FPExp();
 		
 		// Overloading the virtual functions of Operator
