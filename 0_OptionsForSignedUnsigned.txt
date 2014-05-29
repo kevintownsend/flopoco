@@ -1,5 +1,8 @@
-Option 0: Do nothing, try to live with the Synopsys includes
- 
+Option 0: Do nothing radical. It seems when the options
+ --ieee=standard --ieee=synopsys
+are passed to ghdl in this order, we may mix standard and synopsys entities
+See directory TestsSigned  
+Incrementally move towards option 1
 
 Option 1: 
  * Keep only std_logic_vector as IO,
