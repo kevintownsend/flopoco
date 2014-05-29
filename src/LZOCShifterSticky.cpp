@@ -132,7 +132,7 @@ namespace flopoco{
 		outDelayMap["Count"] = getCriticalPath();
 
 
-		vhdl << tab << declare("sCount",wCount_) <<" <= ";
+		vhdl << tab << declare("sCount",wCount_) <<(wCount_==1?"(0)":"")<<" <= ";
 		for (int i=wCount_-1; i>=0; i--){
 			vhdl <<join("count",i);
 			vhdl << (i>0?" & ":join(";","\n"));
