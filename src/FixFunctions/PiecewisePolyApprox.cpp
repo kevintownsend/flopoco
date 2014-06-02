@@ -126,6 +126,8 @@ namespace flopoco{
 				// However we can get a bit extra accuracy/slack because the evaluation will use log2(degree) guard bits.
 				// Adding these to the constants is almost for free: let's do it.  
 				LSB = floor(log2(targetAccuracy/degree));
+				REPORT(DEBUG, "To obtain target accuracy " << targetAccuracy << " with a degree-"<<degree <<" polynomial, we compute with an internal accuracy of " << targetAccuracy/degree
+							 << " (LSB="<<LSB<<")"); 
 				p = new BasicPolyApprox(giS, degree, LSB);
 				poly.push_back(p);
 				if (approxErrorBound < p->approxErrorBound){ 

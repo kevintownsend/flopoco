@@ -25,10 +25,19 @@ DONE
 PiecewisePolyApprox: Iterates over the previous to build a regular piecewise polynomial approximation. Roughly the approximation part of previous FunctionEvaluator
 DONE
 
-FixPolynomialHornerEvaluator: an operator that inputs an X in [0,1] and a vector of coefficients, and evaluates the corresponding polynomial with truncated multipliers.
-REM a trunc mult faithful to lsb will compute weights to LSB+g 
+
+
+FixPolynomialHornerEvaluator: 
+  constructor inputs alpha,  a table of 2^alpha vectors of coefficients, lsbY
+  and builds table + horner evaluator (operator inputting index and Y)
+
+			evaluates the corresponding polynomial(s) with truncated multipliers.
+								REM a trunc mult faithful to lsb will compute weights to LSB+g 
+
+
 
 FixFunctionBySimplePoly: a flopoco operator plugging  BasicPolyApprox to FixPolynomialHornerEvaluator
+
 
 FixFunctionBySimpleBitHeap: an Operator plugging BasicPolyApprox to a bit heap back-end.
 													 (with bit heaps you don't do piecewise polynomials, or you do it the HOTBM way)
