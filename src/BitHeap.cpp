@@ -75,7 +75,7 @@ namespace flopoco
 		fullAdder = NULL;
 
 		bitheapCompressed = false;
-		bitheapRounded = false;
+		//bitheapRounded = false;
 	}
 
 
@@ -1423,12 +1423,13 @@ namespace flopoco
 		bitheapCompressed = true;
 	}
 
+
+#if 0
 	//round the result of the bitheap compression
 	void BitHeap::roundBitheap(int lsb)
 	{
 		if(!bitheapCompressed)
 			THROWERROR("Trying to round an uncompressed bit heap (in roundBitheap)! Must first call generateCompressorVHDL()");
-
 		if(lsb == 0)
 		{
 			REPORT(DEBUG, "Trying to round to the last bit. Nothing to be done.");
@@ -1442,10 +1443,12 @@ namespace flopoco
 			op->vhdl << op->declare(join(getSumName(), "_rouded"), maxWeight-lsb+1)
 					<< " <= " << join(getSumName(), "_rouded_int") << range(maxWeight-lsb+1, 1) << ";" << endl;
 		}
-
-
 		bitheapRounded = true;
 	}
+#endif
+
+
+
 
 
 	//returns a pointer to the first bit which has the smallest cycle & CP combination
@@ -2367,17 +2370,17 @@ namespace flopoco
 
 	string BitHeap::getSumName()
 	{
-		if(bitheapRounded)
-			return join("CompressionResult", guid, "_rounded");
-		else
+		// if(bitheapRounded)
+		// 	return join("CompressionResult", guid, "_rounded");
+		// else
 			return join("CompressionResult", guid);
 	}
 
 	string BitHeap::getSumName(int msb, int lsb)
 	{
-		if(bitheapRounded)
-			return join(join("CompressionResult", guid, "_rounded"), range(msb, lsb));
-		else
+		// if(bitheapRounded)
+		// 	return join(join("CompressionResult", guid, "_rounded"), range(msb, lsb));
+		// else
 			return join(join("CompressionResult", guid), range(msb, lsb));
 	}
 

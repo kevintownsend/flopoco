@@ -148,11 +148,6 @@ namespace flopoco{
 		/** generate the VHDL for the bit heap. To be called last by operators using BitHeap.*/
 		void generateCompressorVHDL();
 
-		/** round the resut of the bit heap compression. Must be called only after generateCompressorVHDL() has been called.
-		 *  @param lsb the precision to which to round the result of the compression
-		 */
-		void roundBitheap(int lsb=0);
-
 		/** returns the name of the compressed sum */
 		string getSumName();
 
@@ -340,7 +335,6 @@ namespace flopoco{
 		bool enableSuperTiles;
 
 		bool bitheapCompressed;						/**< Has the bitheap already been compressed */
-		bool bitheapRounded;						/**< Has the bitheap already been rounded */
 	};
 
 
