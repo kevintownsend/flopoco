@@ -1090,6 +1090,7 @@ namespace flopoco{
 			};
 		}
 		
+
 		for (it=op->portMap_.begin()  ; it != op->portMap_.end(); it++ ) {
 			bool outputSignal = false;
 			for ( int k = 0; k < int(op->ioList_.size()); k++){
@@ -1108,16 +1109,9 @@ namespace flopoco{
 			if (it!=op->portMap_.begin() || op->isSequential())				
 				o << "," << endl <<  tab << tab << "           ";
 
-			Signal* lhs = op->getSignalByName((*it).first);
-			Signal* rhs = getSignalByName((*it).second);
-			o << (*it).first << " => " ;
-#if 0// no signed IO
-			if (rhs->isFix() && lhs->type()==Signal::in)
-				o << std_logic_vector((*it).second);
-			else
-#endif
-				o << (*it).second;
-		
+			//			Signal* lhs = op->getSignalByName((*it).first);
+			o << (*it).first << " => " << (*it).second;
+			
 			if ( outputSignal && parsing ){
 				vhdl << o.str();
 				vhdl.flush(currentCycle_);

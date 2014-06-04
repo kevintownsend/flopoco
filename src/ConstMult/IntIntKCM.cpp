@@ -32,8 +32,8 @@ using namespace std;
 
 namespace flopoco{
 
-	IntIntKCM::IntIntKCM(Target* target, int wIn, mpz_class C, bool inputTwosComplement, bool useBitheap_, map<string, double> inputDelays):
-		Operator(target, inputDelays), wIn_(wIn), signedInput_(inputTwosComplement), C_(C), useBitheap(useBitheap_), inputDelays_(inputDelays) 
+	IntIntKCM::IntIntKCM(Target* target, int wIn, mpz_class C, bool inputTwosComplement, map<string, double> inputDelays):
+		Operator(target, inputDelays), wIn_(wIn), signedInput_(inputTwosComplement), C_(C), inputDelays_(inputDelays) 
 	{	
 		setCopyrightString("Bogdan Pasca, Florent de Dinechin (2009,2010)");		
 		srcFileName="IntIntKCM";
@@ -144,7 +144,6 @@ namespace flopoco{
 				{ // use a simple adder 
 					//determine the addition operand size
 					int addOpSize = (nbOfTables - 2) * lutWidth  +  lastLutWidth + constantWidth;
-					
 					for(int i=0; i<nbOfTables; i++)
 						{
 							vhdl << tab << declare( join("addOp",i), addOpSize ) << " <= ";
@@ -163,7 +162,7 @@ namespace flopoco{
 
 					Operator* adder;
 					adder = new IntAdder(target, addOpSize, inDelayMap("X0", target->localWireDelay() + getCriticalPath()));
-					oplist.push_back(adder);
+					addSubComponent(adder);
 					inPortMap (adder, "X" , join("addOp",0));
 					inPortMap (adder, "Y" , join("addOp",1));
 					inPortMapCst(adder, "Cin" , "'0'");

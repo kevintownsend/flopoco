@@ -138,9 +138,8 @@ void usage(char *name, string opName = ""){
 	}
 
 	if ( full || opName == "IntMultiplier" || opName == "IntIntKCM"){					
-		OP( "IntIntKCM","w c signedInput useBitheap");
+		OP( "IntIntKCM","w c signedInput");
 		cerr << "      Integer constant multiplier using KCM: w - input size, c - the constant\n";
-		cerr << "      		useBitheap - if true, operator is uses bit heaps\n";
 	}
 
 	if ( full || opName == "FixRealKCM"){					
@@ -617,16 +616,15 @@ bool parseCommandLine(int argc, char* argv[]){
 		
 		
 		else if(opname=="IntIntKCM"){
-			int nargs = 4;
+			int nargs = 3;
 			if (i+nargs > argc)
 				usage(argv[0],opname);
 			else {
 				int w = atoi(argv[i++]);
 				mpz_class mpc(argv[i++]);
 				int signedInput = checkBoolean(argv[i++], argv[0]);
-				int useBitheap = checkBoolean(argv[i++], argv[0]);
 
-				op = new IntIntKCM(target, w, mpc, signedInput, useBitheap);
+				op = new IntIntKCM(target, w, mpc, signedInput);
 				addOperator(op);
 			}        
 		}
