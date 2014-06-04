@@ -98,6 +98,107 @@ void usage(char *name, string opName = ""){
 		OP("LOCShifterSticky","wIn wOut");
 
 	if ( full )
+		cerr << "    ____________ ADDERS/SUBTRACTERS ____________________________________________\n";
+
+	if ( full || opName == "IntAdder"){ 	
+		OP("IntAdder","wIn");
+		cerr << "      Integer adder, possibly pipelined\n";
+	}
+	if ( full || opName == "IntAdderExpert" || opName == "IntAdder"){ 		
+		OP("IntAdderExpert","wIn optimizeType srl implementation bufferedInputs inputDelay");
+		cerr << "      Integer adder, multple parameters, possibly pipelined\n";
+		cerr << "      optimizeType=<0,1,2,3> 0=LUT 1=REG 2=SLICE 3=LATENCY\n";
+		cerr << "      srl=<0,1> Allow SRLs\n";
+		cerr << "      implementation=<-1,0,1,2> -1=optimizeType dependent,\n";  
+		cerr << "                                 0=Classical, 1=Alternative, 2=Short-Latency\n";
+		cerr << "      bufferedInputs=<0,1>\n";
+		cerr << "      inputDelay\n";
+	}
+	if ( full || opName == "IntAdder" || opName == "LongIntAdderAddAddMux")
+		OP("LongIntAdderAddAddMux","wIn generation");
+	if ( full || opName == "IntAdder" || opName == "LongIntAdderCmpAddInc")
+		OP("LongIntAdderCmpAddInc","wIn generation");
+	if ( full || opName == "IntAdder" || opName == "LongIntAdderCmpCmpAdd")	
+		OP("LongIntAdderCmpCmpAdd","wIn generation");
+	if ( full || opName == "IntAdder" || opName == "LongIntAdderAddAddMux" || opName == "LongIntAdderCmpAddInc" || opName == "LongIntAdderCmpCmpAdd")
+		cerr << "      generation 1 are the 2010 ver., 2 are the 2011 ver.\n";
+
+	if ( full || opName == "IntAdder" || opName == "IntDualSub"){
+		OP("IntDualSub","wIn opType");
+		cerr << "      Integer adder/subtracter or dual subtracter, possibly pipelined\n";
+		cerr << "      opType: if 1, compute X-Y and X+Y; if 0, compute X-Y and Y-X \n";
+	}
+
+	if ( full )
+		cerr << "    ____________ MULTIPLICATION AND DIVISION BY CONSTANTS ______________________\n";
+
+	if ( full || opName == "IntMultiplier" || opName == "IntConstMult"){				
+		OP( "IntConstMult","w c");
+		cerr << "      Integer constant multiplier using shift-and-add: w - input size, c - the constant\n";
+	}
+
+	if ( full || opName == "IntMultiplier" || opName == "IntIntKCM"){					
+		OP( "IntIntKCM","w c signedInput useBitheap");
+		cerr << "      Integer constant multiplier using KCM: w - input size, c - the constant\n";
+		cerr << "      		useBitheap - if true, operator is uses bit heaps\n";
+	}
+
+	if ( full || opName == "FixRealKCM"){					
+		OP( "FixRealKCM","lsbIn msbIn signedInput lsbOut constant useBitheap");
+		cerr << "      Faithful multiplier of a fixed-point input by a real constant\n";
+		cerr << "      The constant is provided as a Sollya expression, e.g \"log(2)\"\n";
+		cerr << "      The multiplier might or might not us bit heaps, based on the value of the useBitheap parameter\n";
+	}
+
+	if ( full || opName == "IntConstDiv"){					
+		OP( "IntConstDiv","n d alpha");
+		cerr << "      Euclidean division of input of size n by d (returning q and r)\n";
+		cerr << "      Algorithm uses radix 2^alpha,   alpha=-1 means a sensible default.\n";
+	}
+
+	if ( full || opName == "IntConstRem"){					
+		OP( "IntConstDiv","n d alpha");
+		cerr << "      Remainder of Euclidean division of input of size n by d\n";
+		cerr << "      Algorithm uses radix 2^alpha,   alpha=-1 means a sensible default.\n";
+	}
+
+	if ( full || opName == "FPConstDiv"){					
+		OP( "FPConstDiv","wE wF d");
+		cerr << "      Floating-point division by the (small) integer d\n";
+		OP( "FPConstDivExpert","wE wF d e alpha");
+		cerr << "      Floating-point division by  d.2^e, where d is a small integer\n";
+		cerr << "      Algorithm uses radix 2^alpha,   alpha=-1 means a sensible default. \n";  // 
+	}
+	if ( full || opName == "FPConstMult"){					
+		OP( "FPConstMult","wE_in wF_in wE_out wF_out wC constant_expr");
+		cerr << "      Faithful floating-point constant multiplier\n";
+		cerr << "      last argument is a Sollya expression between double quotes,e.g.\"exp(pi/2)\".\n";
+		cerr << "      If wC>1, it is the size in bits on which the constant must be evaluated.\n";
+		cerr << "      If wC=0 the size is computed for a faithful result.\n";
+	}
+	if ( full || opName == "FPConstMult" || opName == "CRFPConstMult"){					
+		OP( "CRFPConstMult","wE_in wF_in wE_out wF_out constant_expr");
+		cerr << "      Correctly-rounded floating-point constant multiplier\n";
+		cerr << "      The constant is provided as a Sollya expression, between double quotes.\n";
+	}	
+	if ( full || opName == "FPConstMult" || opName == "FPConstMultRational"){					
+		OP( "FPConstMultRational","wE_in wF_in wE_out wF_out a b");
+		cerr << "      Floating-point constant multiplier by a rational a/b\n";
+		cerr << "      Useful for multiplications by simple rational constants such as 2/3 or 1/9\n";
+	}
+	if ( full || opName == "FPConstMult" || opName == "FPConstMultExpert"){					
+		OP("FPConstMultExpert","wE_in wF_in wE_out wF_out cst_sgn cst_exp cst_int_sig");
+		cerr << "      Floating-point constant multiplier\n";
+		cerr << "      The constant is provided as integral significand and integral exponent.\n";
+	}
+	if ( full || opName == "FPConstMult" || opName == "FPRealKCM"){					
+		NEWOP("FPRealKCM","wE wF constantExpression");
+		cerr << "      Floating-point constant multiplier using the KCM algorithm\n";
+		cerr << "      last argument is a Sollya expression between double quotes,e.g.\"exp(pi/2)\".\n";
+	}
+
+
+	if ( full )
 		cerr << "    ____________ FUNCTION EVALUATORS ___________________________________________\n";
 
 	if ( full || opName == "FixFunctionEval"){					
@@ -446,6 +547,262 @@ bool parseCommandLine(int argc, char* argv[]){
 					cerr << "wIn must be > 1"<<endl;
 			}
 		}
+
+		else if(opname=="IntAdder"){
+			int nargs = 1;
+			if (i+nargs > argc)
+				usage(argv[0], opname);
+			else {
+				int wIn = checkStrictlyPositive(argv[i++], argv[0]);
+				op = new IntAdder(target,wIn, inDelayMap("X",target->ffDelay() + target->localWireDelay()) );
+				addOperator(op);
+			}    
+		}
+		else if(opname=="IntAdderExpert"){
+			int nargs = 5;
+			if (i+nargs > argc)
+				usage(argv[0],opname);
+			else {
+				int wIn = checkStrictlyPositive(argv[i++], argv[0]);
+				int type = atoi(argv[i++]);
+				int srl = atoi(argv[i++]);
+				int implementation = atoi(argv[i++]);
+				int bufferedIn = atoi(argv[i++]);
+				double inputDelay = atof(argv[i++]);
+				map <string, double> delayMap;
+
+				if (bufferedIn){
+					delayMap["X"] = target->ffDelay() + target->localWireDelay() + 1.0e-25;
+				}else{
+					delayMap["X"] = inputDelay;
+				}
+				
+				switch (type) {
+					case 0: op = new IntAdder(target, wIn, delayMap, 0, srl, implementation); break; //lut optimized
+					case 1: op = new IntAdder(target, wIn, delayMap, 1, srl, implementation); break; //reg
+					case 2: op = new IntAdder(target, wIn, delayMap, 2, srl, implementation); break; //slice
+					case 3: op = new IntAdder(target, wIn, delayMap, 3, srl, implementation); break; //latency
+					default: op = new IntAdder(target,wIn, delayMap, 2, srl, implementation); break;
+				}
+				addOperator(op);
+			}    
+		}
+		else if(opname=="IntComparator"){
+			int nargs = 2;
+			if (i+nargs > argc)
+				usage(argv[0],opname);
+			else {
+				int wIn = checkStrictlyPositive(argv[i++], argv[0]);
+				int criteria = atoi(argv[i++]);
+				
+				op = new IntComparator(target,wIn,criteria,false,0);
+				addOperator(op);
+			}    
+		}
+		else if(opname=="IntConstComparator"){
+			int nargs = 3;
+			if (i+nargs > argc)
+				usage(argv[0],opname);
+			else {
+				int wIn = checkStrictlyPositive(argv[i++], argv[0]);
+				int criteria = atoi(argv[i++]);
+				int constant = atoi(argv[i++]);
+				
+				op = new IntComparator(target,wIn,criteria, true, constant);
+				addOperator(op);
+			}    
+		}
+
+		//-------------------CONSTANT MULTIPLICATION AND DIVISION ----------------------
+		
+		
+		else if(opname=="IntIntKCM"){
+			int nargs = 4;
+			if (i+nargs > argc)
+				usage(argv[0],opname);
+			else {
+				int w = atoi(argv[i++]);
+				mpz_class mpc(argv[i++]);
+				int signedInput = checkBoolean(argv[i++], argv[0]);
+				int useBitheap = checkBoolean(argv[i++], argv[0]);
+
+				op = new IntIntKCM(target, w, mpc, signedInput, useBitheap);
+				addOperator(op);
+			}        
+		}
+		
+		else if(opname=="IntConstMult"){
+			int nargs = 2;
+			if (i+nargs > argc)
+				usage(argv[0],opname);
+			else {
+				int w = atoi(argv[i++]);
+				mpz_class mpc(argv[i++]);
+				op = new IntConstMult(target, w, mpc);
+				addOperator(op);
+			}        
+		}
+
+		else if(opname=="IntConstDiv"){
+			int nargs = 3;
+			if (i+nargs > argc)
+				usage(argv[0],opname);
+			else {
+				int n = checkStrictlyPositive(argv[i++], argv[0]);
+				int d = checkStrictlyPositive(argv[i++], argv[0]);
+				int alpha = atoi(argv[i++]);
+				op = new IntConstDiv(target, n, d, alpha);
+				addOperator(op);
+			} 
+		}
+
+		else if(opname=="IntConstRem"){
+			int nargs = 3;
+			if (i+nargs > argc)
+				usage(argv[0],opname);
+			else {
+				int n = checkStrictlyPositive(argv[i++], argv[0]);
+				int d = checkStrictlyPositive(argv[i++], argv[0]);
+				int alpha = atoi(argv[i++]);
+				op = new IntConstDiv(target, n, d, alpha, true);
+				addOperator(op);
+			} 
+		}
+
+
+		else if(opname=="FPConstMultRational"){
+			int nargs = 6;
+			if (i+nargs > argc)
+				usage(argv[0],opname);
+			else {
+				int wE_in = checkStrictlyPositive(argv[i++], argv[0]);
+				int wF_in = checkStrictlyPositive(argv[i++], argv[0]);
+				int wE_out = checkStrictlyPositive(argv[i++], argv[0]);
+				int wF_out = checkStrictlyPositive(argv[i++], argv[0]);
+				int a  = atoi(argv[i++]); 
+				int b  = checkStrictlyPositive(argv[i++], argv[0]); 
+				op = new FPConstMult(target, wE_in, wF_in, wE_out, wF_out, a, b);
+				addOperator(op);
+			}        
+		} 	
+
+		else if(opname=="FPConstMultExpert"){
+			int nargs = 7;
+			if (i+nargs > argc)
+				usage(argv[0],opname);
+			else {
+				int wE_in = checkStrictlyPositive(argv[i++], argv[0]);
+				int wF_in = checkStrictlyPositive(argv[i++], argv[0]);
+				int wE_out = checkStrictlyPositive(argv[i++], argv[0]);
+				int wF_out = checkStrictlyPositive(argv[i++], argv[0]);
+				int cst_sgn  = checkSign(argv[i++], argv[0]); 
+				int cst_exp  = atoi(argv[i++]); // TODO no check on this arg
+				mpz_class cst_sig(argv[i++]);
+				op = new FPConstMult(target, wE_in, wF_in, wE_out, wF_out, cst_sgn, cst_exp, cst_sig);
+				addOperator(op);
+			}        
+		} 	
+		else if(opname=="FPConstDiv"){
+			int nargs = 3;
+			if (i+nargs > argc)
+				usage(argv[0],opname);
+			else {
+				int wE = checkStrictlyPositive(argv[i++], argv[0]);
+				int wF = checkStrictlyPositive(argv[i++], argv[0]);
+				int d = checkStrictlyPositive(argv[i++], argv[0]);
+				op = new FPConstDiv(target, wE, wF, wE, wF, d, 0, -1); // exponent 0, alpha = default
+				addOperator(op);
+			}        
+		}
+		else if(opname=="FPConstDivExpert"){
+			int nargs = 4;
+			if (i+nargs > argc)
+				usage(argv[0],opname);
+			else {
+				int wE = checkStrictlyPositive(argv[i++], argv[0]);
+				int wF = checkStrictlyPositive(argv[i++], argv[0]);
+				int d = checkStrictlyPositive(argv[i++], argv[0]);
+				int e = atoi(argv[i++]);
+				int alpha = atoi(argv[i++]);
+				op = new FPConstDiv(target, wE, wF, wE, wF, d, e, alpha);
+				addOperator(op);
+			}        
+		} 	
+
+		else if(opname=="FixRealKCM"){
+			int nargs = 6;
+			if (i+nargs > argc)
+				usage(argv[0],opname);
+			else {
+				int lsbIn = atoi(argv[i++]);
+				int msbIn = atoi(argv[i++]);
+				int signedInput = checkBoolean(argv[i++], argv[0]);
+				int lsbOut = atoi(argv[i++]);
+				string constant = argv[i++];
+				int useBitheap = checkBoolean(argv[i++], argv[0]);
+				op = new FixRealKCM(target, lsbIn, msbIn, signedInput, lsbOut, constant, 1.0, emptyDelayMap, useBitheap);
+				addOperator(op);
+			}
+		}
+		
+		else if(opname=="FixRealKCMExpert"){ // hidden, for debug
+			int nargs = 6;
+			if (i+nargs > argc)
+				usage(argv[0],opname);
+			else {
+				int lsbIn = atoi(argv[i++]);
+				int msbIn = atoi(argv[i++]);
+				int signedInput = checkBoolean(argv[i++], argv[0]);
+				int lsbOut = atoi(argv[i++]);
+				string constant = argv[i++];
+				float targetUlpError = atof(argv[i++]);
+				op = new FixRealKCM(target, lsbIn, msbIn, signedInput, lsbOut, constant, targetUlpError);
+				addOperator(op);
+			}        
+		}
+		else if(opname=="FPRealKCM"){
+			int nargs = 3;
+			if (i+nargs > argc)
+				usage(argv[0],opname);
+			else {
+				int wE = atoi(argv[i++]);
+				int wF = atoi(argv[i++]);
+				string constant = argv[i++];
+				op = new FPRealKCM(target, wE, wF, constant);
+				addOperator(op);
+			}        
+		}
+		else if(opname=="CRFPConstMult"){ 
+			int nargs = 5;
+			if (i+nargs > argc)
+				usage(argv[0],opname);
+			else { 
+				int wE_in = checkStrictlyPositive(argv[i++], argv[0]);
+				int wF_in = checkStrictlyPositive(argv[i++], argv[0]);
+				int wE_out = checkStrictlyPositive(argv[i++], argv[0]);
+				int wF_out = checkStrictlyPositive(argv[i++], argv[0]);
+				string constant = argv[i++];
+				op = new CRFPConstMult(target, wE_in, wF_in, wE_out, wF_out, constant);
+				addOperator(op);
+			}        
+		} 	
+		else if(opname=="FPConstMult"){ 
+			int nargs = 6;
+			if (i+nargs > argc)
+				usage(argv[0],opname);
+			else { 
+				int wE_in = checkStrictlyPositive(argv[i++], argv[0]);
+				int wF_in = checkStrictlyPositive(argv[i++], argv[0]);
+				int wE_out = checkStrictlyPositive(argv[i++], argv[0]);
+				int wF_out = checkStrictlyPositive(argv[i++], argv[0]);
+				int wF_C = atoi(argv[i++]);
+				string constant = argv[i++];
+				op = new FPConstMult(target, wE_in, wF_in, wE_out, wF_out, wF_C, constant);
+				addOperator(op);
+			}        
+		} 	
+
+
 
 		//-------------------FUNCTION EVALUATORS----------------------
 		else if (opname == "BasicPolyApprox") {

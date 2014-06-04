@@ -25,8 +25,6 @@
 
 #ifdef HAVE_SOLLYA
 #include "FPRealKCM.hpp"
-#include "../IntAdder.hpp"
-#include "../IntMultiAdder.hpp"
 #include "FixRealKCM.hpp"
 
 using namespace std;
@@ -40,16 +38,17 @@ namespace flopoco{
 
 		/* Convert the input string into a sollya evaluation tree */
 		sollya_obj_t node;
-		node = parseString(constant.c_str());	/* If conversion did not succeed (i.e. parse error) */
-		if (node == 0) {
-			ostringstream error;
-			error << srcFileName << ": Unable to parse string "<< constant << " as a numeric constant" <<endl;
-			throw error.str();
-		}
+		node = sollya_lib_parse_string(constant.c_str());	
+		/* If  parse error throw an exception */
+		if (sollya_lib_obj_is_error(node))
+			{
+				ostringstream error;
+				error << srcFileName << ": Unable to parse string "<< constant << " as a numeric constant" <<endl;
+				throw error.str();
+			}
 
 		mpfr_init2(mpC, 10000);
-		setToolPrecision(10000);
-		evaluateConstantExpression(mpC, node,  getToolPrecision());// should be enough for everybody
+		sollya_lib_get_constant(mpC, node);
 
 		if(mpfr_cmp_si(mpC, 0)<0)
 			throw string("FPRealKCM: only positive constants are supported");

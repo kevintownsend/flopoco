@@ -54,10 +54,38 @@
 #include "ShiftersEtc/LZOC.hpp"
 #include "ShiftersEtc/LZOCShifterSticky.hpp"
 
-#if 0
 /* regular pipelined integer adder/ adder+subtracter --------- */
-#include "IntAdder.hpp"
-#include "IntDualSub.hpp"
+#include "IntAdders/IntAdder.hpp" // includes several other .hpp
+#include "IntAdders/IntDualSub.hpp"
+#include "IntAdders/IntComparator.hpp"
+
+/* fast large adders ----------------------------------------- */
+#include "IntAdders/LongIntAdderAddAddMuxGen1.hpp"
+#include "IntAdders/LongIntAdderCmpCmpAddGen1.hpp"
+#include "IntAdders/LongIntAdderCmpAddIncGen1.hpp"
+#include "IntAdders/IntAdderSpecific.hpp"
+#include "IntAdders/CarryGenerationCircuit.hpp"
+#include "IntAdders/LongIntAdderAddAddMuxGen2.hpp"
+#include "IntAdders/LongIntAdderCmpCmpAddGen2.hpp"
+#include "IntAdders/LongIntAdderCmpAddIncGen2.hpp"
+#include "IntAdders/IntComparatorSpecific.hpp"
+#include "IntAdders/LongIntAdderMuxNetwork.hpp"
+
+/* Constant multipliers and dividers ------------------------ */
+#include "ConstMult/IntConstDiv3.hpp"
+
+#include "ConstMult/IntConstMult.hpp"
+#include "ConstMult/IntIntKCM.hpp"
+#include "ConstMult/FixRealKCM.hpp"
+#include "ConstMult/FPConstMult.hpp"
+#include "ConstMult/CRFPConstMult.hpp"
+#include "ConstMult/FPRealKCM.hpp"
+
+#include "IntConstDiv.hpp"
+#include "FPConstDiv.hpp"
+
+
+#if 0
 
 /* General purpose heap of weighted bits  -------------------- */
 #include "BitHeap.hpp"
@@ -66,28 +94,14 @@
 
 /* multioperand adders --------------------------------------- */
 #include "IntMultiAdder.hpp"
-#include "IntAddition/IntNAdder.hpp"
-#include "IntAddition/IntCompressorTree.hpp"
-#include "IntAddition/PopCount.hpp"
-#include "IntAddition/BasicCompressor.hpp"
-#include "IntAddition/NewCompressorTree.hpp"
+#include "IntAdders/IntNAdder.hpp"
+#include "IntAdders/IntCompressorTree.hpp"
+#include "IntAdders/PopCount.hpp"
+#include "IntAdders/BasicCompressor.hpp"
+#include "IntAdders/NewCompressorTree.hpp"
 
 /* comparator(s) --------------------------------------------- */
-#include "IntComparator.hpp"
 
-/* fast adders ----------------------------------------------- */
-#include "IntAddition/LongIntAdderAddAddMuxGen1.hpp"
-#include "IntAddition/LongIntAdderCmpCmpAddGen1.hpp"
-#include "IntAddition/LongIntAdderCmpAddIncGen1.hpp"
-
-#include "IntAddition/IntAdderSpecific.hpp"
-#include "IntAddition/CarryGenerationCircuit.hpp"
-#include "IntAddition/LongIntAdderAddAddMuxGen2.hpp"
-#include "IntAddition/LongIntAdderCmpCmpAddGen2.hpp"
-#include "IntAddition/LongIntAdderCmpAddIncGen2.hpp"
-#include "IntAddition/IntComparatorSpecific.hpp"
-
-#include "IntAddition/LongIntAdderMuxNetwork.hpp"
 
 
 /* multiplication-related ------------------------------------ */
@@ -100,15 +114,6 @@
 
 #include "IntMultipliers/FixSinPoly.hpp"
 #include "IntMultipliers/FixXPow3Div6.hpp"
-#include "ConstMult/IntConstDiv3.hpp"
-
-#include "ConstMult/IntConstMult.hpp"
-#include "ConstMult/FPConstMult.hpp"
-#include "ConstMult/IntIntKCM.hpp"
-#include "ConstMult/FixRealKCM.hpp"
-
-#include "IntConstDiv.hpp"
-#include "FPConstDiv.hpp"
 
 
 #include "IntMultipliers/MultiplierBlock.hpp"

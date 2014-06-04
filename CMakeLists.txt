@@ -184,21 +184,52 @@ ADD_LIBRARY(FloPoCoLib STATIC
  src/Targets/CycloneIV 
  src/Targets/CycloneV 
 
-# Shifters/LZOC related ---------------------------------------------
+# Shifters/LZOC ----------------------------------------------------
  src/ShiftersEtc/LZOC 
  src/ShiftersEtc/LZOCShifterSticky
  src/ShiftersEtc/Shifters
 
-# Multiplier related ------------------------------------------------
+# pipelined Integer addition -------------------------------------------------
+ src/IntAdders/IntAdder  
+ src/IntAdders/IntAdderClassical 
+ src/IntAdders/IntAdderAlternative 
+ src/IntAdders/IntAdderShortLatency
+ src/IntAdders/IntComparator
+ src/IntAdders/IntDualSub
+ src/IntAdders/BasicCompressor
+ 
+# ---------- First generation of fast large adders ------------------------
+ src/IntAdders/LongIntAdderAddAddMuxGen1 
+ src/IntAdders/LongIntAdderCmpCmpAddGen1 
+ src/IntAdders/LongIntAdderCmpAddIncGen1
+
+# ---------- Second Generation of fast large adders -----------------------
+ src/IntAdders/IntAdderSpecific 
+ src/IntAdders/IntComparatorSpecific 
+ src/IntAdders/CarryGenerationCircuit 
+ src/IntAdders/LongIntAdderAddAddMuxGen2 
+ src/IntAdders/LongIntAdderCmpCmpAddGen2 
+ src/IntAdders/LongIntAdderCmpAddIncGen2
+ src/IntAdders/LongIntAdderMuxNetwork
+
+# Constant multiplications and divisions
+ src/ConstMult/ShiftAddOp 
+ src/ConstMult/ShiftAddDag 
+ src/ConstMult/IntConstMult 
+ src/ConstMult/KCMTable
+ src/ConstMult/IntIntKCM 
+ src/ConstMult/FPConstMult 
+ src/ConstMult/CRFPConstMult 
+ src/ConstMult/FixRealKCM
+ src/ConstMult/FPRealKCM
+ src/IntConstDiv 
+ src/FPConstDiv 
+
+# Bit heap        ------------------------------------------------
 
  src/BitHeap
  src/WeightedBit
- src/IntComparator
- src/IntDualSub
-
-#---------Plotting-related ---------------------------------------
 src/Plotter
-
 
  
 # Multiplication related --------------------------------------------
@@ -206,7 +237,7 @@ src/Plotter
  src/IntMultiplier
  src/FixMultAdd
 
-src/IntMultipliers/MultiplierBlock
+ src/IntMultipliers/MultiplierBlock
 
 
  src/Table 

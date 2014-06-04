@@ -23,8 +23,8 @@
 #include "../utils.hpp"
 #include "../Operator.hpp"
 #include "LongIntAdderCmpAddIncGen2.hpp"
-#include "../IntAdder.hpp"
-#include "../IntComparator.hpp"
+#include "IntAdder.hpp"
+#include "IntComparator.hpp"
 	
 
 using namespace std;

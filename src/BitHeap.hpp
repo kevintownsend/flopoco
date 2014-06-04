@@ -20,8 +20,8 @@
 #include "Operator.hpp"
 #include "Table.hpp"
 #include "DualTable.hpp"
-#include "IntAdder.hpp"
-#include "IntAddition/BasicCompressor.hpp"
+#include "IntAdders/IntAdder.hpp"
+#include "IntAdders/BasicCompressor.hpp"
 #include "IntMultipliers/MultiplierBlock.hpp"
 
 // To enable SVG plotting, uncomment the following line

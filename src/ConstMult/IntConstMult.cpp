@@ -26,6 +26,8 @@
 #include "ShiftAddDag.hpp"
 
 #include "IntConstMult.hpp"
+
+#include "../IntAdders/IntAdder.hpp"
 //#include "rigo.h"
 
 using namespace std;

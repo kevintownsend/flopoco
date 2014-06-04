@@ -44,15 +44,17 @@ namespace flopoco{
 
 		srcFileName="CRFPConstMult";
 		/* Convert the input string into a sollya evaluation tree */
-		node = parseString(constant.c_str());	/* If conversion did not succeed (i.e. parse error) */
-		if (node == 0) {
-			ostringstream error;
-			error << srcFileName << ": Unable to parse string "<< constant << " as a numeric constant" <<endl;
-			throw error.str();
-		}
+		node = sollya_lib_parse_string(constant.c_str());	
+		/* If  parse error throw an exception */
+		if (sollya_lib_obj_is_error(node))
+			{
+				ostringstream error;
+				error << srcFileName << ": Unable to parse string "<< constant << " as a numeric constant" <<endl;
+				throw error.str();
+			}
 
 		mpfr_inits(mpR, NULL);
-		evaluateConstantExpression(mpR, node,  getToolPrecision());
+		sollya_lib_get_constant(mpR, node);
 
 
 		if(verbose){
@@ -68,7 +70,8 @@ namespace flopoco{
 
 		REPORT(INFO, "Required significand precision to reach correct rounding is " << cst_width  ); 
 
-		evaluateConstantExpression(mpR, node,  cst_width);
+		mpfr_set_prec(mpfrC, cst_width);
+		sollya_lib_get_constant(mpR, node);
 
 		// Now convert mpR into exponent + integral significand
 

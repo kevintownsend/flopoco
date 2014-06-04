@@ -6,8 +6,8 @@
 #include <gmpxx.h>
 #include "../utils.hpp"
 #include "../Operator.hpp"
-#include "../IntAdder.hpp"
-#include "../IntComparator.hpp"
+#include "IntAdder.hpp"
+#include "IntComparator.hpp"
 
 namespace flopoco{
 

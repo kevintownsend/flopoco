@@ -26,9 +26,9 @@ Copyright © ENS-Lyon, INRIA, CNRS, UCBL,
 #include "utils.hpp"
 #include "IntAdder.hpp"
 
-#include "IntAddition/IntAdderClassical.hpp"
-#include "IntAddition/IntAdderAlternative.hpp"
-#include "IntAddition/IntAdderShortLatency.hpp"
+#include "IntAdderClassical.hpp"
+#include "IntAdderAlternative.hpp"
+#include "IntAdderShortLatency.hpp"
  
 using namespace std;
 namespace flopoco {

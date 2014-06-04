@@ -4,7 +4,6 @@
 #include <sstream>
 #include <gmp.h>
 #include <gmpxx.h>
-#include "../IntMultiAdder.hpp"
 #include "../Operator.hpp"
 
 #include "../BitHeap.hpp"

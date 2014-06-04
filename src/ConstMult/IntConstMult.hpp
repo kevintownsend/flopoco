@@ -10,7 +10,6 @@
 #include "../Operator.hpp"
 #include "ShiftAddOp.hpp"
 #include "ShiftAddDag.hpp"
-#include "../IntAdder.hpp"
 
 /**
 	Integer constant multiplication.

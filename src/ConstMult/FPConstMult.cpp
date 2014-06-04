@@ -333,41 +333,43 @@ namespace flopoco{
 
 		srcFileName="FPConstMult";
 		/* Convert the input string into a sollya evaluation tree */
-		node = parseString(constant.c_str());	/* If conversion did not succeed (i.e. parse error) */
-		if (node == 0) {
-			ostringstream error;
-			error << srcFileName << ": Unable to parse string "<< constant << " as a numeric constant" <<endl;
-			throw error.str();
-		}
+		node = sollya_lib_parse_string(constant.c_str());	
+		/* If  parse error throw an exception */
+		if (sollya_lib_obj_is_error(node))
+			{
+				ostringstream error;
+				error << srcFileName << ": Unable to parse string "<< constant << " as a numeric constant" <<endl;
+				throw error.str();
+			}
 		//     flopoco -verbose=1 FPConstMultParser 8 23 8 23 30 "1/7"
 
 
 		mpfr_inits(mpfrC, NULL);
-		evaluateConstantExpression(mpfrC, node,  getToolPrecision());
+		sollya_lib_get_constant(mpfrC, node);
 		REPORT(DEBUG, "Constant evaluates to " << mpfr_get_d(mpfrC, GMP_RNDN));
+		
+		
+		
+		// Nonperiodic version
 
+		if(wF_C==0) //  means: please compute wF_C for faithful rounding
+			cstWidth=wF_out+3;
+		else
+			cstWidth=wF_C;
+		
+		mpfr_set_prec(mpfrC, cstWidth);
+		sollya_lib_get_constant(mpfrC, node);
+		
 
-
-			// Nonperiodic version
-
-			if(wF_C==0) //  means: please compute wF_C for faithful rounding
-				cstWidth=wF_out+3;
-			else
-				cstWidth=wF_C;
-			
-			mpfr_set_prec(mpfrC, wF_out+3);
-			evaluateConstantExpression(mpfrC, node,  cstWidth);
-
-
-			setupSgnAndExpCases();
-			computeExpSig();
-			computeIntExpSig();
-			normalizeCst();
-
-			if(!constant_is_zero && !mantissa_is_one) {
-				icm = new IntConstMult(target, wF_in+1, cstIntSig);
-				oplist.push_back(icm);
-			}
+		setupSgnAndExpCases();
+		computeExpSig();
+		computeIntExpSig();
+		normalizeCst();
+		
+		if(!constant_is_zero && !mantissa_is_one) {
+			icm = new IntConstMult(target, wF_in+1, cstIntSig);
+			oplist.push_back(icm);
+		}
 			
 		
 		

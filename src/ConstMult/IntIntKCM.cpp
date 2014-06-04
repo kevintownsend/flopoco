@@ -24,7 +24,7 @@
 #include <gmpxx.h>
 #include "../utils.hpp"
 #include "../Operator.hpp"
-#include "../IntAdder.hpp"
+#include "../IntAdders/IntAdder.hpp"
 #include "IntIntKCM.hpp"
 #include "KCMTable.hpp"
 
@@ -137,8 +137,47 @@ namespace flopoco{
 				vhdl << instance(t , join("KCMTable_",i));
 			}
 			
-			if(useBitheap)
-			{
+
+
+
+			if(nbOfTables==2)
+				{ // use a simple adder 
+					//determine the addition operand size
+					int addOpSize = (nbOfTables - 2) * lutWidth  +  lastLutWidth + constantWidth;
+					
+					for(int i=0; i<nbOfTables; i++)
+						{
+							vhdl << tab << declare( join("addOp",i), addOpSize ) << " <= ";
+							if(i!=nbOfTables-1)
+								{
+									//if not the last table
+									vhdl << rangeAssign(addOpSize-1, constantWidth + i*lutWidth, "'0'") << " & " 
+											 <<  join("pp",i) << range(constantWidth + lutWidth -1, (i==0?lutWidth:0)) << " & " 
+											 << zg((i-1)*lutWidth,0) << ";" << endl;
+								}
+							else
+								{
+									vhdl << join("pp",i)<<range(constantWidth + lastLutWidth -1, (i==0?lutWidth:0))<< " & " << zg((i-1)*lutWidth,0) << ";" << endl;
+								}
+						}
+
+					Operator* adder;
+					adder = new IntAdder(target, addOpSize, inDelayMap("X0", target->localWireDelay() + getCriticalPath()));
+					oplist.push_back(adder);
+					inPortMap (adder, "X" , join("addOp",0));
+					inPortMap (adder, "Y" , join("addOp",1));
+					inPortMapCst(adder, "Cin" , "'0'");
+					outPortMap(adder, "R", "OutRes");
+					vhdl << instance(adder, "Result_Adder");
+					syncCycleFromSignal("OutRes");
+					
+					outDelayMap["R"] = adder->getOutputDelay("R");
+					vhdl << tab << "R <= OutRes & pp0" << range(lutWidth-1,0) << ";" <<endl;
+				}
+
+
+			else // nbOfTables >2,  use a bit heap
+				{
 				//create the bitheap
 				bitHeap = new BitHeap(this, wOut_);
 				
@@ -151,9 +190,7 @@ namespace flopoco{
 					for(int w=0; w<=constantWidth + lutWidth-1; w++)
 					{
 						stringstream s;
-						
 						s << "pp" << i << of(w);
-						
 						bitHeap->addBit(w+tableWeightShift, s.str());
 					}
 				}
@@ -192,52 +229,6 @@ namespace flopoco{
 
 				vhdl << tab << "R <= OutRes;" <<endl;
 				outDelayMap["R"] = getCriticalPath();
-			}
-			else
-			{				
-				//determine the addition operand size
-				int addOpSize = (nbOfTables - 2) * lutWidth  +  lastLutWidth + constantWidth;
-			
-				for(int i=0; i<nbOfTables; i++)
-				{
-					vhdl << tab << declare( join("addOp",i), addOpSize ) << " <= ";
-					if(i!=nbOfTables-1)
-					{
-						//if not the last table
-						vhdl << rangeAssign(addOpSize-1, constantWidth + i*lutWidth, "'0'") << " & " 
-							  <<  join("pp",i) << range(constantWidth + lutWidth -1, (i==0?lutWidth:0)) << " & " 
-							  << zg((i-1)*lutWidth,0) << ";" << endl;
-					}
-					else
-					{
-						vhdl << join("pp",i)<<range(constantWidth + lastLutWidth -1, (i==0?lutWidth:0))<< " & " << zg((i-1)*lutWidth,0) << ";" << endl;
-					}
-				}		
-				
-				Operator* adder;
-
-				if(nbOfTables>2)
-				{
-					adder = new IntMultiAdder(target, addOpSize, nbOfTables, inDelayMap("X0", target->localWireDelay() + getCriticalPath()));
-					oplist.push_back(adder);
-					for (int i=0; i<nbOfTables; i++)
-						inPortMap (adder, join("X",i) , join("addOp",i));
-				}
-				else
-				{
-					adder = new IntAdder(target, addOpSize, inDelayMap("X0", target->localWireDelay() + getCriticalPath()));
-					oplist.push_back(adder);
-					inPortMap (adder, "X" , join("addOp",0));
-					inPortMap (adder, "Y" , join("addOp",1));
-					inPortMapCst(adder, "Cin" , "'0'");
-				}
-
-				outPortMap(adder, "R", "OutRes");
-				vhdl << instance(adder, "Result_Adder");
-				syncCycleFromSignal("OutRes");
-			
-				outDelayMap["R"] = adder->getOutputDelay("R");
-				vhdl << tab << "R <= OutRes & pp0" << range(lutWidth-1,0) << ";" <<endl;
 			}
 		}
 	}
