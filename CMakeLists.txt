@@ -185,9 +185,9 @@ ADD_LIBRARY(FloPoCoLib STATIC
  src/Targets/CycloneV 
 
 # Shifters/LZOC related ---------------------------------------------
- src/LZOC 
- src/LZOCShifterSticky
- src/Shifters
+ src/ShiftersEtc/LZOC 
+ src/ShiftersEtc/LZOCShifterSticky
+ src/ShiftersEtc/Shifters
 
 # Multiplier related ------------------------------------------------
 

@@ -50,9 +50,9 @@
 #include "FixFunctions/FixFunctionBySimplePoly.hpp"
 
 /* shifters + lzoc ------------------------------------------- */
-#include "Shifters.hpp"
-#include "LZOC.hpp"
-#include "LZOCShifterSticky.hpp"
+#include "ShiftersEtc/Shifters.hpp"
+#include "ShiftersEtc/LZOC.hpp"
+#include "ShiftersEtc/LZOCShifterSticky.hpp"
 
 #if 0
 /* regular pipelined integer adder/ adder+subtracter --------- */
