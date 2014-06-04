@@ -8,8 +8,8 @@
             Bogdan Pasca, Bogdan.Pasca@ens-lyon.org
 
   Initial software.
-  Copyright © ENS-Lyon, INRIA, CNRS, UCBL,  
-  2008-2010.
+  Copyright © ENS-Lyon, INRIA, CNRS, UCBL, INSA-Lyon  
+  2008-2014.
   All rights reserved.
 
 */
@@ -75,6 +75,30 @@ void usage(char *name, string opName = ""){
 		cerr << "\nUsage: "<<name<<" <operator specification list>\n" ;
 		cerr << "Each operator specification is one of: \n";
 	}
+	if ( full )
+		cerr << "    ____________ SHIFTERS/LZOC _________________________________________________\n";
+
+	if ( full || opName == "LeftShifter") 
+		OP("LeftShifter","wIn MaxShift");
+	if ( full || opName == "RightShifter") 
+		OP("RightShifter","wIn MaxShift");
+	if ( full || opName == "LZOC") 	
+		OP("LZOC","wIn");
+	if ( full || opName == "LZOCShifter") 	
+		OP("LZOCShifter","wIn wOut");
+	if ( full || opName == "LZCShifter") 	
+		OP("LZCShifter","wIn wOut");
+	if ( full || opName == "LOCShifter") 	
+		OP("LOCShifter","wIn wOut");
+	if ( full || opName == "LZOCShifterSticky") 		
+		OP("LZOCShifterSticky","wIn wOut");
+	if ( full || opName == "LZCShifterSticky") 		
+		OP("LZCShifterSticky","wIn wOut");
+	if ( full || opName == "LOCShifterSticky") 			
+		OP("LOCShifterSticky","wIn wOut");
+
+	if ( full )
+		cerr << "    ____________ FUNCTION EVALUATORS ___________________________________________\n";
 
 	if ( full || opName == "FixFunctionEval"){					
 		OP( "FixFunctionEval", "function x");	
@@ -297,6 +321,133 @@ bool parseCommandLine(int argc, char* argv[]){
 				}
 			}
 		}
+
+		//-------------------  SHIFTERS AND LZOCS ----------------------
+
+		else if(opname=="LeftShifter"){
+			int nargs = 2;
+			if (i+nargs > argc)
+				usage(argv[0],opname);
+			else {
+				int wIn = checkStrictlyPositive(argv[i++], argv[0]);
+				int maxShift = checkStrictlyPositive(argv[i++], argv[0]);
+				map<string, double> inputDelays;
+				inputDelays["X"]=0;
+				inputDelays["S"]=0;
+				op = new Shifter(target, wIn, maxShift, Shifter::Left);
+				addOperator(op);
+			}    
+		}
+		else if(opname=="RightShifter"){
+			int nargs = 2;
+			if (i+nargs > argc)
+				usage(argv[0],opname);
+			else {
+				int wIn = checkStrictlyPositive(argv[i++], argv[0]);
+				int maxShift = checkStrictlyPositive(argv[i++], argv[0]);
+				map<string, double> inputDelays;
+				inputDelays["X"]=0;
+				inputDelays["S"]=0;
+				op = new Shifter(target, wIn, maxShift, Shifter::Right, inputDelays);
+				addOperator(op);
+			}
+		}
+		else if(opname=="LZOC"){
+			int nargs = 1;
+			if (i+nargs > argc)
+				usage(argv[0],opname);
+			else {
+				int wIn = checkStrictlyPositive(argv[i++], argv[0]);
+				op = new LZOC(target, wIn);
+				addOperator(op);
+			}
+		}
+		else if(opname=="LZOCShifter"){
+			int nargs = 2;
+			if (i+nargs > argc)
+				usage(argv[0],opname);
+			else {
+				int wIn  = checkStrictlyPositive(argv[i++], argv[0]);
+				int wOut = checkStrictlyPositive(argv[i++], argv[0]);
+				if (wIn > 1){
+					op = new LZOCShifterSticky(target, wIn, wOut, intlog2(wIn), 0, -1);
+					addOperator(op);
+				}else
+					cerr << "wIn must be > 1"<<endl;
+			}
+		}
+		else if(opname=="LZCShifter"){
+			int nargs = 2;
+			if (i+nargs > argc)
+				usage(argv[0],opname);
+			else {
+				int wIn  = checkStrictlyPositive(argv[i++], argv[0]);
+				int wOut = checkStrictlyPositive(argv[i++], argv[0]);
+				if (wIn > 1){
+					op = new LZOCShifterSticky(target, wIn, wOut, intlog2(wIn), 0, 0);
+					addOperator(op);
+				}else
+					cerr << "wIn must be > 1"<<endl;
+			}
+		}
+		else if(opname=="LOCShifter"){
+			int nargs = 2;
+			if (i+nargs > argc)
+				usage(argv[0],opname);
+			else {
+				int wIn  = checkStrictlyPositive(argv[i++], argv[0]);
+				int wOut = checkStrictlyPositive(argv[i++], argv[0]);
+				if (wIn > 1){
+					op = new LZOCShifterSticky(target, wIn, wOut, intlog2(wIn), 0, 1);
+					addOperator(op);
+				}else
+					cerr << "wIn must be > 1"<<endl;
+			}
+		}
+		else if(opname=="LZOCShifterSticky"){
+			int nargs = 2;
+			if (i+nargs > argc)
+				usage(argv[0],opname);
+			else {
+				int wIn  = checkStrictlyPositive(argv[i++], argv[0]);
+				int wOut = checkStrictlyPositive(argv[i++], argv[0]);
+				if (wIn > 1){
+					op = new LZOCShifterSticky(target, wIn, wOut, intlog2(wIn), 1, -1);
+					addOperator(op);
+				}else
+					cerr << "wIn must be > 1"<<endl;
+			}
+		}
+		else if(opname=="LZCShifterSticky"){
+			int nargs = 2;
+			if (i+nargs > argc)
+				usage(argv[0],opname);
+			else {
+				int wIn  = checkStrictlyPositive(argv[i++], argv[0]);
+				int wOut = checkStrictlyPositive(argv[i++], argv[0]);
+				if (wIn > 1){
+					op = new LZOCShifterSticky(target, wIn, wOut, intlog2(wIn), 1, 0);
+					addOperator(op);
+				}else
+					cerr << "wIn must be > 1"<<endl;
+			}
+		}
+		else if(opname=="LOCShifterSticky"){
+			int nargs = 2;
+			if (i+nargs > argc)
+				usage(argv[0],opname);
+			else {
+				int wIn  = checkStrictlyPositive(argv[i++], argv[0]);
+				int wOut = checkStrictlyPositive(argv[i++], argv[0]);
+				if (wIn > 1){
+					op = new LZOCShifterSticky(target, wIn, wOut, intlog2(wIn), 1, 1);
+					addOperator(op);
+				}else
+					cerr << "wIn must be > 1"<<endl;
+			}
+		}
+
+		//-------------------FUNCTION EVALUATORS----------------------
 		else if (opname == "BasicPolyApprox") {
 			int nargs = 3;
 			if (i+nargs > argc)

@@ -1,6 +1,6 @@
 PROJECT(FloPoCo C CXX)
 
-MESSAGE("Trying to build FloPoCo on " ${CMAKE_SYSTEM_NAME} ", compiler is "${CMAKE_C_COMPILER})
+MESSAGE("Trying to build FloPoCo on " ${CMAKE_SYSTEM_NAME} ", compiler is " ${CMAKE_C_COMPILER})
 
 # CMake's way of handling various versions
 cmake_minimum_required(VERSION 2.4)
@@ -160,15 +160,12 @@ ADD_LIBRARY(FloPoCoLib STATIC
  VHDLLexer
  
  # Resource Estimation related ---------------------------------------
- #--------------------------------------------------------------------
  src/Tools/ResourceEstimationHelper
- #--------------------------------------------------------------------
  
  # Floorplanning related ---------------------------------------------
- #--------------------------------------------------------------------
  src/Tools/FloorplanningHelper
- #--------------------------------------------------------------------
 
+ # Targets -----------------------------------------------------------
  src/Targets/DSP
  src/Target 
  
@@ -186,6 +183,13 @@ ADD_LIBRARY(FloPoCoLib STATIC
  src/Targets/CycloneIII 
  src/Targets/CycloneIV 
  src/Targets/CycloneV 
+
+# Shifters/LZOC related ---------------------------------------------
+ src/LZOC 
+ src/LZOCShifterSticky
+ src/Shifters
+
+# Multiplier related ------------------------------------------------
 
  src/BitHeap
  src/WeightedBit

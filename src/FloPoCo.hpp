@@ -49,12 +49,12 @@
 #include "FixFunctions/FixFunctionByTable.hpp"
 #include "FixFunctions/FixFunctionBySimplePoly.hpp"
 
-#if 0
 /* shifters + lzoc ------------------------------------------- */
 #include "Shifters.hpp"
 #include "LZOC.hpp"
 #include "LZOCShifterSticky.hpp"
 
+#if 0
 /* regular pipelined integer adder/ adder+subtracter --------- */
 #include "IntAdder.hpp"
 #include "IntDualSub.hpp"
