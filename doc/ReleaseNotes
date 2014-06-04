@@ -1,3 +1,10 @@
+======================================================================
+Version ???
+Shifts to Sollya 4.0 library. Polynomial evaluator rewritten in the process
+Sum of constant products, and a few filters.
+A few multi-operand adders removed: with bit heaps, these are no longer components.
+If somebody asks for it we will rebuild them using bit heaps
+======================================================================
 Version 2.5.0
 Added a clock enable option.
 Fixed low-precision FPExp at last.

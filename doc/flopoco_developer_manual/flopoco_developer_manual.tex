@@ -101,6 +101,25 @@ is used in \texttt{src/main.cpp}.
 
 There should be a Doxygen documentation of FloPoCo.
 
+
+\section{Fixed-point numbers in FloPoCo}
+In FloPoCo, a fixed point format is defined by a boolean true if signed, and two integers: the weights of the MSB and the LSB, which can be positive or negative. For instance the unit bit has weight 0, the point is between weights 0 and -1. 
+
+These two weights are inclusive: The size of the corresponding bit vector will be MSB-LSB+1.
+This is true for signed as well as unsigned numbers: If the format is signed, then the sign bit is the bit of weight MSB.
+
+
+Now for a more stylistic, but nevertheless useful convention. Whenever an interface (be it to the command line, or to an internal function) includes the MSB and the LSB of the same format, they should appear in this order (MSB then LSB). This order corresponds to the order of the weights in the binary writing (the MSB is to the left of the LSB). When a boolean sign is passed as well, it should be first, for the same reason (the sign bit is the leftmost bit).
+
+Examples:
+\begin{itemize}
+\item C char type corresponds to MSB=7, LSB=0.
+\item a n-bit unsigned number between 0 and 1 has MSB=-1 and LSB=-n
+\item a n-bit signed number between -1 and 1 has MSB=0 and LSB=-n+1
+\end{itemize}
+
+Finally, whenever we can live with integers, we should stick with integers and not obfuscate them as fixed-point numbers.
+
 \section{Pipelining made easy: a tutorial \label{sec:pipeline-made-easy}}
 \label{sec:pme}
 
