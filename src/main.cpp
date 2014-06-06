@@ -880,10 +880,14 @@ bool parseCommandLine(int argc, char* argv[]){
 			cerr << tab << "run " << ((TestBench*)op)->getSimulationTime() <<"ns" << endl;
 			cerr << "To run the simulation using gHDL, type the following in a shell prompt:" <<endl;
 			string simlibs;
+#if 0
 			if(op->getStdLibType()==0 || op->getStdLibType()==-1)
 				simlibs="--ieee=synopsys ";
 			if(op->getStdLibType()==1)
 				simlibs="--ieee=standard ";
+#else
+				simlibs="--ieee=standard --ieee=synopsys ";
+#endif
 			cerr <<  "ghdl -a " << simlibs << "-fexplicit "<< filename <<endl;
 			cerr <<  "ghdl -e " << simlibs << "-fexplicit " << op->getName() <<endl;
 			cerr <<  "ghdl -r " << simlibs << op->getName() << " --vcd=" << op->getName() << ".vcd" <<endl;
@@ -913,10 +917,14 @@ bool parseCommandLine(int argc, char* argv[]){
 			cerr << tab << "run " << ((TestBench*)op)->getSimulationTime() << "ns" << endl;
 			cerr << "To run the simulation using gHDL, type the following in a shell prompt:" <<endl;
 			string simlibs;
+#if 0
 			if(op->getStdLibType()==0 || op->getStdLibType()==-1)
 				simlibs="--ieee=synopsys ";
 			if(op->getStdLibType()==1)
 				simlibs="--ieee=standard ";
+#else
+				simlibs="--ieee=standard --ieee=synopsys ";
+#endif
 			cerr <<  "ghdl -a " << simlibs << "-fexplicit "<< filename <<endl;
 			cerr <<  "ghdl -e " << simlibs << "-fexplicit " << op->getName() <<endl;
 			cerr <<  "ghdl -r " << simlibs << op->getName() << " --vcd=" << op->getName() << ".vcd" <<endl;

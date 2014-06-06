@@ -29,7 +29,7 @@ namespace flopoco{
 	int verbose=0;
 	
 	Operator::Operator(Target* target, map<string, double> inputDelays){
-		stdLibType_                 = 1; // unfortunately this is the historical default.
+		stdLibType_                 = 0; // unfortunately this is the historical default.
 		target_                     = target;
 		numberOfInputs_             = 0;
 		numberOfOutputs_            = 0;
@@ -426,6 +426,7 @@ namespace flopoco{
 		if(stdLibType_==1){
 			o << "use ieee.numeric_std.all;"<<endl;			
 		}
+		// ???
 		if(stdLibType_==2){
 			o << "use ieee.numeric_std.all;"<<endl
 			  << "use ieee.std_logic_signed.all;"<<endl; 
