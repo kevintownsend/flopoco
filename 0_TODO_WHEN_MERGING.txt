@@ -1,9 +1,15 @@
 Get rid of the useBitHeap arg in KCMs
 
 - Interface to FunctionTable has changed deeply, manually convert everything
+	 This is triggered by FunctionTable being renamed to FixFunctionByTable
+   (not that bad, need to replace wIn with lsbIn=-wIn, and exchange lsbOut and msbOut)
+
 -reverse MSB and LSB in LongAcc etc
 
 
 - Check all these registered etc nonsense in Signal. Is it really used?
 - get rid of use() in Operator
 - Check DualTable and DualTable2
+
+
+- FixSinCos seems never to use its special ConstDiv3 anymore, check that
