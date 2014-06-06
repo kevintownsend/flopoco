@@ -22,7 +22,7 @@
 #include <fstream>
 #include <sstream>
 
-#include "IntConstDiv3.hpp"
+#include "ConstDiv3ForSinPoly.hpp"
 
 
 using namespace std;
@@ -30,7 +30,7 @@ using namespace std;
 
 namespace flopoco{
 
-	IntConstDiv3::EuclideanDiv3Table::EuclideanDiv3Table(Target* target, int d_, int alpha_, int gamma_, int delta_, bool lastTable_) :
+	ConstDiv3ForSinPoly::EuclideanDiv3Table::EuclideanDiv3Table(Target* target, int d_, int alpha_, int gamma_, int delta_, bool lastTable_) :
 		/* input on alpha+gamma bits: alpha from the number, gamma from the pervious remainder */
 		/* computations on alpha+gamma+nbZeros bits */
 		/* output on alpha+2*gamma*/
@@ -42,20 +42,20 @@ namespace flopoco{
 		
 		ostringstream name;
 		
-		srcFileName = "IntConstDiv3::EuclideanDiv3Table";
+		srcFileName = "ConstDiv3ForSinPoly::EuclideanDiv3Table";
 		name << "EuclideanDiv3Table_" << d << "_" << alpha << "_" << delta << "zeros" << (lastTable ? "_lastTable" : "");
 		setName(name.str());
 	};
 
 
-	mpz_class IntConstDiv3::EuclideanDiv3Table::function(int x)
+	mpz_class ConstDiv3ForSinPoly::EuclideanDiv3Table::function(int x)
 	{
 		// machine integer arithmetic should be safe here
 		//	getting r_{1}r_{0}x_{k}x_{k-1}...x_{0} as input, actually will work with r_{1}r_{0}x_{k}00x_{k-1}...00x_{0} (delta zeros)
 		if((x < 0) || (x >= (1<<(alpha+gamma))))
 		{
 			ostringstream e;
-			e << "ERROR in IntConstDiv3::EuclideanDiv3Table::function, argument out of range" <<endl;
+			e << "ERROR in ConstDiv3ForSinPoly::EuclideanDiv3Table::function, argument out of range" <<endl;
 			throw e.str();
 		}
 		
@@ -107,23 +107,23 @@ namespace flopoco{
 		
 	
 
-	int IntConstDiv3::quotientSize()
+	int ConstDiv3ForSinPoly::quotientSize()
 	{
 		return qSize;
 	};
 
-	int IntConstDiv3::remainderSize()
+	int ConstDiv3ForSinPoly::remainderSize()
 	{
 		return gamma;
 	};
 
 
 
-	IntConstDiv3::IntConstDiv3(Target* target, int wIn_, int d_, int alpha_, int nbZeros_,  bool remainderOnly_, map<string, double> inputDelays)
+	ConstDiv3ForSinPoly::ConstDiv3ForSinPoly(Target* target, int wIn_, int d_, int alpha_, int nbZeros_,  bool remainderOnly_, map<string, double> inputDelays)
 		: Operator(target), wIn(wIn_), d(d_), remainderOnly(remainderOnly_), alpha(alpha_), nbZeros(nbZeros_)
 	{
 		setCopyrightString("Florent de Dinechin, Matei Istoan (2013)");
-		srcFileName="IntConstDiv3";
+		srcFileName="ConstDiv3ForSinPoly";
 
 		//set gamma to the size of the remainder
 		gamma = intlog2(d-1);
@@ -147,7 +147,7 @@ namespace flopoco{
 		if(remainderOnly)
 			o << "IntConstRem3_";
 		else
-			o << "IntConstDiv3_";
+			o << "ConstDiv3ForSinPoly_";
 		o << d << "_" << vhdlize(wIn) << "_"  << vhdlize(alpha) << "_" << vhdlize(nbZeros) << "zeros_";
 		if(target->isPipelined()) 
 			o << vhdlize(target->frequencyMHz());
@@ -278,13 +278,13 @@ namespace flopoco{
 		outDelayMap["R"] = getCriticalPath();
 	}	
 
-	IntConstDiv3::~IntConstDiv3()
+	ConstDiv3ForSinPoly::~ConstDiv3ForSinPoly()
 	{
 	}
 
 
 
-	void IntConstDiv3::emulate(TestCase * tc)
+	void ConstDiv3ForSinPoly::emulate(TestCase * tc)
 	{
 		// Get I/O values
 		mpz_class X = tc->getInputValue("X");

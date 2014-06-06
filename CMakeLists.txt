@@ -233,13 +233,13 @@ src/Plotter
 
  
 # Multiplication related --------------------------------------------
-#--------------------------------------------------------------------
  src/IntMultiplier
  src/FixMultAdd
 
  src/IntMultipliers/MultiplierBlock
 
 
+# Generic fixed-point function evaluators ---------------------------
  src/Table 
  src/DualTable 
  src/DualTable2
@@ -251,6 +251,11 @@ src/Plotter
  src/FixFunctions/FixHornerEvaluator
  src/FixFunctions/FixFunctionBySimplePoly
  src/FixConstant
+
+# Trigonometric functions ------------------------------------------
+src/Trigs/ConstDiv3ForSinPoly
+src/Trigs/FixSinPoly
+src/Trigs/FixSinCos
 
 # TestBench-related -------------------------------------------------
 #--------------------------------------------------------------------

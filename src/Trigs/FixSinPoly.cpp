@@ -15,7 +15,8 @@
 */
 
 #include "FixSinPoly.hpp"
- 
+#include "ConstDiv3ForSinPoly.hpp"
+
 
 using namespace std;
 
@@ -122,8 +123,8 @@ namespace flopoco{
 		
 		//add the terms corresponding to sum_{i=imin}^imax(2^(3i-1)*x_i)
 		//	negated
-		IntConstDiv3 *divider;
-		divider = new IntConstDiv3(target, wIn, 3, -1, 2, false,  inDelayMap("X", getCriticalPath())) ;
+		ConstDiv3ForSinPoly *divider;
+		divider = new ConstDiv3ForSinPoly(target, wIn, 3, -1, 2, false,  inDelayMap("X", getCriticalPath())) ;
 		addSubComponent(divider);  
 		inPortMap (divider , "X", "X");
 		outPortMap(divider , "Q", "XZeroIntDiv3");

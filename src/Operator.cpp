@@ -251,6 +251,11 @@ namespace flopoco{
 		return true;
 	}
 	
+
+	void Operator::addHeaderComment(std::string comment){
+		headerComment_ +=  comment;
+	}
+	
 	void Operator::setName(std::string prefix, std::string postfix){
 		ostringstream pr, po;
 		if (prefix.length()>0)
@@ -268,18 +273,21 @@ namespace flopoco{
 		uniqueName_ = operatorName;
 	}
 	
-
-
-	void Operator::addHeaderComment(std::string comment){
-		headerComment_ +=  comment;
+	void Operator::setNameWithFreq(std::string operatorName){
+		std::ostringstream o;
+		o <<  operatorName <<  "_" ;
+		if(target_->isPipelined()) 
+			o << target_->frequencyMHz() ;
+		else
+			o << "comb";
+		uniqueName_ = o.str();
 	}
 	
 	void  Operator::changeName(std::string operatorName){
 		commentedName_ = uniqueName_;
 		uniqueName_ = operatorName;
 	}
-	
-	
+
 	string Operator::getName() const{
 		return uniqueName_;
 	}

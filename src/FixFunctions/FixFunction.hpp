@@ -28,15 +28,15 @@ namespace flopoco{
 			 The FixFunctionByTable constructor
 			 @param[string] func    a string representing the function, input range should be [0,1]
 			 @param[int]    lsbX    input LSB weight (-lsbX is the input size)
-			 @param[int]    lsbOut  output LSB weight
 			 @param[int]    msbOut  output MSB weight, used to determine wOut
+			 @param[int]    lsbOut  output LSB weight
 			 
 			 One could argue that MSB weight is redundant, as it can be deduced from an analysis of the function. 
 			 This would require quite a lot of work for non-trivial functions (isolating roots of the derivative etc).
 			 So this is currently left to the user.
 			 There are defaults for lsbOut and msbOut for situations when they are computed afterwards.
 		 */
-		FixFunction(string sollyaString, int lsbIn=0, int lsbOut=0, int msbOut=0);
+		FixFunction(string sollyaString, int lsbIn=0, int msbOut=0, int lsbOut=0);
 		FixFunction(sollya_obj_t fS);
 
 		virtual ~FixFunction();

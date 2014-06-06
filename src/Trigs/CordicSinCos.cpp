@@ -160,6 +160,10 @@ namespace flopoco{
 		REPORT(DEBUG, "kfactor=" << printMPFR(kfactor, 15));
 		mpfr_clear(temp);
 		
+		// initialize the zatan mpfr. It will be cleared outside the loop
+		mpfr_init2(zatan, 10*w);
+			
+
 
 		vhdl << tab << declare("Cos1", w+1) << " <= " <<  unsignedFixPointNumber(kfactor, 0, -w) << ";" 
 		     << "-- scale factor, about " << printMPFR(kfactor, 15) << endl;
@@ -217,9 +221,7 @@ namespace flopoco{
 
 #endif			
 			
-			//create the constant signal for the arctan
-			mpfr_init2(zatan, 10*w);
-			
+			//create the constant signal for the arctan	
 			mpfr_set_d(zatan, 1.0, GMP_RNDN);
 			mpfr_div_2si(zatan, zatan, stage, GMP_RNDN);
 			mpfr_atan(zatan, zatan, GMP_RNDN);

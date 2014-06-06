@@ -3,12 +3,12 @@
 
 #include "../Operator.hpp"
 #include "../utils.hpp"
-#include "../FixedPointFunctions/FunctionEvaluator.hpp"
+#include "../FixFunctions/FunctionEvaluator.hpp"
 
 namespace flopoco{ 
 
 
-	class FixedPointSinOrCos : public Operator {
+	class FixSinOrCos : public Operator {
 	  
 	  public:
 		int w;
@@ -16,10 +16,10 @@ namespace flopoco{
 		mpfr_t scale;
 	  
 		// constructor, defined there with two parameters (default value 0 for each)
-		FixedPointSinOrCos(Target* target, int w, int degree, map<string, double> inputDelays = emptyDelayMap);
+		FixSinOrCos(Target* target, int w, int degree, map<string, double> inputDelays = emptyDelayMap);
 
 		// destructor
-		~FixedPointSinOrCos();
+		~FixSinOrCos();
 		
 		void changeName(std::string operatorName);
 

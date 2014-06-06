@@ -243,6 +243,32 @@ void usage(char *name, string opName = ""){
 		cerr << "    msbO and lsbO: weights of output MSB and LSB,\n";
 	}
 
+	if ( full || opName == "FixSinCos" || opName == "FixSinOrCos" || opName == "SinCos"){
+		NEWOP( "FixSinCos","w");
+		cerr << "      For a fixed-point 2's complement input x in [-1,1[, calculates\n";
+		cerr << "      (1-2^(-w))*{sin,cos}(pi*x); w is the precision not counting the sign bit\n";
+	}
+
+	#if 0
+	if ( full || opName == "CordicAtan2"){
+		NEWOP( "CordicAtan2","w");
+		cerr << "      Computes atan(x/y) as a=(angle in radian)/pi so a in [-1,1[;\n";
+		cerr << "      w is the size of both inputs and outputs, all being two's complement signals\n";
+	}
+	if ( full || opName == "CordicSinCos" || opName == "FixSinOrCos" || opName == "SinCos"){
+		NEWOP( "CordicSinCos","wIn wOut reduced");
+		cerr << "      Computes (1-2^(-w)) sin(pi*x) and (1-2^(-w)) cos(pi*x) for x in [-1,1[, ;\n";
+		cerr << "      wIn and wOut are the fixed-point precision of inputs and outputs (not counting the sign bit)\n";
+		cerr << "      reduced : if 1,  reduced number of iterations at the cost of two multiplications \n";
+	}
+	if ( full || opName == "CordicSinCos" || opName == "FixSinOrCos" || opName == "SinCos"){
+		NEWOP( "FixSinOrCos","w d");
+		cerr << "      Computes (1-2^(-w)) sin(pi*x) or (1-2^(-w)) cos(pi*x) for x in -[1,1[, ;\n";
+		cerr << "      w is the fixed-point precision of inputs and outputs, not counting the sign bit\n";
+		cerr << "      d: degree of the polynomial-based method (-1 should default to something sensible)\n";
+	}
+#endif
+
 	if ( full || opName=="options"){
 		cerr << "________________________________________________________________________________\n";
 		cerr << "________________ OPTIONS________________________________________________________\n";
@@ -858,6 +884,61 @@ bool parseCommandLine(int argc, char* argv[]){
 			Operator* tg = new FixFunctionBySimplePoly(target, func, lsbI, msbO, lsbO);
 			addOperator(tg);
 		}
+
+
+		//-------------------Trigonometric functions ----------------------
+
+		else if (opname == "FixSinCos") {
+			int nargs = 1;
+			if (i+nargs > argc)
+				usage(argv[0],opname); // and exit
+			int w = checkStrictlyPositive(argv[i++], argv[0]); // must be >=2 actually
+			Operator* tg = new FixSinCos(target, w);
+			addOperator(tg);
+		}
+
+		else if (opname == "FixSinCosExpert") {
+			int nargs = 2;
+			if (i+nargs > argc)
+				usage(argv[0],opname); // and exit
+			int w = checkStrictlyPositive(argv[i++], argv[0]); // must be >=2 actually
+			float DSPThreshold = atof(argv[i++]);
+			Operator* tg = new FixSinCos(target, w,DSPThreshold);
+			addOperator(tg);
+		}
+
+#if 0
+		else if (opname == "FixSinOrCos") {
+			int nargs = 2;
+			if (i+nargs > argc)
+				usage(argv[0],opname); // and exit
+			int w = checkStrictlyPositive(argv[i++], argv[0]); // must be >=2 actually
+			int degree = atoi(argv[i++]); 
+			Operator* tg = new FixSinOrCos(target, w, degree);
+			addOperator(tg);
+		}
+
+		
+		else if (opname == "CordicSinCos") {
+			int nargs = 3;
+			if (i+nargs > argc)
+				usage(argv[0],opname); // and exit
+			int wIn = checkStrictlyPositive(argv[i++], argv[0]); // must be >=2 actually
+			int wOut = checkStrictlyPositive(argv[i++], argv[0]); // must be >=2 actually
+			int reducedIterations = checkPositiveOrNull(argv[i++], argv[0]); 
+			Operator* tg = new CordicSinCos(target, wIn, wOut, reducedIterations);
+			addOperator(tg);
+		}
+
+		else if (opname == "CordicAtan2") {
+			int nargs = 1;
+			if (i+nargs > argc)
+				usage(argv[0],opname); // and exit
+			int w = checkStrictlyPositive(argv[i++], argv[0]); // must be >=2 actually
+			Operator* tg = new CordicAtan2(target, w);
+			addOperator(tg);
+		}
+#endif
 
 		else if (opname == "TestBench") {
 			int nargs = 1;

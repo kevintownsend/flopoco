@@ -12,8 +12,8 @@
   All rights reserved.
 
 */
-#ifndef __IntConstDiv3_HPP
-#define __IntConstDiv3_HPP
+#ifndef __ConstDiv3ForSinPoly_HPP
+#define __ConstDiv3ForSinPoly_HPP
 #include <vector>
 #include <list>
 #include <sstream>
@@ -26,7 +26,7 @@
 namespace flopoco{
 
 
-	class IntConstDiv3 : public Operator
+	class ConstDiv3ForSinPoly : public Operator
 	{
 	public:
 
@@ -57,8 +57,8 @@ namespace flopoco{
 		 * @param alpha The size of the chunk, or, use radix 2^alpha
 		 */
 
-		IntConstDiv3(Target* target, int wIn, int d=3, int alpha=-1, int nbZeros=0, bool remainderOnly=false, map<string, double> inputDelays = emptyDelayMap);
-		~IntConstDiv3();
+		ConstDiv3ForSinPoly(Target* target, int wIn, int d=3, int alpha=-1, int nbZeros=0, bool remainderOnly=false, map<string, double> inputDelays = emptyDelayMap);
+		~ConstDiv3ForSinPoly();
 		
 		// Overloading the virtual functions of Operator
 		// void outputVHDL(std::ostream& o, std::string name);

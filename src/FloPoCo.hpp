@@ -43,11 +43,6 @@
 
 
 #include "TestBench.hpp"
-#include "FixFunctions/FixFunction.hpp"
-#include "FixFunctions/BasicPolyApprox.hpp"
-#include "FixFunctions/PiecewisePolyApprox.hpp"
-#include "FixFunctions/FixFunctionByTable.hpp"
-#include "FixFunctions/FixFunctionBySimplePoly.hpp"
 
 /* shifters + lzoc ------------------------------------------- */
 #include "ShiftersEtc/Shifters.hpp"
@@ -72,8 +67,6 @@
 #include "IntAdders/LongIntAdderMuxNetwork.hpp"
 
 /* Constant multipliers and dividers ------------------------ */
-#include "ConstMult/IntConstDiv3.hpp"
-
 #include "ConstMult/IntConstMult.hpp"
 #include "ConstMult/IntIntKCM.hpp"
 #include "ConstMult/FixRealKCM.hpp"
@@ -84,6 +77,18 @@
 #include "IntConstDiv.hpp"
 #include "FPConstDiv.hpp"
 
+/* Fixed-point function generators ---------------------*/
+
+#include "FixFunctions/FixFunction.hpp"
+#include "FixFunctions/BasicPolyApprox.hpp"
+#include "FixFunctions/PiecewisePolyApprox.hpp"
+#include "FixFunctions/FixFunctionByTable.hpp"
+#include "FixFunctions/FixFunctionBySimplePoly.hpp"
+
+/*  Various trigonometric functions ----------------------------*/
+#include "Trigs/FixSinCos.hpp"
+// #include "CORDIC/FixedPointSinOrCos.hpp"
+// #include "CORDIC/CordicSinCos.hpp"
 
 #if 0
 
@@ -125,9 +130,6 @@
 #endif
 /* fixed-point ----------------------------------------------- */
 #ifdef HAVE_SOLLYA
-#include "FixSinCos.hpp"
-#include "CORDIC/FixedPointSinOrCos.hpp"
-#include "CORDIC/CordicSinCos.hpp"
 
 #include "FixedPointFIR.hpp"
 

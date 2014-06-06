@@ -6,3 +6,4 @@ Get rid of the useBitHeap arg in KCMs
 
 - Check all these registered etc nonsense in Signal. Is it really used?
 - get rid of use() in Operator
+- Check DualTable and DualTable2
