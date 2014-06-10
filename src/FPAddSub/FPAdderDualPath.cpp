@@ -31,8 +31,7 @@
 #include <mpfr.h>
 
 #include <gmpxx.h>
-#include "utils.hpp"
-#include "Operator.hpp"
+#include <utils.hpp>
 
 #include "FPAdderDualPath.hpp"
 

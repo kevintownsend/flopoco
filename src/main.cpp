@@ -33,8 +33,7 @@
 #define OPER 32
 #define NEWOPER 32
 #define PARAM 34
-#define OP(op,paramList)             {cerr << "  "; printf("%c[%d;%dm",27,1,OPER); cerr <<  op; printf("%c[%dm",27,0); cerr<< " "; printf("%c[%d;%dm",27,1,PARAM); cerr << paramList; printf("%c[%dm\n",27,0); } 
-#define NEWOP(op,paramList)          {cerr << "  "; printf("%c[%d;%dm",27,1,NEWOPER); cerr <<  op; printf("%c[%dm",27,0); cerr<< " "; printf("%c[%d;%dm",27,1,PARAM); cerr << paramList; printf("%c[%dm\n",27,0); } 
+#define OP(op,paramList)             {cerr << "  "; printf("%c[%d;%dm",27,1,OPER)   ; cerr <<  op; printf("%c[%dm",27,0); cerr<< " "; printf("%c[%d;%dm",27,1,PARAM); cerr << paramList; printf("%c[%dm\n",27,0); } 
 
 
 using namespace std;
@@ -130,6 +129,26 @@ void usage(char *name, string opName = ""){
 	}
 
 	if ( full )
+		cerr << "    ____________ FLOATING-POINT ADDERS ______________________\n";
+
+	if ( full || opName == "FPAdder"){					
+		OP( "FPAdder","wE wF");
+		cerr << "      Floating-point adder (default architecture is now single-path) \n";
+	}	
+	if ( full || opName == "FPAdder" || opName == "FPAdderDualPath"){					
+		OP( "FPAdderDualPath","wE wF");
+		cerr << "      Floating-point adder with dual-path architecture (shorter latency, larger area)\n";
+	}
+	if ( full || opName == "FPAdder" || opName == "FPAdder3Input"){					
+		OP( "FPAdder3Input","wE wF");
+		cerr << "      A 3-operand floating-point adder\n";
+	}
+	if ( full || opName == "FPAdder" || opName == "FPAddSub"){					
+		OP( "FPAddSub","wE wF");
+		cerr << "      A floating-point adder/subtractor, useful e.g for butterfly circuits\n";
+	}
+
+	if ( full )
 		cerr << "    ____________ MULTIPLICATION AND DIVISION BY CONSTANTS ______________________\n";
 
 	if ( full || opName == "IntMultiplier" || opName == "IntConstMult"){				
@@ -191,7 +210,7 @@ void usage(char *name, string opName = ""){
 		cerr << "      The constant is provided as integral significand and integral exponent.\n";
 	}
 	if ( full || opName == "FPConstMult" || opName == "FPRealKCM"){					
-		NEWOP("FPRealKCM","wE wF constantExpression");
+		OP("FPRealKCM","wE wF constantExpression");
 		cerr << "      Floating-point constant multiplier using the KCM algorithm\n";
 		cerr << "      last argument is a Sollya expression between double quotes,e.g.\"exp(pi/2)\".\n";
 	}
@@ -244,25 +263,25 @@ void usage(char *name, string opName = ""){
 	}
 
 	if ( full || opName == "FixSinCos" || opName == "FixSinOrCos" || opName == "SinCos"){
-		NEWOP( "FixSinCos","w");
+		OP( "FixSinCos","w");
 		cerr << "      For a fixed-point 2's complement input x in [-1,1[, calculates\n";
 		cerr << "      (1-2^(-w))*{sin,cos}(pi*x); w is the precision not counting the sign bit\n";
 	}
 
 	#if 0
 	if ( full || opName == "CordicAtan2"){
-		NEWOP( "CordicAtan2","w");
+		OP( "CordicAtan2","w");
 		cerr << "      Computes atan(x/y) as a=(angle in radian)/pi so a in [-1,1[;\n";
 		cerr << "      w is the size of both inputs and outputs, all being two's complement signals\n";
 	}
 	if ( full || opName == "CordicSinCos" || opName == "FixSinOrCos" || opName == "SinCos"){
-		NEWOP( "CordicSinCos","wIn wOut reduced");
+		OP( "CordicSinCos","wIn wOut reduced");
 		cerr << "      Computes (1-2^(-w)) sin(pi*x) and (1-2^(-w)) cos(pi*x) for x in [-1,1[, ;\n";
 		cerr << "      wIn and wOut are the fixed-point precision of inputs and outputs (not counting the sign bit)\n";
 		cerr << "      reduced : if 1,  reduced number of iterations at the cost of two multiplications \n";
 	}
 	if ( full || opName == "CordicSinCos" || opName == "FixSinOrCos" || opName == "SinCos"){
-		NEWOP( "FixSinOrCos","w d");
+		OP( "FixSinOrCos","w d");
 		cerr << "      Computes (1-2^(-w)) sin(pi*x) or (1-2^(-w)) cos(pi*x) for x in -[1,1[, ;\n";
 		cerr << "      w is the fixed-point precision of inputs and outputs, not counting the sign bit\n";
 		cerr << "      d: degree of the polynomial-based method (-1 should default to something sensible)\n";
@@ -637,6 +656,59 @@ bool parseCommandLine(int argc, char* argv[]){
 				addOperator(op);
 			}    
 		}
+		
+		//--------------FP ADDERS --------------------------------
+
+		// For the FPAdder the default is the single-path design
+		else if(opname=="FPAdder"){ 
+			int nargs = 2;
+			if (i+nargs > argc)
+				usage(argv[0],opname);
+			else {
+				int wE = checkStrictlyPositive(argv[i++], argv[0]);
+				int wF = checkStrictlyPositive(argv[i++], argv[0]);
+				
+				op = new FPAdderSinglePath(target, wE, wF, wE, wF, wE, wF);
+				addOperator(op);
+			}
+		}		
+		else if(opname=="FPAdderDualPath"){
+			int nargs = 2;
+			if (i+nargs > argc)
+				usage(argv[0],opname);
+			else {
+				int wE = checkStrictlyPositive(argv[i++], argv[0]);
+				int wF = checkStrictlyPositive(argv[i++], argv[0]);
+				
+				op = new FPAdderDualPath(target, wE, wF, wE, wF, wE, wF);
+				addOperator(op);
+			}
+		}
+		else if(opname=="FPAdder3Input"){
+			int nargs = 2;
+			if (i+nargs > argc)
+				usage(argv[0],opname);
+			else {
+				int wE = checkStrictlyPositive(argv[i++], argv[0]);
+				int wF = checkStrictlyPositive(argv[i++], argv[0]);
+				
+				op = new FPAdder3Input(target, wE, wF);
+				addOperator(op);
+			}
+		}	
+		else if(opname=="FPAddSub"){
+			int nargs = 2;
+			if (i+nargs > argc)
+				usage(argv[0],opname);
+			else {
+				int wE = checkStrictlyPositive(argv[i++], argv[0]);
+				int wF = checkStrictlyPositive(argv[i++], argv[0]);
+				
+				op = new FPAddSub(target, wE, wF, wE, wF, wE, wF);
+				addOperator(op);
+			}
+		}	
+
 
 		//-------------------CONSTANT MULTIPLICATION AND DIVISION ----------------------
 		

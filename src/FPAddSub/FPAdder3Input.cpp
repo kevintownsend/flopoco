@@ -26,8 +26,11 @@
 #include "Operator.hpp"
 
 #include "FPAdder3Input.hpp"
+#if 0 
 #include "IntMultiAdder.hpp"
-
+#else 
+#include "BitHeap.hpp"
+#endif
 using namespace std;
 namespace flopoco{
 
@@ -268,6 +271,7 @@ FPAdder3Input::FPAdder3Input(Target* target, int wE, int wF, map<string, double>
 		syncCycleFromSignal("sefZ");
 		setCriticalPath( ia2->getOutputDelay("R"));
 		
+#if 0
 		IntMultiAdder *ct = new IntMultiAdder(target, 3 + 3*wF+1, 3, inDelayMap("X0", target->localWireDelay() + getCriticalPath()));
 		oplist.push_back(ct);
 		
@@ -279,6 +283,14 @@ FPAdder3Input::FPAdder3Input(Target* target, int wE, int wF, map<string, double>
 		vhdl << tab << instance(ct, "Adder3Op") << endl;
 		syncCycleFromSignal("addRes");
 		setCriticalPath(ct->getOutputDelay("R"));
+#else
+		BitHeap * bitHeap = new BitHeap(this, 3 + 3*wF+1);
+		bitHeap->addUnsignedBitVector(0, "sefX", 3 + 3*wF+1);
+		bitHeap->addUnsignedBitVector(0, "sefY", 3 + 3*wF+1);
+		bitHeap->addUnsignedBitVector(0, "sefZ", 3 + 3*wF+1);
+    bitHeap->generateCompressorVHDL();
+		vhdl << tab << declare("addRes", 3+3*wF+1) << " <= " << bitHeap->getSumName(3 + 3*wF, 0) << ";" << endl;
+#endif
 		
 		vhdl << tab << declare("trSign") << " <= addRes"<<of(3 + 3*wF)<< ";"<< endl;
 		

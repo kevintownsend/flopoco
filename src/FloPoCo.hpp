@@ -90,11 +90,17 @@
 // #include "CORDIC/FixedPointSinOrCos.hpp"
 // #include "CORDIC/CordicSinCos.hpp"
 
+
+/* Floating-point adder variants ----------------------------- */
+#include "FPAddSub/FPAdderDualPath.hpp"
+#include "FPAddSub/FPAdderSinglePath.hpp"
+#include "FPAddSub/FPAdder3Input.hpp"
+#include "FPAddSub/FPAddSub.hpp"
+
+
+
 #if 0
 
-/* General purpose heap of weighted bits  -------------------- */
-#include "BitHeap.hpp"
-#include "WeightedBit.hpp"
 
 
 /* multioperand adders --------------------------------------- */
@@ -104,10 +110,6 @@
 #include "IntAdders/PopCount.hpp"
 #include "IntAdders/BasicCompressor.hpp"
 #include "IntAdders/NewCompressorTree.hpp"
-
-/* comparator(s) --------------------------------------------- */
-
-
 
 /* multiplication-related ------------------------------------ */
 #include "IntMultiplier.hpp"
@@ -119,9 +121,12 @@
 
 #include "IntMultipliers/FixSinPoly.hpp"
 #include "IntMultipliers/FixXPow3Div6.hpp"
-
-
 #include "IntMultipliers/MultiplierBlock.hpp"
+
+
+
+
+
 /* fixed-point function evaluation---------------------------- */
 #ifndef _WIN32
 
@@ -147,11 +152,6 @@
 #include "ConstMult/CRFPConstMult.hpp"
 #endif
 #endif
-
-#include "FPAdderDualPath.hpp"
-#include "FPAdderSinglePath.hpp"
-#include "FPAdder3Input.hpp"
-#include "FPAddSub.hpp"
 
 #include "FPDiv.hpp"
 #include "FPExp.hpp" 

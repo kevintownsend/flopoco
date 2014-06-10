@@ -226,7 +226,6 @@ ADD_LIBRARY(FloPoCoLib STATIC
  src/FPConstDiv 
 
 # Bit heap        ------------------------------------------------
-
  src/BitHeap
  src/WeightedBit
 src/Plotter
@@ -235,8 +234,14 @@ src/Plotter
 # Multiplication related --------------------------------------------
  src/IntMultiplier
  src/FixMultAdd
-
  src/IntMultipliers/MultiplierBlock
+
+
+# Floating-Point Adders and Subtracters -----------------------------
+ src/FPAddSub/FPAdderDualPath
+ src/FPAddSub/FPAdderSinglePath
+ src/FPAddSub/FPAdder3Input
+ src/FPAddSub/FPAddSub
 
 
 # Generic fixed-point function evaluators ---------------------------

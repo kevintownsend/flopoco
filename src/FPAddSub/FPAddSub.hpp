@@ -1,27 +1,26 @@
-#ifndef FPADDERSP_HPP
-#define FPADDERSP_HPP
+#ifndef FPADDSUB_HPP
+#define FPADDSUB_HPP
 #include <vector>
 #include <sstream>
 #include <gmp.h>
 #include <mpfr.h>
 #include <gmpxx.h>
 
-#include "Operator.hpp"
-#include "LZOC.hpp"
-#include "Shifters.hpp"
-#include "FPNumber.hpp"
-#include "IntAdder.hpp"
-#include "IntDualSub.hpp"
-#include "LZOCShifterSticky.hpp"
+#include "../ShiftersEtc/LZOC.hpp"
+#include "../ShiftersEtc/Shifters.hpp"
+#include "../ShiftersEtc/LZOCShifterSticky.hpp"
+#include "../FPNumber.hpp"
+#include "../IntAdders/IntAdder.hpp"
+#include "../IntAdders/IntDualSub.hpp"
 
 namespace flopoco{
 
-	/** The FPAdderSinglePath class */
-	class FPAdderSinglePath : public Operator
+	/** The FPAddSub class */
+	class FPAddSub : public Operator
 	{
 	public:
 		/**
-		 * The FPAdderSinglePath constructor
+		 * The FPAddSub constructor
 		 * @param[in]		target		the target device
 		 * @param[in]		wEX			the the with of the exponent for the f-p number X
 		 * @param[in]		wFX			the the with of the fraction for the f-p number X
@@ -30,12 +29,12 @@ namespace flopoco{
 		 * @param[in]		wER			the the with of the exponent for the addition result
 		 * @param[in]		wFR			the the with of the fraction for the addition result
 		 */
-		FPAdderSinglePath(Target* target, int wEX, int wFX, int wEY, int wFY, int wER, int wFR, map<string, double> inputDelays = emptyDelayMap);
+		FPAddSub(Target* target, int wEX, int wFX, int wEY, int wFY, int wER, int wFR, map<string, double> inputDelays = emptyDelayMap);
 
 		/**
-		 * FPAdderSinglePath destructor
+		 * FPAddSub destructor
 		 */
-		~FPAdderSinglePath();
+		~FPAddSub();
 
 
 		void emulate(TestCase * tc);
@@ -66,7 +65,7 @@ namespace flopoco{
 		/** The dual subtractor for the close path */
 		IntDualSub *dualSubClose;
 		/** The fraction adder for the far path */
-		IntAdder *fracAddFar; 
+		IntAdder *fracAdder;
 		/** The adder that does the final rounding */
 		IntAdder *finalRoundAdd; 
 		/** The right shifter for the far path */
