@@ -5,12 +5,12 @@
 #include <gmp.h>
 #include <gmpxx.h>
 #include "Operator.hpp"
-#include "IntAdder.hpp"
-#include "IntMultiplier.hpp"
+#include "IntAdders/IntAdder.hpp"
+#include "IntMultipliers/IntMultiplier.hpp"
 
 namespace flopoco{
 
-	/** The IntSquarer class for experimenting with adders. 
+	/** The IntSquarer class for experimenting with squarers. 
 	 */
 	class IntSquarer : public Operator
 	{

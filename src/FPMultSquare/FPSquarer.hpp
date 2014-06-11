@@ -7,7 +7,7 @@
 #include <gmpxx.h>
 
 #include "Operator.hpp"
-#include "IntMultiplier.hpp"
+#include "IntMultipliers/IntMultiplier.hpp"
 
 namespace flopoco{
 

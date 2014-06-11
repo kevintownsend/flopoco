@@ -11,6 +11,7 @@
   2008-2010.
   All rights reserved.
 
+
  */
 
 #include <iostream>
@@ -29,6 +30,8 @@
 using namespace std;
 
 namespace flopoco{
+
+
 
 //#define OPT 0
 #define NADD
@@ -51,11 +54,12 @@ namespace flopoco{
 		addOutput("R", wOut_);
 	
 		//TODO replace 17 with a generic multiplierWidth()
+
+		int chunkSize_ = 17;
 	
-		int chunks = ( wIn % 17 ==0 ? wIn/17 : ceil( double(wIn)/double(17)) );
+		int chunks = ( wIn % chunksize ==0 ? wIn/chunksize : ceil( double(wIn)/double(chunksize)) );
 		setCriticalPath(getMaxInputDelays(inputDelays));
 		
-		int chunkSize_ = 17;
 
 		if (chunks == 1){
 			/* no need for karatsuba here */

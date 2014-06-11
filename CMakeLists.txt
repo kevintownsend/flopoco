@@ -152,6 +152,11 @@ SET_SOURCE_FILES_PROPERTIES(ExpressionScanner GENERATED)
 
 
 ADD_LIBRARY(FloPoCoLib STATIC
+
+#--------------------------------------------------------------------
+#               FRAMEWORK
+#--------------------------------------------------------------------
+
  src/FloPoCo.hpp
  src/Operator
  src/Signal
@@ -183,6 +188,24 @@ ADD_LIBRARY(FloPoCoLib STATIC
  src/Targets/CycloneIII 
  src/Targets/CycloneIV 
  src/Targets/CycloneV 
+
+# TestBench-related -------------------------------------------------
+ src/TestCase
+ src/FPNumber
+ src/IEEENumber
+ src/Wrapper
+ src/TestBench 
+
+
+# Bit heap  ------------------------------------------------
+ src/BitHeap
+ src/WeightedBit
+ src/Plotter
+
+
+#--------------------------------------------------------------------
+#               OPERATORS          
+#--------------------------------------------------------------------
 
 # Shifters/LZOC ----------------------------------------------------
  src/ShiftersEtc/LZOC 
@@ -225,24 +248,26 @@ ADD_LIBRARY(FloPoCoLib STATIC
  src/ConstMult/IntConstDiv 
  src/ConstMult/FPConstDiv 
 
-# Bit heap        ------------------------------------------------
- src/BitHeap
- src/WeightedBit
-src/Plotter
-
  
 # Multiplication related --------------------------------------------
  src/IntMultipliers/IntMultiplier
  src/IntMultipliers/FixMultAdd
  src/IntMultipliers/FixMultAddBitheap
  src/IntMultipliers/MultiplierBlock
+ src/IntMultipliers/IntSquarer
 
 
-# Floating-Point Adders and Subtracters -----------------------------
+# Floating-point adders and subtracters -----------------------------
  src/FPAddSub/FPAdderDualPath
  src/FPAddSub/FPAdderSinglePath
  src/FPAddSub/FPAdder3Input
  src/FPAddSub/FPAddSub
+
+# Floating-point multipliers and squarers
+ src/FPMultSquare/FPMultiplier
+#  src/FPMultSquare/FPMultiplierKaratsuba # See TODO
+ src/FPMultSquare/FPSquarer
+
 
 
 # Generic fixed-point function evaluators ---------------------------
@@ -262,13 +287,6 @@ src/Trigs/ConstDiv3ForSinPoly
 src/Trigs/FixSinPoly
 src/Trigs/FixSinCos
 
-# TestBench-related -------------------------------------------------
-#--------------------------------------------------------------------
- src/TestCase
- src/FPNumber
- src/IEEENumber
- src/Wrapper
- src/TestBench 
 )
 IF (SOLLYA_LIB)
 TARGET_LINK_LIBRARIES(

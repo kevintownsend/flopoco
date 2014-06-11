@@ -14,4 +14,7 @@ Get rid of the useBitHeap arg in KCMs
 
 - FixSinCos seems never to use its special ConstDiv3 anymore, check that
 
-- DualTable and DualTable2: WTF?
+
+TODOs that will go in the TODO 
+- IntSquarer should be made non-xilinx-specific, and bitheapized
+- Same for IntKaratsuba and FPKaratsuba, which have been disabled completely
