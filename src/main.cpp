@@ -793,7 +793,9 @@ bool parseCommandLine(int argc, char* argv[]){
 				addOperator(op);
 			}
 		}
-		
+#endif
+
+#if 0		
 		else if (opname == "FixMultAddBitheap") {
 			int nargs = 9;
 			if (i+nargs > argc)
