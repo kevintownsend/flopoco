@@ -54,7 +54,7 @@ namespace flopoco{
 		}
 		po2 = ((mpz_class) 1)<<size;
 		number=x;
-		//		cout << "***** "<< po2 << " " << x <<endl;
+		
 		for (int i = 0; i < size ; i++) {
 			po2 = po2>>1;
 			if (number >= po2) {
@@ -234,11 +234,9 @@ namespace flopoco{
 		mpz_class sig;
 		int e;
 		e = mpfr_get_z_exp (sig.get_mpz_t(), x);
-		//		s <<  mpfr_get_d(x, GMP_RNDN);
 		s << sig << "b" << e;
 		return s.str();
 	}
-
 
 	/** Print out binary writing of an integer on "size" bits */
 	// TODO remove this function
@@ -696,7 +694,6 @@ namespace flopoco{
 
 	string align( int left, string s, int right ){
 		ostringstream tmp;
-		
 		tmp << "(" << (left>0?zg(left,0) + " & ":"") << s << (right>0?" & " +zg(right, 0):"") << ")";
 		return tmp.str(); 
 	}
@@ -756,5 +753,16 @@ namespace flopoco{
 		o << "std_logic_vector(" << s << ")";
 		return o.str();
 	};
+
+
+	string center(const string& str, char padchar, int width) {
+    int len = str.length();
+    if(width < len) 
+			return str;
+    int diff = width - len;
+    int pad1 = diff/2;
+    int pad2 = diff - pad1;
+    return string(pad1, padchar) + str + string(pad2, padchar);
+	}
 
 }

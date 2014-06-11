@@ -65,8 +65,7 @@ namespace flopoco{
 	 */
 	string fp2bin(mpfr_t x, int wE, int wF);
 
-	/** return the binary representation of an MPFR, with bits ranging from msb to lsb
-	 * (total size msb-lsb+1) 
+	/** return the  bits ranging from msb to lsb of an MPFR, (total size msb-lsb+1) 
 	 * @param x the number to be represented
 	 * @param msb the weight of the MSB. 
 	 * @param lsb the weight of the LSB
@@ -98,7 +97,7 @@ namespace flopoco{
 	 */
 	void printBinNumGMP(ostream& o, mpz_class number, int size);
 
-	/** returns a string for a mpfr_t on n digits in radix r*/
+	/** returns a string for a mpfr_t using the mantissa b exponent notation */
 	string printMPFR(mpfr_t x);
 
 	/** Prints the binary representation of a positive integer on size bits
@@ -313,13 +312,18 @@ namespace flopoco{
 	 */
 	string range(int left, int right);
 
-	/** Helper function for VHDL output: returns (left downto right => s)
+	/** Helper function for VHDL output: returns "(left downto right => s)"
 	 */
 	string rangeAssign( int left, int right, std::string s);
 
+	/** Helper function for VHDL output: returns "(x)"
+	 */
 	string of( int x);
 
-
+	
+	/** Helper function for VHDL output: returns s, padded left and right with zeroes. 
+			TODO this function should be removed
+	 */
 	string align( int left, string s, int right );
 
 	/**
@@ -350,6 +354,10 @@ namespace flopoco{
 
 	/** A function to help VHDL casts */
 	string std_logic_vector(const string& s );
+
+	/** A helper function when displaying comments: center str to a certain width */
+	string center(const string& str, char padchar=' ', int width=80);
+
 }
 
 

@@ -34,7 +34,7 @@ namespace flopoco{
 
 
 	//standalone operator
-	FixRealKCM::FixRealKCM(Target* target, int lsbIn_, int msbIn_, bool signedInput_, int lsbOut_, string constant_, double targetUlpError_, map<string, double> inputDelays, bool useBitheap_) :
+	FixRealKCM::FixRealKCM(Target* target, bool signedInput_, int msbIn_, int lsbIn_, int lsbOut_, string constant_, double targetUlpError_, map<string, double> inputDelays, bool useBitheap_) :
 		Operator(target, inputDelays), lsbIn(lsbIn_), msbIn(msbIn_), signedInput(signedInput_),
 		wIn(msbIn_-lsbIn_+1), lsbOut(lsbOut_), constant(constant_), targetUlpError(targetUlpError_),
 		useBitheap(useBitheap_)
@@ -473,7 +473,9 @@ namespace flopoco{
 	
 	//operator incorporated into a global compression
 	//	for use as part of a bigger operator
-	FixRealKCM::FixRealKCM(Operator* parentOp, Target* target, Signal* multiplicandX, int lsbIn_, int msbIn_, bool signedInput_, int lsbOut_, string constant_, BitHeap* bitHeap_, double targetUlpError_, map<string, double> inputDelays) :
+	FixRealKCM::FixRealKCM(Operator* parentOp, Target* target, Signal* multiplicandX, 
+												 bool signedInput_, int msbIn_, int lsbIn_, int lsbOut_, 
+												 string constant_, BitHeap* bitHeap_, double targetUlpError_, map<string, double> inputDelays) :
 		Operator(target, inputDelays), lsbIn(lsbIn_), msbIn(msbIn_), signedInput(signedInput_),
 		wIn(msbIn_-lsbIn_+1), lsbOut(lsbOut_), constant(constant_), targetUlpError(targetUlpError_), bitHeap(bitHeap_)
 	{

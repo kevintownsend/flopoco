@@ -26,14 +26,14 @@
 
 
 #include "FloPoCo.hpp"
+#include "utils.hpp"
 
 
 #define BRIGHT 1
 #define RED 31
-#define OPER 32
-#define NEWOPER 32
+#define OPER 35
 #define PARAM 34
-#define OP(op,paramList)             {cerr << "  "; printf("%c[%d;%dm",27,1,OPER)   ; cerr <<  op; printf("%c[%dm",27,0); cerr<< " "; printf("%c[%d;%dm",27,1,PARAM); cerr << paramList; printf("%c[%dm\n",27,0); } 
+#define OP(op,paramList)   {cerr << "  "; printf("%c[%d;%dm",27,1,OPER); cerr <<  op; printf("%c[%dm",27,0); cerr<< " "; printf("%c[%d;%dm",27,1,PARAM); cerr << paramList; printf("%c[%dm\n",27,0); } 
 
 
 using namespace std;
@@ -74,8 +74,12 @@ void usage(char *name, string opName = ""){
 		cerr << "\nUsage: "<<name<<" <operator specification list>\n" ;
 		cerr << "Each operator specification is one of: \n";
 	}
+
+
+
+
 	if ( full )
-		cerr << "    ____________ SHIFTERS/LZOC _________________________________________________\n";
+		cerr << center("SHIFTERS/LZOC", '_') << "\n";
 
 	if ( full || opName == "LeftShifter") 
 		OP("LeftShifter","wIn MaxShift");
@@ -96,22 +100,25 @@ void usage(char *name, string opName = ""){
 	if ( full || opName == "LOCShifterSticky") 			
 		OP("LOCShifterSticky","wIn wOut");
 
+
+
+
 	if ( full )
-		cerr << "    ____________ ADDERS/SUBTRACTERS ____________________________________________\n";
+		cerr << center("INTEGER/FIXPOINT ADDERS/SUBTRACTERS", '_') << "\n";
 
 	if ( full || opName == "IntAdder"){ 	
 		OP("IntAdder","wIn");
-		cerr << "      Integer adder, possibly pipelined\n";
+		cerr << "Integer adder, possibly pipelined\n";
 	}
 	if ( full || opName == "IntAdderExpert" || opName == "IntAdder"){ 		
 		OP("IntAdderExpert","wIn optimizeType srl implementation bufferedInputs inputDelay");
-		cerr << "      Integer adder, multple parameters, possibly pipelined\n";
-		cerr << "      optimizeType=<0,1,2,3> 0=LUT 1=REG 2=SLICE 3=LATENCY\n";
-		cerr << "      srl=<0,1> Allow SRLs\n";
-		cerr << "      implementation=<-1,0,1,2> -1=optimizeType dependent,\n";  
-		cerr << "                                 0=Classical, 1=Alternative, 2=Short-Latency\n";
-		cerr << "      bufferedInputs=<0,1>\n";
-		cerr << "      inputDelay\n";
+		cerr << "Integer adder, multple parameters, possibly pipelined\n";
+		cerr << "optimizeType=<0,1,2,3> 0=LUT 1=REG 2=SLICE 3=LATENCY\n";
+		cerr << "srl=<0,1> Allow SRLs\n";
+		cerr << "implementation=<-1,0,1,2> -1=optimizeType dependent,\n";  
+		cerr << "                           0=Classical, 1=Alternative, 2=Short-Latency\n";
+		cerr << "bufferedInputs=<0,1>\n";
+		cerr << "inputDelay\n";
 	}
 	if ( full || opName == "IntAdder" || opName == "LongIntAdderAddAddMux")
 		OP("LongIntAdderAddAddMux","wIn generation");
@@ -120,111 +127,171 @@ void usage(char *name, string opName = ""){
 	if ( full || opName == "IntAdder" || opName == "LongIntAdderCmpCmpAdd")	
 		OP("LongIntAdderCmpCmpAdd","wIn generation");
 	if ( full || opName == "IntAdder" || opName == "LongIntAdderAddAddMux" || opName == "LongIntAdderCmpAddInc" || opName == "LongIntAdderCmpCmpAdd")
-		cerr << "      generation 1 are the 2010 ver., 2 are the 2011 ver.\n";
+		cerr << "generation 1 are the 2010 ver., 2 are the 2011 ver.\n";
 
 	if ( full || opName == "IntAdder" || opName == "IntDualSub"){
 		OP("IntDualSub","wIn opType");
-		cerr << "      Integer adder/subtracter or dual subtracter, possibly pipelined\n";
-		cerr << "      opType: if 1, compute X-Y and X+Y; if 0, compute X-Y and Y-X \n";
+		cerr << "Integer adder/subtracter or dual subtracter, possibly pipelined\n";
+		cerr << "opType: if 1, compute X-Y and X+Y; if 0, compute X-Y and Y-X \n";
 	}
 
+
 	if ( full )
-		cerr << "    ____________ FLOATING-POINT ADDERS ______________________\n";
+		cerr << center("INTEGER/FIXPOINT MULTIPLIERS AND SQUARERS", '_') << "\n";
+
+	 if ( full || opName == "IntMultiplier"){
+	 	OP("IntMultiplier","wInX wInY wOut signed DSP_threshold enableSupertiles");
+	 	cerr << "Integer multiplier of two integers X and Y of sizes wInX and wInY \n";
+	 	cerr << "Result is faithfully truncated to wOut bits  (wOut=0 means: full multiplier)\n";
+	 	cerr << "signed=0: unsigned multiplier;     signed=1: signed inputs, signed outputs \n";
+	 	cerr << "0 <= DSP_threshold <= 1;  proportion of a DSP block that may be left unused\n";
+		cerr << "enableSuperTiles: 0/1. 0 => lower latency, higher logic cost \n";
+	 }
+	if ( full || opName == "IntMultiplier" || opName == "IntSquarer"){			
+		OP ("IntSquarer","wIn");
+		cerr << "integer squarer. For now wIn <=68 \n";		
+	}
+#if 0
+	if ( full || opName == "IntMultiplier" || opName == "IntMultAdd"){			
+		OP ("IntMultAdd","wIn");
+		cerr << "  A+B*C with B and C on wIn bits and A on2*wIn bits\n";		
+	}
+#endif
+#if 0
+	if ( full || opName == "IntMultiplier" || opName == "IntKaratsuba"){			
+		OP ("IntKaratsuba","wIn");
+		cerr << "integer multiplier of two integers X and Y of sizes wIn. 17 < wIn <= 68\n";	
+	}
+#endif
+
+
+	if ( full )
+		cerr << center("FLOATING-POINT ADDERS", '_') << "\n";
 
 	if ( full || opName == "FPAdder"){					
 		OP( "FPAdder","wE wF");
-		cerr << "      Floating-point adder (default architecture is now single-path) \n";
+		cerr << "Floating-point adder (default architecture is now single-path) \n";
 	}	
 	if ( full || opName == "FPAdder" || opName == "FPAdderDualPath"){					
 		OP( "FPAdderDualPath","wE wF");
-		cerr << "      Floating-point adder with dual-path architecture (shorter latency, larger area)\n";
+		cerr << "Floating-point adder with dual-path architecture (shorter latency, larger area)\n";
 	}
 	if ( full || opName == "FPAdder" || opName == "FPAdder3Input"){					
 		OP( "FPAdder3Input","wE wF");
-		cerr << "      A 3-operand floating-point adder\n";
+		cerr << "A 3-operand floating-point adder\n";
 	}
 	if ( full || opName == "FPAdder" || opName == "FPAddSub"){					
 		OP( "FPAddSub","wE wF");
-		cerr << "      A floating-point adder/subtractor, useful e.g for butterfly circuits\n";
+		cerr << "A floating-point adder/subtractor, useful e.g for butterfly circuits\n";
 	}
 
+
+
+
 	if ( full )
-		cerr << "    ____________ MULTIPLICATION AND DIVISION BY CONSTANTS ______________________\n";
+		cerr << center("FLOATING-POINT MULTIPLIERS AND SQUARERS", '_') << "\n";
+	if ( full || opName == "FPMultiplier"){					
+		OP( "FPMultiplier","wE wF_in wF_out");
+	}
+	if ( full  || opName == "FPMultiplier" || opName == "FPMultiplierFaithful"){					
+		OP( "FPMultiplierFaithful","wE wF_in wF_out");
+	}
+	if ( full  || opName == "FPMultiplier" || opName == "FPMultiplierExpert"){					
+		OP( "FPMultiplierExpert","wE wFX wFY wFR CorrectRounding DSPThreshold");
+	}		
+	cerr << "Standard or faithful (resource-saving) floating-point multiplier \n";
+
+
+#if 0 // Commented out for now, should be resurrected some day: see TODO
+	if ( full || opName == "FPMultiplier" || opName == "FPMultiplierKaratsuba"){						
+		OP( "FPMultiplierKaratsuba","wE wF_in wF_out");
+		cerr << "Floating-point multiplier, supporting different in/out precision. \n";
+		cerr << "Mantissa multiplier uses Karatsuba\n";
+	}
+#endif
+	if ( full || opName == "FPMultiplier" || opName == "FPSquarer"){					
+		OP( "FPSquarer","wE wFin wFout");
+		cerr << "Floating-point squarer \n";
+	}
+
+
+
+
+	if ( full )
+		cerr << center("MULTIPLICATION AND DIVISION BY CONSTANTS", '_') << "\n";
 
 	if ( full || opName == "IntMultiplier" || opName == "IntConstMult"){				
 		OP( "IntConstMult","w c");
-		cerr << "      Integer constant multiplier using shift-and-add: w - input size, c - the constant\n";
+		cerr << "Integer constant multiplier using shift-and-add: w - input size, c - the constant\n";
 	}
-
 	if ( full || opName == "IntMultiplier" || opName == "IntIntKCM"){					
 		OP( "IntIntKCM","w c signedInput");
-		cerr << "      Integer constant multiplier using KCM: w - input size, c - the constant\n";
+		cerr << "Integer constant multiplier using KCM: w - input size, c - the constant\n";
 	}
 
 	if ( full || opName == "FixRealKCM"){					
-		OP( "FixRealKCM","lsbIn msbIn signedInput lsbOut constant useBitheap");
-		cerr << "      Faithful multiplier of a fixed-point input by a real constant\n";
-		cerr << "      The constant is provided as a Sollya expression, e.g \"log(2)\"\n";
-		cerr << "      The multiplier might or might not us bit heaps, based on the value of the useBitheap parameter\n";
+		OP( "FixRealKCM"," signedInput msbIn lsbIn lsbOut constant useBitheap");
+		cerr << "Faithful multiplier of a fixed-point input by a real constant\n";
+		cerr << "The constant is provided as a Sollya expression, e.g \"log(2)\"\n";
 	}
 
 	if ( full || opName == "IntConstDiv"){					
 		OP( "IntConstDiv","n d alpha");
-		cerr << "      Euclidean division of input of size n by d (returning q and r)\n";
-		cerr << "      Algorithm uses radix 2^alpha,   alpha=-1 means a sensible default.\n";
+		cerr << "Euclidean division of input of size n by d (returning q and r)\n";
+		cerr << "Algorithm uses radix 2^alpha,   alpha=-1 means a sensible default.\n";
 	}
 
 	if ( full || opName == "IntConstRem"){					
 		OP( "IntConstDiv","n d alpha");
-		cerr << "      Remainder of Euclidean division of input of size n by d\n";
-		cerr << "      Algorithm uses radix 2^alpha,   alpha=-1 means a sensible default.\n";
+		cerr << "Remainder of Euclidean division of input of size n by d\n";
+		cerr << "Algorithm uses radix 2^alpha,   alpha=-1 means a sensible default.\n";
 	}
 
 	if ( full || opName == "FPConstDiv"){					
 		OP( "FPConstDiv","wE wF d");
-		cerr << "      Floating-point division by the (small) integer d\n";
+		cerr << "Floating-point division by the (small) integer d\n";
 		OP( "FPConstDivExpert","wE wF d e alpha");
-		cerr << "      Floating-point division by  d.2^e, where d is a small integer\n";
-		cerr << "      Algorithm uses radix 2^alpha,   alpha=-1 means a sensible default. \n";  // 
+		cerr << "Floating-point division by  d.2^e, where d is a small integer\n";
+		cerr << "Algorithm uses radix 2^alpha,   alpha=-1 means a sensible default. \n";  // 
 	}
 	if ( full || opName == "FPConstMult"){					
 		OP( "FPConstMult","wE_in wF_in wE_out wF_out wC constant_expr");
-		cerr << "      Faithful floating-point constant multiplier\n";
-		cerr << "      last argument is a Sollya expression between double quotes,e.g.\"exp(pi/2)\".\n";
-		cerr << "      If wC>1, it is the size in bits on which the constant must be evaluated.\n";
-		cerr << "      If wC=0 the size is computed for a faithful result.\n";
+		cerr << "Faithful floating-point constant multiplier\n";
+		cerr << "last argument is a Sollya expression between double quotes,e.g.\"exp(pi/2)\".\n";
+		cerr << "If wC>1, it is the size in bits on which the constant must be evaluated.\n";
+		cerr << "If wC=0 the size is computed for a faithful result.\n";
 	}
 	if ( full || opName == "FPConstMult" || opName == "CRFPConstMult"){					
 		OP( "CRFPConstMult","wE_in wF_in wE_out wF_out constant_expr");
-		cerr << "      Correctly-rounded floating-point constant multiplier\n";
-		cerr << "      The constant is provided as a Sollya expression, between double quotes.\n";
+		cerr << "Correctly-rounded floating-point constant multiplier\n";
+		cerr << "The constant is provided as a Sollya expression, between double quotes.\n";
 	}	
 	if ( full || opName == "FPConstMult" || opName == "FPConstMultRational"){					
 		OP( "FPConstMultRational","wE_in wF_in wE_out wF_out a b");
-		cerr << "      Floating-point constant multiplier by a rational a/b\n";
-		cerr << "      Useful for multiplications by simple rational constants such as 2/3 or 1/9\n";
+		cerr << "Floating-point constant multiplier by a rational a/b\n";
+		cerr << "Useful for multiplications by simple rational constants such as 2/3 or 1/9\n";
 	}
 	if ( full || opName == "FPConstMult" || opName == "FPConstMultExpert"){					
 		OP("FPConstMultExpert","wE_in wF_in wE_out wF_out cst_sgn cst_exp cst_int_sig");
-		cerr << "      Floating-point constant multiplier\n";
-		cerr << "      The constant is provided as integral significand and integral exponent.\n";
+		cerr << "Floating-point constant multiplier\n";
+		cerr << "The constant is provided as integral significand and integral exponent.\n";
 	}
 	if ( full || opName == "FPConstMult" || opName == "FPRealKCM"){					
 		OP("FPRealKCM","wE wF constantExpression");
-		cerr << "      Floating-point constant multiplier using the KCM algorithm\n";
-		cerr << "      last argument is a Sollya expression between double quotes,e.g.\"exp(pi/2)\".\n";
+		cerr << "Floating-point constant multiplier using the KCM algorithm\n";
+		cerr << "last argument is a Sollya expression between double quotes,e.g.\"exp(pi/2)\".\n";
 	}
 
 
 	if ( full )
-		cerr << "    ____________ FUNCTION EVALUATORS ___________________________________________\n";
+		cerr << center("FUNCTION EVALUATORS", '_') << "\n";
 
 	if ( full || opName == "FixFunctionEval"){					
 		OP( "FixFunctionEval", "function x");	
 		cerr << "  ** Helper/debug feature, does not generate VHDL **\n";
 		cerr << "  Evaluates a function in arbitrary precision\n";
-		cerr << "      function - sollya-syntaxed function to implement, between double quotes\n";
-		cerr << "      x - arbitrary precision value\n";
+		cerr << "function - sollya-syntaxed function to implement, between double quotes\n";
+		cerr << "x - arbitrary precision value\n";
 	}
 
 	if ( full || opName == "BasicPolyApprox"){					
@@ -234,7 +301,7 @@ void usage(char *name, string opName = ""){
 		cerr << "    function - sollya-syntaxed function to implement, between double quotes\n";
 		cerr << "    targetAcc - real number, e.g. 0.00001\n";
 		cerr << "    addGuardBitsToConstant: if -1, will do something sensible (relax the size of the constant by the number of guard bits that will be added to ensure faithful evaluation)\n";
-		cerr << "                          : if >=0, this number of extra LSB bits will be added to the minimal size of the constant\n";
+		cerr << "                    : if >=0, this number of extra LSB bits will be added to the minimal size of the constant\n";
 	}
 
 	if ( full || opName == "PiecewisePolyApprox"){					
@@ -264,33 +331,33 @@ void usage(char *name, string opName = ""){
 
 	if ( full || opName == "FixSinCos" || opName == "FixSinOrCos" || opName == "SinCos"){
 		OP( "FixSinCos","w");
-		cerr << "      For a fixed-point 2's complement input x in [-1,1[, calculates\n";
-		cerr << "      (1-2^(-w))*{sin,cos}(pi*x); w is the precision not counting the sign bit\n";
+		cerr << "For a fixed-point 2's complement input x in [-1,1[, calculates\n";
+		cerr << "(1-2^(-w))*{sin,cos}(pi*x); w is the precision not counting the sign bit\n";
 	}
 
 	#if 0
 	if ( full || opName == "CordicAtan2"){
 		OP( "CordicAtan2","w");
-		cerr << "      Computes atan(x/y) as a=(angle in radian)/pi so a in [-1,1[;\n";
-		cerr << "      w is the size of both inputs and outputs, all being two's complement signals\n";
+		cerr << "Computes atan(x/y) as a=(angle in radian)/pi so a in [-1,1[;\n";
+		cerr << "w is the size of both inputs and outputs, all being two's complement signals\n";
 	}
 	if ( full || opName == "CordicSinCos" || opName == "FixSinOrCos" || opName == "SinCos"){
 		OP( "CordicSinCos","wIn wOut reduced");
-		cerr << "      Computes (1-2^(-w)) sin(pi*x) and (1-2^(-w)) cos(pi*x) for x in [-1,1[, ;\n";
-		cerr << "      wIn and wOut are the fixed-point precision of inputs and outputs (not counting the sign bit)\n";
-		cerr << "      reduced : if 1,  reduced number of iterations at the cost of two multiplications \n";
+		cerr << "Computes (1-2^(-w)) sin(pi*x) and (1-2^(-w)) cos(pi*x) for x in [-1,1[, ;\n";
+		cerr << "wIn and wOut are the fixed-point precision of inputs and outputs (not counting the sign bit)\n";
+		cerr << "reduced : if 1,  reduced number of iterations at the cost of two multiplications \n";
 	}
 	if ( full || opName == "CordicSinCos" || opName == "FixSinOrCos" || opName == "SinCos"){
 		OP( "FixSinOrCos","w d");
-		cerr << "      Computes (1-2^(-w)) sin(pi*x) or (1-2^(-w)) cos(pi*x) for x in -[1,1[, ;\n";
-		cerr << "      w is the fixed-point precision of inputs and outputs, not counting the sign bit\n";
-		cerr << "      d: degree of the polynomial-based method (-1 should default to something sensible)\n";
+		cerr << "Computes (1-2^(-w)) sin(pi*x) or (1-2^(-w)) cos(pi*x) for x in -[1,1[, ;\n";
+		cerr << "w is the fixed-point precision of inputs and outputs, not counting the sign bit\n";
+		cerr << "d: degree of the polynomial-based method (-1 should default to something sensible)\n";
 	}
 #endif
 
 	if ( full || opName=="options"){
-		cerr << "________________________________________________________________________________\n";
-		cerr << "________________ OPTIONS________________________________________________________\n";
+		cerr << center("________________", '_') << "\n";
+		cerr << center("OPTIONS", '_') << "\n";
 		cerr << "General options that should only appear before any operator specification:\n";
 		cerr << "   -outputfile=<output file name>           (default=flopoco.vhdl)\n";
 		cerr << "   -target=<Spartan3|Virtex4|Virtex5|Virtex6|StratixII|StratixIII|StratixIV|StratixV|CycloneII|CycloneIII|CycloneIV|CycloneV>      (default=Virtex5)\n";
@@ -299,14 +366,14 @@ void usage(char *name, string opName = ""){
 		cerr << "   -frequency=<target frequency in MHz>     (default=400)\n";
 		cerr << "   -clockenable=<yes|no>                    (default is no)\n";
 		cerr << "   -DSP_blocks=<yes|no>\n";
-		cerr << "       optimize for the use of DSP blocks   (default=yes)\n";
+		cerr << " optimize for the use of DSP blocks   (default=yes)\n";
 		cerr << "   -name=<entity name>\n";
-		cerr << "       defines the name of the VHDL entity of the next operator\n";
+		cerr << " defines the name of the VHDL entity of the next operator\n";
 		cerr << "   -resourceEstimation=level\n";
-		cerr << "       level=0 disables resource estimation (default)\n";
-		cerr << "       level=1..3 larger number means more details\n";
+		cerr << " level=0 disables resource estimation (default)\n";
+		cerr << " level=1..3 larger number means more details\n";
 		cerr << "   -floorplanning=<yes|no>\n";
-		cerr << "       generate a floorplan (experimental, Xilinx only)\n";
+		cerr << " generates a floorplan (experimental, Xilinx only)\n";
 		cerr << "Debugging options, affecting the operators that follow them:\n";
 		cerr << "   -verbose=<0|1|2|3>     verbosity level. 0: no output (default), 1: basic info, 3: full debug \n";
 		cerr << "   -reDebugging=<yes|no>  debug output for resource estimation (default=no)\n";
@@ -657,6 +724,66 @@ bool parseCommandLine(int argc, char* argv[]){
 			}    
 		}
 		
+
+		//HIDDEN. Why?
+		else if(opname=="IntDualSub"){
+			int nargs = 2;
+			if (i+nargs > argc)
+				usage(argv[0],opname);
+			else {
+				int wIn = checkStrictlyPositive(argv[i++], argv[0]);
+				int opType = checkBoolean(argv[i++], argv[0]);
+				op = new IntDualSub(target,wIn,opType);
+				addOperator(op);
+			}    
+		}
+
+
+		else if(opname=="IntMultiplier"){
+			int nargs = 6;
+			if (i+nargs > argc)
+				usage(argv[0],opname);
+			else {
+				int wInX		    = checkStrictlyPositive(argv[i++], argv[0]);
+				int wInY		    = checkStrictlyPositive(argv[i++], argv[0]);
+				int wOut		    = atoi(argv[i++]);
+				int signedIO	    =  checkBoolean(argv[i++], argv[0]);
+				float DSPThreshold			= atof(argv[i++]);
+				int buildSuperTiles =  checkBoolean(argv[i++], argv[0]);
+				IntMultiplier* mul=new IntMultiplier(target, wInX, wInY, wOut, signedIO, DSPThreshold, emptyDelayMap,buildSuperTiles);
+				op = mul;
+				addOperator(op);
+			}
+		}
+
+		else if (opname == "IntSquarer")
+		{
+			int nargs = 1;
+			if (i+nargs > argc)
+				usage(argv[0],opname); // and exit
+			int wIn = checkStrictlyPositive(argv[i++], argv[0]);
+			op = new IntSquarer(target, wIn);
+			addOperator(op);
+		}
+
+#if 0
+		else if(opname=="IntMultAdd"){
+			int nargs = 3;
+			if (i+nargs > argc)
+				usage(argv[0],opname);
+			else {
+				int wIn    = checkStrictlyPositive(argv[i++], argv[0]);
+				int signedIO    = checkBoolean(argv[i++], argv[0]);
+				float DSPThreshold = atof(argv[i++]);
+				int wInY=wIn;
+				int wInX=wIn;
+				int wA=2*wIn;
+				FixMultAdd* op=new FixMultAdd(target, wInX /*wX*/, wInY /*wY*/, wA /*wA*/, wA /*wOut*/, wA-1 /*msbP*/, 0 /*lsbA*/, signedIO, DSPThreshold);
+				addOperator(op);
+			}
+		}
+#endif
+
 		//--------------FP ADDERS --------------------------------
 
 		// For the FPAdder the default is the single-path design
@@ -708,6 +835,69 @@ bool parseCommandLine(int argc, char* argv[]){
 				addOperator(op);
 			}
 		}	
+
+
+
+		else if(opname=="FPMultiplier"){
+			int nargs = 3; 
+			if (i+nargs > argc)
+				usage(argv[0],opname);
+			int wE = checkStrictlyPositive(argv[i++], argv[0]);
+			int wFIn = checkStrictlyPositive(argv[i++], argv[0]);
+			int wFOut = checkStrictlyPositive(argv[i++], argv[0]);
+			op = new FPMultiplier(target, wE, wFIn, wE, wFIn, wE, wFOut, true /*normd*/, true /*CR*/);
+			addOperator(op);
+		} 
+		else if(opname=="FPMultiplierFaithful"){
+			int nargs = 3; 
+			if (i+nargs > argc)
+				usage(argv[0],opname);
+			int wE = checkStrictlyPositive(argv[i++], argv[0]);
+			int wFIn = checkStrictlyPositive(argv[i++], argv[0]);
+			int wFOut = checkStrictlyPositive(argv[i++], argv[0]);
+			op = new FPMultiplier(target, wE, wFIn, wE, wFIn, wE, wFOut, true, false);
+			addOperator(op);
+		}
+		#if 0
+		else if(opname=="FPMultiplierKaratsuba"){
+			int nargs = 3; 
+			if (i+nargs > argc)
+				usage(argv[0],opname);
+			else {
+				int wE = checkStrictlyPositive(argv[i++], argv[0]);
+				int wFIn = checkStrictlyPositive(argv[i++], argv[0]);
+				int wFOut = checkStrictlyPositive(argv[i++], argv[0]);
+				op = new FPMultiplierKaratsuba(target, wE, wFIn, wE, wFIn, wE, wFOut, 1);
+				addOperator(op);
+			}
+		}  
+		#endif
+		else if(opname=="FPMultiplierExpert"){
+			int nargs = 6; 
+			if (i+nargs > argc)
+				usage(argv[0],opname);
+			int wE = checkStrictlyPositive(argv[i++], argv[0]);
+			int wFXIn = checkStrictlyPositive(argv[i++], argv[0]);
+			int wFYIn = checkStrictlyPositive(argv[i++], argv[0]);
+			int wFOut = checkStrictlyPositive(argv[i++], argv[0]);
+			int correctRounding = checkBoolean(argv[i++], argv[0]);
+			float r = atof(argv[i++]);
+
+			op = new FPMultiplier(target, wE, wFXIn, wE, wFYIn, wE, wFOut, true, correctRounding, r);
+			addOperator(op);
+		}  
+		else if(opname=="FPSquarer"){
+			int nargs = 3; 
+			if (i+nargs > argc)
+				usage(argv[0],opname);
+			else {
+				int wE = checkStrictlyPositive(argv[i++], argv[0]);
+				int wFX = checkStrictlyPositive(argv[i++], argv[0]);
+				int wFR = checkStrictlyPositive(argv[i++], argv[0]);
+				op = new FPSquarer(target, wE, wFX, wFR);
+				addOperator(op);
+			}
+		} 
 
 
 		//-------------------CONSTANT MULTIPLICATION AND DIVISION ----------------------
@@ -830,13 +1020,13 @@ bool parseCommandLine(int argc, char* argv[]){
 			if (i+nargs > argc)
 				usage(argv[0],opname);
 			else {
-				int lsbIn = atoi(argv[i++]);
-				int msbIn = atoi(argv[i++]);
 				int signedInput = checkBoolean(argv[i++], argv[0]);
+				int msbIn = atoi(argv[i++]);
+				int lsbIn = atoi(argv[i++]);
 				int lsbOut = atoi(argv[i++]);
 				string constant = argv[i++];
 				int useBitheap = checkBoolean(argv[i++], argv[0]);
-				op = new FixRealKCM(target, lsbIn, msbIn, signedInput, lsbOut, constant, 1.0, emptyDelayMap, useBitheap);
+				op = new FixRealKCM(target, signedInput, msbIn, lsbIn, lsbOut, constant, 1.0, emptyDelayMap, useBitheap);
 				addOperator(op);
 			}
 		}

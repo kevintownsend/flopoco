@@ -60,12 +60,33 @@
 #include "IntAdders/LongIntAdderCmpCmpAddGen1.hpp"
 #include "IntAdders/LongIntAdderCmpAddIncGen1.hpp"
 #include "IntAdders/IntAdderSpecific.hpp"
-#include "IntAdders/CarryGenerationCircuit.hpp"
 #include "IntAdders/LongIntAdderAddAddMuxGen2.hpp"
 #include "IntAdders/LongIntAdderCmpCmpAddGen2.hpp"
 #include "IntAdders/LongIntAdderCmpAddIncGen2.hpp"
 #include "IntAdders/IntComparatorSpecific.hpp"
 #include "IntAdders/LongIntAdderMuxNetwork.hpp"
+
+/* Integer and fixed-point multipliers ------------------------ */
+#include "IntMultipliers/IntMultiplier.hpp"
+#include "IntMultipliers/FixMultAdd.hpp"
+// #include "IntMultipliers/IntKaratsuba.hpp"
+#include "IntMultipliers/IntSquarer.hpp"
+// #include "IntMultipliers/GenericBinaryPolynomial.hpp"
+// #include "IntMultipliers/IntPower.hpp"
+
+
+/* Floating-point adder variants ----------------------------- */
+#include "FPAddSub/FPAdderDualPath.hpp"
+#include "FPAddSub/FPAdderSinglePath.hpp"
+#include "FPAddSub/FPAdder3Input.hpp"
+#include "FPAddSub/FPAddSub.hpp"
+
+/* Floating-point multiplier variants-------------------------- */ 
+#include "FPMultSquare/FPMultiplier.hpp"
+//#include "FPMultiplierKaratsuba.hpp"
+#include "FPMultSquare/FPSquarer.hpp"
+
+
 
 /* Constant multipliers and dividers ------------------------ */
 #include "ConstMult/IntConstMult.hpp"
@@ -90,13 +111,6 @@
 #include "Trigs/FixSinCos.hpp"
 // #include "CORDIC/FixedPointSinOrCos.hpp"
 // #include "CORDIC/CordicSinCos.hpp"
-
-
-/* Floating-point adder variants ----------------------------- */
-#include "FPAddSub/FPAdderDualPath.hpp"
-#include "FPAddSub/FPAdderSinglePath.hpp"
-#include "FPAddSub/FPAdder3Input.hpp"
-#include "FPAddSub/FPAddSub.hpp"
 
 
 
