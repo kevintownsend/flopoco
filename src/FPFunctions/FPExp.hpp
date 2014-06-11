@@ -38,39 +38,19 @@ namespace flopoco{
 		       
 		class magicTable: public DualTable {
 		public:
+			magicTable(Target* target, int sizeExpA_, int sizeExpZPart_, bool storeExpZmZm1_);
+			mpz_class function(int x);
 			int sizeExpA;
 			int sizeExpZPart; /** sometimes e^Z-1, sometimes e^Z-Z-1*/
 			bool storeExpZmZm1;
-
-			magicTable(Target* target, int sizeExpA_, int sizeExpZPart_, bool storeExpZmZm1_) : DualTable(target, 9, sizeExpA_+sizeExpZPart_, 0, 511),
-				                   sizeExpA(sizeExpA_), sizeExpZPart(sizeExpZPart_), storeExpZmZm1(storeExpZmZm1_) {
-				ostringstream name; 
-				srcFileName="FPExp::MagicSPExpTable";
-				name <<"MagicSPExpTable";
-				setName(name.str());
-			};
-
-			mpz_class function(int x);
 		};
 
 
 		class ExpYTable: public Table {
 		public:
-
-			ExpYTable(Target* target, int wIn, int wOut) : 
-				Table(target, wIn, wOut) {
-				ostringstream name; 
-				srcFileName="FPExp::ExpYTable";
-				name <<"ExpYTable_" << wIn << "_" << wOut;
-				setName(name.str());
-				
-				outDelayMap["Y"] = target->RAMDelay();
-			};
-
+			ExpYTable(Target* target, int wIn, int wOut);
 			mpz_class function(int x);
 		};
-
-
 
 
 
@@ -85,7 +65,7 @@ namespace flopoco{
 		    * @param DSP_threshold is the DSP use threshold to be used by all the internal multipliers. Formal definition in IntMultiplier.hpp   
 		    */
 
-		FPExp(Target* target, int wE, int wF, int k, int d, int guardBits=-1, bool fullInput=false, float DSP_threshold=0.7,  map<string, double> inputDelays = emptyDelayMap);
+		FPExp(Target* target, int wE, int wF, int k, int d, int guardBits=-1, bool fullInput=false, float DSP_threshold=0.7f,  map<string, double> inputDelays = emptyDelayMap);
 		~FPExp();
 		
 		// Overloading the virtual functions of Operator

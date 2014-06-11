@@ -16,10 +16,14 @@ Get rid of the useBitHeap arg in KCMs
 
 
 TODOs that will go in the TODO 
+- bug  ./flopoco FixSinCos -16 TestBenchFile 1000
+- change interface to FixSinCos and CordicSinCos to use lsb and not w
+- IntConstMult: signed or unsigned int? (fix main.cpp)
 - rounding bug:  ./flopoco FixRealKCM 1 3 -10 -10 "Pi" 1 TestBenchFile 1000
 	(close corresponding bug when fixed)
 - IntSquarer should be made non-xilinx-specific, and bitheapized
 - Same for IntKaratsuba and FPKaratsuba, which have been disabled completely
 - simple and expert versions of IntMultiplier
 - Check IntDualSub situation
+- Merge AM work into IntConstMult
 - resurrect Guillaume's work (IntPower etc)

@@ -79,13 +79,13 @@ namespace flopoco{
 			Operator *multiplyOperatorRe, *multiplyOperatorIm;
 			
 			if(multiplierMode == 0){
-				multiplyOperatorRe = new FixRealKCM(target, -wF, wI-1, 1, -2*wF, getTwiddleConstantString(TWIDDLERE));
+				multiplyOperatorRe = new FixRealKCM(target, true, wI-1, -wF, -2*wF, getTwiddleConstantString(TWIDDLERE));
 				oplist.push_back(multiplyOperatorRe);
 				
 				if(abs(twIm.get_si()) == abs(twRe.get_si())){
 					multiplyOperatorIm = multiplyOperatorRe;
 				}else{
-					multiplyOperatorIm = new FixRealKCM(target, -wF, wI-1, 1, -2*wF, getTwiddleConstantString(TWIDDLEIM));
+					multiplyOperatorIm = new FixRealKCM(target, true, wI-1, -wF, -2*wF, getTwiddleConstantString(TWIDDLEIM));
 					oplist.push_back(multiplyOperatorIm);
 				}
 			}else{
@@ -249,22 +249,22 @@ namespace flopoco{
 			Operator *multiplyOperatorRe, *multiplyOperatorReSubIm, *multiplyOperatorNegReAddIm;
 			
 			if(multiplierMode == 0){
-				multiplyOperatorRe = new FixRealKCM(target, -wF, wI-1, 1, -2*wF, getTwiddleConstantString(TWIDDLERE));
+				multiplyOperatorRe = new FixRealKCM(target, true, wI-1, -wF, -2*wF, getTwiddleConstantString(TWIDDLERE));
 				oplist.push_back(multiplyOperatorRe);
 				
 				if(abs(twReSubIm.get_si()) == abs(twNegReAddIm.get_si())){
 					multiplyOperatorReSubIm = multiplyOperatorRe;
 					multiplyOperatorNegReAddIm = multiplyOperatorRe;
 				}else if(twReSubIm.get_si() == 0){
-					multiplyOperatorNegReAddIm = new FixRealKCM(target, -wF, wI-1, 1, -2*wF, getTwiddleConstantString(TWIDDLENEGREADDIM));
+					multiplyOperatorNegReAddIm = new FixRealKCM(target, true,  wI-1, -wF, -2*wF, getTwiddleConstantString(TWIDDLENEGREADDIM));
 					oplist.push_back(multiplyOperatorNegReAddIm);
 				}else if(twNegReAddIm.get_si() == 0){
-					multiplyOperatorReSubIm = new FixRealKCM(target, -wF, wI-1, 1, -2*wF, getTwiddleConstantString(TWIDDLERESUBIM));
+					multiplyOperatorReSubIm = new FixRealKCM(target, true, wI-1, -wF, -2*wF, getTwiddleConstantString(TWIDDLERESUBIM));
 					oplist.push_back(multiplyOperatorReSubIm);
 				}else{
-					multiplyOperatorReSubIm = new FixRealKCM(target, -wF, wI-1, 1, -2*wF, getTwiddleConstantString(TWIDDLERESUBIM));
+					multiplyOperatorReSubIm = new FixRealKCM(target, true,  wI-1, -wF, -2*wF, getTwiddleConstantString(TWIDDLERESUBIM));
 					oplist.push_back(multiplyOperatorReSubIm);
-					multiplyOperatorNegReAddIm = new FixRealKCM(target, -wF, wI-1, 1, -2*wF, getTwiddleConstantString(TWIDDLENEGREADDIM));
+					multiplyOperatorNegReAddIm = new FixRealKCM(target, true, wI-1, -wF, -2*wF, getTwiddleConstantString(TWIDDLENEGREADDIM));
 					oplist.push_back(multiplyOperatorNegReAddIm);
 				}
 			}else{

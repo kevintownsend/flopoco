@@ -110,8 +110,8 @@
 
 /*  Various trigonometric functions ----------------------------*/
 #include "Trigs/FixSinCos.hpp"
+#include "Trigs/CordicSinCos.hpp"
 // #include "CORDIC/FixedPointSinOrCos.hpp"
-// #include "CORDIC/CordicSinCos.hpp"
 
 
 

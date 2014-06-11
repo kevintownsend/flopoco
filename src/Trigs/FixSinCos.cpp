@@ -381,9 +381,9 @@ FixSinCos::FixSinCos(Target * target, int w_, float ratio):Operator(target), w(w
 		int wZ=w-wA+g; // see alignment below. Actually w-2-wA+2  (-2 because Q&O bits, +2 because mult by Pi)
 
 		pi_mult = new FixRealKCM (target,
-															-w-g,     // lsbIn
-															-2-wA-1,  // msbIn
 															false,    // signedInput
+															-2-wA-1,  // msbIn
+															-w-g,     // lsbIn
 															-w-g ,    // lsbOut
 															"pi",     // constant 
 															1.0,      // targetUlpError

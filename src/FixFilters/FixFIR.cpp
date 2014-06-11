@@ -5,7 +5,7 @@
 
 #include "sollya.h"
 
-#include "FixedPointFIR.hpp"
+#include "FixFIR.hpp"
 
 #include "ConstMult/FixRealKCM.hpp"
 
@@ -13,13 +13,13 @@ using namespace std;
 namespace flopoco{
 
 
-	FixedPointFIR::FixedPointFIR(Target* target, int p_, vector<string> coeff_, bool useBitheap_, map<string, double> inputDelays) : 
+	FixFIR::FixFIR(Target* target, int p_, vector<string> coeff_, bool useBitheap_, map<string, double> inputDelays) : 
 		Operator(target), p(p_), coeff(coeff_), useBitheap(useBitheap_)
 	{
-		srcFileName="FixedPointFIR";
+		srcFileName="FixFIR";
 					
 		ostringstream name;
-		name<<"FixedPointFIR_"<<p<<"_uid"<<getNewUId(); 
+		name<<"FixFIR_"<<p<<"_uid"<<getNewUId(); 
 		setName(name.str()); 
 	
 		setCopyrightString("Florent de Dinechin (2013)");
@@ -50,7 +50,7 @@ namespace flopoco{
 		for (int i=0; i< n; i++)
 		{
 			// parse the coeffs from the string, with Sollya parsing
-			solla_obj_t node;
+			sollya_node_t node;
 			mpfr_t mpC;
 			
 			node = parseString(coeff[i].c_str());
@@ -150,9 +150,9 @@ namespace flopoco{
 				FixRealKCM* mult = new FixRealKCM(this,				// the envelopping operator
 														target, 	// the target FPGA
 														getSignalByName(join("X",i)),
-														-p, 		// input LSB weight
-														-1, 		// input MSB, but one sign bit will be added
 														true, 		// signed
+														-1, 		// input MSB, but one sign bit will be added
+														-p, 		// input LSB weight
 														-p-g, 		// output LSB weight -- the output MSB is computed out of the constant
 														coeff[i], 	// pass the string unmodified
 														bitHeap		// pass the reference to the bitheap that will accumulate the intermediary products
@@ -178,9 +178,9 @@ namespace flopoco{
 				
 				// Multiplication: instantiating a KCM object. 
 				FixRealKCM* mult = new FixRealKCM(target, 
-												  -p, // input LSB weight
-												  -1, // input MSB, but one sign bit will be added
 												  true, // signed
+												  -1, // input MSB, but one sign bit will be added
+												  -p, // input LSB weight
 												  -p-g, // output LSB weight -- the output MSB is computed out of the constant
 												  coeff[i] // pass the string unmodified
 												  );
@@ -224,7 +224,7 @@ namespace flopoco{
 	};
 
 	
-	void FixedPointFIR::emulate(TestCase * tc) {
+	void FixFIR::emulate(TestCase * tc) {
 
 		// Not completely safe: we compute everything on 10 times the required precision, and hope that rounding this result is equivalent to rounding the exact result
 
@@ -278,7 +278,7 @@ namespace flopoco{
 
 
 	// please fill me with regression tests or corner case tests
-	void FixedPointFIR::buildStandardTestCases(TestCaseList * tcl) {
+	void FixFIR::buildStandardTestCases(TestCaseList * tcl) {
 		TestCase *tc;
 
 		// first few cases to check emulate()

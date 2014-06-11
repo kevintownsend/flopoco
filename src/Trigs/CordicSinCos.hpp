@@ -1,11 +1,11 @@
 #ifndef CORDICSINCOS_HPP
 #define CORDICSINCOS_HPP
 
-#include "../Operator.hpp"
-#include "../utils.hpp"
-#include "../IntMultiplier.hpp"
-#include "../IntAdder.hpp"
-#include "../ConstMult/FixRealKCM.hpp"
+#include "Operator.hpp"
+#include "utils.hpp"
+#include "IntMultipliers/IntMultiplier.hpp"
+#include "IntAdders/IntAdder.hpp"
+#include "ConstMult/FixRealKCM.hpp"
 
 //#include "CordicSinCosClassic.hpp"
 // #include "CordicSinCosRedIter.hpp"

@@ -23,8 +23,8 @@
 #include "ConstMult/FixRealKCM.hpp"
 #include "Shifters.hpp"
 #include "IntMultiplier.hpp"
-#include "FixedPointFunctions/FunctionEvaluator.hpp"
-#include "FixedPointFunctions/FunctionTable.hpp"
+#include "FixFunctions/FunctionEvaluator.hpp"
+#include "FixFunctions/FunctionTable.hpp"
 #include "utils.hpp"
 #include "IntAdder.hpp"
 
@@ -49,6 +49,17 @@ Clean up poly eval and bitheapize it
 #define LARGE_PREC 1000 // 1000 bits should be enough for everybody
 
 namespace flopoco{
+
+
+	FPExp::magicTable::magicTable(Target* target, int sizeExpA_, int sizeExpZPart_, bool storeExpZmZm1_) : 
+		DualTable(target, 9, sizeExpA_+sizeExpZPart_, 0, 511),
+		sizeExpA(sizeExpA_), sizeExpZPart(sizeExpZPart_), storeExpZmZm1(storeExpZmZm1_) {
+				ostringstream name; 
+				srcFileName="FPExp::MagicSPExpTable";
+				name <<"MagicSPExpTable";
+				setName(name.str());
+	};
+
 
 
 	mpz_class FPExp::magicTable::function(int x){
@@ -103,6 +114,15 @@ namespace flopoco{
 
 
 
+	FPExp::ExpYTable::ExpYTable(Target* target, int wIn, int wOut) : 
+		Table(target, wIn, wOut) {
+		ostringstream name; 
+		srcFileName="FPExp::ExpYTable";
+		name <<"ExpYTable_" << wIn << "_" << wOut;
+		setName(name.str());
+		
+		outDelayMap["Y"] = target->RAMDelay();
+	};
 
 	mpz_class FPExp::ExpYTable::function(int x){
 		mpz_class h;
@@ -146,17 +166,11 @@ namespace flopoco{
 		throw e.str();
 #endif
 
+		// Paperwork
 
-		/* Generate unique name */
-		{
-			std::ostringstream o;
-			o << "FPExp_" << wE << "_" << wF << "_" ;
-			if(target->isPipelined()) 
-				o << target->frequencyMHz() ;
-			else
-				o << "comb";
-			uniqueName_ = o.str();
-		}
+		std::ostringstream name;
+		name << "FPExp_" << wE << "_" << wF ;
+		setNameWithFreq(name.str());
 
 		setCopyrightString("F. de Dinechin, Bogdan Pasca (2008-2013)");
 		srcFileName="FPExp";
@@ -417,9 +431,9 @@ namespace flopoco{
 		//***************** Multiplication by 1/log2 to get approximate result ******** 
 		// FixRealKCM does the rounding to the proper place with the proper error
 		FixRealKCM *mulInvLog2 = new  FixRealKCM(target,
-		                                         lsbXforFirstMult, // lsbIn 
-		                                         wE-2 , // msbIn,
 		                                         false,  // unsigned input,
+		                                         wE-2 , // msbIn,
+		                                         lsbXforFirstMult, // lsbIn 
 		                                         0,   // lsbOut,
 		                                         "1/log(2)", //  constant
 		                                         0.5 + 0.09, // error: we have 0.125 on X, and target is 0.5+0.22 
@@ -447,10 +461,10 @@ namespace flopoco{
 		setCycleFromSignal("absK", mulInvLog2->getOutputDelay("R") );
 
 		FixRealKCM *mulLog2 = new FixRealKCM(target, 
-		                                     0, 
-		                                     wE-1, 
 		                                     false  /* unsigned input */, 
-		                                     -wF-g, 
+		                                     wE-1, // msbIn
+		                                     0,    // lsbIn
+		                                     -wF-g, // lsbOut
 		                                     "log(2)", 
 		                                     1.0, 
 		                                     inDelayMap( "X", target->localWireDelay(wF+g) + getCriticalPath()) );

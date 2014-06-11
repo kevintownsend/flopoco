@@ -286,6 +286,7 @@ ADD_LIBRARY(FloPoCoLib STATIC
 src/Trigs/ConstDiv3ForSinPoly
 src/Trigs/FixSinPoly
 src/Trigs/FixSinCos
+src/Trigs/CordicSinCos
 
 )
 IF (SOLLYA_LIB)

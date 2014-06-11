@@ -33,7 +33,7 @@
 #define RED 31
 #define OPER 35
 #define PARAM 34
-#define OP(op,paramList)   {cerr << "  "; printf("%c[%d;%dm",27,1,OPER); cerr <<  op; printf("%c[%dm",27,0); cerr<< " "; printf("%c[%d;%dm",27,1,PARAM); cerr << paramList; printf("%c[%dm\n",27,0); } 
+#define OP(op,paramList)   {printf("%c[%d;%dm",27,1,OPER); cerr <<  op; printf("%c[%dm",27,0); cerr<< " "; printf("%c[%d;%dm",27,1,PARAM); cerr << paramList; printf("%c[%dm\n",27,0); } 
 
 
 using namespace std;
@@ -233,7 +233,7 @@ void usage(char *name, string opName = ""){
 
 	if ( full || opName == "IntMultiplier" || opName == "IntConstMult"){				
 		OP( "IntConstMult","w c");
-		cerr << "Integer constant multiplier using shift-and-add: w - input size, c - the constant\n";
+		cerr << "Multiplier of an integer of w bits by the constant c, using shift-and-add\n";
 	}
 	if ( full || opName == "IntMultiplier" || opName == "IntIntKCM"){					
 		OP( "IntIntKCM","w c signedInput");
@@ -295,76 +295,72 @@ void usage(char *name, string opName = ""){
 
 
 	if ( full )
-		cerr << center("FUNCTION EVALUATORS", '_') << "\n";
+		cerr << center("FIXED-POINT TRIGONOMETRICS", '_') << "\n";
 
-	if ( full || opName == "FixFunctionEval"){					
-		OP( "FixFunctionEval", "function x");	
-		cerr << "  ** Helper/debug feature, does not generate VHDL **\n";
-		cerr << "  Evaluates a function in arbitrary precision\n";
-		cerr << "function - sollya-syntaxed function to implement, between double quotes\n";
-		cerr << "x - arbitrary precision value\n";
+	if ( full || opName == "FixSinCos"  || opName == "SinCos"){
+		OP( "FixSinCos","lsbIn");
+		cerr << "Sin/Cosine of Pi*x for x signed in in [-1,1)\n";
 	}
 
-	if ( full || opName == "BasicPolyApprox"){					
-		OP( "BasicPolyApprox", "function targetAcc addGuardBitsToConstant");	
-		cerr << "  ** Helper/debug feature, does not generate VHDL **\n";
-		cerr << "  Builds a polynomial approximation of a function, accurate to targetAcc on the interval [0,1) \n";
-		cerr << "    function - sollya-syntaxed function to implement, between double quotes\n";
-		cerr << "    targetAcc - real number, e.g. 0.00001\n";
-		cerr << "    addGuardBitsToConstant: if -1, will do something sensible (relax the size of the constant by the number of guard bits that will be added to ensure faithful evaluation)\n";
-		cerr << "                    : if >=0, this number of extra LSB bits will be added to the minimal size of the constant\n";
+	if ( full || opName == "CordicSinCos" || opName == "SinCos"){
+		OP( "CordicSinCos","lsbIn lsbOut reduced");
+		cerr << "Sin/Cosine of Pi*x for x signed in in [-1,1)\n";
+		cerr << "if reduced=1, fewer iterations at the cost of two multiplications \n";
 	}
 
-	if ( full || opName == "PiecewisePolyApprox"){					
-		OP( "PiecewisePolyApprox", "function targetAcc degree");	
-		cerr << "  ** Helper/debug feature, does not generate VHDL **\n";
-		cerr << "  Builds a piecewise polynomial approximation of a function, accurate to targetAcc on the interval [0,1) \n";
-		cerr << "    function - sollya-syntaxed function to implement, between double quotes\n";
-		cerr << "    targetAcc - real number, e.g. 0.00001\n";
-		cerr << "    degree: degree of the polynomial approximation\n";
-	}
-
-	if ( full || opName == "FixFunctionByTable" || opName == "FixFunction"){					
-		OP( "FixFunctionByTable","function lsbI  msbO lsbO");
-		cerr << "  Simple tabulation of a function defined on [0,1)\n";
-		cerr << "    lsbI: weight of input LSB, for instance -8 for an 8-bit input (bit weights from -1 to -8)\n";
-		cerr << "    msbO and lsbO: weights of output MSB and LSB,\n";
-		cerr << "    function: sollya-syntaxed function to implement, e.g. \"sin(x*Pi/2)\" \n";
-	}
-
-	if ( full || opName == "FixFunctionBySimplePoly" || opName == "FixFunction"){					
-		OP( "FixFunctionBySimplePoly","function lsbI msbO lsbO ");
-		cerr << "  A function evaluator using a single polynomial on the interval [0,1), evaluated with Horner scheme \n";
-		cerr << "    function: sollya-syntaxed function to implement, e.g. \"sin(x*Pi/2)\" \n";
-		cerr << "    lsbI: weight of input LSB, for instance -8 for an 8-bit input (bit weights from -1 to -8)\n";
-		cerr << "    msbO and lsbO: weights of output MSB and LSB,\n";
-	}
-
-	if ( full || opName == "FixSinCos" || opName == "FixSinOrCos" || opName == "SinCos"){
-		OP( "FixSinCos","w");
-		cerr << "For a fixed-point 2's complement input x in [-1,1[, calculates\n";
-		cerr << "(1-2^(-w))*{sin,cos}(pi*x); w is the precision not counting the sign bit\n";
-	}
-
-	#if 0
-	if ( full || opName == "CordicAtan2"){
-		OP( "CordicAtan2","w");
-		cerr << "Computes atan(x/y) as a=(angle in radian)/pi so a in [-1,1[;\n";
-		cerr << "w is the size of both inputs and outputs, all being two's complement signals\n";
-	}
-	if ( full || opName == "CordicSinCos" || opName == "FixSinOrCos" || opName == "SinCos"){
-		OP( "CordicSinCos","wIn wOut reduced");
-		cerr << "Computes (1-2^(-w)) sin(pi*x) and (1-2^(-w)) cos(pi*x) for x in [-1,1[, ;\n";
-		cerr << "wIn and wOut are the fixed-point precision of inputs and outputs (not counting the sign bit)\n";
-		cerr << "reduced : if 1,  reduced number of iterations at the cost of two multiplications \n";
-	}
-	if ( full || opName == "CordicSinCos" || opName == "FixSinOrCos" || opName == "SinCos"){
+#if 0
+	// TODO: change the interface
+	if ( full ||  opName == "FixSinOrCos" || opName == "SinCos"){
 		OP( "FixSinOrCos","w d");
 		cerr << "Computes (1-2^(-w)) sin(pi*x) or (1-2^(-w)) cos(pi*x) for x in -[1,1[, ;\n";
 		cerr << "w is the fixed-point precision of inputs and outputs, not counting the sign bit\n";
 		cerr << "d: degree of the polynomial-based method (-1 should default to something sensible)\n";
 	}
+	if ( full || opName == "CordicAtan2"){
+		OP( "CordicAtan2","w");
+		cerr << "Computes atan(x/y) as a=(angle in radian)/pi so a in [-1,1[;\n";
+		cerr << "w is the size of both inputs and outputs, all being two's complement signals\n";
+	}
 #endif
+
+
+	if ( full )
+		cerr << center("FUNCTION EVALUATORS", '_') << "\n";
+
+	if ( full || opName == "FixFunctionEval"){					
+		OP( "FixFunctionEval", "f x");	
+		cerr << "** Helper/debug feature, does not generate VHDL **\n";
+		cerr << "Evaluates function f (e.g. \"exp(x/1024)\") at point x (arbitrary precision)\n";
+	}
+
+	if ( full || opName == "BasicPolyApprox"){					
+		OP( "BasicPolyApprox", "f targetAcc constantGuardBits");	
+		cerr << "** Helper/debug feature, does not generate VHDL **\n";
+		cerr << "Polynomial approximation of function f, accurate to targetAcc on [0,1)\n";
+		cerr << "constantGuardBits: >=0, or use -1 for sensible default\n";
+	}
+
+	if ( full || opName == "PiecewisePolyApprox"){					
+		OP( "PiecewisePolyApprox", "f targetAcc d");	
+		cerr << "** Helper/debug feature, does not generate VHDL **\n";
+		cerr << "Piecewise polynomial approximation of function f on [0,1),\n";
+		cerr << " accurate to targetAcc and using polynomials of degree d\n";
+	}
+
+	if ( full || opName == "FixFunctionByTable" || opName == "FixFunction"){					
+		OP( "FixFunctionByTable","f lsbI  msbO lsbO");
+		cerr << "Simple tabulation of function f defined on [0,1)\n";
+		cerr << "  lsbI: weight of input LSB, for instance -8 for an 8-bit input\n";
+		cerr << "  msbO and lsbO: weights of output MSB and LSB\n";
+		cerr << " f in Sollya syntax, e.g. \"sin(x*Pi/2)\" or \"exp(x*1b-8)\"\n";
+	}
+
+	if ( full || opName == "FixFunctionBySimplePoly" || opName == "FixFunction"){					
+		OP( "FixFunctionBySimplePoly","f lsbI msbO lsbO ");
+		cerr << "Evaluator of function f on [0,1), using a single polynomial with Horner scheme \n";
+	}
+
+
 
 	if ( full || opName=="options"){
 		cerr << center("________________", '_') << "\n";
@@ -1188,18 +1184,31 @@ bool parseCommandLine(int argc, char* argv[]){
 			int nargs = 1;
 			if (i+nargs > argc)
 				usage(argv[0],opname); // and exit
-			int w = checkStrictlyPositive(argv[i++], argv[0]); // must be >=2 actually
-			Operator* tg = new FixSinCos(target, w);
+			int lsbIn = atoi(argv[i++]); 
+			Operator* tg = new FixSinCos(target, -lsbIn); // TODO: change interface to FixSinCos
 			addOperator(tg);
 		}
 
+		// Currently hidden. TODO?
 		else if (opname == "FixSinCosExpert") {
 			int nargs = 2;
 			if (i+nargs > argc)
 				usage(argv[0],opname); // and exit
-			int w = checkStrictlyPositive(argv[i++], argv[0]); // must be >=2 actually
+			int lsbIn = atoi(argv[i++]); 
 			float DSPThreshold = atof(argv[i++]);
-			Operator* tg = new FixSinCos(target, w,DSPThreshold);
+			Operator* tg = new FixSinCos(target, -lsbIn,DSPThreshold);
+			addOperator(tg);
+		}
+
+		
+		else if (opname == "CordicSinCos") {
+			int nargs = 3;
+			if (i+nargs > argc)
+				usage(argv[0],opname); // and exit
+			int lsbIn = atoi(argv[i++]); 
+			int lsbOut = atoi(argv[i++]); 
+			int reducedIterations = checkPositiveOrNull(argv[i++], argv[0]); 
+			Operator* tg = new CordicSinCos(target, -lsbIn, -lsbOut, reducedIterations);  // TODO: change interface to CordicSinCos
 			addOperator(tg);
 		}
 
@@ -1214,17 +1223,6 @@ bool parseCommandLine(int argc, char* argv[]){
 			addOperator(tg);
 		}
 
-		
-		else if (opname == "CordicSinCos") {
-			int nargs = 3;
-			if (i+nargs > argc)
-				usage(argv[0],opname); // and exit
-			int wIn = checkStrictlyPositive(argv[i++], argv[0]); // must be >=2 actually
-			int wOut = checkStrictlyPositive(argv[i++], argv[0]); // must be >=2 actually
-			int reducedIterations = checkPositiveOrNull(argv[i++], argv[0]); 
-			Operator* tg = new CordicSinCos(target, wIn, wOut, reducedIterations);
-			addOperator(tg);
-		}
 
 		else if (opname == "CordicAtan2") {
 			int nargs = 1;

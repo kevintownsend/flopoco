@@ -98,7 +98,7 @@ namespace flopoco{
 		mpfr_set_d(scale, -1.0, GMP_RNDN);           // exact
 		mpfr_mul_2si(scale, scale, -wOut+1, GMP_RNDN); // exact
 		mpfr_add_d(scale, scale, 1.0, GMP_RNDN);     // exact
-		REPORT(DEBUG, "scale=" << printMPFR(scale, 15));
+		REPORT(DEBUG, "scale=" << printMPFR(scale));
 		
 
 		// declaring inputs
@@ -157,7 +157,7 @@ namespace flopoco{
 
 		mpfr_mul(kfactor, kfactor, scale, GMP_RNDN);
 		
-		REPORT(DEBUG, "kfactor=" << printMPFR(kfactor, 15));
+		REPORT(DEBUG, "kfactor=" << printMPFR(kfactor));
 		mpfr_clear(temp);
 		
 		// initialize the zatan mpfr. It will be cleared outside the loop
@@ -166,7 +166,7 @@ namespace flopoco{
 
 
 		vhdl << tab << declare("Cos1", w+1) << " <= " <<  unsignedFixPointNumber(kfactor, 0, -w) << ";" 
-		     << "-- scale factor, about " << printMPFR(kfactor, 15) << endl;
+		     << "-- scale factor, about " << printMPFR(kfactor) << endl;
 		vhdl << tab << declare("Sin1", w+1) << " <= " << zg(w+1) << ";" << endl;
 		vhdl << tab << declare("Z1", sizeZ) << "<= Yp;" << endl;
 		vhdl << tab << declare("D1") << "<= Yp" << of(sizeZ-1) << ";" << endl;
@@ -226,7 +226,7 @@ namespace flopoco{
 			mpfr_div_2si(zatan, zatan, stage, GMP_RNDN);
 			mpfr_atan(zatan, zatan, GMP_RNDN);
 			mpfr_div(zatan, zatan, constPi, GMP_RNDN);
-			REPORT(DEBUG, "stage=" << stage << "  atancst=" << printMPFR(zatan, 15));		
+			REPORT(DEBUG, "stage=" << stage << "  atancst=" << printMPFR(zatan));		
 			//create the arctangent factor to be added to Zin
 									
 			REPORT(DEBUG, "  sizeZ=" << sizeZ << "   zMSB="<<zMSB );
