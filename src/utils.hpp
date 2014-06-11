@@ -10,11 +10,7 @@
 #include <map>
 #include <math.h>
 
-#ifdef _WIN32
-  #include "pstdint.h"
-#else
-  #include <inttypes.h>
-#endif
+#include <inttypes.h>
 
 
 using namespace std;

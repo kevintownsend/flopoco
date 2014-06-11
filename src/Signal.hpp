@@ -5,11 +5,7 @@
 #include <sstream>
 #include <gmpxx.h>
 
-#ifdef _WIN32
-  #include "pstdint.h"
-#else
-  #include <inttypes.h>
-#endif
+#include <inttypes.h>
 
 namespace flopoco{
 
