@@ -20,7 +20,7 @@
 #include <gmpxx.h>
 
 #include "Operator.hpp"
-#include "FPNumber.hpp"
+#include "TestBenches/FPNumber.hpp"
 
 namespace flopoco{
 

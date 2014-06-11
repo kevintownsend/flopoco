@@ -10,7 +10,7 @@
 #include <gmpxx.h>
 #include "Target.hpp"
 #include "Signal.hpp"
-#include "TestCase.hpp"
+#include "TestBenches/TestCase.hpp"
 #include <float.h>
 #include <utility>
 #include <vector>

@@ -24,7 +24,7 @@
 #include "utils.hpp"
 #include "Operator.hpp"
 #include "FPConstDiv.hpp"
-#include "FPNumber.hpp"
+#include "TestBenches/FPNumber.hpp"
 
 using namespace std;
 

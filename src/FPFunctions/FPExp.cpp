@@ -18,7 +18,7 @@
 #include <math.h>	// For NaN
 
 #include "FPExp.hpp"
-#include "FPNumber.hpp"
+#include "TestBenches/FPNumber.hpp"
 #include "ConstMult/IntIntKCM.hpp"
 #include "ConstMult/FixRealKCM.hpp"
 #include "Shifters.hpp"

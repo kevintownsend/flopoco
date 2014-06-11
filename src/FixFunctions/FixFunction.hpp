@@ -6,7 +6,7 @@
 
 #include <sollya.h>
 #include <gmpxx.h>
-#include "../TestCase.hpp"
+#include "../TestBenches/TestCase.hpp"
 
 using namespace std;
 

@@ -9,7 +9,7 @@
 #include <sstream>
 
 #include "Signal.hpp"
-#include "FPNumber.hpp"
+#include "TestBenches/FPNumber.hpp"
 #include "IEEENumber.hpp"
 
 using namespace std;

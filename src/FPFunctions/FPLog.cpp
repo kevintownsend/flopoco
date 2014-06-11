@@ -21,7 +21,7 @@
 #include <sstream>
 #include <math.h>	// for NaN
 #include "FPLog.hpp"
-#include "FPNumber.hpp"
+#include "TestBenches/FPNumber.hpp"
 #include "utils.hpp"
 #include "IntSquarer.hpp"
 #include "FPLogTables/FirstInvTable.hpp"

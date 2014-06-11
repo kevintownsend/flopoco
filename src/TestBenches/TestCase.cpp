@@ -1,4 +1,4 @@
-#include "TestCase.hpp"
+#include "TestBenches/TestCase.hpp"
 #include "Operator.hpp"
 
 namespace flopoco{

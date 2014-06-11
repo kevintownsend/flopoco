@@ -26,7 +26,7 @@
 #ifdef HAVE_SOLLYA
 #include "FPConstMult.hpp"
 #include "CRFPConstMult.hpp"
-#include "../FPNumber.hpp"
+#include "../TestBenches/FPNumber.hpp"
 
 using namespace std;
 

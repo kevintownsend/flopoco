@@ -28,7 +28,7 @@
 #include <sollya.h>
 #include "../Operator.hpp"
 #include "FPConstMult.hpp"
-#include "../FPNumber.hpp"
+#include "../TestBenches/FPNumber.hpp"
 
 using namespace std;
 

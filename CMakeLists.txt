@@ -190,11 +190,11 @@ ADD_LIBRARY(FloPoCoLib STATIC
  src/Targets/CycloneV 
 
 # TestBench-related -------------------------------------------------
- src/TestCase
- src/FPNumber
- src/IEEENumber
- src/Wrapper
- src/TestBench 
+ src/TestBenches/TestCase
+ src/TestBenches/FPNumber
+ src/TestBenches/IEEENumber
+ src/TestBenches/Wrapper
+ src/TestBenches/TestBench 
 
 
 # Bit heap  ------------------------------------------------

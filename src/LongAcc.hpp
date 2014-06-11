@@ -5,7 +5,7 @@
 #include <gmpxx.h>
 #include "Operator.hpp"
 #include "Shifters.hpp"
-#include "FPNumber.hpp"
+#include "TestBenches/FPNumber.hpp"
 #include "utils.hpp"
 
 namespace flopoco{

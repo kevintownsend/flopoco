@@ -7,7 +7,7 @@
 #include <gmpxx.h>
 
 #include "Operator.hpp"
-#include "FPNumber.hpp"
+#include "TestBenches/FPNumber.hpp"
 #include "FixedPointFunctions/PolyCoeffTable.hpp"
 #include "FixedPointFunctions/PolynomialEvaluator.hpp"
 #include "squareroot/PolynomialTableCorrectRounded.hpp"

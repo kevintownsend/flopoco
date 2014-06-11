@@ -7,7 +7,7 @@
 #include <gmpxx.h>
 
 #include "Operator.hpp"
-#include "FPNumber.hpp"
+#include "TestBenches/FPNumber.hpp"
 #include "LZOCShifterSticky.hpp"
 
 namespace flopoco{

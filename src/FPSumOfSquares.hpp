@@ -13,7 +13,7 @@
 #include "IntSquarer.hpp"
 #include "FPMultiplier.hpp"
 #include "FPAdderSinglePath.hpp"
-#include "FPNumber.hpp"
+#include "TestBenches/FPNumber.hpp"
 #include "utils.hpp"
 
 namespace flopoco{

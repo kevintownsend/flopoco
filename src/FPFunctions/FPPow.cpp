@@ -21,7 +21,7 @@
 #include "LZOC.hpp"
 #include "FPPow.hpp"
 #include "FPMultiplier.hpp"
-#include "FPNumber.hpp"
+#include "TestBenches/FPNumber.hpp"
 #include "utils.hpp"
 
 

@@ -10,7 +10,7 @@
 #include "../ShiftersEtc/LZOC.hpp"
 #include "../ShiftersEtc/Shifters.hpp"
 #include "../ShiftersEtc/LZOCShifterSticky.hpp"
-#include "../FPNumber.hpp"
+#include "../TestBenches/FPNumber.hpp"
 #include "../IntAdders/IntAdder.hpp"
 #include "../IntAdders/IntDualSub.hpp"
 

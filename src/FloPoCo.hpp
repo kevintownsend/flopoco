@@ -43,7 +43,7 @@
 
 
 
-#include "TestBench.hpp"
+#include "TestBenches/TestBench.hpp"
 
 /* shifters + lzoc ------------------------------------------- */
 #include "ShiftersEtc/Shifters.hpp"
@@ -239,7 +239,7 @@ use withing matrix-multiplication scenarios ------------------ */
 #endif /////////////////////////////////////////////////////0
 
 /* misc ------------------------------------------------------ */
-#include "Wrapper.hpp"
+#include "TestBenches/Wrapper.hpp"
 #include "UserDefinedOperator.hpp"
 #include "Plotter.hpp"
 

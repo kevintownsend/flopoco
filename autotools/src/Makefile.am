@@ -83,7 +83,7 @@ noinst_HEADERS = \
           FPLog.hpp \
           FPMultiplier.hpp \
           FPMultiplierKaratsuba.hpp \
-          FPNumber.hpp \
+          TestBenchs/FPNumber.hpp \
           FPSqrt.hpp \
           FPSqrtPoly.hpp \
           FPSquarer.hpp \
@@ -319,7 +319,7 @@ libflopoco_la_SOURCES = \
                         apps/FPFMAcc.cpp \
                         apps/FPJacobi.cpp \
                         TestCase.cpp \
-                        FPNumber.cpp \
+                        TestBenchs/FPNumber.cpp \
                         IEEENumber.cpp \
                         UtilSollya.cc \
                         FP2Fix.cpp \
