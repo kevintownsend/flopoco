@@ -28,9 +28,6 @@
 #include <gmpxx.h>
 #include "utils.hpp"
 #include "Operator.hpp"
-#include "IntAdder.hpp"
-#include "IntMultiplier.hpp"
-#include "IntSquarer.hpp"
 #include "FPSqrt.hpp"
 
 using namespace std;

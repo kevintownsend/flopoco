@@ -84,9 +84,12 @@
 
 /* Floating-point multiplier variants-------------------------- */ 
 #include "FPMultSquare/FPMultiplier.hpp"
-//#include "FPMultiplierKaratsuba.hpp"
+//#include "FPMultiplierKaratsuba.hpp" // Resurrect some day?
 #include "FPMultSquare/FPSquarer.hpp"
 
+#include "FPDivSqrt/FPDiv.hpp"
+#include "FPDivSqrt/FPSqrt.hpp"
+//#include "FPDivSqrt/FPSqrtPoly.hpp" // Resurrect some day?
 
 
 /* Constant multipliers and dividers ------------------------ */
@@ -169,12 +172,10 @@
 #endif
 #endif
 
-#include "FPDiv.hpp"
 #include "FPExp.hpp" 
 #include "FPLog.hpp"
 #include "FPPow.hpp"
 
-#include "FPSqrt.hpp"
 // #include "FP2DNorm.hpp" // The world is not ready yet 
 #include "FPSqrtPoly.hpp"
 

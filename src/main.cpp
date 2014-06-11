@@ -213,6 +213,31 @@ void usage(char *name, string opName = ""){
 	cerr << "Standard or faithful (resource-saving) floating-point multiplier \n";
 
 
+
+	if ( full )
+		cerr << center("FLOATING-POINT DIVIDERS AND SQUARE ROOTS", '_') << "\n";
+	if ( full || opName == "FPDivider"){					
+		OP( "FPDivider","wE wF");
+		cerr << "Floating-point divider,  using digit recurrence \n";
+	}
+	if ( full || opName == "FPSqrt"){					
+		OP("FPSqrt","wE wF");
+		cerr << "Floating-point square root operator, using digit recurrence\n";
+	}
+
+
+	if ( full || opName == "FPDivider"){					
+		OP( "FPMultiplier","wE wF_in wF_out");
+	}
+	if ( full  || opName == "FPMultiplier" || opName == "FPMultiplierFaithful"){					
+		OP( "FPMultiplierFaithful","wE wF_in wF_out");
+	}
+	if ( full  || opName == "FPMultiplier" || opName == "FPMultiplierExpert"){					
+		OP( "FPMultiplierExpert","wE wFX wFY wFR CorrectRounding DSPThreshold");
+	}		
+	cerr << "Standard or faithful (resource-saving) floating-point multiplier \n";
+
+
 #if 0 // Commented out for now, should be resurrected some day: see TODO
 	if ( full || opName == "FPMultiplier" || opName == "FPMultiplierKaratsuba"){						
 		OP( "FPMultiplierKaratsuba","wE wF_in wF_out");
@@ -929,6 +954,29 @@ bool parseCommandLine(int argc, char* argv[]){
 			}
 		} 
 
+
+
+		//-------------------FP Division and square root ----------------------
+		else if (opname == "FPDiv")
+		{
+			int nargs = 2;
+			if (i+nargs > argc)
+				usage(argv[0],opname); // and exit
+			int wE = checkStrictlyPositive(argv[i++], argv[0]);
+			int wF = checkStrictlyPositive(argv[i++], argv[0]);
+			op = new FPDiv(target, wE, wF);
+			addOperator(op);
+		}
+		else if (opname == "FPSqrt")
+		{
+			int nargs = 2;
+			if (i+nargs > argc)
+				usage(argv[0],opname); // and exit
+			int wE = checkStrictlyPositive(argv[i++], argv[0]);
+			int wF = checkStrictlyPositive(argv[i++], argv[0]);
+			op = new FPSqrt(target, wE, wF);
+			addOperator(op);
+		}
 
 		//-------------------CONSTANT MULTIPLICATION AND DIVISION ----------------------
 		

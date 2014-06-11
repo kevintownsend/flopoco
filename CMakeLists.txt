@@ -268,6 +268,11 @@ ADD_LIBRARY(FloPoCoLib STATIC
 #  src/FPMultSquare/FPMultiplierKaratsuba # See TODO
  src/FPMultSquare/FPSquarer
 
+# Floating-point dividers and square roots
+src/FPDivSqrt/FPDiv
+src/FPDivSqrt/FPSqrt
+# src/FPDivSqrt/FPSqrtPoly # Resurrect some day?
+
 
 
 # Generic fixed-point function evaluators ---------------------------
