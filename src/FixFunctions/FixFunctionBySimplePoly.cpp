@@ -27,7 +27,7 @@
 
 
 #include "FixFunctionBySimplePoly.hpp"
-#include "IntMultipliers/FixMultAdd.hpp"
+#include "IntMult//FixMultAdd.hpp"
 
 #ifdef HAVE_SOLLYA
 

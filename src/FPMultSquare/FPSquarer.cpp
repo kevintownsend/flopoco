@@ -25,7 +25,7 @@
 #include "Operator.hpp"
 #include "FPSquarer.hpp"
 #include "TestBenches/FPNumber.hpp"
-#include "IntMultipliers/IntSquarer.hpp"
+#include "IntMult//IntSquarer.hpp"
 
 using namespace std;
 

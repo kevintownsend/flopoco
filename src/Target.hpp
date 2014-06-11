@@ -27,7 +27,7 @@
 #include <string>
 #include <math.h>
 #include "Targets/DSP.hpp"
-#include "IntMultipliers/MultiplierBlock.hpp"
+#include "IntMult//MultiplierBlock.hpp"
 
 using namespace std;
 

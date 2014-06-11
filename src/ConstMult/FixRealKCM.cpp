@@ -26,7 +26,7 @@
 #include <sollya.h>
 #include "../utils.hpp"
 #include "FixRealKCM.hpp"
-#include "../IntAdders/IntAdder.hpp"
+#include "../IntAddSubCmp/IntAdder.hpp"
 
 using namespace std;
 

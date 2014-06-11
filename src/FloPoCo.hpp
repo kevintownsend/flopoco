@@ -51,29 +51,29 @@
 #include "ShiftersEtc/LZOCShifterSticky.hpp"
 
 /* regular pipelined integer adder/ adder+subtracter --------- */
-#include "IntAdders/IntAdder.hpp" // includes several other .hpp
-#include "IntAdders/IntDualSub.hpp"
-#include "IntAdders/IntComparator.hpp"
+#include "IntAddSubCmp/IntAdder.hpp" // includes several other .hpp
+#include "IntAddSubCmp/IntDualSub.hpp"
+#include "IntAddSubCmp/IntComparator.hpp"
 
 /* fast large adders ----------------------------------------- */
-#include "IntAdders/LongIntAdderAddAddMuxGen1.hpp"
-#include "IntAdders/LongIntAdderCmpCmpAddGen1.hpp"
-#include "IntAdders/LongIntAdderCmpAddIncGen1.hpp"
-#include "IntAdders/IntAdderSpecific.hpp"
-#include "IntAdders/LongIntAdderAddAddMuxGen2.hpp"
-#include "IntAdders/LongIntAdderCmpCmpAddGen2.hpp"
-#include "IntAdders/LongIntAdderCmpAddIncGen2.hpp"
-#include "IntAdders/IntComparatorSpecific.hpp"
-#include "IntAdders/LongIntAdderMuxNetwork.hpp"
+#include "IntAddSubCmp/LongIntAdderAddAddMuxGen1.hpp"
+#include "IntAddSubCmp/LongIntAdderCmpCmpAddGen1.hpp"
+#include "IntAddSubCmp/LongIntAdderCmpAddIncGen1.hpp"
+#include "IntAddSubCmp/IntAdderSpecific.hpp"
+#include "IntAddSubCmp/LongIntAdderAddAddMuxGen2.hpp"
+#include "IntAddSubCmp/LongIntAdderCmpCmpAddGen2.hpp"
+#include "IntAddSubCmp/LongIntAdderCmpAddIncGen2.hpp"
+#include "IntAddSubCmp/IntComparatorSpecific.hpp"
+#include "IntAddSubCmp/LongIntAdderMuxNetwork.hpp"
 
 /* Integer and fixed-point multipliers ------------------------ */
-#include "IntMultipliers/IntMultiplier.hpp"
-#include "IntMultipliers/FixMultAdd.hpp"
-#include "IntMultipliers/FixMultAddBitheap.hpp"
-// #include "IntMultipliers/IntKaratsuba.hpp"
-#include "IntMultipliers/IntSquarer.hpp"
-// #include "IntMultipliers/GenericBinaryPolynomial.hpp"
-// #include "IntMultipliers/IntPower.hpp"
+#include "IntMult//IntMultiplier.hpp"
+#include "IntMult//FixMultAdd.hpp"
+#include "IntMult//FixMultAddBitheap.hpp"
+// #include "IntMult//IntKaratsuba.hpp"
+#include "IntMult//IntSquarer.hpp"
+// #include "IntMult//GenericBinaryPolynomial.hpp"
+// #include "IntMult//IntPower.hpp"
 
 
 /* Floating-point adder variants ----------------------------- */
@@ -124,23 +124,23 @@
 
 /* multioperand adders --------------------------------------- */
 #include "IntMultiAdder.hpp"
-#include "IntAdders/IntNAdder.hpp"
-#include "IntAdders/IntCompressorTree.hpp"
-#include "IntAdders/PopCount.hpp"
-#include "IntAdders/BasicCompressor.hpp"
-#include "IntAdders/NewCompressorTree.hpp"
+#include "IntAddSubCmp/IntNAdder.hpp"
+#include "IntAddSubCmp/IntCompressorTree.hpp"
+#include "IntAddSubCmp/PopCount.hpp"
+#include "IntAddSubCmp/BasicCompressor.hpp"
+#include "IntAddSubCmp/NewCompressorTree.hpp"
 
 /* multiplication-related ------------------------------------ */
 #include "IntMultiplier.hpp"
 #include "FixMultAdd.hpp"
-#include "IntMultipliers/IntKaratsuba.hpp"
+#include "IntMult//IntKaratsuba.hpp"
 #include "IntSquarer.hpp"
-#include "IntMultipliers/GenericBinaryPolynomial.hpp"
-#include "IntMultipliers/IntPower.hpp"
+#include "IntMult//GenericBinaryPolynomial.hpp"
+#include "IntMult//IntPower.hpp"
 
-#include "IntMultipliers/FixSinPoly.hpp"
-#include "IntMultipliers/FixXPow3Div6.hpp"
-#include "IntMultipliers/MultiplierBlock.hpp"
+#include "IntMult//FixSinPoly.hpp"
+#include "IntMult//FixXPow3Div6.hpp"
+#include "IntMult//MultiplierBlock.hpp"
 
 
 

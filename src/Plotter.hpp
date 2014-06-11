@@ -23,7 +23,7 @@ All rights reserved.
 
 #include "BitHeap.hpp"
 #include "WeightedBit.hpp"
-#include "IntMultipliers/MultiplierBlock.hpp"
+#include "IntMult//MultiplierBlock.hpp"
 
 
 namespace flopoco

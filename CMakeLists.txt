@@ -213,27 +213,27 @@ ADD_LIBRARY(FloPoCoLib STATIC
  src/ShiftersEtc/Shifters
 
 # pipelined Integer addition -------------------------------------------------
- src/IntAdders/IntAdder  
- src/IntAdders/IntAdderClassical 
- src/IntAdders/IntAdderAlternative 
- src/IntAdders/IntAdderShortLatency
- src/IntAdders/IntComparator
- src/IntAdders/IntDualSub
- src/IntAdders/BasicCompressor
+ src/IntAddSubCmp/IntAdder  
+ src/IntAddSubCmp/IntAdderClassical 
+ src/IntAddSubCmp/IntAdderAlternative 
+ src/IntAddSubCmp/IntAdderShortLatency
+ src/IntAddSubCmp/IntComparator
+ src/IntAddSubCmp/IntDualSub
+ src/IntAddSubCmp/BasicCompressor
  
 # ---------- First generation of fast large adders ------------------------
- src/IntAdders/LongIntAdderAddAddMuxGen1 
- src/IntAdders/LongIntAdderCmpCmpAddGen1 
- src/IntAdders/LongIntAdderCmpAddIncGen1
+ src/IntAddSubCmp/LongIntAdderAddAddMuxGen1 
+ src/IntAddSubCmp/LongIntAdderCmpCmpAddGen1 
+ src/IntAddSubCmp/LongIntAdderCmpAddIncGen1
 
 # ---------- Second Generation of fast large adders -----------------------
- src/IntAdders/IntAdderSpecific 
- src/IntAdders/IntComparatorSpecific 
- src/IntAdders/CarryGenerationCircuit 
- src/IntAdders/LongIntAdderAddAddMuxGen2 
- src/IntAdders/LongIntAdderCmpCmpAddGen2 
- src/IntAdders/LongIntAdderCmpAddIncGen2
- src/IntAdders/LongIntAdderMuxNetwork
+ src/IntAddSubCmp/IntAdderSpecific 
+ src/IntAddSubCmp/IntComparatorSpecific 
+ src/IntAddSubCmp/CarryGenerationCircuit 
+ src/IntAddSubCmp/LongIntAdderAddAddMuxGen2 
+ src/IntAddSubCmp/LongIntAdderCmpCmpAddGen2 
+ src/IntAddSubCmp/LongIntAdderCmpAddIncGen2
+ src/IntAddSubCmp/LongIntAdderMuxNetwork
 
 # Constant multiplications and divisions
  src/ConstMult/ShiftAddOp 
@@ -250,11 +250,11 @@ ADD_LIBRARY(FloPoCoLib STATIC
 
  
 # Multiplication related --------------------------------------------
- src/IntMultipliers/IntMultiplier
- src/IntMultipliers/FixMultAdd
- src/IntMultipliers/FixMultAddBitheap
- src/IntMultipliers/MultiplierBlock
- src/IntMultipliers/IntSquarer
+ src/IntMult//IntMultiplier
+ src/IntMult//FixMultAdd
+ src/IntMult//FixMultAddBitheap
+ src/IntMult//MultiplierBlock
+ src/IntMult//IntSquarer
 
 
 # Floating-point adders and subtracters -----------------------------

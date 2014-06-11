@@ -73,7 +73,7 @@
 #include "utils.hpp"
 #include "Operator.hpp"
 #include "IntMultiplier.hpp"
-#include "IntAdders/IntAdder.hpp"
+#include "IntAddSubCmp/IntAdder.hpp"
 #include "Targets/StratixII.hpp"
 #include "Targets/StratixIII.hpp"
 #include "Targets/StratixIV.hpp"

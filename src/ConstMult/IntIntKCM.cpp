@@ -24,7 +24,7 @@
 #include <gmpxx.h>
 #include "../utils.hpp"
 #include "../Operator.hpp"
-#include "../IntAdders/IntAdder.hpp"
+#include "../IntAddSubCmp/IntAdder.hpp"
 #include "IntIntKCM.hpp"
 #include "KCMTable.hpp"
 

@@ -27,7 +27,7 @@
 
 #include "IntConstMult.hpp"
 
-#include "../IntAdders/IntAdder.hpp"
+#include "../IntAddSubCmp/IntAdder.hpp"
 //#include "rigo.h"
 
 using namespace std;

@@ -20,9 +20,9 @@
 #include "Operator.hpp"
 #include "Table.hpp"
 #include "DualTable.hpp"
-#include "IntAdders/IntAdder.hpp"
-#include "IntAdders/BasicCompressor.hpp"
-#include "IntMultipliers/MultiplierBlock.hpp"
+#include "IntAddSubCmp/IntAdder.hpp"
+#include "IntAddSubCmp/BasicCompressor.hpp"
+#include "IntMult//MultiplierBlock.hpp"
 
 // To enable SVG plotting, uncomment the following line
  #define BITHEAP_GENERATE_SVG 1

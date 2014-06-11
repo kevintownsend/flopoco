@@ -9,7 +9,7 @@
 #include "Table.hpp"
 #include "BitHeap.hpp"
 
-#include "IntMultipliers/MultiplierBlock.hpp"
+#include "IntMult//MultiplierBlock.hpp"
 
 namespace flopoco {
 

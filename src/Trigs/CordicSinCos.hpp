@@ -3,8 +3,8 @@
 
 #include "Operator.hpp"
 #include "utils.hpp"
-#include "IntMultipliers/IntMultiplier.hpp"
-#include "IntAdders/IntAdder.hpp"
+#include "IntMult//IntMultiplier.hpp"
+#include "IntAddSubCmp/IntAdder.hpp"
 #include "ConstMult/FixRealKCM.hpp"
 
 //#include "CordicSinCosClassic.hpp"
