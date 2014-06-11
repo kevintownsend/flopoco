@@ -8,7 +8,7 @@
 
 #include "Operator.hpp"
 #include "TestBenches/FPNumber.hpp"
-#include "LZOCShifterSticky.hpp"
+#include "ShiftersEtc/LZOCShifterSticky.hpp"
 
 namespace flopoco{
 

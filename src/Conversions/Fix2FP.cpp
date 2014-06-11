@@ -47,7 +47,7 @@ namespace flopoco{
 #define DEBUGVHDL 0
 
 
-	Fix2FP::Fix2FP(Target* target, int LSBI, int MSBI, int Signed,int wER, int wFR) :
+	Fix2FP::Fix2FP(Target* target, bool Signed, int MSBI, int LSBI, int wER, int wFR) :
 		Operator(target), MSBI(MSBI), LSBI(LSBI), Signed(Signed),wER(wER), wFR(wFR) {
 
 		ostringstream name;
@@ -68,7 +68,7 @@ namespace flopoco{
 
 		int absMSB = MSBI>=0?MSBI:-MSBI;
 		int absLSB = LSBI>=0?LSBI:-LSBI;
-		name<<"Fix2FP_"<< (LSBI<0?"M":"")<<absLSB<<"_"<<(MSBI<0?"M":"")<<absMSB <<"_"<< (Signed==1?"S":"US") << "_" <<wER<<"_"<<wFR; 
+		name<<"Fix2FP_"<< (LSBI<0?"M":"")<<absLSB<<"_"<<(MSBI<0?"M":"")<<absMSB <<"_"<< (Signed?"S":"US") << "_" <<wER<<"_"<<wFR; 
 		setName(name.str()); 
 
 		setCopyrightString("Radu Tudoran, Bogdan Pasca (2009)");		
@@ -97,7 +97,7 @@ namespace flopoco{
 	
 		// code for the LZOCShifter part
 	
-		if(Signed!=0)
+		if(Signed)
 			vhdl << tab << declare("signSignal")<<"<=input"<<of(MSB-1-LSB)<<";"<<endl;
 		else
 			vhdl << tab << declare("signSignal")<<"<= '0';"<<endl;
@@ -110,7 +110,7 @@ namespace flopoco{
 			//code for the case when a rounding is required
 			int maximalOutputValue = (MSB-LSB)>wF+4? MSB-LSB:wF+4;
 	
-			if(Signed!=0){	
+			if(Signed){	
 				lzocs = new LZOCShifterSticky(target,inputWidth-1 , maximalOutputValue, intlog2(inputWidth-1), 0, -1);
 				lzocs->changeName(getName()+"_LZOCS");
 				oplist.push_back(lzocs);
@@ -140,12 +140,12 @@ namespace flopoco{
 			syncCycleFromSignal("temporalExponent");
 	
 			//Code for creating the exponent
-			if(Signed!=0)
+			if(Signed)
 				vhdl << tab << declare("MSB2Signal",wE)<<"<=CONV_STD_LOGIC_VECTOR("<<MSB-2<<","<<wE<<");"<<endl;
 			else
 				vhdl << tab << declare("MSB2Signal",wE)<<"<=CONV_STD_LOGIC_VECTOR("<<MSB-1<<","<<wE<<");"<<endl;
 	
-			if(Signed!=0)
+			if(Signed)
 				vhdl << tab << declare("zeroPadding4Exponent",wE- intlog2(inputWidth-1),true)<<"<=CONV_STD_LOGIC_VECTOR(0,"<<wE- intlog2(inputWidth-1)<<");"<<endl;
 			else
 				vhdl << tab << declare("zeroPadding4Exponent",wE- intlog2(inputWidth),true)<<"<=CONV_STD_LOGIC_VECTOR(0,"<<wE- intlog2(inputWidth)<<");"<<endl;
@@ -189,7 +189,7 @@ namespace flopoco{
 	
 			setCycleFromSignal("passedInput");
 	
-			if(Signed!=0){
+			if(Signed){
 				vhdl << tab << declare("minusOne4ZD",MSB -LSB)<<"<=CONV_STD_LOGIC_VECTOR("<<-1<<","<<MSB-LSB<<");"<<endl;
 	
 				zeroD = new IntAdder(target, MSB-LSB );
@@ -225,7 +225,7 @@ namespace flopoco{
 			//code for the Convertion of the fraction
 			setCycleFromSignal("temporalFraction");
 	
-			if(Signed!=0){
+			if(Signed){
 	
 				vhdl << tab << declare("sign2vector",maximalOutputValue)<<"<=(others => signSignal);"<<endl;
 				vhdl << tab << declare("tempConvert",maximalOutputValue)<<"<= sign2vector xor temporalFraction;"<<endl;
@@ -328,7 +328,7 @@ namespace flopoco{
 		
 				//code for zero detector of the input
 
-				if(Signed!=0){
+				if(Signed){
 					vhdl << tab << declare("minusOne4ZD",MSB -LSB)<<"<=CONV_STD_LOGIC_VECTOR("<<-1<<","<<MSB-LSB<<");"<<endl;
 	
 					zeroD = new IntAdder(target, MSB-LSB );
@@ -363,7 +363,7 @@ namespace flopoco{
 				//code for the leading zeros/ones
 				setCycleFromSignal("input2LZOC");
 	
-				if(Signed!=0){
+				if(Signed){
 					lzocs		= new LZOCShifterSticky(target,inputWidth-1 , maximalOutputValue, intlog2(inputWidth-1), 0, -1);
 					lzocs->changeName(getName()+"_LZCS");
 					oplist.push_back(lzocs);
@@ -394,7 +394,7 @@ namespace flopoco{
 	
 				int sizeFractionPlusOne=wF+1;
 
-				if(Signed!=0){
+				if(Signed){
 					vhdl << tab << declare("tfr",sizeFractionPlusOne) <<"<= temporalFraction"<<range(maximalOutputValue-1,maximalOutputValue-sizeFractionPlusOne)<<";"<<endl;
 		
 					vhdl << tab << declare("sign2vector",sizeFractionPlusOne)<<"<=(others=>signSignal);"<<endl;
@@ -424,12 +424,12 @@ namespace flopoco{
 	
 				//code for creating the exponent
 				setCycleFromSignal("temporalExponent");
-				if(Signed!=0)
+				if(Signed)
 					vhdl << tab << declare("MSB2Signal",wE,true)<<"<= CONV_STD_LOGIC_VECTOR("<<MSB-2<<","<<wE<<");"<<endl;
 				else
 					vhdl << tab << declare("MSB2Signal",wE,true)<<"<= CONV_STD_LOGIC_VECTOR("<<MSB-1<<","<<wE<<");"<<endl;
 	
-				if(Signed!=0)
+				if(Signed)
 					vhdl << tab << declare("zeroPadding4Exponent",wE- intlog2(inputWidth-1),true)<<"<= CONV_STD_LOGIC_VECTOR(0,"<<wE- intlog2(inputWidth-1)<<");"<<endl;
 				else
 					vhdl << tab << declare("zeroPadding4Exponent",wE- intlog2(inputWidth),true)<<"<= CONV_STD_LOGIC_VECTOR(0,"<<wE- intlog2(inputWidth)<<");"<<endl;
@@ -519,7 +519,7 @@ namespace flopoco{
 		mpz_class tmpSUB = (mpz_class(1) << (MSBI-LSBI+1));
 		mpz_class tmpCMP = (mpz_class(1)  << (MSBI-LSBI))-1;
 
-		if (Signed != 0)
+		if (Signed)
 			if (svX > tmpCMP){ //negative number 
 				svX = svX - tmpSUB;
 			}

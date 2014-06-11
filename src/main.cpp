@@ -27,13 +27,7 @@
 
 #include "FloPoCo.hpp"
 #include "utils.hpp"
-
-
-#define BRIGHT 1
-#define RED 31
-#define OPER 35
-#define PARAM 34
-#define OP(op,paramList)   {printf("%c[%d;%dm",27,1,OPER); cerr <<  op; printf("%c[%dm",27,0); cerr<< " "; printf("%c[%d;%dm",27,1,PARAM); cerr << paramList; printf("%c[%dm\n",27,0); } 
+#include "main.hpp"
 
 
 using namespace std;
@@ -385,6 +379,37 @@ void usage(char *name, string opName = ""){
 		cerr << "Evaluator of function f on [0,1), using a single polynomial with Horner scheme \n";
 	}
 
+	if ( full )
+		cerr << center("PSEUDO-RANDOM NUMBER GENERATORS", '_') << "\n";
+	// Delegate to operators from random
+	random_usage(name, opName);
+
+
+
+
+
+	if ( full )
+		cerr << center("CONVERSIONS BETWEEN NUMBER FORMATS", '_') << "\n";
+
+	if ( full || opName == "Fix2FP"){					
+		OP("Fix2FP","Signed MSB LSB wE wF");
+		cerr << "Convert a 2's complement fixed-point number in the bit range MSB...LSB \n";
+		cerr << "   into FloPoCo floating-point format\n";
+	}	
+	if ( full || opName == "FP2Fix"){					
+		OP("FP2Fix","wE wF Signed MSB LSB  trunc");
+		cerr << "Convert a floating point number into a 2's complement fixed-point number \n";
+		cerr << "  in the bit range MSB...LSB, truncated or not\n";
+	}	
+	if ( full || opName == "OutputIEEE"){					
+		OP( "OutputIEEE","wEIn wFIn wEOut wFOut");
+		cerr << "Conversion from FloPoCo to IEEE-754-like floating-point formats\n";
+	}
+	if ( full || opName == "InputIEEE"){					
+		OP( "InputIEEE","wEIn wFIn wEOut wFOut");
+		cerr << "Conversion from IEEE-754-like to FloPoCo floating-point formats\n";
+	}
+
 
 
 	if ( full || opName=="options"){
@@ -392,7 +417,9 @@ void usage(char *name, string opName = ""){
 		cerr << center("OPTIONS", '_') << "\n";
 		cerr << "General options that should only appear before any operator specification:\n";
 		cerr << "   -outputfile=<output file name>           (default=flopoco.vhdl)\n";
-		cerr << "   -target=<Spartan3|Virtex4|Virtex5|Virtex6|StratixII|StratixIII|StratixIV|StratixV|CycloneII|CycloneIII|CycloneIV|CycloneV>      (default=Virtex5)\n";
+		cerr << "   -target=<Spartan3|Virtex4|Virtex5|Virtex6\n";
+		cerr << "           |StratixII|StratixIII|StratixIV|StratixV\n";
+		cerr << "           |CycloneII|CycloneIII|CycloneIV|CycloneV>      (default=Virtex5)\n";
 		cerr << "Options affecting the operators that follow them:\n";
 		cerr << "   -pipeline=<yes|no>                       (default=yes)\n";
 		cerr << "   -frequency=<target frequency in MHz>     (default=400)\n";
@@ -407,7 +434,7 @@ void usage(char *name, string opName = ""){
 		cerr << "   -floorplanning=<yes|no>\n";
 		cerr << " generates a floorplan (experimental, Xilinx only)\n";
 		cerr << "Debugging options, affecting the operators that follow them:\n";
-		cerr << "   -verbose=<0|1|2|3>     verbosity level. 0: no output (default), 1: basic info, 3: full debug \n";
+		cerr << "   -verbose=<0|1|2|3>   verbosity level: default=0 (quiet), 3 means full debug \n";
 		cerr << "   -reDebugging=<yes|no>  debug output for resource estimation (default=no)\n";
 		cerr << "   -flpDebugging=<yes|no> debug output for floorplanning (default=no)\n";
 	}
@@ -1281,6 +1308,43 @@ bool parseCommandLine(int argc, char* argv[]){
 			addOperator(tg);
 		}
 #endif
+
+		else if(opname=="Fix2FP"){
+			int nargs = 5;
+			if (i+nargs > argc)
+				usage(argv[0],opname);
+			else {
+				int sign = atoi(argv[i++]);
+				int MSB = atoi(argv[i++]);
+				int LSB = atoi(argv[i++]);
+				int wE = checkStrictlyPositive(argv[i++], argv[0]);
+				int wF = checkStrictlyPositive(argv[i++], argv[0]);
+				
+				op = new Fix2FP(target, sign, MSB, LSB, wE, wF);
+				addOperator(op);
+			}
+		}
+		else if(opname=="FP2Fix"){
+			int nargs = 6;
+			if (i+nargs > argc)
+				usage(argv[0],opname);
+			else {
+				int wE = checkStrictlyPositive(argv[i++], argv[0]);
+				int wF = checkStrictlyPositive(argv[i++], argv[0]);
+				int sign = atoi(argv[i++]);
+				int MSB = atoi(argv[i++]);
+				int LSB = atoi(argv[i++]);
+				int trunc_p = checkBoolean(argv[i++], argv[0]);
+				
+				op = new FP2Fix(target,  sign, MSB, LSB, wE, wF, trunc_p);
+				addOperator(op);
+			}
+		}
+
+
+		else if(random_parseCommandLine(argc, argv, target, opname, i)){
+			// we actually do nothing, the work is already done if it returned true
+		}
 
 		else if (opname == "TestBench") {
 			int nargs = 1;

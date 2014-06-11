@@ -14,6 +14,8 @@
 #include "Operator.hpp"
 
 #include "FP2Fix.hpp"
+#include "IntAddSubCmp/IntAdder.hpp"
+#include "ShiftersEtc/Shifters.hpp"
 
 #include <cstdlib>
 #include <iostream>
@@ -29,7 +31,6 @@
 #include <stdio.h>
 #include <mpfr.h>
 
-#include "Shifters.hpp"
 
 using namespace std;
 
@@ -38,7 +39,7 @@ namespace flopoco{
 #define DEBUGVHDL 0
 
 
-   FP2Fix::FP2Fix(Target* target, int _LSBO, int _MSBO, int _Signed,int _wEI, int _wFI, bool _trunc_p) :
+   FP2Fix::FP2Fix(Target* target, bool _Signed, int _MSBO, int _LSBO, int _wEI, int _wFI, bool _trunc_p) :
          Operator(target), wEI(_wEI), wFI(_wFI), Signed(_Signed), LSBO(_LSBO), MSBO(_MSBO), trunc_p(_trunc_p) {
 
       int MSB=MSBO;
@@ -74,7 +75,7 @@ namespace flopoco{
       }
       int absMSB = MSB>=0?MSB:-MSB;
       int absLSB = LSB>=0?LSB:-LSB;
-      name<<"FP2Fix_" << wEI << "_" << wFI << (LSB<0?"M":"") << "_" << absLSB << "_" << (MSB<0?"M":"") << absMSB <<"_"<< (Signed==1?"S":"US") << "_" << (trunc_p==1?"T":"NT");
+      name<<"FP2Fix_" << wEI << "_" << wFI << (LSB<0?"M":"") << "_" << absLSB << "_" << (MSB<0?"M":"") << absMSB <<"_"<< (Signed?"S":"US") << "_" << (trunc_p==1?"T":"NT");
       setName(name.str());
 
       setCopyrightString("Fabrizio Ferrandi (2012)");
@@ -125,7 +126,7 @@ namespace flopoco{
 
       if(trunc_p)
       {
-         if(Signed == 0)
+         if(!Signed)
          {
             vhdl << tab << declare("fA4",wFO) <<  "<= fA1" << range(wFO0+wFI+LSB, wFI+1+LSB)<< ";"<<endl;
          }
@@ -140,7 +141,7 @@ namespace flopoco{
       {
          vhdl << tab << declare("fA2a",wFO+1) <<  "<= '0' & fA1" << range(wFO0+wFI+LSB, wFI+1+LSB)<< ";"<<endl;
          IntAdder* MantSum;
-         if(Signed == 0)
+         if(!Signed)
          {
             manageCriticalPath(target->localWireDelay() + target->lutDelay());
             vhdl << tab << declare("notallzero") << " <= '0' when fA1" << range(wFI+LSB-1, 0) << " = " << rangeAssign(wFI+LSB-1, 0,"'0'") << " else '1';"<<endl;
@@ -163,7 +164,7 @@ namespace flopoco{
          vhdl << instance(MantSum, "MantSum");
          setCycleFromSignal("fA3");
          setCriticalPath(MantSum->getOutputDelay("R"));
-         if(Signed == 0)
+         if(!Signed)
          {
             vhdl << tab << declare("fA4",wFO) <<  "<= fA3" << range(wFO-1, 0)<< ";"<<endl;
          }
@@ -186,13 +187,14 @@ namespace flopoco{
       
       if(trunc_p)
       {
-         if(Signed == 0)
+         if(!Signed)
             vhdl << tab << declare("overFl1") << " <= fA1" << of(wFO0+wFI+1+LSB) << ";"<<endl;
          else
          {
             manageCriticalPath(target->localWireDelay() + target->lutDelay());
-            vhdl << tab << declare("overFl1") << " <= fA4" << of(wFO-1) << " xor I" << of(wEI+wFI) << ";"<<endl;
-         }
+            vhdl << tab << declare("notZeroTest") << " <= '1' when fA4 /= conv_std_logic_vector(0," << wFO <<")"<< " else '0';"<<endl;
+            vhdl << tab << declare("overFl1") << " <= (fA4" << of(wFO-1) << " xor I" << of(wEI+wFI) << ") and notZeroTest;"<<endl;
+        }
       }
       else
       {
@@ -236,7 +238,7 @@ namespace flopoco{
       else
          mpfr_get_z(svO.get_mpz_t(), i, GMP_RNDN);
       
-      if (Signed != 0)
+      if (Signed)
       {
          mpz_class tmpCMP = (mpz_class(1)  << (MSBO-LSBO))-1;
          if (svO > tmpCMP){ //negative number 

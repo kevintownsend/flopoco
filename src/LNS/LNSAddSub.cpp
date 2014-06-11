@@ -13,6 +13,9 @@
   All rights reserved.
  */
 
+// works only with sollya
+#ifdef HAVE_SOLLYA
+
 #include "LNSAddSub.hpp"
 #include "../utils.hpp"
 #include <cmath>
@@ -170,3 +173,4 @@ namespace flopoco{
 
 	}
 }
+#endif// HAVE_SOLLYA

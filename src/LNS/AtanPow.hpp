@@ -2,7 +2,7 @@
 #define ATANPOW_HPP
 
 #include "../Operator.hpp"
-#include "../FixedPointFunctions/GenericEvaluator.hpp"
+#include "../FixFunctions/GenericEvaluator.hpp"
 
 namespace flopoco{
 

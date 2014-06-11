@@ -16,10 +16,12 @@
 
 */
 
+// works only with sollya
+#ifdef HAVE_SOLLYA
 #include "AtanPow.hpp"
 #include <sstream>
 #include <vector>
-#include "../FixedPointFunctions/HOTBM.hpp"
+#include "../FixFunctions/HOTBM.hpp"
 
 using namespace std;
 
@@ -94,3 +96,4 @@ namespace flopoco{
 	}
 
 }
+#endif// HAVE_SOLLYA

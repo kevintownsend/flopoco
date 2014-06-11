@@ -207,6 +207,13 @@ ADD_LIBRARY(FloPoCoLib STATIC
 #               OPERATORS          
 #--------------------------------------------------------------------
 
+
+# Conversions ----------------------------------------------------
+src/Conversions/InputIEEE
+src/Conversions/OutputIEEE
+src/Conversions/FP2Fix
+src/Conversions/Fix2FP
+
 # Shifters/LZOC ----------------------------------------------------
  src/ShiftersEtc/LZOC 
  src/ShiftersEtc/LZOCShifterSticky

@@ -41,8 +41,6 @@
 #include "Targets/CycloneIV.hpp"
 #include "Targets/CycloneV.hpp"
 
-
-
 #include "TestBenches/TestBench.hpp"
 
 /* shifters + lzoc ------------------------------------------- */
@@ -116,6 +114,11 @@
 #include "Trigs/CordicSinCos.hpp"
 // #include "CORDIC/FixedPointSinOrCos.hpp"
 
+#include "Conversions/Fix2FP.hpp"
+#include "Conversions/FP2Fix.hpp"
+#include "Conversions/InputIEEE.hpp"
+#include "Conversions/OutputIEEE.hpp"
+
 
 
 #if 0
@@ -187,39 +190,32 @@
 
 #include "FPPipeline.hpp"
 
-#include "Fix2FP.hpp"
-#include "FP2Fix.hpp"
-#include "InputIEEE.hpp"
-#include "OutputIEEE.hpp"
-
 
 /* Complex arithmetic */
 #include "Complex/FixedComplexAdder.hpp"
 #include "Complex/FixedComplexMultiplier.hpp"
 
 
-/* test-bench related ---------------------------------------- */
-#include "TestBench.hpp"
 
 
 /* applications ---------------------------------------------- */
 
 /* Coil Inductance application */
-//#include "apps/CoilInductance/CoordinatesTableX.hpp"
-//#include "apps/CoilInductance/CoordinatesTableZ.hpp"
-//#include "apps/CoilInductance/CoordinatesTableY.hpp"
-//#include "apps/CoilInductance/CoilInductance.hpp"
+//#include "Apps/CoilInductance/CoordinatesTableX.hpp"
+//#include "Apps/CoilInductance/CoordinatesTableZ.hpp"
+//#include "Apps/CoilInductance/CoordinatesTableY.hpp"
+//#include "Apps/CoilInductance/CoilInductance.hpp"
 
 /* fast evaluation of the possible intrusion of a point within a 
 spheric enclosure -------------------------------------------- */ 
-#include "apps/Collision.hpp"
+#include "Apps/Collision.hpp"
 
 /* a floating-point fused multiply-accumulate operator for the 
 use withing matrix-multiplication scenarios ------------------ */ 
-#include "apps/FPFMAcc.hpp"
+#include "Apps/FPFMAcc.hpp"
 
 /* a 1D Jacobi computation kernel ---------------------------- */ 
-#include "apps/FPJacobi.hpp"
+#include "Apps/FPJacobi.hpp"
 
 /* logarithmic number system  -------------------------------- */ 
 #ifndef _WIN32

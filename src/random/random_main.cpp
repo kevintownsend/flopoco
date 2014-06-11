@@ -7,17 +7,9 @@
 #include <cstdlib>
 
 #include "urng/LutSrRng.hpp"
-
+#include "main.hpp"
 #include "FloPoCo.hpp"
 
-
-#define BRIGHT 1
-#define RED 31
-#define OPER 32
-#define NEWOPER 32
-#define PARAM 34
-#define OP(op,paramList)             {cerr << "    "; printf("%c[%d;%dm",27,1,OPER); cerr <<  op; printf("%c[%dm",27,0); cerr<< " "; printf("%c[%d;%dm",27,1,PARAM); cerr << paramList; printf("%c[%dm\n",27,0); } 
-#define NEWOP(op,paramList)          {cerr << "    "; printf("%c[%d;%dm",27,1,NEWOPER); cerr <<  op; printf("%c[%dm",27,0); cerr<< " "; printf("%c[%d;%dm",27,1,PARAM); cerr << paramList; printf("%c[%dm\n",27,0); } 
 
 
 using namespace std;
@@ -40,12 +32,12 @@ extern void addOperator(Operator *op);
 void random_usage(char *name, string opName = ""){
 	bool full = (opName=="");
 
-	if( full || opName=="lut_sr_rng"){
-		OP("lut_sr_rng", "r t k");
-		cerr << "       uniform RNG using LUTs and Shift Registers\n";
-		cerr << "	r - width of output random number\n";
-		cerr << "	t - XOR gate input count\n";
-		cerr << "	k - Maximum Shift Register length\n";
+	if( full || opName=="LUT_SR_RNG"){
+		OP("LUT_SR_RNG", "r t k");
+		cerr << "uniform RNG using LUTs and Shift Registers\n";
+		cerr << " r - width of output random number\n";
+		cerr << " t - XOR gate input count\n";
+		cerr << " k - Maximum Shift Register length\n";
 	}
 	/*
 	//6.20 bitwise architecture Junfei Yan
@@ -78,7 +70,7 @@ bool random_parseCommandLine(
 		return true;
 	}
 	else */
-	if (opname == "lut_sr_rng")
+	if (opname == "LUT_SR_RNG")
 	{
 		int nargs = 3;
 		if (i+nargs > argc)
@@ -86,8 +78,6 @@ bool random_parseCommandLine(
 		int tr = checkStrictlyPositive(argv[i++], argv[0]);
 		int t = checkStrictlyPositive(argv[i++], argv[0]);
 		int k = checkStrictlyPositive(argv[i++], argv[0]);
-
-
 		cerr << "> lut_sr_rng: r=" << tr << "	t= " << t << "	k= " << k <<endl;
 		addOperator(new flopoco::random::LutSrRng(target, tr, t, k));
 		return true;

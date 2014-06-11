@@ -8,9 +8,9 @@
 
 #include "Operator.hpp"
 #include "TestBenches/FPNumber.hpp"
-#include "LZOCShifterSticky.hpp"
-#include "LZOC.hpp"
-#include "IntAdder.hpp"
+#include "ShiftersEtc/LZOCShifterSticky.hpp"
+#include "ShiftersEtc/LZOC.hpp"
+#include "IntAddSubCmp/IntAdder.hpp"
 
 
 namespace flopoco{
@@ -22,12 +22,13 @@ namespace flopoco{
 		/**
 		 * The  constructor
 		 * @param[in]		target		the target device
+		 * @param[in]		Signed	is the Fix number signed?
 		 * @param[in]		MSB			the MSB of the input number
 		 * @param[in]		LSB			the LSB of the input number
 		 * @param[in]		wER			the with of the exponent for the convertion result
 		 * @param[in]		wFR			the with of the fraction for the convertion result
 		 */
-		Fix2FP(Target* target, int LSBI, int MSBI, int Signed,int wER, int wFR);
+		Fix2FP(Target* target, bool Signed, int MSBI, int LSBI, int wER, int wFR);
 
 		/**
 		 *  destructor
@@ -46,7 +47,7 @@ namespace flopoco{
 		/** The LSB for the input */
 		int LSBI; 
 		/** are all numbers positive or not */
-		int Signed;
+		bool Signed;
 		/** The width of the exponent for the output R */
 		int wER; 
 		/** The width of the fraction for the output R */

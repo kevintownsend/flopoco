@@ -8,7 +8,6 @@
 
 #include "Operator.hpp"
 #include "TestBenches/FPNumber.hpp"
-#include "IntAdder.hpp"
 
 
 namespace flopoco{
@@ -26,7 +25,7 @@ namespace flopoco{
                  * @param[in]		wFR			the with of the fraction in input
                  * @param[in]		trunc_p			the output is not rounded when trunc_p is true
                  */
-      FP2Fix(Target* target, int LSBO, int MSBO, int Signed,int wER, int wFR, bool trunc_p);
+		 FP2Fix(Target* target, bool SignedO, int MSBO, int LSBO,  int wEI, int wFI, bool trunc_p);
 
       /**
 		 *  destructor
@@ -46,7 +45,7 @@ namespace flopoco{
       /** The width of the fraction for the input */
       int wFI;
       /** are all numbers positive or not */
-      int Signed;
+      bool Signed;
       /** The LSB for the output */
       int LSBO;
       /** The MSB for the output */
