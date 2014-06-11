@@ -156,7 +156,18 @@ void usage(char *name, string opName = ""){
 		OP ("IntMultAdd","wIn");
 		cerr << "  A+B*C with B and C on wIn bits and A on2*wIn bits\n";		
 	}
+	
+	if ( full || opName == "FixMultAddBitheap"){
+		OP( "FixMultAddBitheap","msbX lsbX msbY lsbY msbA lsbA msbR lsbR signedIO");
+		cerr << "  A fused multiply-add operator (computing X*Y+A), using bitheaps \n";
+		cerr << "    msbX, lsbX: weight of input X's (the first multiplicand) MSB and LSB\n";
+		cerr << "    msbY, lsbY: weight of input Y's (the second multiplicand) MSB and LSB\n";
+		cerr << "    msbA, lsbA: weight of input A's (the addend) MSB and LSB\n";
+		cerr << "    msbO and lsbO: weights of output MSB and LSB,\n";
+		cerr << "    signedIO: signed (1) or unsigned (0) inputs\n";
+	}
 #endif
+
 #if 0
 	if ( full || opName == "IntMultiplier" || opName == "IntKaratsuba"){			
 		OP ("IntKaratsuba","wIn");
@@ -781,6 +792,27 @@ bool parseCommandLine(int argc, char* argv[]){
 				FixMultAdd* op=new FixMultAdd(target, wInX /*wX*/, wInY /*wY*/, wA /*wA*/, wA /*wOut*/, wA-1 /*msbP*/, 0 /*lsbA*/, signedIO, DSPThreshold);
 				addOperator(op);
 			}
+		}
+		
+		else if (opname == "FixMultAddBitheap") {
+			int nargs = 9;
+			if (i+nargs > argc)
+				usage(argv[0],opname);
+			int msbX = atoi(argv[i++]);
+			int lsbX = atoi(argv[i++]);
+			int msbY = atoi(argv[i++]);
+			int lsbY = atoi(argv[i++]);
+			int msbA = atoi(argv[i++]);
+			int lsbA = atoi(argv[i++]);
+			int msbO = atoi(argv[i++]);
+			int lsbO = atoi(argv[i++]);
+			int signedIO = atoi(argv[i++]);
+			Operator* op = new FixMultAddBitheap(target,
+												 new Signal("Xin", Signal::in, (signedIO==1), msbX, lsbX),
+												 new Signal("Yin", Signal::in, (signedIO==1), msbY, lsbY),
+												 new Signal("Ain", Signal::in, (signedIO==1), msbA, lsbA),
+												 msbO, lsbO);
+			addOperator(op);
 		}
 #endif
 
