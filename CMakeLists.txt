@@ -248,7 +248,6 @@ src/Plotter
 # Generic fixed-point function evaluators ---------------------------
  src/Table 
  src/DualTable 
- src/DualTable2
  
  src/FixFunctions/FixFunction
  src/FixFunctions/FixFunctionByTable

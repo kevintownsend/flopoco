@@ -13,3 +13,5 @@ Get rid of the useBitHeap arg in KCMs
 
 
 - FixSinCos seems never to use its special ConstDiv3 anymore, check that
+
+- DualTable and DualTable2: WTF?
