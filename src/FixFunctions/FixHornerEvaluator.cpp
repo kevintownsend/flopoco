@@ -15,7 +15,7 @@
 #include <iostream>
 
 #include "FixHornerEvaluator.hpp"
-#include "FixMultAdd.hpp"
+#include "IntMultipliers/FixMultAdd.hpp"
 
 using namespace std;
 

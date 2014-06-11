@@ -222,8 +222,8 @@ ADD_LIBRARY(FloPoCoLib STATIC
  src/ConstMult/CRFPConstMult 
  src/ConstMult/FixRealKCM
  src/ConstMult/FPRealKCM
- src/IntConstDiv 
- src/FPConstDiv 
+ src/ConstMult/IntConstDiv 
+ src/ConstMult/FPConstDiv 
 
 # Bit heap        ------------------------------------------------
  src/BitHeap
@@ -232,8 +232,9 @@ src/Plotter
 
  
 # Multiplication related --------------------------------------------
- src/IntMultiplier
- src/FixMultAdd
+ src/IntMultipliers/IntMultiplier
+ src/IntMultipliers/FixMultAdd
+ src/IntMultipliers/FixMultAddBitheap
  src/IntMultipliers/MultiplierBlock
 
 

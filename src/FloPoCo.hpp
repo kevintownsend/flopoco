@@ -1,5 +1,6 @@
 #ifndef FLOPOCO_HPP
 #define FLOPOCO_HPP
+
 // TODO: I guess we should at some point copy here only the public part of each class, 
 // to provide a single self-contained include file.
 
@@ -74,8 +75,8 @@
 #include "ConstMult/CRFPConstMult.hpp"
 #include "ConstMult/FPRealKCM.hpp"
 
-#include "IntConstDiv.hpp"
-#include "FPConstDiv.hpp"
+#include "ConstMult/IntConstDiv.hpp"
+#include "ConstMult/FPConstDiv.hpp"
 
 /* Fixed-point function generators ---------------------*/
 

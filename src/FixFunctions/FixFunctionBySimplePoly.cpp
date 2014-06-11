@@ -8,7 +8,7 @@
   
   Initial software.
   Copyright © ENS-Lyon, INRIA, CNRS, UCBL,  
-  2008-2010.
+  2008-2014.
   All rights reserved.
 
   */
@@ -27,7 +27,7 @@
 
 
 #include "FixFunctionBySimplePoly.hpp"
-#include "../FixMultAdd.hpp"
+#include "IntMultipliers/FixMultAdd.hpp"
 
 #ifdef HAVE_SOLLYA
 

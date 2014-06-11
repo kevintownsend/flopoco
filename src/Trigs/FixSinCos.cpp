@@ -12,11 +12,10 @@
 
 // works only with sollya
 #ifdef HAVE_SOLLYA
-#include "../ConstMult/FixRealKCM.hpp"
-#include "../IntMultiplier.hpp"
-#include "../FixFunctions/FixFunctionByTable.hpp"
-#include "../IntConstDiv.hpp"
-#include "../BitHeap.hpp"
+#include "ConstMult/FixRealKCM.hpp"
+#include "IntMultipliers/IntMultiplier.hpp"
+#include "FixFunctions/FixFunctionByTable.hpp"
+#include "BitHeap.hpp"
 #include "FixSinPoly.hpp"
 
 #include <iostream>
