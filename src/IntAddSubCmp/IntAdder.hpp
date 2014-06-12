@@ -71,7 +71,7 @@ namespace flopoco {
 				k    = 1;
 			} else {
 				beta = ( wIn_ % alpha == 0 ? alpha : wIn_ % alpha );
-				k    = ( wIn_ % alpha == 0 ? wIn_ / alpha : ceil ( double ( wIn_ ) / double ( alpha ) ) );
+				k    = ( wIn_ % alpha == 0 ? wIn_ / alpha : int ( ceil ( double ( wIn_ ) / double ( alpha ) ) ) );
 			}
 		};
 	
@@ -137,7 +137,7 @@ namespace flopoco {
 					k    = 1;
 				} else {
 					beta = ( wIn_ % alpha == 0 ? alpha : wIn_ % alpha );
-					k    = ( wIn_ % alpha == 0 ? wIn_ / alpha : ceil ( double ( wIn_ ) / double ( alpha ) ) );
+					k    = ( wIn_ % alpha == 0 ? wIn_ / alpha : int ( ceil ( double ( wIn_ ) / double ( alpha ) ) ) );
 				}
 			
 		}
