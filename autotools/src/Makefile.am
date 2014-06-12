@@ -160,7 +160,7 @@ noinst_HEADERS = \
           TestCase.hpp \
           UserDefinedOperator.hpp \
           Wrapper.hpp \
-          FPSumOfSquares.hpp \
+          FPSumOf3Squares.hpp \
           FixSinCos.hpp \
           CORDIC/FixedPointSinOrCos.hpp \
           CORDIC/CordicSinCos.hpp \
@@ -298,7 +298,7 @@ libflopoco_la_SOURCES = \
                         FPPow.cpp \
                         LongAcc.cpp \
                         LongAcc2FP.cpp \
-                        FPSumOfSquares.cpp \
+                        FPSumOf3Squares.cpp \
                         Fix2FP.cpp \
                         InputIEEE.cpp \
                         OutputIEEE.cpp \

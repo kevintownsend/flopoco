@@ -1,5 +1,5 @@
-#ifndef __FPSumOfSquares_HPP
-#define __FPSumOfSquares_HPP
+#ifndef __FPSumOf3Squares_HPP
+#define __FPSumOf3Squares_HPP
 #include <vector>
 #include <sstream>
 
@@ -18,11 +18,11 @@
 
 namespace flopoco{
 
-	class FPSumOfSquares : public Operator
+	class FPSumOf3Squares : public Operator
 	{
 	public:
-		FPSumOfSquares(Target* target, int wE, int wF, int optimize);
-		~FPSumOfSquares();
+		FPSumOf3Squares(Target* target, int wE, int wF, int optimize);
+		~FPSumOf3Squares();
 
 		void emulate(TestCase * tc);
 

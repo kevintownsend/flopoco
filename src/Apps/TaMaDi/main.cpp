@@ -1673,7 +1673,7 @@ bool parseCommandLine(int argc, char* argv[], vector<Operator*> &oplist){
 			op = new Collision(target, wE, wF, optimize);
 			addOperator(oplist, op);
 		}
-		else if (opname == "FPSumOfSquares")
+		else if (opname == "FPSumOf3Squares")
 		{
 			int nargs = 3;
 			if (i+nargs > argc)
@@ -1681,8 +1681,8 @@ bool parseCommandLine(int argc, char* argv[], vector<Operator*> &oplist){
 			int wE = checkStrictlyPositive(argv[i++], argv[0]);
 			int wF = checkStrictlyPositive(argv[i++], argv[0]);
 			int optimize = checkBoolean(argv[i++], argv[0]);
-			cerr << "> FPSumOfSquares: wE=" << wE << " wF=" << wF << (optimize==0? " using FP operators" : " optimized version") << endl;
-			op = new FPSumOfSquares(target, wE, wF, optimize);
+			cerr << "> FPSumOf3Squares: wE=" << wE << " wF=" << wF << (optimize==0? " using FP operators" : " optimized version") << endl;
+			op = new FPSumOf3Squares(target, wE, wF, optimize);
 			addOperator(oplist, op);
 		}
 		else if (opname == "IntSquarer")

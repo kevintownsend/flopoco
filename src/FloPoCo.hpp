@@ -192,7 +192,7 @@
 #include "FPLargeAcc2FP.hpp"
 
 #include "FPFPComposite/FPDotProduct.hpp"
-#include "FPSumOfSquares.hpp"
+#include "FPSumOf3Squares.hpp"
 
 #include "FPPipeline.hpp"
 

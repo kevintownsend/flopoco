@@ -21,7 +21,7 @@
 #include <fstream>
 #include <sstream>
 #include <math.h>	// for NaN
-#include "FPSumOfSquares.hpp"
+#include "FPSumOf3Squares.hpp"
 
 
 using namespace std;
@@ -29,13 +29,13 @@ using namespace std;
 namespace flopoco{
 
 
-	FPSumOfSquares::FPSumOfSquares(Target* target, int wE, int wF, int optimize)
+	FPSumOf3Squares::FPSumOf3Squares(Target* target, int wE, int wF, int optimize)
 		: Operator(target), wE(wE), wF(wF)
 	{
 		setCopyrightString("F. de Dinechin, Bogdan Pasca (2011)");
-		srcFileName="FPSumOfSquares";
+		srcFileName="FPSumOf3Squares";
 		ostringstream o;
-		o << "FPSumOfSquares_" << wE << "_" << wF;
+		o << "FPSumOf3Squares_" << wE << "_" << wF;
 		if(!optimize)
 			o << "_FP";
 		setName(o.str());
@@ -352,7 +352,7 @@ namespace flopoco{
 	}	
 
 
-	FPSumOfSquares::~FPSumOfSquares()
+	FPSumOf3Squares::~FPSumOf3Squares()
 	{
 	}
 
@@ -365,7 +365,7 @@ namespace flopoco{
 		when the operator is the optimized one (TODO). All it checks is that
 		the optimized version is at least as accurate as the FP one. */
 
-	void FPSumOfSquares::emulate(TestCase * tc)
+	void FPSumOf3Squares::emulate(TestCase * tc)
 	{
 		/* Get I/O values */
 		mpz_class svX = tc->getInputValue("X");
@@ -444,7 +444,7 @@ namespace flopoco{
 
 	// This method is cloned from Operator, just resetting sign and exception bits
 	// (because we don't have any exception support in this toy example)
-	TestCase* FPSumOfSquares::buildRandomTestCase(int i){
+	TestCase* FPSumOf3Squares::buildRandomTestCase(int i){
 
 		TestCase *tc;
 		/* Generate test cases using random input numbers */
