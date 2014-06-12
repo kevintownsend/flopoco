@@ -69,7 +69,7 @@ namespace flopoco{
 
 		nextCycle();
 		
-		FPAdderSinglePath *fas = new FPAdderSinglePath(target, wE, wF, wE, wF, wE, wF);
+		FPAddSinglePath *fas = new FPAddSinglePath(target, wE, wF, wE, wF, wE, wF);
 		oplist.push_back(fas);
 		
 		inPortMap   (fas, "X", "rmult");

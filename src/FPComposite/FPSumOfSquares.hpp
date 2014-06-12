@@ -12,7 +12,7 @@
 #include "IntMultiplier.hpp"
 #include "IntSquarer.hpp"
 #include "FPMultiplier.hpp"
-#include "FPAdderSinglePath.hpp"
+#include "FPAddSinglePath.hpp"
 #include "TestBenches/FPNumber.hpp"
 #include "utils.hpp"
 

@@ -29,8 +29,8 @@
 #ifdef HAVE_SOLLYA
 
 #include "FPJacobi.hpp"
-#include "../FPAdder3Input.hpp"
-#include "../FPAdderSinglePath.hpp"
+#include "../FPAdd3Input.hpp"
+#include "../FPAddSinglePath.hpp"
 #include "../ConstMult/FPRealKCM.hpp"
 
 
@@ -68,7 +68,7 @@ namespace flopoco{
 		nextCycle(); // register level
 		
 		if ( version == 0){
-			FPAdder3Input *fpa3in = new FPAdder3Input( target, wE, wF);
+			FPAdd3Input *fpa3in = new FPAdd3Input( target, wE, wF);
 			oplist.push_back(fpa3in);
 			
 			inPortMap (fpa3in, "X", "opX");
@@ -80,7 +80,7 @@ namespace flopoco{
 			nextCycle();
 			
 		}else{
-			FPAdderSinglePath *fpa1 = new FPAdderSinglePath(target, wE, wF, wE, wF, wE, wF);
+			FPAddSinglePath *fpa1 = new FPAddSinglePath(target, wE, wF, wE, wF, wE, wF);
 			oplist.push_back(fpa1);
 			
 			inPortMap (fpa1, "X", "opX");
@@ -90,7 +90,7 @@ namespace flopoco{
 			syncCycleFromSignal("addRes_1");
 			nextCycle();
 
-			FPAdderSinglePath *fpa2 = new FPAdderSinglePath( target, wE, wF, wE, wF, wE, wF);
+			FPAddSinglePath *fpa2 = new FPAddSinglePath( target, wE, wF, wE, wF, wE, wF);
 			oplist.push_back(fpa2);
 			
 			inPortMap (fpa1, "X", "addRes_1");

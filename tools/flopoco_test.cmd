@@ -156,11 +156,11 @@ flopoco Fix2FP -30 50 1 8 23
 flopoco Fix2FP -120 120 0 11 52
 
 
-#         FPAdder wE wF
+#         FPAdd wE wF
 
-flopoco FPAdder 8 23
-flopoco FPAdder 11 52
-flopoco FPAdder 15 112
+flopoco FPAdd 8 23
+flopoco FPAdd 11 52
+flopoco FPAdd 15 112
 
 
 #         FPMultiplier wE wF_in wF_out

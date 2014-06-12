@@ -25,7 +25,7 @@
 #include "utils.hpp"
 #include "Operator.hpp"
 
-#include "FPAdder3Input.hpp"
+#include "FPAdd3Input.hpp"
 #if 0 
 #include "IntMultiAdder.hpp"
 #else 
@@ -37,12 +37,12 @@ namespace flopoco{
 #define DEBUGVHDL 0
 
 
-FPAdder3Input::FPAdder3Input(Target* target, int wE, int wF, map<string, double> inputDelays) :
+FPAdd3Input::FPAdd3Input(Target* target, int wE, int wF, map<string, double> inputDelays) :
 		Operator(target), wE(wE), wF(wF) {
-		srcFileName="FPAdder3Input";
+		srcFileName="FPAdd3Input";
 			
 		ostringstream name;
-		name<<"FPAdder3Input_"<<wE<<"_"<<wF<<"_uid"<<getNewUId(); 
+		name<<"FPAdd3Input_"<<wE<<"_"<<wF<<"_uid"<<getNewUId(); 
 		setName(name.str()); 
 
 		setCopyrightString("Bogdan Pasca (2010)");		
@@ -377,11 +377,11 @@ FPAdder3Input::FPAdder3Input(Target* target, int wE, int wF, map<string, double>
 		outDelayMap["R"] = getCriticalPath();
 		}
 
-	FPAdder3Input::~FPAdder3Input() {
+	FPAdd3Input::~FPAdd3Input() {
 	}
 
 
-	void FPAdder3Input::emulate(TestCase * tc)
+	void FPAdd3Input::emulate(TestCase * tc)
 	{
 		/* Get I/O values */
 		mpz_class svX = tc->getInputValue("X");

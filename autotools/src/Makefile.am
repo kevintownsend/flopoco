@@ -75,9 +75,9 @@ noinst_HEADERS = \
           DualTable2.hpp \
           Fix2FP.hpp \
           FP2Fix.hpp \
-          FPAdderDualPath.hpp \
-          FPAdderSinglePath.hpp \
-          FPAdder3Input.hpp \
+          FPAddDualPath.hpp \
+          FPAddSinglePath.hpp \
+          FPAdd3Input.hpp \
           FPDiv.hpp \
           FPExp.hpp \
           FPLog.hpp \
@@ -266,9 +266,9 @@ libflopoco_la_SOURCES = \
                         CORDIC/CordicSinCos.cpp \
                         FixedPointFIR.cpp \
                         FixedPointDCT.cpp \
-                        FPAdderDualPath.cpp \
-                        FPAdderSinglePath.cpp \
-                        FPAdder3Input.cpp \
+                        FPAddDualPath.cpp \
+                        FPAddSinglePath.cpp \
+                        FPAdd3Input.cpp \
                         FPAddSub.cpp \
                         FPMultiplier.cpp \
                         FPMultiplierKaratsuba.cpp \

@@ -45,10 +45,10 @@ int main(int argc, char* argv[] )
 	int wE = 9;
 	int wF = 33;
 	
-	Operator*	op = new FPAdderSinglePath(target, wE, wF, wE, wF, wE, wF);
+	Operator*	op = new FPAddSinglePath(target, wE, wF, wE, wF, wE, wF);
 	
 	ofstream file;
-	file.open("FPAdder.vhdl", ios::out);
+	file.open("FPAdd.vhdl", ios::out);
 	
 	op->outputVHDLToFile(file);
 

@@ -534,7 +534,7 @@ public:
 	/**
 	 * Gets the correct value associated to one or more inputs.
 	 * @param tc the test case, filled with the input values, to be filled with the output values.
-	 * @see FPAdder for an example implementation
+	 * @see FPAdd for an example implementation
 	 */
 	virtual void emulate(TestCase * tc);
 		
@@ -551,7 +551,7 @@ public:
 	 * Generate Random Test case identified by an integer . There is a default
 	 * implementation using a uniform random generator, but most
 	 * operators are not exercised efficiently using such a
-	 * generator. For instance, in FPAdder, the random number generator
+	 * generator. For instance, in FPAdd, the random number generator
 	 * should be biased to favor exponents which are relatively close
 	 * so that an effective addition takes place.
 	 * This function create a new TestCase (to be free after use)
@@ -576,7 +576,7 @@ public:
 	 * Append random test cases to a test case list. There is a default
 	 * implementation using a uniform random generator, but most
 	 * operators are not exercised efficiently using such a
-	 * generator. For instance, in FPAdder, the random number generator
+	 * generator. For instance, in FPAdd, the random number generator
 	 * should be biased to favor exponents which are relatively close
 	 * so that an effective addition takes place.
 	 * In most cases you do need to overload this method, 

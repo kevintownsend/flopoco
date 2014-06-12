@@ -52,7 +52,7 @@ namespace flopoco{
 
 			FPMultiplier* mult = new FPMultiplier(target, wE, wF, wE, wF, wE, wF, 1);
 			oplist.push_back(mult);
-			FPAdderSinglePath* add =  new FPAdderSinglePath(target, wE, wF, wE, wF, wE, wF);
+			FPAddSinglePath* add =  new FPAddSinglePath(target, wE, wF, wE, wF, wE, wF);
 			oplist.push_back(add);
 		
 			inPortMap (mult, "X", "X");

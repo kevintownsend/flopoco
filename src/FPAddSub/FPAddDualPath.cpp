@@ -33,7 +33,7 @@
 #include <gmpxx.h>
 #include <utils.hpp>
 
-#include "FPAdderDualPath.hpp"
+#include "FPAddDualPath.hpp"
 
 using namespace std;
 
@@ -42,13 +42,13 @@ namespace flopoco{
 #define DEBUGVHDL 0
 
 
-	FPAdderDualPath::FPAdderDualPath(Target* target, int wEX, int wFX, int wEY, int wFY, int wER, int wFR) :
+	FPAddDualPath::FPAddDualPath(Target* target, int wEX, int wFX, int wEY, int wFY, int wER, int wFR) :
 		Operator(target), wEX(wEX), wFX(wFX), wEY(wEY), wFY(wFY), wER(wER), wFR(wFR) {
 
 		ostringstream name, synch, synch2;
 
-		srcFileName="FPAdderDualPath";
-		name<<"FPAdderDualPath_"<<wEX<<"_"<<wFX<<"_"<<wEY<<"_"<<wFY<<"_"<<wER<<"_"<<wFR; 
+		srcFileName="FPAddDualPath";
+		name<<"FPAddDualPath_"<<wEX<<"_"<<wFX<<"_"<<wEY<<"_"<<wFY<<"_"<<wER<<"_"<<wFR; 
 		if(target->isPipelined()) 
 			name << target->frequencyMHz() ;
 		else
@@ -447,7 +447,7 @@ namespace flopoco{
 
 	}
 
-	FPAdderDualPath::~FPAdderDualPath() {
+	FPAddDualPath::~FPAddDualPath() {
 	}
 
 
@@ -459,7 +459,7 @@ namespace flopoco{
 
 
 
-	void FPAdderDualPath::emulate(TestCase * tc)
+	void FPAddDualPath::emulate(TestCase * tc)
 	{
 		/* Get I/O values */
 		mpz_class svX = tc->getInputValue("X");
@@ -490,7 +490,7 @@ namespace flopoco{
 
 
 
-	void FPAdderDualPath::buildStandardTestCases(TestCaseList* tcl){
+	void FPAddDualPath::buildStandardTestCases(TestCaseList* tcl){
 		TestCase *tc;
 
 		// Regression tests 
@@ -540,7 +540,7 @@ namespace flopoco{
 
 
 
-	TestCase* FPAdderDualPath::buildRandomTestCase(int i){
+	TestCase* FPAddDualPath::buildRandomTestCase(int i){
 
 		TestCase *tc;
 		mpz_class x,y;

@@ -6,7 +6,7 @@
 
 #include "../Operator.hpp"
 #include "../FPMultiplier.hpp"
-#include "../FPAdderSinglePath.hpp"
+#include "../FPAddSinglePath.hpp"
 
 namespace flopoco{
 

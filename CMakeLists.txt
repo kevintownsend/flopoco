@@ -265,9 +265,9 @@ src/Conversions/Fix2FP
 
 
 # Floating-point adders and subtracters -----------------------------
- src/FPAddSub/FPAdderDualPath
- src/FPAddSub/FPAdderSinglePath
- src/FPAddSub/FPAdder3Input
+ src/FPAddSub/FPAddDualPath
+ src/FPAddSub/FPAddSinglePath
+ src/FPAddSub/FPAdd3Input
  src/FPAddSub/FPAddSub
 
 # Floating-point multipliers and squarers

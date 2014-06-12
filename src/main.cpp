@@ -173,19 +173,19 @@ void usage(char *name, string opName = ""){
 	if ( full )
 		cerr << center("FLOATING-POINT ADDERS", '_') << "\n";
 
-	if ( full || opName == "FPAdder"){					
-		OP( "FPAdder","wE wF");
+	if ( full || opName == "FPAdd"){					
+		OP( "FPAdd","wE wF");
 		cerr << "Floating-point adder (default architecture is now single-path) \n";
 	}	
-	if ( full || opName == "FPAdder" || opName == "FPAdderDualPath"){					
-		OP( "FPAdderDualPath","wE wF");
+	if ( full || opName == "FPAdd" || opName == "FPAddDualPath"){					
+		OP( "FPAddDualPath","wE wF");
 		cerr << "Floating-point adder with dual-path architecture (shorter latency, larger area)\n";
 	}
-	if ( full || opName == "FPAdder" || opName == "FPAdder3Input"){					
-		OP( "FPAdder3Input","wE wF");
+	if ( full || opName == "FPAdd" || opName == "FPAdd3Input"){					
+		OP( "FPAdd3Input","wE wF");
 		cerr << "A 3-operand floating-point adder\n";
 	}
-	if ( full || opName == "FPAdder" || opName == "FPAddSub"){					
+	if ( full || opName == "FPAdd" || opName == "FPAddSub"){					
 		OP( "FPAddSub","wE wF");
 		cerr << "A floating-point adder/subtractor, useful e.g for butterfly circuits\n";
 	}
@@ -879,8 +879,8 @@ bool parseCommandLine(int argc, char* argv[]){
 
 		//--------------FP ADDERS --------------------------------
 
-		// For the FPAdder the default is the single-path design
-		else if(opname=="FPAdder"){ 
+		// For the FPAdd the default is the single-path design
+		else if(opname=="FPAdd"){ 
 			int nargs = 2;
 			if (i+nargs > argc)
 				usage(argv[0],opname);
@@ -888,12 +888,12 @@ bool parseCommandLine(int argc, char* argv[]){
 				int wE = checkStrictlyPositive(argv[i++], argv[0]);
 				int wF = checkStrictlyPositive(argv[i++], argv[0]);
 				
-				op = new FPAdderSinglePath(target, wE, wF, wE, wF, wE, wF);
+				op = new FPAddSinglePath(target, wE, wF, wE, wF, wE, wF);
 				addOperator(op);
 			}
 		}		
 
-		else if(opname=="FPAdderDualPath"){
+		else if(opname=="FPAddDualPath"){
 			int nargs = 2;
 			if (i+nargs > argc)
 				usage(argv[0],opname);
@@ -901,12 +901,12 @@ bool parseCommandLine(int argc, char* argv[]){
 				int wE = checkStrictlyPositive(argv[i++], argv[0]);
 				int wF = checkStrictlyPositive(argv[i++], argv[0]);
 				
-				op = new FPAdderDualPath(target, wE, wF, wE, wF, wE, wF);
+				op = new FPAddDualPath(target, wE, wF, wE, wF, wE, wF);
 				addOperator(op);
 			}
 		}
 
-		else if(opname=="FPAdder3Input"){
+		else if(opname=="FPAdd3Input"){
 			int nargs = 2;
 			if (i+nargs > argc)
 				usage(argv[0],opname);
@@ -914,7 +914,7 @@ bool parseCommandLine(int argc, char* argv[]){
 				int wE = checkStrictlyPositive(argv[i++], argv[0]);
 				int wF = checkStrictlyPositive(argv[i++], argv[0]);
 				
-				op = new FPAdder3Input(target, wE, wF);
+				op = new FPAdd3Input(target, wE, wF);
 				addOperator(op);
 			}
 		}	

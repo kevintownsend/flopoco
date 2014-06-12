@@ -75,9 +75,9 @@
 
 
 /* Floating-point adder variants ----------------------------- */
-#include "FPAddSub/FPAdderDualPath.hpp"
-#include "FPAddSub/FPAdderSinglePath.hpp"
-#include "FPAddSub/FPAdder3Input.hpp"
+#include "FPAddSub/FPAddDualPath.hpp"
+#include "FPAddSub/FPAddSinglePath.hpp"
+#include "FPAddSub/FPAdd3Input.hpp"
 #include "FPAddSub/FPAddSub.hpp"
 
 /* Floating-point multiplier variants-------------------------- */ 

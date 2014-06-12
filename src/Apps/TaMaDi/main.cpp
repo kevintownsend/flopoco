@@ -938,8 +938,8 @@ bool parseCommandLine(int argc, char* argv[], vector<Operator*> &oplist){
 				addOperator(oplist, op);
 			}
 		}		
-		// For the FPAdder the default is the single-path design
-		else if(opname=="FPAdder"){ 
+		// For the FPAdd the default is the single-path design
+		else if(opname=="FPAdd"){ 
 			int nargs = 2;
 			if (i+nargs > argc)
 				usage(argv[0],opname);
@@ -947,12 +947,12 @@ bool parseCommandLine(int argc, char* argv[], vector<Operator*> &oplist){
 				int wE = checkStrictlyPositive(argv[i++], argv[0]);
 				int wF = checkStrictlyPositive(argv[i++], argv[0]);
 				
-				cerr << "> FPAdder , wE="<<wE<<", wF="<<wF<<" \n";
-				op = new FPAdderSinglePath(target, wE, wF, wE, wF, wE, wF);
+				cerr << "> FPAdd , wE="<<wE<<", wF="<<wF<<" \n";
+				op = new FPAddSinglePath(target, wE, wF, wE, wF, wE, wF);
 				addOperator(oplist, op);
 			}
 		}		
-		else if(opname=="FPAdderDualPath"){
+		else if(opname=="FPAddDualPath"){
 			int nargs = 2;
 			if (i+nargs > argc)
 				usage(argv[0],opname);
@@ -960,12 +960,12 @@ bool parseCommandLine(int argc, char* argv[], vector<Operator*> &oplist){
 				int wE = checkStrictlyPositive(argv[i++], argv[0]);
 				int wF = checkStrictlyPositive(argv[i++], argv[0]);
 				
-				cerr << "> FPAdderDualPath , wE="<<wE<<", wF="<<wF<<" \n";
-				op = new FPAdderDualPath(target, wE, wF, wE, wF, wE, wF);
+				cerr << "> FPAddDualPath , wE="<<wE<<", wF="<<wF<<" \n";
+				op = new FPAddDualPath(target, wE, wF, wE, wF, wE, wF);
 				addOperator(oplist, op);
 			}
 		}
-		else if(opname=="FPAdder3Input"){
+		else if(opname=="FPAdd3Input"){
 			int nargs = 2;
 			if (i+nargs > argc)
 				usage(argv[0],opname);
@@ -973,8 +973,8 @@ bool parseCommandLine(int argc, char* argv[], vector<Operator*> &oplist){
 				int wE = checkStrictlyPositive(argv[i++], argv[0]);
 				int wF = checkStrictlyPositive(argv[i++], argv[0]);
 				
-				cerr << "> FPAdder3Input , wE="<<wE<<", wF="<<wF<<" \n";
-				op = new FPAdder3Input(target, wE, wF);
+				cerr << "> FPAdd3Input , wE="<<wE<<", wF="<<wF<<" \n";
+				op = new FPAdd3Input(target, wE, wF);
 				addOperator(oplist, op);
 			}
 	}	

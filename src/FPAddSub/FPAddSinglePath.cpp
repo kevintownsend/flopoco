@@ -24,7 +24,7 @@
 #include <utils.hpp>
 #include <Operator.hpp>
 
-#include "FPAdderSinglePath.hpp"
+#include "FPAddSinglePath.hpp"
 
 using namespace std;
 
@@ -36,17 +36,17 @@ namespace flopoco{
 #define DEBUGVHDL 0
 
 
-FPAdderSinglePath::FPAdderSinglePath(Target* target, int wEX, int wFX, int wEY, int wFY, int wER, int wFR, map<string, double> inputDelays) :
+FPAddSinglePath::FPAddSinglePath(Target* target, int wEX, int wFX, int wEY, int wFY, int wER, int wFR, map<string, double> inputDelays) :
 		Operator(target), wEX(wEX), wFX(wFX), wEY(wEY), wFY(wFY), wER(wER), wFR(wFR) {
 
-		srcFileName="FPAdderSinglePath";
+		srcFileName="FPAddSinglePath";
 			
 		//parameter set up. For now all wEX=wEY=wER and the same holds for fractions
 		wF = wFX;
 		wE = wEX;
 			
 		ostringstream name;
-		name<<"FPAdder_"<<wE<<"_"<<wF<<"_uid"<<getNewUId(); 
+		name<<"FPAdd_"<<wE<<"_"<<wF<<"_uid"<<getNewUId(); 
 		setName(name.str()); 
 
 		setCopyrightString("Bogdan Pasca, Florent de Dinechin (2010)");		
@@ -326,11 +326,11 @@ FPAdderSinglePath::FPAdderSinglePath(Target* target, int wEX, int wFX, int wEY, 
 
 	}
 
-	FPAdderSinglePath::~FPAdderSinglePath() {
+	FPAddSinglePath::~FPAddSinglePath() {
 	}
 
 
-	void FPAdderSinglePath::emulate(TestCase * tc)
+	void FPAddSinglePath::emulate(TestCase * tc)
 	{
 		/* Get I/O values */
 		mpz_class svX = tc->getInputValue("X");
@@ -360,7 +360,7 @@ FPAdderSinglePath::FPAdderSinglePath(Target* target, int wEX, int wFX, int wEY, 
 
 
 
-	void FPAdderSinglePath::buildStandardTestCases(TestCaseList* tcl){
+	void FPAddSinglePath::buildStandardTestCases(TestCaseList* tcl){
 		TestCase *tc;
 
 		// Regression tests 
@@ -410,7 +410,7 @@ FPAdderSinglePath::FPAdderSinglePath(Target* target, int wEX, int wFX, int wEY, 
 
 
 
-	TestCase* FPAdderSinglePath::buildRandomTestCase(int i){
+	TestCase* FPAddSinglePath::buildRandomTestCase(int i){
 
 		TestCase *tc;
 		mpz_class x,y;

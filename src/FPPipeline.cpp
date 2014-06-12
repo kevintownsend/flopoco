@@ -406,7 +406,7 @@ namespace flopoco{
 		case 1:{ //adder 
 			REPORT(DETAILED, " instance adder");
 						
-			op1 = new FPAdderSinglePath(target_, wE, wF, wE, wF, wE, wF);
+			op1 = new FPAddSinglePath(target_, wE, wF, wE, wF, wE, wF);
 			oplist.push_back(op1);
 
 			inPortMap( op1, "X", n->nodeArray->n->name);
@@ -422,7 +422,7 @@ namespace flopoco{
 		case 2:{ //subtracter 
 			REPORT(DETAILED, " instance subtracter");
 						
-			op1 = new FPAdderSinglePath(target_, wE, wF, wE, wF, wE, wF);
+			op1 = new FPAddSinglePath(target_, wE, wF, wE, wF, wE, wF);
 			oplist.push_back(op1);
 
 			ostringstream temp;

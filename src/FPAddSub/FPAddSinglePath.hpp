@@ -1,5 +1,5 @@
-#ifndef FPADDER3INPUT_HPP
-#define FPADDER3INPUT_HPP
+#ifndef FPADDERSP_HPP
+#define FPADDERSP_HPP
 #include <vector>
 #include <sstream>
 #include <gmp.h>
@@ -16,12 +16,12 @@
 
 namespace flopoco{
 
-	/** The FPAdder3Input class */
-	class FPAdder3Input : public Operator
+	/** The FPAddSinglePath class */
+	class FPAddSinglePath : public Operator
 	{
 	public:
 		/**
-		 * The FPAdder3Input constructor
+		 * The FPAddSinglePath constructor
 		 * @param[in]		target		the target device
 		 * @param[in]		wEX			the the with of the exponent for the f-p number X
 		 * @param[in]		wFX			the the with of the fraction for the f-p number X
@@ -30,22 +30,34 @@ namespace flopoco{
 		 * @param[in]		wER			the the with of the exponent for the addition result
 		 * @param[in]		wFR			the the with of the fraction for the addition result
 		 */
-		FPAdder3Input(Target* target, int wE, int wF, map<string, double> inputDelays = emptyDelayMap);
+		FPAddSinglePath(Target* target, int wEX, int wFX, int wEY, int wFY, int wER, int wFR, map<string, double> inputDelays = emptyDelayMap);
 
 		/**
-		 * FPAdder3Input destructor
+		 * FPAddSinglePath destructor
 		 */
-		~FPAdder3Input();
+		~FPAddSinglePath();
 
 
 		void emulate(TestCase * tc);
-// 		void buildStandardTestCases(TestCaseList* tcl);
-// 		TestCase* buildRandomTestCase(int i);
+		void buildStandardTestCases(TestCaseList* tcl);
+		TestCase* buildRandomTestCase(int i);
 
 
 
 	private:
-
+		/** The width of the exponent for the input X */
+		int wEX; 
+		/** The width of the fraction for the input X */
+		int wFX; 
+		/** The width of the exponent for the input Y */
+		int wEY; 
+		/** The width of the fraction for the input Y */
+		int wFY; 
+		/** The width of the exponent for the output R */
+		int wER; 
+		/** The width of the fraction for the output R */
+		int wFR;
+		/** Signal if the output of the operator is to be or not normalized*/
 
 		/** The combined leading zero counter and shifter for the close path */
 		LZOCShifterSticky* lzocs; 
@@ -61,10 +73,10 @@ namespace flopoco{
 		Shifter* rightShifter;	
 
 
+		int wF;
+		int wE;
 		int sizeRightShift;
 	
-		int wE;
-		int wF;
 	};
 
 }

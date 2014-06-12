@@ -44,7 +44,7 @@ ulp of R2.
 #include "../IntMultiplier.hpp"
 #include "../IntSquarer.hpp"
 #include "../FPMultiplier.hpp"
-#include "../FPAdderSinglePath.hpp"
+#include "../FPAddSinglePath.hpp"
 
 namespace flopoco{
 
