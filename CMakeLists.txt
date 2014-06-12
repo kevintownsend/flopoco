@@ -282,8 +282,8 @@ src/FPDivSqrt/FPSqrt
 
 
 # Composite operators
-src/FPComposite/FPLargeAccumulator 
-src/FPComposite/LargeAccumulatorToFP 
+src/FPComposite/FPLargeAcc 
+src/FPComposite/LargeAccToFP 
 src/FPComposite/FPDotProduct 
 src/FPComposite/FP2DNorm
 

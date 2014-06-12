@@ -9,7 +9,7 @@
 
 #include "Operator.hpp"
 #include "IntMult/IntMultiplier.hpp"
-#include "FPLargeAccumulator.hpp"
+#include "FPLargeAcc.hpp"
 
 namespace flopoco{
 

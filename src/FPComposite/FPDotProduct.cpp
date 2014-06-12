@@ -140,7 +140,7 @@ namespace flopoco{
 		syncCycleFromSignal("mFrac", getSignalDelay("mFrac"));			
 
 		/* now we instantiate the accumulator */
-		FPLargeAccumulator* la = new FPLargeAccumulator(target, wE, wFX, MaxMSBX, MSBA, LSBA, inDelayMap("sigX_dprod",target->localWireDelay() + getCriticalPath()),true, wFY);
+		FPLargeAcc* la = new FPLargeAcc(target, wE, wFX, MaxMSBX, MSBA, LSBA, inDelayMap("sigX_dprod",target->localWireDelay() + getCriticalPath()),true, wFY);
 		oplist.push_back(la);
 		
 		inPortMap( la, "sigX_dprod", "signP");
@@ -258,7 +258,7 @@ namespace flopoco{
 		sum=mpfr_get_d(fp_acc, GMP_RNDN);
 		cout << "   FPAcc="<< sum;
 		sum=mpfr_get_d(long_acc, GMP_RNDN);
-		cout << "   FPLargeAccumulator="<< sum;
+		cout << "   FPLargeAcc="<< sum;
 
 		cout <<endl << n << " & ";
 		// compute the error for the FP adder
@@ -331,7 +331,7 @@ namespace flopoco{
 		sum=mpfr_get_d(fp_acc, GMP_RNDN);
 		cout << "   FPAcc="<< sum;
 		sum=mpfr_get_d(long_acc, GMP_RNDN);
-		cout << "   FPLargeAccumulator="<< sum;
+		cout << "   FPLargeAcc="<< sum;
 		cout <<endl;
 	}
 }

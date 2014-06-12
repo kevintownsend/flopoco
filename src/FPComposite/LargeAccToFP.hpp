@@ -12,7 +12,7 @@ namespace flopoco{
 
 	/** Operator which converts the output of the long accumulator to the desired FP format
 	 */
-	class LargeAccumulatorToFP : public Operator
+	class LargeAccToFP : public Operator
 	{
 	public:
 
@@ -24,10 +24,10 @@ namespace flopoco{
 		 * @param wEOut the width of the output exponent 
 		 * @param eFOut the width of the output fractional part
 		 */ 
-		LargeAccumulatorToFP(Target* target, int MSBA, int LSBA, int wEOut, int wFOut);
+		LargeAccToFP(Target* target, int MSBA, int LSBA, int wEOut, int wFOut);
 
 		/** Destructor */
-		~LargeAccumulatorToFP();
+		~LargeAccToFP();
 		
 		void emulate(TestCase * tc);
 		

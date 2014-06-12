@@ -304,17 +304,17 @@ void usage(char *name, string opName = ""){
 	if ( full )
 		cerr << center("FLOATING-POINT COMPOSITE OPERATORS", '_') << "\n";
 
-	if ( full || opName == "FPLargeAccumulator"){					
-		OP( "FPLargeAccumulator","wE_in wF_in MaxMSB_in  MSB_acc LSB_acc");
+	if ( full || opName == "FPLargeAcc"){					
+		OP( "FPLargeAcc","wE_in wF_in MaxMSB_in  MSB_acc LSB_acc");
 		cerr << "Accumulator of floating-point numbers into a large fixed-point accumulator\n";
 	}		
-	if ( full || opName == "LargAccumulatorToFP" || opName == "FPLargeAccumulator"){
+	if ( full || opName == "LargAccumulatorToFP" || opName == "FPLargeAcc"){
 		OP( "LargAccumulatorToFP","MSB_acc LSB_acc wE_out wF_out");
-		cerr << "Post-normalisation unit for FPLargeAccumulator\n";
+		cerr << "Post-normalisation unit for FPLargeAcc\n";
 	}
 	if ( full || opName == "DotProduct"){					
 		OP( "FPDotProduct","wE wFX wFY MaxMSB_in MSB_acc LSB_acc DSPThreshold");
-		cerr << "Floating-point dot product unit based on FPLargeAccumulator\n";
+		cerr << "Floating-point dot product unit based on FPLargeAcc\n";
 	}
 
 	if ( full )
@@ -1213,7 +1213,7 @@ bool parseCommandLine(int argc, char* argv[]){
 			}        
 		} 	
 
-		else if(opname=="FPLargeAccumulator"){
+		else if(opname=="FPLargeAcc"){
 			int nargs = 5;
 			if (i+nargs > argc)
 				usage(argv[0],opname);
@@ -1223,13 +1223,13 @@ bool parseCommandLine(int argc, char* argv[]){
 				int MaxMSBX = atoi(argv[i++]); // may be negative
 				int MSBA = atoi(argv[i++]); // may be negative
 				int LSBA = atoi(argv[i++]); // may be negative
-				op = new FPLargeAccumulator(target, wEX, wFX, MaxMSBX, MSBA, LSBA);
+				op = new FPLargeAcc(target, wEX, wFX, MaxMSBX, MSBA, LSBA);
 				addOperator(op);
 			}
 		}
 
 
-		else if(opname=="LargeAccumulatorToFP"){
+		else if(opname=="LargeAccToFP"){
 			int nargs = 4;
 			if (i+nargs > argc)
 				usage(argv[0],opname);
@@ -1238,14 +1238,14 @@ bool parseCommandLine(int argc, char* argv[]){
 				int MSBA = atoi(argv[i++]); // may be negative
 				int wE_out = checkStrictlyPositive(argv[i++], argv[0]);
 				int wF_out = checkStrictlyPositive(argv[i++], argv[0]);
-				op = new LargeAccumulatorToFP(target, MSBA, LSBA, wE_out, wF_out);
+				op = new LargeAccToFP(target, MSBA, LSBA, wE_out, wF_out);
 				addOperator(op);
 			}
 		}
 
 		// hidden and undocumented
 		else if(opname=="FPDotProdPrecTest"){
-			int nargs = 7; // same as FPLargeAccumulator, plus an iteration count
+			int nargs = 7; // same as FPLargeAcc, plus an iteration count
 			if (i+nargs > argc)
 				usage(argv[0],opname);
 			else {

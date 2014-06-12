@@ -1374,7 +1374,7 @@ bool parseCommandLine(int argc, char* argv[], vector<Operator*> &oplist){
 		}
 #endif // HAVE_SOLLYA
 
-		else if(opname=="FPLargeAccumulator"){
+		else if(opname=="FPLargeAcc"){
 			int nargs = 5;
 			if (i+nargs > argc)
 				usage(argv[0],opname);
@@ -1385,14 +1385,14 @@ bool parseCommandLine(int argc, char* argv[], vector<Operator*> &oplist){
 				int LSBA = atoi(argv[i++]); // may be negative
 				int MSBA = atoi(argv[i++]); // may be negative
 				cerr << "> Long accumulator , wEX="<<wEX<<", wFX="<<wFX<<", MaxMSBX="<<MaxMSBX<<", LSBA="<<LSBA<<", MSBA="<<MSBA<<"\n";
-				op = new FPLargeAccumulator(target, wEX, wFX, MaxMSBX, LSBA, MSBA);
+				op = new FPLargeAcc(target, wEX, wFX, MaxMSBX, LSBA, MSBA);
 				addOperator(oplist, op);
 			}
 		}
 
 		// hidden and undocumented
-		else if(opname=="FPLargeAccumulatorPrecTest"){
-			int nargs = 6; // same as FPLargeAccumulator, plus an iteration count
+		else if(opname=="FPLargeAccPrecTest"){
+			int nargs = 6; // same as FPLargeAcc, plus an iteration count
 			if (i+nargs > argc)
 				usage(argv[0],opname);
 			else {
@@ -1403,13 +1403,13 @@ bool parseCommandLine(int argc, char* argv[], vector<Operator*> &oplist){
 				int MSBA = atoi(argv[i++]);
 				int n = atoi(argv[i++]);
 				cerr << "> Test of long accumulator accuracy, wEX="<<wEX<<", wFX="<<wFX<<", MaxMSBX="<<MaxMSBX<<", LSBA="<<LSBA<<", MSBA="<<MSBA<<", "<< n << " tests\n";
-				FPLargeAccumulator * op = new FPLargeAccumulator(target, wEX, wFX, MaxMSBX, LSBA, MSBA);
+				FPLargeAcc * op = new FPLargeAcc(target, wEX, wFX, MaxMSBX, LSBA, MSBA);
 				// op->test_precision(n);
 				op->test_precision2();
 			}    
 		}
 
-		else if(opname=="FPLargeAccumulator2FP"){
+		else if(opname=="FPLargeAcc2FP"){
 			int nargs = 4;
 			if (i+nargs > argc)
 				usage(argv[0],opname);
@@ -1419,14 +1419,14 @@ bool parseCommandLine(int argc, char* argv[], vector<Operator*> &oplist){
 				int wE_out = checkStrictlyPositive(argv[i++], argv[0]);
 				int wF_out = checkStrictlyPositive(argv[i++], argv[0]);
 				cerr << "> Post-Normalization unit for Long accumulator, LSBA="<<LSBA<<", MSBA="<<MSBA<<" wE_out="<<wE_out<<", wF_out="<<wF_out<<"\n";
-				op = new FPLargeAccumulator2FP(target, LSBA, MSBA, wE_out, wF_out);
+				op = new FPLargeAcc2FP(target, LSBA, MSBA, wE_out, wF_out);
 				addOperator(oplist, op);
 			}
 		}
 #ifndef _WIN32
 		// hidden and undocumented
 		else if(opname=="DotProdPrecTest"){
-			int nargs = 7; // same as FPLargeAccumulator, plus an iteration count
+			int nargs = 7; // same as FPLargeAcc, plus an iteration count
 			if (i+nargs > argc)
 				usage(argv[0],opname);
 			else {

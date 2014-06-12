@@ -12,7 +12,7 @@ namespace flopoco{
 
 	/** Implements a long, fixed point accumulator for accumulating floating point numbers
 	 */
-	class FPLargeAccumulator : public Operator
+	class FPLargeAcc : public Operator
 	{
 	public:
 		/** Constructor
@@ -23,10 +23,10 @@ namespace flopoco{
 		 * @param LSBA the weight of the least significand bit of the accumulator
 		 * @param MSBA the weight of the most significand bit of the accumulator
 		 */ 
-		FPLargeAccumulator(Target* target, int wEX, int wFX, int MaxMSBX, int MSBA, int LSBA, map<string, double> inputDelays = emptyDelayMap, bool forDotProd = false, int wFY = -1);
+		FPLargeAcc(Target* target, int wEX, int wFX, int MaxMSBX, int MSBA, int LSBA, map<string, double> inputDelays = emptyDelayMap, bool forDotProd = false, int wFY = -1);
 	
 		/** Destructor */
-		~FPLargeAccumulator();
+		~FPLargeAcc();
 	
 		void test_precision(int n); /**< Undocumented */
 		void test_precision2(); /**< Undocumented */

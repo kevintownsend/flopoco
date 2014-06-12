@@ -102,8 +102,8 @@
 #include "ConstMult/FPConstDiv.hpp"
 
 /* FP composite operators */ 
-#include "FPComposite/FPLargeAccumulator.hpp"
-#include "FPComposite/LargeAccumulatorToFP.hpp"
+#include "FPComposite/FPLargeAcc.hpp"
+#include "FPComposite/LargeAccToFP.hpp"
 #include "FPComposite/FPDotProduct.hpp"
 
 
@@ -188,8 +188,8 @@
 // #include "FP2DNorm.hpp" // The world is not ready yet 
 #include "FPSqrtPoly.hpp"
 
-#include "FPComposite/FPLargeAccumulator.hpp"
-#include "FPLargeAccumulator2FP.hpp"
+#include "FPComposite/FPLargeAcc.hpp"
+#include "FPLargeAcc2FP.hpp"
 
 #include "FPFPComposite/FPDotProduct.hpp"
 #include "FPSumOfSquares.hpp"

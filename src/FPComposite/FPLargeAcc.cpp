@@ -27,13 +27,13 @@
 
 #include "utils.hpp"
 #include "Operator.hpp"
-#include "FPLargeAccumulator.hpp"
+#include "FPLargeAcc.hpp"
 
 using namespace std;
 
 namespace flopoco{
 
-	FPLargeAccumulator::FPLargeAccumulator(Target* target, int wEX, int wFX, int MaxMSBX, int MSBA, int LSBA, map<string, double> inputDelays,  bool forDotProd, int wFY): 
+	FPLargeAcc::FPLargeAcc(Target* target, int wEX, int wFX, int MaxMSBX, int MSBA, int LSBA, map<string, double> inputDelays,  bool forDotProd, int wFY): 
 		Operator(target), 
 		wEX_(wEX), wFX_(wFX), MaxMSBX_(MaxMSBX), LSBA_(LSBA), MSBA_(MSBA), AccValue_(0), xOvf(0)
 	{
@@ -49,17 +49,17 @@ namespace flopoco{
 
 		//check input constraints, i.e, MaxMSBX <= MSBA, LSBA<MaxMSBx
 		if ((MaxMSBX_ > MSBA_)){
-			cerr << " FPLargeAccumulator: Input constraint MaxMSBX <= MSBA not met." << endl;
+			cerr << " FPLargeAcc: Input constraint MaxMSBX <= MSBA not met." << endl;
 			exit (EXIT_FAILURE);
 		}
 		if ((LSBA_ >= MaxMSBX_)){
-			cerr << " FPLargeAccumulator: Input constraint LSBA<MaxMSBx not met:"<<
+			cerr << " FPLargeAcc: Input constraint LSBA<MaxMSBx not met:"<<
 				" This accumulator would never accumulate a bit." << endl;
 			exit (EXIT_FAILURE);
 		}
 
 		ostringstream name; 
-		name <<"FPLargeAccumulator_"<<wEX_<<"_"<<wFX_<<"_"
+		name <<"FPLargeAcc_"<<wEX_<<"_"<<wFX_<<"_"
 				 <<(MaxMSBX_>=0?"":"M")<<abs(MaxMSBX_)<<"_"
 				 <<(MSBA_>=0?"":"M")<<abs(MSBA_)<<"_" 
 				 <<(LSBA_>=0?"":"M")<<abs(LSBA_);
@@ -108,7 +108,7 @@ namespace flopoco{
 		//2. after bias is added, representation should still fit on no more than wEX bits
 		int biasedMaxMSBX_ = MaxMSBX_ + E0X_;
 		if(biasedMaxMSBX_ < 0 || intlog2(biasedMaxMSBX_)>wEX_) {
-			cerr<<"ERROR in FPLargeAccumulator: MaxMSBX_="<<MaxMSBX_<<" is not a valid exponent of X (range "
+			cerr<<"ERROR in FPLargeAcc: MaxMSBX_="<<MaxMSBX_<<" is not a valid exponent of X (range "
 				 <<(-E0X_)<< " to " << ((1<<wEX_)-1)-E0X_ <<endl;
 			exit (EXIT_FAILURE);
 		}
@@ -116,13 +116,13 @@ namespace flopoco{
 		/* set-up carry-save parameters */		
 		int chunkSize_;
 		target->suggestSlackSubaddSize(chunkSize_ , sizeAcc_, target->localWireDelay() + target->lutDelay());
-		REPORT( DEBUG, "Addition chunk size in FPLargeAccumulator is:"<<chunkSize_);
+		REPORT( DEBUG, "Addition chunk size in FPLargeAcc is:"<<chunkSize_);
 		 
 		int nbOfChunks    = ceil(double(sizeAcc_)/double(chunkSize_));
 		int lastChunkSize = ( sizeAcc_ % chunkSize_ == 0 ? chunkSize_  : sizeAcc_ % chunkSize_);
 
 
-		/* if FPLargeAccumulator is used in FPDotProduct, then its input fraction is twice as large */
+		/* if FPLargeAcc is used in FPDotProduct, then its input fraction is twice as large */
 		if (!forDotProd){
 			vhdl << tab << declare("fracX",wFX_+1) << " <=  \"1\" & X" << range(wFX_-1,0) << ";" << endl;
 			vhdl << tab << declare("expX" ,wEX_  ) << " <= X" << range(wEX_+wFX_-1,wFX_) << ";" << endl;
@@ -155,7 +155,7 @@ namespace flopoco{
 		inPortMap   (shifter_, "X", "fracX");
 		inPortMapCst(shifter_, "S", "shiftVal"+range(shifter_->getShiftInWidth() - 1,0));
 		outPortMap  (shifter_, "R", "shifted_frac");
-		vhdl << instance(shifter_, "FPLargeAccumulatorInputShifter");
+		vhdl << instance(shifter_, "FPLargeAccInputShifter");
 	
 		syncCycleFromSignal("shifted_frac");
 
@@ -238,10 +238,10 @@ namespace flopoco{
 	}
 
 
-	FPLargeAccumulator::~FPLargeAccumulator() {
+	FPLargeAcc::~FPLargeAcc() {
 	}
 
-	void FPLargeAccumulator::test_precision(int n) {
+	void FPLargeAcc::test_precision(int n) {
 		mpfr_t ref_acc, long_acc, fp_acc, r, d, one, two, msb;
 		double sum, error;
 
@@ -289,7 +289,7 @@ namespace flopoco{
 		sum=mpfr_get_d(fp_acc, GMP_RNDN);
 		cout << "   FPAcc="<< sum;
 		sum=mpfr_get_d(long_acc, GMP_RNDN);
-		cout << "   FPLargeAccumulator="<< sum;
+		cout << "   FPLargeAcc="<< sum;
 
 		cout <<endl << n << " & ";
 		// compute the error for the FP adder
@@ -348,13 +348,13 @@ namespace flopoco{
 		sum=mpfr_get_d(fp_acc, GMP_RNDN);
 		cout << "   FPAcc="<< sum;
 		sum=mpfr_get_d(long_acc, GMP_RNDN);
-		cout << "   FPLargeAccumulator="<< sum;
+		cout << "   FPLargeAcc="<< sum;
 		cout <<endl;
 
 	}
 
 	// read the values from a file and accumulate them
-	void FPLargeAccumulator::test_precision2() {
+	void FPLargeAcc::test_precision2() {
 
 		mpfr_t ref_acc, long_acc, fp_acc, r, d, one, two, msb;
 		double dr,  sum, error;
@@ -420,7 +420,7 @@ namespace flopoco{
 							sum=mpfr_get_d(fp_acc, GMP_RNDN);
 							cout << "   FPAcc="<< sum;
 							sum=mpfr_get_d(long_acc, GMP_RNDN);
-							cout << "   FPLargeAccumulator="<< sum;
+							cout << "   FPLargeAcc="<< sum;
 							cout <<endl;
 							// add the leading one back
 							mpfr_add(long_acc, long_acc, msb, GMP_RNDN);
@@ -451,7 +451,7 @@ namespace flopoco{
 		sum=mpfr_get_d(fp_acc, GMP_RNDN);
 		cout << "   FPAcc="<< sum;
 		sum=mpfr_get_d(long_acc, GMP_RNDN);
-		cout << "   FPLargeAccumulator="<< sum;
+		cout << "   FPLargeAcc="<< sum;
 		cout <<endl;
 
 
@@ -470,7 +470,7 @@ namespace flopoco{
 	// addOutput  ("AccOverflow");  
 	// In the following there is no check on the two last ones
 
-	void FPLargeAccumulator::fillTestCase(mpz_class a[])
+	void FPLargeAcc::fillTestCase(mpz_class a[])
 	{
 		mpz_class& sX = a[0];
 		mpz_class& sA = a[1];
@@ -543,7 +543,7 @@ namespace flopoco{
  
 	}
 
-	mpz_class FPLargeAccumulator::mapFP2Acc(FPNumber X)
+	mpz_class FPLargeAcc::mapFP2Acc(FPNumber X)
 	{
 		//get true exponent of X
 		mpz_class expX = X.getExponentSignalValue() - ( intpow2(wEX_-1)-1 ); 
@@ -557,7 +557,7 @@ namespace flopoco{
 			return (X.getFractionSignalValue()*mpz_class(intpow2(keepBits-wFX_)));
 	}
 
-	mpz_class FPLargeAccumulator::sInt2C2(mpz_class X, int width)
+	mpz_class FPLargeAcc::sInt2C2(mpz_class X, int width)
 	{
 		if (X>=0)
 			return X;
@@ -566,10 +566,10 @@ namespace flopoco{
 		}
 	}
 
-	void FPLargeAccumulator::emulate(TestCase* tc){
+	void FPLargeAcc::emulate(TestCase* tc){
 	}
 
-	TestCase* FPLargeAccumulator::buildRandomTestCase(int i){
+	TestCase* FPLargeAcc::buildRandomTestCase(int i){
 
 		TestCase *tc;
 		mpz_class x;
