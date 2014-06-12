@@ -81,9 +81,9 @@
 #include "FPAddSub/FPAddSub.hpp"
 
 /* Floating-point multiplier variants-------------------------- */ 
-#include "FPMultSquare/FPMultiplier.hpp"
-//#include "FPMultiplierKaratsuba.hpp" // Resurrect some day?
-#include "FPMultSquare/FPSquarer.hpp"
+#include "FPMultSquare/FPMult.hpp"
+//#include "FPMultKaratsuba.hpp" // Resurrect some day?
+#include "FPMultSquare/FPSquare.hpp"
 
 #include "FPDivSqrt/FPDiv.hpp"
 #include "FPDivSqrt/FPSqrt.hpp"
@@ -171,9 +171,9 @@
 #endif
 
 /* floating-point -------------------------------------------- */ 
-#include "FPMultiplier.hpp"
-#include "FPMultiplierKaratsuba.hpp"
-#include "FPSquarer.hpp"
+#include "FPMult.hpp"
+#include "FPMultKaratsuba.hpp"
+#include "FPSquare.hpp"
 
 #ifndef _WIN32
 #ifdef HAVE_SOLLYA

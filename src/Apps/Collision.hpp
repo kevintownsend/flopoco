@@ -43,7 +43,7 @@ ulp of R2.
 #include "../IntAdder.hpp"
 #include "../IntMultiplier.hpp"
 #include "../IntSquarer.hpp"
-#include "../FPMultiplier.hpp"
+#include "../FPMult.hpp"
 #include "../FPAddSinglePath.hpp"
 
 namespace flopoco{

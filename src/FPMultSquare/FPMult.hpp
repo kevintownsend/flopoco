@@ -1,5 +1,5 @@
-#ifndef FPMultiplierKaratsubaS_HPP
-#define FPMultiplierKaratsubaS_HPP
+#ifndef FPMULTIPLIERS_HPP
+#define FPMULTIPLIERS_HPP
 #include <vector>
 #include <sstream>
 #include <gmp.h>
@@ -7,13 +7,13 @@
 #include <gmpxx.h>
 
 #include "Operator.hpp"
-#include "IntMult//IntKaratsuba.hpp"
+#include "IntMult//IntMultiplier.hpp"
 #include "IntAddSubCmp/IntAdder.hpp"
 
 namespace flopoco{
 
-	/** The FPMultiplierKaratsuba class */
-	class FPMultiplierKaratsuba : public Operator
+	/** The FPMult class */
+	class FPMult : public Operator
 	{
 	public:
 	
@@ -27,12 +27,13 @@ namespace flopoco{
 		 * @param[in]		wER			the the with of the exponent for the multiplication result
 		 * @param[in]		wFR			the the with of the fraction for the multiplication result
 		 **/
-		FPMultiplierKaratsuba(Target* target, int wEX, int wFX, int wEY, int wFY, int wER, int wFR, int norm);
+		FPMult(Target* target, int wEX, int wFX, int wEY, int wFY, int wER, int wFR, 
+		             bool norm = true, bool correctlyRounded=true, double ratio=1, map<string, double> inputDelays = emptyDelayMap);
 
 		/**
-		 * FPMultiplierKaratsuba destructor
+		 * FPMult destructor
 		 */
-		~FPMultiplierKaratsuba();
+		~FPMult();
 
 		/**
 		 * Emulate the operator using MPFR.
@@ -49,12 +50,9 @@ namespace flopoco{
 		int  wFY_;                  /**< The width of the fraction for the input Y */
 		int  wER_;                  /**< The width of the exponent for the output R */
 		int  wFR_;                  /**< The width of the fraction for the output R */
-		bool normalized_;	       /**< Signal if the output of the operator is to be or not normalized*/
+		bool normalized_;	          /**< Signal if the output of the operator is to be or not normalized*/
+		bool correctlyRounded_;	    /**< true: operator computes correct rounding; false: operator computes faithful rounding */
 
-	private:
-
-		IntKaratsuba* intmult_;     /**< The integer multiplier object */
-		IntAdder* intadd_;           /**< The integer multiplier object */
  
 	};
 }

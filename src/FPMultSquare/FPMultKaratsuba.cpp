@@ -23,18 +23,18 @@
 #include <gmpxx.h>
 #include "utils.hpp"
 #include "Operator.hpp"
-#include "FPMultiplierKaratsuba.hpp"
+#include "FPMultKaratsuba.hpp"
 #include "TestBenches/FPNumber.hpp"
 
 using namespace std;
 
 namespace flopoco{
 
-	FPMultiplierKaratsuba::FPMultiplierKaratsuba(Target* target, int wEX, int wFX, int wEY, int wFY, int wER, int wFR, int norm) :
+	FPMultKaratsuba::FPMultKaratsuba(Target* target, int wEX, int wFX, int wEY, int wFY, int wER, int wFR, int norm) :
 		Operator(target), wEX_(wEX), wFX_(wFX), wEY_(wEY), wFY_(wFY), wER_(wER), wFR_(wFR) {
 
 		ostringstream name;
-		name << "FPMultiplierKaratsuba_"<<wEX_<<"_"<<wFX_<<"_"<<wEY_<<"_"<<wFY_<<"_"<<wER_<<"_"<<wFR_; 
+		name << "FPMultKaratsuba_"<<wEX_<<"_"<<wFX_<<"_"<<wEY_<<"_"<<wFY_<<"_"<<wER_<<"_"<<wFR_; 
 		setName(name.str());
 
 		if (wFX!=wFY){
@@ -181,12 +181,12 @@ namespace flopoco{
 		}
 	} // end constructor
 
-	FPMultiplierKaratsuba::~FPMultiplierKaratsuba() {
+	FPMultKaratsuba::~FPMultKaratsuba() {
 	}
 
 	// FIXME: the following is only functional for a correctly rounded multiplier.
 	// The old code for the non-normalized case is commented out below, just in case.
-	void FPMultiplierKaratsuba::emulate(TestCase * tc)
+	void FPMultKaratsuba::emulate(TestCase * tc)
 	{
 		/* Get I/O values */
 		mpz_class svX = tc->getInputValue("X");

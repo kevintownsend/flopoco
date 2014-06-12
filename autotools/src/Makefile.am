@@ -81,12 +81,12 @@ noinst_HEADERS = \
           FPDiv.hpp \
           FPExp.hpp \
           FPLog.hpp \
-          FPMultiplier.hpp \
-          FPMultiplierKaratsuba.hpp \
+          FPMult.hpp \
+          FPMultKaratsuba.hpp \
           TestBenchs/FPNumber.hpp \
           FPSqrt.hpp \
           FPSqrtPoly.hpp \
-          FPSquarer.hpp \
+          FPSquare.hpp \
           IEEENumber.hpp \
           InputIEEE.hpp \
           IntAdder.hpp \
@@ -270,9 +270,9 @@ libflopoco_la_SOURCES = \
                         FPAddSinglePath.cpp \
                         FPAdd3Input.cpp \
                         FPAddSub.cpp \
-                        FPMultiplier.cpp \
-                        FPMultiplierKaratsuba.cpp \
-                        FPSquarer.cpp \
+                        FPMult.cpp \
+                        FPMultKaratsuba.cpp \
+                        FPSquare.cpp \
                         FPDiv.cpp \
                         FPSqrt.cpp \
                         FPSqrtPoly.cpp \

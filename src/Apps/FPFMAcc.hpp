@@ -11,7 +11,7 @@
 
 #include "../Operator.hpp"
 #include "../FPAddSinglePath.hpp"
-#include "../FPMultiplier.hpp"
+#include "../FPMult.hpp"
 
 namespace flopoco{
 
@@ -40,7 +40,7 @@ namespace flopoco{
 
 	private:
 		
-//		FPTruncMult* fpTruncMultiplier; /**< instance of a FPMultiplier */
+//		FPTruncMult* fpTruncMultiplier; /**< instance of a FPMult */
 //		FPAdd*     longAcc;      /**< instance of a FPAdd */
 		
 	};

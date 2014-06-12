@@ -23,19 +23,19 @@
 #include <gmpxx.h>
 #include "utils.hpp"
 #include "Operator.hpp"
-#include "FPMultiplier.hpp"
+#include "FPMult.hpp"
 #include "TestBenches/FPNumber.hpp"
 
 using namespace std;
 
 namespace flopoco{
 
-	FPMultiplier::FPMultiplier(Target* target, int wEX, int wFX, int wEY, int wFY, int wER, int wFR, 
+	FPMult::FPMult(Target* target, int wEX, int wFX, int wEY, int wFY, int wER, int wFR, 
 	                           bool norm, bool correctlyRounded, double ratio, map<string, double> inputDelays) :
 		Operator(target), wEX_(wEX), wFX_(wFX), wEY_(wEY), wFY_(wFY), wER_(wER), wFR_(wFR), normalized_(norm), correctlyRounded_(correctlyRounded)  {
 
 		ostringstream name;
-		name << "FPMultiplier_"<<wEX_<<"_"<<wFX_<<"_"<<wEY_<<"_"<<wFY_<<"_"<<wER_<<"_"<<wFR_<<"_uid"<<getNewUId(); 
+		name << "FPMult_"<<wEX_<<"_"<<wFX_<<"_"<<wEY_<<"_"<<wFY_<<"_"<<wER_<<"_"<<wFR_<<"_uid"<<getNewUId(); 
 		setName(name.str());
 		setCopyrightString("Bogdan Pasca, Florent de Dinechin 2008-2011");
 
@@ -228,13 +228,13 @@ namespace flopoco{
 		}
 	} // end constructor
 
-	FPMultiplier::~FPMultiplier() {
+	FPMult::~FPMult() {
 	}
 
 
 
 	// TODO the unnormalized case is not emulated
-	void FPMultiplier::emulate(TestCase * tc)
+	void FPMult::emulate(TestCase * tc)
 	{
 		/* Get I/O values */
 		mpz_class svX = tc->getInputValue("X");

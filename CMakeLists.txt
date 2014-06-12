@@ -271,9 +271,9 @@ src/Conversions/Fix2FP
  src/FPAddSub/FPAddSub
 
 # Floating-point multipliers and squarers
- src/FPMultSquare/FPMultiplier
-#  src/FPMultSquare/FPMultiplierKaratsuba # See TODO
- src/FPMultSquare/FPSquarer
+ src/FPMultSquare/FPMult
+#  src/FPMultSquare/FPMultKaratsuba # See TODO
+ src/FPMultSquare/FPSquare
 
 # Floating-point dividers and square roots
 src/FPDivSqrt/FPDiv

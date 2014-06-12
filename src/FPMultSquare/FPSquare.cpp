@@ -23,7 +23,7 @@
 #include <gmpxx.h>
 #include "utils.hpp"
 #include "Operator.hpp"
-#include "FPSquarer.hpp"
+#include "FPSquare.hpp"
 #include "TestBenches/FPNumber.hpp"
 #include "IntMult//IntSquarer.hpp"
 
@@ -33,11 +33,11 @@ namespace flopoco{
 
 
 
-	FPSquarer::FPSquarer(Target* target, int wE, int wFX, int wFR) :
+	FPSquare::FPSquare(Target* target, int wE, int wFX, int wFR) :
 		Operator(target), wE_(wE), wFX_(wFX), wFR_(wFR){
 
 		ostringstream name;
-		name<<"FPSquarer_"<<wE_<<"_"<<wFX_<<"_"<<wFR_<<"_uid"<<getNewUId(); 
+		name<<"FPSquare_"<<wE_<<"_"<<wFX_<<"_"<<wFR_<<"_uid"<<getNewUId(); 
 		setName(name.str());
 		setCopyrightString("Bogdan Pasca (2009)");
 	
@@ -159,13 +159,13 @@ namespace flopoco{
 	
 	}
 
-	FPSquarer::~FPSquarer() {
+	FPSquare::~FPSquare() {
 	}
 
 
 	// FIXME: the following is only functional for a correctly rounded multiplier.
 	// The old code for the non-normalized case is commented out below, just in case.
-	void FPSquarer::emulate(TestCase * tc)
+	void FPSquare::emulate(TestCase * tc)
 	{
 		/* Get I/O values */
 		mpz_class svX = tc->getInputValue("X");

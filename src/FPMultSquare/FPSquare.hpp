@@ -11,8 +11,8 @@
 
 namespace flopoco{
 
-	/** The FPSquarer class */
-	class FPSquarer : public Operator
+	/** The FPSquare class */
+	class FPSquare : public Operator
 	{
 	public:
 	
@@ -23,12 +23,12 @@ namespace flopoco{
 		 * @param[in]		wFX			the the with of the fraction for the f-p number X
 		 * @param[in]		wFR			the the with of the fraction for the multiplication result
 		 **/
-		FPSquarer(Target* target, int wEX, int wFX, int wFR);
+		FPSquare(Target* target, int wEX, int wFX, int wFR);
 
 		/**
-		 * FPSquarer destructor
+		 * FPSquare destructor
 		 */
-		~FPSquarer();
+		~FPSquare();
 
 		/**
 		 * Emulate the operator using MPFR.

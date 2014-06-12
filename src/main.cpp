@@ -195,27 +195,27 @@ void usage(char *name, string opName = ""){
 
 	if ( full )
 		cerr << center("FLOATING-POINT MULTIPLIERS AND SQUARERS", '_') << "\n";
-	if ( full || opName == "FPMultiplier"){					
-		OP( "FPMultiplier","wE wF_in wF_out");
+	if ( full || opName == "FPMult"){					
+		OP( "FPMult","wE wF_in wF_out");
 		cerr << "Standard (correctly-rounded) floating-point multiplier \n";
 	}
-	if ( full  || opName == "FPMultiplier" || opName == "FPMultiplierFaithful"){					
-		OP( "FPMultiplierFaithful","wE wF_in wF_out");
+	if ( full  || opName == "FPMult" || opName == "FPMultFaithful"){					
+		OP( "FPMultFaithful","wE wF_in wF_out");
 		cerr << "Resource-saving (faithfully rounded) floating-point multiplier \n";
 	}
-	if ( full  || opName == "FPMultiplier" || opName == "FPMultiplierExpert"){					
-		OP( "FPMultiplierExpert","wE wFX wFY wFR CorrectRounding DSPThreshold");
+	if ( full  || opName == "FPMult" || opName == "FPMultExpert"){					
+		OP( "FPMultExpert","wE wFX wFY wFR CorrectRounding DSPThreshold");
 		cerr << "Fully flexible floating-point multiplier \n";
 	}		
 #if 0 // Commented out for now, should be resurrected some day: see TODO
-	if ( full || opName == "FPMultiplier" || opName == "FPMultiplierKaratsuba"){						
-		OP( "FPMultiplierKaratsuba","wE wF_in wF_out");
+	if ( full || opName == "FPMult" || opName == "FPMultKaratsuba"){						
+		OP( "FPMultKaratsuba","wE wF_in wF_out");
 		cerr << "Floating-point multiplier, supporting different in/out precision. \n";
 		cerr << "Mantissa multiplier uses Karatsuba\n";
 	}
 #endif
-	if ( full || opName == "FPMultiplier" || opName == "FPSquarer"){					
-		OP( "FPSquarer","wE wFin wFout");
+	if ( full || opName == "FPMult" || opName == "FPSquare"){					
+		OP( "FPSquare","wE wFin wFout");
 		cerr << "Floating-point squarer \n";
 	}
 
@@ -934,30 +934,30 @@ bool parseCommandLine(int argc, char* argv[]){
 
 		//-------------------FP Multipliers ----------------------
 
-		else if(opname=="FPMultiplier"){
+		else if(opname=="FPMult"){
 			int nargs = 3; 
 			if (i+nargs > argc)
 				usage(argv[0],opname);
 			int wE = checkStrictlyPositive(argv[i++], argv[0]);
 			int wFIn = checkStrictlyPositive(argv[i++], argv[0]);
 			int wFOut = checkStrictlyPositive(argv[i++], argv[0]);
-			op = new FPMultiplier(target, wE, wFIn, wE, wFIn, wE, wFOut, true /*normd*/, true /*CR*/);
+			op = new FPMult(target, wE, wFIn, wE, wFIn, wE, wFOut, true /*normd*/, true /*CR*/);
 			addOperator(op);
 		} 
 
-		else if(opname=="FPMultiplierFaithful"){
+		else if(opname=="FPMultFaithful"){
 			int nargs = 3; 
 			if (i+nargs > argc)
 				usage(argv[0],opname);
 			int wE = checkStrictlyPositive(argv[i++], argv[0]);
 			int wFIn = checkStrictlyPositive(argv[i++], argv[0]);
 			int wFOut = checkStrictlyPositive(argv[i++], argv[0]);
-			op = new FPMultiplier(target, wE, wFIn, wE, wFIn, wE, wFOut, true, false);
+			op = new FPMult(target, wE, wFIn, wE, wFIn, wE, wFOut, true, false);
 			addOperator(op);
 		}
 
 		#if 0
-		else if(opname=="FPMultiplierKaratsuba"){
+		else if(opname=="FPMultKaratsuba"){
 			int nargs = 3; 
 			if (i+nargs > argc)
 				usage(argv[0],opname);
@@ -965,13 +965,13 @@ bool parseCommandLine(int argc, char* argv[]){
 				int wE = checkStrictlyPositive(argv[i++], argv[0]);
 				int wFIn = checkStrictlyPositive(argv[i++], argv[0]);
 				int wFOut = checkStrictlyPositive(argv[i++], argv[0]);
-				op = new FPMultiplierKaratsuba(target, wE, wFIn, wE, wFIn, wE, wFOut, 1);
+				op = new FPMultKaratsuba(target, wE, wFIn, wE, wFIn, wE, wFOut, 1);
 				addOperator(op);
 			}
 		}  
 		#endif
 
-		else if(opname=="FPMultiplierExpert"){
+		else if(opname=="FPMultExpert"){
 			int nargs = 6; 
 			if (i+nargs > argc)
 				usage(argv[0],opname);
@@ -982,11 +982,11 @@ bool parseCommandLine(int argc, char* argv[]){
 			int correctRounding = checkBoolean(argv[i++], argv[0]);
 			float r = atof(argv[i++]);
 
-			op = new FPMultiplier(target, wE, wFXIn, wE, wFYIn, wE, wFOut, true, correctRounding, r);
+			op = new FPMult(target, wE, wFXIn, wE, wFYIn, wE, wFOut, true, correctRounding, r);
 			addOperator(op);
 		}  
 
-		else if(opname=="FPSquarer"){
+		else if(opname=="FPSquare"){
 			int nargs = 3; 
 			if (i+nargs > argc)
 				usage(argv[0],opname);
@@ -994,7 +994,7 @@ bool parseCommandLine(int argc, char* argv[]){
 				int wE = checkStrictlyPositive(argv[i++], argv[0]);
 				int wFX = checkStrictlyPositive(argv[i++], argv[0]);
 				int wFR = checkStrictlyPositive(argv[i++], argv[0]);
-				op = new FPSquarer(target, wE, wFX, wFR);
+				op = new FPSquare(target, wE, wFX, wFR);
 				addOperator(op);
 			}
 		} 

@@ -479,7 +479,7 @@ namespace flopoco{
 				vhdl << instance(op1, tmp.str())<<endl;
 			}else{
 				//we just plug-in a regular multiplier
-				op1 = new FPMultiplier(target_, wE, wF, wE, wF, wE, wF);
+				op1 = new FPMult(target_, wE, wF, wE, wF, wE, wF);
 				oplist.push_back(op1);
 
 				inPortMap( op1, "X", n->nodeArray->n->name);
@@ -512,7 +512,7 @@ namespace flopoco{
 		case 5:{ //squarer
 			REPORT(DETAILED, " instance squarer");
 						
-			op1 = new FPSquarer(target_, wE, wF, wF);
+			op1 = new FPSquare(target_, wE, wF, wF);
 			oplist.push_back(op1);
 
 			inPortMap( op1, "X", n->nodeArray->n->name);

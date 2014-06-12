@@ -50,7 +50,7 @@ namespace flopoco{
 			//            A version that assembles FP operators             //
 			//////////////////////////////////////////////////////////////////:
 
-			FPMultiplier* mult = new FPMultiplier(target, wE, wF, wE, wF, wE, wF, 1);
+			FPMult* mult = new FPMult(target, wE, wF, wE, wF, wE, wF, 1);
 			oplist.push_back(mult);
 			FPAddSinglePath* add =  new FPAddSinglePath(target, wE, wF, wE, wF, wE, wF);
 			oplist.push_back(add);

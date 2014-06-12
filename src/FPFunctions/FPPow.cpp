@@ -20,7 +20,7 @@
 #include "FPExp.hpp"
 #include "LZOC.hpp"
 #include "FPPow.hpp"
-#include "FPMultiplier.hpp"
+#include "FPMult.hpp"
 #include "TestBenches/FPNumber.hpp"
 #include "utils.hpp"
 
@@ -312,11 +312,11 @@ namespace flopoco{
 
 #if 0
 		// TODO: the following mult could be  truncated
-		FPMultiplier* mult = new FPMultiplier(target,   /*X:*/ wE, logwF,   /*Y:*/ wE, wF,  /*R: */  wE,  wF+wE+expG, 
+		FPMult* mult = new FPMult(target,   /*X:*/ wE, logwF,   /*Y:*/ wE, wF,  /*R: */  wE,  wF+wE+expG, 
 		                                      1 /* norm*/); 
 #else
 		// truncated
-		FPMultiplier* mult = new FPMultiplier(target,   /*X:*/ wE, logwF,   /*Y:*/ wE, wF,  /*R: */  wE,  wF+wE+expG, 
+		FPMult* mult = new FPMult(target,   /*X:*/ wE, logwF,   /*Y:*/ wE, wF,  /*R: */  wE,  wF+wE+expG, 
 		                                      1, /* norm*/ 
 		                                      0 /* faithful only*/); 
 #endif

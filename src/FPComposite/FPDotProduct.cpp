@@ -29,7 +29,7 @@
 #include "Operator.hpp"
 
 #include "FPDotProduct.hpp"
-#include "FPMultSquare/FPMultiplier.hpp"
+#include "FPMultSquare/FPMult.hpp"
 
 
 using namespace std;

@@ -93,14 +93,14 @@ Tentative roadmap
 We have left  0.xx for 1.xx when all the basic operators have been backported with working pipeline):
 
 Version 0.1: IntConstMult, FPConstMult, FPCRConstMult
-Version 0.4: LongAccumulator, FPMultiplier
+Version 0.4: LongAccumulator, FPMult
 Version 0.5 : HOTBM integration 
 Version 0.6 : FPLog
 Version 0.7 : FPExp
 Version 0.8 : DotProduct
 Version 0.9 : LNS operators, thanks to Sylvain Collange
 Version 0.11: FPDiv, IntSquarer, new pipeline framework
-Version 1.15: FPSqrt FPSquarer InputIEEE Fix2FP 
+Version 1.15: FPSqrt FPSquare InputIEEE Fix2FP 
 Version 2.0 : FunctionEvaluator
 Version 2.2 : FPExp, FPPowr (experimental)
 Version 2.3 : IntConstDiv, FPConstDiv and FPConstDivExpert, FPConstMultRational, TaMaDi architecture

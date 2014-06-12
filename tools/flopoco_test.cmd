@@ -163,27 +163,27 @@ flopoco FPAdd 11 52
 flopoco FPAdd 15 112
 
 
-#         FPMultiplier wE wF_in wF_out
+#         FPMult wE wF_in wF_out
 
-flopoco FPMultiplier 8 23 23
-flopoco FPMultiplier 8 23 52
-flopoco FPMultiplier 11 52 23
-
-
-#          FPMultiplierKaratsuba
-
-flopoco FPMultiplierKaratsuba 8 23 23
-flopoco FPMultiplierKaratsuba 8 23 52
-flopoco FPMultiplierKaratsuba 11 52 23
+flopoco FPMult 8 23 23
+flopoco FPMult 8 23 52
+flopoco FPMult 11 52 23
 
 
-# FPMultiplierTiling wE wF_in wF_out ratio timeInMinutes
+#          FPMultKaratsuba
+
+flopoco FPMultKaratsuba 8 23 23
+flopoco FPMultKaratsuba 8 23 52
+flopoco FPMultKaratsuba 11 52 23
 
 
-# FPSquarer wE wFin wFout
+# FPMultTiling wE wF_in wF_out ratio timeInMinutes
 
-flopoco FPSquarer 8 23 23
-flopoco FPSquarer 11 52 52
+
+# FPSquare wE wFin wFout
+
+flopoco FPSquare 8 23 23
+flopoco FPSquare 11 52 52
 
 
 #   FPDiv wE wF

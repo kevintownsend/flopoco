@@ -1274,29 +1274,29 @@ bool parseCommandLine(int argc, char* argv[], vector<Operator*> &oplist){
 		// 		addOperator(oplist, op);
 		// 	}
 		// }
-		else if(opname=="FPMultiplier"){
+		else if(opname=="FPMult"){
 			int nargs = 3; 
 			if (i+nargs > argc)
 				usage(argv[0],opname);
 			int wE = checkStrictlyPositive(argv[i++], argv[0]);
 			int wFIn = checkStrictlyPositive(argv[i++], argv[0]);
 			int wFOut = checkStrictlyPositive(argv[i++], argv[0]);
-			cerr << "> FPMultiplier , wE="<<wE<<", wFIn="<<wFIn<<", wFOut="<<wFOut<<" \n";
-			op = new FPMultiplier(target, wE, wFIn, wE, wFIn, wE, wFOut, true /*normd*/, true /*CR*/);
+			cerr << "> FPMult , wE="<<wE<<", wFIn="<<wFIn<<", wFOut="<<wFOut<<" \n";
+			op = new FPMult(target, wE, wFIn, wE, wFIn, wE, wFOut, true /*normd*/, true /*CR*/);
 			addOperator(oplist, op);
 		} 
-		else if(opname=="FPMultiplierFaithful"){
+		else if(opname=="FPMultFaithful"){
 			int nargs = 3; 
 			if (i+nargs > argc)
 				usage(argv[0],opname);
 			int wE = checkStrictlyPositive(argv[i++], argv[0]);
 			int wFIn = checkStrictlyPositive(argv[i++], argv[0]);
 			int wFOut = checkStrictlyPositive(argv[i++], argv[0]);
-			cerr << "> FPMultiplierFaithful , wE="<<wE<<", wFIn="<<wFIn<<", wFOut="<<wFOut<<" \n";
-			op = new FPMultiplier(target, wE, wFIn, wE, wFIn, wE, wFOut, true, false);
+			cerr << "> FPMultFaithful , wE="<<wE<<", wFIn="<<wFIn<<", wFOut="<<wFOut<<" \n";
+			op = new FPMult(target, wE, wFIn, wE, wFIn, wE, wFOut, true, false);
 			addOperator(oplist, op);
 		}
-		else if(opname=="FPMultiplierKaratsuba"){
+		else if(opname=="FPMultKaratsuba"){
 			int nargs = 3; 
 			if (i+nargs > argc)
 				usage(argv[0],opname);
@@ -1304,12 +1304,12 @@ bool parseCommandLine(int argc, char* argv[], vector<Operator*> &oplist){
 				int wE = checkStrictlyPositive(argv[i++], argv[0]);
 				int wFIn = checkStrictlyPositive(argv[i++], argv[0]);
 				int wFOut = checkStrictlyPositive(argv[i++], argv[0]);
-				cerr << "> FPMultiplierKaratsuba , wE="<<wE<<", wFIn="<<wFIn<<", wFOut="<<wFOut<<" \n";
-				op = new FPMultiplierKaratsuba(target, wE, wFIn, wE, wFIn, wE, wFOut, 1);
+				cerr << "> FPMultKaratsuba , wE="<<wE<<", wFIn="<<wFIn<<", wFOut="<<wFOut<<" \n";
+				op = new FPMultKaratsuba(target, wE, wFIn, wE, wFIn, wE, wFOut, 1);
 				addOperator(oplist, op);
 			}
 		}  
-		else if(opname=="FPMultiplierExpert"){
+		else if(opname=="FPMultExpert"){
 			int nargs = 7; 
 			if (i+nargs > argc)
 				usage(argv[0],opname);
@@ -1321,10 +1321,10 @@ bool parseCommandLine(int argc, char* argv[], vector<Operator*> &oplist){
 			float r = atof(argv[i++]);
 			int maxTimeInMinutes = atoi(argv[i++]);
 
-			op = new FPMultiplier(target, wE, wFXIn, wE, wFYIn, wE, wFOut, true, correctRounding, r, maxTimeInMinutes);
+			op = new FPMult(target, wE, wFXIn, wE, wFYIn, wE, wFOut, true, correctRounding, r, maxTimeInMinutes);
 			addOperator(oplist, op);
 		}  
-		else if(opname=="FPSquarer"){
+		else if(opname=="FPSquare"){
 			int nargs = 3; 
 			if (i+nargs > argc)
 				usage(argv[0],opname);
@@ -1332,8 +1332,8 @@ bool parseCommandLine(int argc, char* argv[], vector<Operator*> &oplist){
 				int wE = checkStrictlyPositive(argv[i++], argv[0]);
 				int wFX = checkStrictlyPositive(argv[i++], argv[0]);
 				int wFR = checkStrictlyPositive(argv[i++], argv[0]);
-				cerr << "> FPSquarer , wE="<<wE<<", wFX="<<wFX<<" wFR="<<wFR<< " \n";
-				op = new FPSquarer(target, wE, wFX, wFR);
+				cerr << "> FPSquare , wE="<<wE<<", wFX="<<wFX<<" wFR="<<wFR<< " \n";
+				op = new FPSquare(target, wE, wFX, wFR);
 				addOperator(oplist, op);
 			}
 		} 
