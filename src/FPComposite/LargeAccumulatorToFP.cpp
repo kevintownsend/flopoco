@@ -41,10 +41,10 @@ namespace flopoco{
 		srcFileName = "LargeAccumulatorToFP";
 		ownTarget_ = target;
 		ostringstream name;
-		setCopyrightString("Bogdan Pasca (2008-2011)");		
+		setCopyrightString("Florent de Dinechin, Bogdan Pasca (2008-2014)");		
 		name <<"LargeAccumulatorToFP_"
-			  <<(LSBA_>=0?"":"M")<<abs(LSBA_)<<"_"
 			  <<(MSBA_>=0?"":"M")<<abs(MSBA_)<<"_"
+			  <<(LSBA_>=0?"":"M")<<abs(LSBA_)<<"_"
 			  <<wEOut_<<"_"<<wFOut_;
 		setName(name.str());
 	

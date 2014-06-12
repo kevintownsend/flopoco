@@ -197,41 +197,16 @@ void usage(char *name, string opName = ""){
 		cerr << center("FLOATING-POINT MULTIPLIERS AND SQUARERS", '_') << "\n";
 	if ( full || opName == "FPMultiplier"){					
 		OP( "FPMultiplier","wE wF_in wF_out");
+		cerr << "Standard (correctly-rounded) floating-point multiplier \n";
 	}
 	if ( full  || opName == "FPMultiplier" || opName == "FPMultiplierFaithful"){					
 		OP( "FPMultiplierFaithful","wE wF_in wF_out");
+		cerr << "Resource-saving (faithfully rounded) floating-point multiplier \n";
 	}
 	if ( full  || opName == "FPMultiplier" || opName == "FPMultiplierExpert"){					
 		OP( "FPMultiplierExpert","wE wFX wFY wFR CorrectRounding DSPThreshold");
+		cerr << "Fully flexible floating-point multiplier \n";
 	}		
-	cerr << "Standard or faithful (resource-saving) floating-point multiplier \n";
-
-
-
-	if ( full )
-		cerr << center("FLOATING-POINT DIVIDERS AND SQUARE ROOTS", '_') << "\n";
-	if ( full || opName == "FPDivider"){					
-		OP( "FPDivider","wE wF");
-		cerr << "Floating-point divider,  using digit recurrence \n";
-	}
-	if ( full || opName == "FPSqrt"){					
-		OP("FPSqrt","wE wF");
-		cerr << "Floating-point square root operator, using digit recurrence\n";
-	}
-
-
-	if ( full || opName == "FPDivider"){					
-		OP( "FPMultiplier","wE wF_in wF_out");
-	}
-	if ( full  || opName == "FPMultiplier" || opName == "FPMultiplierFaithful"){					
-		OP( "FPMultiplierFaithful","wE wF_in wF_out");
-	}
-	if ( full  || opName == "FPMultiplier" || opName == "FPMultiplierExpert"){					
-		OP( "FPMultiplierExpert","wE wFX wFY wFR CorrectRounding DSPThreshold");
-	}		
-	cerr << "Standard or faithful (resource-saving) floating-point multiplier \n";
-
-
 #if 0 // Commented out for now, should be resurrected some day: see TODO
 	if ( full || opName == "FPMultiplier" || opName == "FPMultiplierKaratsuba"){						
 		OP( "FPMultiplierKaratsuba","wE wF_in wF_out");
@@ -245,6 +220,18 @@ void usage(char *name, string opName = ""){
 	}
 
 
+
+	if ( full )
+		cerr << center("FLOATING-POINT DIVIDERS AND SQUARE ROOTS", '_') << "\n";
+
+	if ( full || opName == "FPDiv"){					
+		OP( "FPDiv","wE wF");
+		cerr << "Floating-point divider,  using digit recurrence \n";
+	}
+	if ( full || opName == "FPSqrt"){					
+		OP("FPSqrt","wE wF");
+		cerr << "Floating-point square root operator, using digit recurrence\n";
+	}
 
 
 	if ( full )

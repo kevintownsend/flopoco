@@ -60,9 +60,9 @@ namespace flopoco{
 
 		ostringstream name; 
 		name <<"FPLargeAccumulator_"<<wEX_<<"_"<<wFX_<<"_"
-			  <<(MaxMSBX_>=0?"":"M")<<abs(MaxMSBX_)<<"_"
-			  <<(LSBA_>=0?"":"M")<<abs(LSBA_)<<"_"
-			  <<(MSBA_>=0?"":"M")<<abs(MSBA_) ;
+				 <<(MaxMSBX_>=0?"":"M")<<abs(MaxMSBX_)<<"_"
+				 <<(MSBA_>=0?"":"M")<<abs(MSBA_)<<"_" 
+				 <<(LSBA_>=0?"":"M")<<abs(LSBA_);
 		setName(name.str());
 
 		// This operator is a sequential one
