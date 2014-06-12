@@ -208,7 +208,7 @@ namespace flopoco{
 				vhdl << tab << "R <= finalExc & sign & expSigPostRound" << range(wER_+wFR_-1, 0)<<";"<<endl;
 			
 			}
-		}else{ //the non-normalized version for DotProduct
+		}else{ //the non-normalized version for FPDotProduct
 			// TODO: modern pipeline framework
 			// TODO: manage the faithful case
 				vhdl << tab <<"with expSum" << range(wER_+1, wER_) << " select"<<endl;		

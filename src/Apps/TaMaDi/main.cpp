@@ -1374,7 +1374,7 @@ bool parseCommandLine(int argc, char* argv[], vector<Operator*> &oplist){
 		}
 #endif // HAVE_SOLLYA
 
-		else if(opname=="LongAcc"){
+		else if(opname=="FPLargeAccumulator"){
 			int nargs = 5;
 			if (i+nargs > argc)
 				usage(argv[0],opname);
@@ -1385,14 +1385,14 @@ bool parseCommandLine(int argc, char* argv[], vector<Operator*> &oplist){
 				int LSBA = atoi(argv[i++]); // may be negative
 				int MSBA = atoi(argv[i++]); // may be negative
 				cerr << "> Long accumulator , wEX="<<wEX<<", wFX="<<wFX<<", MaxMSBX="<<MaxMSBX<<", LSBA="<<LSBA<<", MSBA="<<MSBA<<"\n";
-				op = new LongAcc(target, wEX, wFX, MaxMSBX, LSBA, MSBA);
+				op = new FPLargeAccumulator(target, wEX, wFX, MaxMSBX, LSBA, MSBA);
 				addOperator(oplist, op);
 			}
 		}
 
 		// hidden and undocumented
-		else if(opname=="LongAccPrecTest"){
-			int nargs = 6; // same as LongAcc, plus an iteration count
+		else if(opname=="FPLargeAccumulatorPrecTest"){
+			int nargs = 6; // same as FPLargeAccumulator, plus an iteration count
 			if (i+nargs > argc)
 				usage(argv[0],opname);
 			else {
@@ -1403,13 +1403,13 @@ bool parseCommandLine(int argc, char* argv[], vector<Operator*> &oplist){
 				int MSBA = atoi(argv[i++]);
 				int n = atoi(argv[i++]);
 				cerr << "> Test of long accumulator accuracy, wEX="<<wEX<<", wFX="<<wFX<<", MaxMSBX="<<MaxMSBX<<", LSBA="<<LSBA<<", MSBA="<<MSBA<<", "<< n << " tests\n";
-				LongAcc * op = new LongAcc(target, wEX, wFX, MaxMSBX, LSBA, MSBA);
+				FPLargeAccumulator * op = new FPLargeAccumulator(target, wEX, wFX, MaxMSBX, LSBA, MSBA);
 				// op->test_precision(n);
 				op->test_precision2();
 			}    
 		}
 
-		else if(opname=="LongAcc2FP"){
+		else if(opname=="FPLargeAccumulator2FP"){
 			int nargs = 4;
 			if (i+nargs > argc)
 				usage(argv[0],opname);
@@ -1419,14 +1419,14 @@ bool parseCommandLine(int argc, char* argv[], vector<Operator*> &oplist){
 				int wE_out = checkStrictlyPositive(argv[i++], argv[0]);
 				int wF_out = checkStrictlyPositive(argv[i++], argv[0]);
 				cerr << "> Post-Normalization unit for Long accumulator, LSBA="<<LSBA<<", MSBA="<<MSBA<<" wE_out="<<wE_out<<", wF_out="<<wF_out<<"\n";
-				op = new LongAcc2FP(target, LSBA, MSBA, wE_out, wF_out);
+				op = new FPLargeAccumulator2FP(target, LSBA, MSBA, wE_out, wF_out);
 				addOperator(oplist, op);
 			}
 		}
 #ifndef _WIN32
 		// hidden and undocumented
 		else if(opname=="DotProdPrecTest"){
-			int nargs = 7; // same as LongAcc, plus an iteration count
+			int nargs = 7; // same as FPLargeAccumulator, plus an iteration count
 			if (i+nargs > argc)
 				usage(argv[0],opname);
 			else {
@@ -1437,13 +1437,13 @@ bool parseCommandLine(int argc, char* argv[], vector<Operator*> &oplist){
 				int LSBA = atoi(argv[i++]);
 				int MSBA = atoi(argv[i++]);
 				int n = atoi(argv[i++]);
-				cerr << "> Test of DotProduct accuracy, wEX="<<wE<<", wFX="<<wFX<<", wFY="<<wFY<<", MaxMSBX="<<MaxMSBX<<", LSBA="<<LSBA<<", MSBA="<<MSBA<<", "<< n << " tests\n";
-				DotProduct * op = new DotProduct(target, wE, wFX, wFY, MaxMSBX, LSBA, MSBA);
+				cerr << "> Test of FPDotProduct accuracy, wEX="<<wE<<", wFX="<<wFX<<", wFY="<<wFY<<", MaxMSBX="<<MaxMSBX<<", LSBA="<<LSBA<<", MSBA="<<MSBA<<", "<< n << " tests\n";
+				FPDotProduct * op = new FPDotProduct(target, wE, wFX, wFY, MaxMSBX, LSBA, MSBA);
 				op->test_precision(n);
 			}    
 		}
 #endif
-		else if(opname=="DotProduct"){
+		else if(opname=="FPDotProduct"){
 			int nargs = 6;
 			if (i+nargs > argc)
 				usage(argv[0],opname);
@@ -1455,8 +1455,8 @@ bool parseCommandLine(int argc, char* argv[], vector<Operator*> &oplist){
 				int LSBA = atoi(argv[i++]); // may be negative
 				int MSBA = atoi(argv[i++]); // may be negative
 				double ratio = atof(argv[i++]); // may be negative
-				cerr << "> DotProduct , wE="<<wE<<", wFX="<<wFX<<", wFY="<<wFY<<", MaxMSBX="<<MaxMSBX<<", LSBA="<<LSBA<<", MSBA="<<MSBA<<", ratio="<<ratio<<"\n";
-				op = new DotProduct(target, wE, wFX, wFY, MaxMSBX, LSBA, MSBA, ratio);
+				cerr << "> FPDotProduct , wE="<<wE<<", wFX="<<wFX<<", wFY="<<wFY<<", MaxMSBX="<<MaxMSBX<<", LSBA="<<LSBA<<", MSBA="<<MSBA<<", ratio="<<ratio<<"\n";
+				op = new FPDotProduct(target, wE, wFX, wFY, MaxMSBX, LSBA, MSBA, ratio);
 				addOperator(oplist, op);
 			}
 		}

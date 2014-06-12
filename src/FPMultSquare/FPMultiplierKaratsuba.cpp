@@ -163,7 +163,7 @@ namespace flopoco{
 				vhdl << tab << "R <= finalExc & sign & expSigPostRound" << range(wER_+wFR_-1, 0)<<";"<<endl;
 			
 			}
-		}else{ //the non-normalized version for DotProduct
+		}else{ //the non-normalized version for FPDotProduct
 				vhdl << tab <<"with expSum" << range(wER_+1, wER_) << " select"<<endl;		
 				vhdl << tab << declare("excPostProc",2) << " <=  \"01\"  when  \"00\","<<endl;
 				vhdl << tab <<"                            \"10\"             when \"01\", "<<endl;

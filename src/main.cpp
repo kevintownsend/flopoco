@@ -313,6 +313,23 @@ void usage(char *name, string opName = ""){
 	}
 
 
+
+	if ( full )
+		cerr << center("FLOATING-POINT COMPOSITE OPERATORS", '_') << "\n";
+
+	if ( full || opName == "FPLargeAccumulator"){					
+		OP( "FPLargeAccumulator","wE_in wF_in MaxMSB_in  MSB_acc LSB_acc");
+		cerr << "Accumulator of floating-point numbers into a large fixed-point accumulator\n";
+	}		
+	if ( full || opName == "LargAccumulatorToFP" || opName == "FPLargeAccumulator"){
+		OP( "LargAccumulatorToFP","MSB_acc LSB_acc wE_out wF_out");
+		cerr << "Post-normalisation unit for FPLargeAccumulator\n";
+	}
+	if ( full || opName == "DotProduct"){					
+		OP( "FPDotProduct","wE wFX wFY MaxMSB_in MSB_acc LSB_acc DSPThreshold");
+		cerr << "Floating-point dot product unit based on FPLargeAccumulator\n";
+	}
+
 	if ( full )
 		cerr << center("FIXED-POINT TRIGONOMETRICS", '_') << "\n";
 
@@ -609,6 +626,7 @@ bool parseCommandLine(int argc, char* argv[]){
 				addOperator(op);
 			}    
 		}
+
 		else if(opname=="RightShifter"){
 			int nargs = 2;
 			if (i+nargs > argc)
@@ -623,6 +641,7 @@ bool parseCommandLine(int argc, char* argv[]){
 				addOperator(op);
 			}
 		}
+
 		else if(opname=="LZOC"){
 			int nargs = 1;
 			if (i+nargs > argc)
@@ -633,6 +652,7 @@ bool parseCommandLine(int argc, char* argv[]){
 				addOperator(op);
 			}
 		}
+
 		else if(opname=="LZOCShifter"){
 			int nargs = 2;
 			if (i+nargs > argc)
@@ -647,6 +667,7 @@ bool parseCommandLine(int argc, char* argv[]){
 					cerr << "wIn must be > 1"<<endl;
 			}
 		}
+
 		else if(opname=="LZCShifter"){
 			int nargs = 2;
 			if (i+nargs > argc)
@@ -661,6 +682,7 @@ bool parseCommandLine(int argc, char* argv[]){
 					cerr << "wIn must be > 1"<<endl;
 			}
 		}
+
 		else if(opname=="LOCShifter"){
 			int nargs = 2;
 			if (i+nargs > argc)
@@ -675,6 +697,7 @@ bool parseCommandLine(int argc, char* argv[]){
 					cerr << "wIn must be > 1"<<endl;
 			}
 		}
+
 		else if(opname=="LZOCShifterSticky"){
 			int nargs = 2;
 			if (i+nargs > argc)
@@ -689,6 +712,7 @@ bool parseCommandLine(int argc, char* argv[]){
 					cerr << "wIn must be > 1"<<endl;
 			}
 		}
+
 		else if(opname=="LZCShifterSticky"){
 			int nargs = 2;
 			if (i+nargs > argc)
@@ -703,6 +727,7 @@ bool parseCommandLine(int argc, char* argv[]){
 					cerr << "wIn must be > 1"<<endl;
 			}
 		}
+
 		else if(opname=="LOCShifterSticky"){
 			int nargs = 2;
 			if (i+nargs > argc)
@@ -728,6 +753,7 @@ bool parseCommandLine(int argc, char* argv[]){
 				addOperator(op);
 			}    
 		}
+
 		else if(opname=="IntAdderExpert"){
 			int nargs = 5;
 			if (i+nargs > argc)
@@ -746,7 +772,6 @@ bool parseCommandLine(int argc, char* argv[]){
 				}else{
 					delayMap["X"] = inputDelay;
 				}
-				
 				switch (type) {
 					case 0: op = new IntAdder(target, wIn, delayMap, 0, srl, implementation); break; //lut optimized
 					case 1: op = new IntAdder(target, wIn, delayMap, 1, srl, implementation); break; //reg
@@ -757,6 +782,7 @@ bool parseCommandLine(int argc, char* argv[]){
 				addOperator(op);
 			}    
 		}
+
 		else if(opname=="IntComparator"){
 			int nargs = 2;
 			if (i+nargs > argc)
@@ -769,6 +795,7 @@ bool parseCommandLine(int argc, char* argv[]){
 				addOperator(op);
 			}    
 		}
+
 		else if(opname=="IntConstComparator"){
 			int nargs = 3;
 			if (i+nargs > argc)
@@ -776,15 +803,13 @@ bool parseCommandLine(int argc, char* argv[]){
 			else {
 				int wIn = checkStrictlyPositive(argv[i++], argv[0]);
 				int criteria = atoi(argv[i++]);
-				int constant = atoi(argv[i++]);
-				
+				int constant = atoi(argv[i++]);				
 				op = new IntComparator(target,wIn,criteria, true, constant);
 				addOperator(op);
 			}    
 		}
 		
-
-		//HIDDEN. Why?
+		//HIDDEN. Why? TODO
 		else if(opname=="IntDualSub"){
 			int nargs = 2;
 			if (i+nargs > argc)
@@ -796,7 +821,6 @@ bool parseCommandLine(int argc, char* argv[]){
 				addOperator(op);
 			}    
 		}
-
 
 		else if(opname=="IntMultiplier"){
 			int nargs = 6;
@@ -881,6 +905,7 @@ bool parseCommandLine(int argc, char* argv[]){
 				addOperator(op);
 			}
 		}		
+
 		else if(opname=="FPAdderDualPath"){
 			int nargs = 2;
 			if (i+nargs > argc)
@@ -893,6 +918,7 @@ bool parseCommandLine(int argc, char* argv[]){
 				addOperator(op);
 			}
 		}
+
 		else if(opname=="FPAdder3Input"){
 			int nargs = 2;
 			if (i+nargs > argc)
@@ -905,6 +931,7 @@ bool parseCommandLine(int argc, char* argv[]){
 				addOperator(op);
 			}
 		}	
+
 		else if(opname=="FPAddSub"){
 			int nargs = 2;
 			if (i+nargs > argc)
@@ -918,7 +945,7 @@ bool parseCommandLine(int argc, char* argv[]){
 			}
 		}	
 
-
+		//-------------------FP Multipliers ----------------------
 
 		else if(opname=="FPMultiplier"){
 			int nargs = 3; 
@@ -930,6 +957,7 @@ bool parseCommandLine(int argc, char* argv[]){
 			op = new FPMultiplier(target, wE, wFIn, wE, wFIn, wE, wFOut, true /*normd*/, true /*CR*/);
 			addOperator(op);
 		} 
+
 		else if(opname=="FPMultiplierFaithful"){
 			int nargs = 3; 
 			if (i+nargs > argc)
@@ -940,6 +968,7 @@ bool parseCommandLine(int argc, char* argv[]){
 			op = new FPMultiplier(target, wE, wFIn, wE, wFIn, wE, wFOut, true, false);
 			addOperator(op);
 		}
+
 		#if 0
 		else if(opname=="FPMultiplierKaratsuba"){
 			int nargs = 3; 
@@ -954,6 +983,7 @@ bool parseCommandLine(int argc, char* argv[]){
 			}
 		}  
 		#endif
+
 		else if(opname=="FPMultiplierExpert"){
 			int nargs = 6; 
 			if (i+nargs > argc)
@@ -968,6 +998,7 @@ bool parseCommandLine(int argc, char* argv[]){
 			op = new FPMultiplier(target, wE, wFXIn, wE, wFYIn, wE, wFOut, true, correctRounding, r);
 			addOperator(op);
 		}  
+
 		else if(opname=="FPSquarer"){
 			int nargs = 3; 
 			if (i+nargs > argc)
@@ -980,8 +1011,6 @@ bool parseCommandLine(int argc, char* argv[]){
 				addOperator(op);
 			}
 		} 
-
-
 
 		//-------------------FP Division and square root ----------------------
 		else if (opname == "FPDiv")
@@ -1006,7 +1035,6 @@ bool parseCommandLine(int argc, char* argv[]){
 		}
 
 		//-------------------CONSTANT MULTIPLICATION AND DIVISION ----------------------
-		
 		
 		else if(opname=="IntIntKCM"){
 			int nargs = 3;
@@ -1092,7 +1120,8 @@ bool parseCommandLine(int argc, char* argv[]){
 				op = new FPConstMult(target, wE_in, wF_in, wE_out, wF_out, cst_sgn, cst_exp, cst_sig);
 				addOperator(op);
 			}        
-		} 	
+		} 
+
 		else if(opname=="FPConstDiv"){
 			int nargs = 3;
 			if (i+nargs > argc)
@@ -1105,6 +1134,7 @@ bool parseCommandLine(int argc, char* argv[]){
 				addOperator(op);
 			}        
 		}
+
 		else if(opname=="FPConstDivExpert"){
 			int nargs = 4;
 			if (i+nargs > argc)
@@ -1151,6 +1181,7 @@ bool parseCommandLine(int argc, char* argv[]){
 				addOperator(op);
 			}        
 		}
+
 		else if(opname=="FPRealKCM"){
 			int nargs = 3;
 			if (i+nargs > argc)
@@ -1163,6 +1194,7 @@ bool parseCommandLine(int argc, char* argv[]){
 				addOperator(op);
 			}        
 		}
+
 		else if(opname=="CRFPConstMult"){ 
 			int nargs = 5;
 			if (i+nargs > argc)
@@ -1177,6 +1209,7 @@ bool parseCommandLine(int argc, char* argv[]){
 				addOperator(op);
 			}        
 		} 	
+
 		else if(opname=="FPConstMult"){ 
 			int nargs = 6;
 			if (i+nargs > argc)
@@ -1193,6 +1226,70 @@ bool parseCommandLine(int argc, char* argv[]){
 			}        
 		} 	
 
+		else if(opname=="FPLargeAccumulator"){
+			int nargs = 5;
+			if (i+nargs > argc)
+				usage(argv[0],opname);
+			else {
+				int wEX = checkStrictlyPositive(argv[i++], argv[0]);
+				int wFX = checkStrictlyPositive(argv[i++], argv[0]);
+				int MaxMSBX = atoi(argv[i++]); // may be negative
+				int MSBA = atoi(argv[i++]); // may be negative
+				int LSBA = atoi(argv[i++]); // may be negative
+				op = new FPLargeAccumulator(target, wEX, wFX, MaxMSBX, MSBA, LSBA);
+				addOperator(op);
+			}
+		}
+
+
+		else if(opname=="LargeAccumulatorToFP"){
+			int nargs = 4;
+			if (i+nargs > argc)
+				usage(argv[0],opname);
+			else {
+				int LSBA = atoi(argv[i++]); // may be negative
+				int MSBA = atoi(argv[i++]); // may be negative
+				int wE_out = checkStrictlyPositive(argv[i++], argv[0]);
+				int wF_out = checkStrictlyPositive(argv[i++], argv[0]);
+				op = new LargeAccumulatorToFP(target, MSBA, LSBA, wE_out, wF_out);
+				addOperator(op);
+			}
+		}
+
+		// hidden and undocumented
+		else if(opname=="FPDotProdPrecTest"){
+			int nargs = 7; // same as FPLargeAccumulator, plus an iteration count
+			if (i+nargs > argc)
+				usage(argv[0],opname);
+			else {
+				int wE = checkStrictlyPositive(argv[i++], argv[0]);
+				int wFX = checkStrictlyPositive(argv[i++], argv[0]);
+				int wFY = checkStrictlyPositive(argv[i++], argv[0]);
+				int MaxMSBX = atoi(argv[i++]);
+				int LSBA = atoi(argv[i++]);
+				int MSBA = atoi(argv[i++]);
+				int n = atoi(argv[i++]);
+				FPDotProduct * op = new FPDotProduct(target, wE, wFX, wFY, MaxMSBX, MSBA, LSBA);
+				op->test_precision(n);
+			}    
+		}
+
+		else if(opname=="FPDotProduct"){
+			int nargs = 6;
+			if (i+nargs > argc)
+				usage(argv[0],opname);
+			else {
+				int wE = checkStrictlyPositive(argv[i++], argv[0]);
+				int wFX = checkStrictlyPositive(argv[i++], argv[0]);
+				int wFY = checkStrictlyPositive(argv[i++], argv[0]);
+				int MaxMSBX = atoi(argv[i++]); // may be negative
+				int LSBA = atoi(argv[i++]); // may be negative
+				int MSBA = atoi(argv[i++]); // may be negative
+				double ratio = atof(argv[i++]); // may be negative
+				op = new FPDotProduct(target, wE, wFX, wFY, MaxMSBX, MSBA, LSBA, ratio);
+				addOperator(op);
+			}
+		}
 
 
 		//-------------------FUNCTION EVALUATORS----------------------

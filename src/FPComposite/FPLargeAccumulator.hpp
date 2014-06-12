@@ -1,10 +1,10 @@
-#ifndef LONGACC_HPP
-#define LONGACC_HPP
+#ifndef FPLARGEACCUMULATOR_HPP
+#define FPLARGEACCUMULATOR_HPP
 #include <gmp.h>
 #include <mpfr.h>
 #include <gmpxx.h>
 #include "Operator.hpp"
-#include "Shifters.hpp"
+#include "ShiftersEtc/Shifters.hpp"
 #include "TestBenches/FPNumber.hpp"
 #include "utils.hpp"
 
@@ -12,7 +12,7 @@ namespace flopoco{
 
 	/** Implements a long, fixed point accumulator for accumulating floating point numbers
 	 */
-	class LongAcc : public Operator
+	class FPLargeAccumulator : public Operator
 	{
 	public:
 		/** Constructor
@@ -23,10 +23,10 @@ namespace flopoco{
 		 * @param LSBA the weight of the least significand bit of the accumulator
 		 * @param MSBA the weight of the most significand bit of the accumulator
 		 */ 
-		LongAcc(Target* target, int wEX, int wFX, int MaxMSBX, int LSBA, int MSBA, map<string, double> inputDelays = emptyDelayMap, bool forDotProd = false, int wFY = -1);
+		FPLargeAccumulator(Target* target, int wEX, int wFX, int MaxMSBX, int MSBA, int LSBA, map<string, double> inputDelays = emptyDelayMap, bool forDotProd = false, int wFY = -1);
 	
 		/** Destructor */
-		~LongAcc();
+		~FPLargeAccumulator();
 	
 		void test_precision(int n); /**< Undocumented */
 		void test_precision2(); /**< Undocumented */

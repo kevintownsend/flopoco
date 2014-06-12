@@ -7,12 +7,12 @@
 
 #define USE_SQUARER 1
 
-#include "Shifters.hpp"
-#include "IntAdder.hpp"
+#include "ShiftersEtc/Shifters.hpp"
+#include "IntAddSubCmp/IntAdder.hpp"
 #if USE_SQUARER
-#include "IntSquarer.hpp"
+#include "IntMult/IntSquarer.hpp"
 #else
-#include "IntMultiplier.hpp"
+#include "IntMult/IntMultiplier.hpp"
 #endif
 
 using namespace std;

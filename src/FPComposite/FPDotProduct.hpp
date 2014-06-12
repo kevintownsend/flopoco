@@ -1,5 +1,5 @@
-#ifndef DOTPRODUCT_HPP
-#define DOTPRODUCT_HPP
+#ifndef FPDOTPRODUCT_HPP
+#define FPDOTPRODUCT_HPP
 #include <vector>
 #include <sstream>
 #include <gmp.h>
@@ -8,18 +8,18 @@
 #include <cstdlib>
 
 #include "Operator.hpp"
-#include "IntMultiplier.hpp"
-#include "LongAcc.hpp"
+#include "IntMult/IntMultiplier.hpp"
+#include "FPLargeAccumulator.hpp"
 
 namespace flopoco{
 
-	/** The DotProduct class.  */
-	class DotProduct : public Operator
+	/** The FPDotProduct class.  */
+	class FPDotProduct : public Operator
 	{
 	public:
 
 		/**
-		 * The DotProduct constructor
+		 * The FPDotProduct constructor
 		 * @param[in]		target	the target device
 		 * @param[in]		wE			the width of the exponent for the inputs X and Y
 		 * @param[in]		wFX     the width of the fraction for the input X
@@ -28,12 +28,12 @@ namespace flopoco{
 		 * @param[in]		LSBA    The weight of the LSB of the accumulator; determines the final accuracy of the result
 		 * @param[in]		MSBA    The weight of the MSB of the accumulator; has to greater than that of the maximal expected result
 		 **/ 
-		DotProduct(Target* target, int wE, int wFX, int wFY, int MaxMSBX, int LSBA, int MSBA, double ratio = 0.9, map<string, double> inputDelays = emptyDelayMap);
+		FPDotProduct(Target* target, int wE, int wFX, int wFY, int MaxMSBX, int MSBA, int LSBA, double ratio = 0.9, map<string, double> inputDelays = emptyDelayMap);
 
 		/**
-		 * DotProduct destructor
+		 * FPDotProduct destructor
 		 */
-		~DotProduct();
+		~FPDotProduct();
 
 	
 		/**

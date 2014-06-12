@@ -438,7 +438,7 @@ public:
 	void resizeFixPoint(string lhsName, string rhsName, const int MSB, const int LSB, const int indentLevel=1);
 
 
-	// TODO: add methods that allow for signals with reset (when rewriting LongAcc for the new framework)
+	// TODO: add methods that allow for signals with reset (when rewriting FPLargeAccumulator for the new framework)
 
 
 #if 1

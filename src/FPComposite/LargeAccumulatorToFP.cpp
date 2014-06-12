@@ -27,22 +27,22 @@
 
 #include "utils.hpp"
 #include "Operator.hpp"
-#include "LongAcc2FP.hpp"
-#include "IntAdder.hpp"
+#include "LargeAccumulatorToFP.hpp"
+#include "ShiftersEtc/Shifters.hpp"
 
 using namespace std;
 
 namespace flopoco{
 
-	LongAcc2FP::LongAcc2FP(Target* target, int LSBA, int MSBA, int wEOut, int wFOut): 
+	LargeAccumulatorToFP::LargeAccumulatorToFP(Target* target, int MSBA, int LSBA, int wEOut, int wFOut): 
 		Operator(target), 
 		LSBA_(LSBA), MSBA_(MSBA), wEOut_(wEOut), wFOut_(wFOut)
 	{
-		srcFileName = "LongAcc2FP";
+		srcFileName = "LargeAccumulatorToFP";
 		ownTarget_ = target;
 		ostringstream name;
 		setCopyrightString("Bogdan Pasca (2008-2011)");		
-		name <<"LongAcc2FP_"
+		name <<"LargeAccumulatorToFP_"
 			  <<(LSBA_>=0?"":"M")<<abs(LSBA_)<<"_"
 			  <<(MSBA_>=0?"":"M")<<abs(MSBA_)<<"_"
 			  <<wEOut_<<"_"<<wFOut_;
@@ -158,10 +158,10 @@ namespace flopoco{
 		outDelayMap["R"] = getCriticalPath();
 	}
 
-	LongAcc2FP::~LongAcc2FP() {
+	LargeAccumulatorToFP::~LargeAccumulatorToFP() {
 	}
 	
-	void LongAcc2FP::emulate(TestCase *tc)
+	void LargeAccumulatorToFP::emulate(TestCase *tc)
 	{
 		/* Get I/O values */
 		mpz_class svA           = tc->getInputValue("A");
@@ -212,10 +212,10 @@ namespace flopoco{
 		mpfr_clears(x, myFP, NULL);
 	}
 	
-	void LongAcc2FP::buildStandardTestCases(TestCaseList* tcl){
+	void LargeAccumulatorToFP::buildStandardTestCases(TestCaseList* tcl){
 	}
 
-	TestCase* LongAcc2FP::buildRandomTestCase(int i){
+	TestCase* LargeAccumulatorToFP::buildRandomTestCase(int i){
 
 		TestCase *tc;
 		mpz_class A,C;

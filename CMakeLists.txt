@@ -281,6 +281,12 @@ src/FPDivSqrt/FPSqrt
 # src/FPDivSqrt/FPSqrtPoly # Resurrect some day?
 
 
+# Composite operators
+src/FPComposite/FPLargeAccumulator 
+src/FPComposite/LargeAccumulatorToFP 
+src/FPComposite/FPDotProduct 
+src/FPComposite/FP2DNorm
+
 
 # Generic fixed-point function evaluators ---------------------------
  src/Table 

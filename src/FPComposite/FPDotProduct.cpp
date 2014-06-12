@@ -28,21 +28,21 @@
 #include "utils.hpp"
 #include "Operator.hpp"
 
-#include "DotProduct.hpp"
-#include "FPMultiplier.hpp"
+#include "FPDotProduct.hpp"
+#include "FPMultSquare/FPMultiplier.hpp"
 
 
 using namespace std;
 
 namespace flopoco{
 
-	DotProduct::DotProduct(Target* target, int wE, int wFX, int wFY, int MaxMSBX, int LSBA, int MSBA, double ratio,  map<string, double> inputDelays):
+	FPDotProduct::FPDotProduct(Target* target, int wE, int wFX, int wFY, int MaxMSBX, int MSBA, int LSBA, double ratio,  map<string, double> inputDelays):
 		Operator(target), wE(wE), wFX(wFX), wFY(wFY), MaxMSBX(MaxMSBX), LSBA(LSBA), MSBA(MSBA)  {
 	
 		ostringstream name;
 
-		srcFileName="DotProduct";
-		name <<"DotProduct_"<<wE<<"_"<<wFX<<"_"<<wFY<<"_"
+		srcFileName="FPDotProduct";
+		name <<"FPDotProduct_"<<wE<<"_"<<wFX<<"_"<<wFY<<"_"
 			  <<(MaxMSBX>=0?"":"M")<<abs(MaxMSBX)<<"_"
 			  <<(LSBA>=0?"":"M")<<abs(LSBA)<<"_"
 			  <<(MSBA>=0?"":"M")<<abs(MSBA) ;
@@ -140,7 +140,7 @@ namespace flopoco{
 		syncCycleFromSignal("mFrac", getSignalDelay("mFrac"));			
 
 		/* now we instantiate the accumulator */
-		LongAcc* la = new LongAcc(target, wE, wFX, MaxMSBX, LSBA, MSBA, inDelayMap("sigX_dprod",target->localWireDelay() + getCriticalPath()),true, wFY);
+		FPLargeAccumulator* la = new FPLargeAccumulator(target, wE, wFX, MaxMSBX, MSBA, LSBA, inDelayMap("sigX_dprod",target->localWireDelay() + getCriticalPath()),true, wFY);
 		oplist.push_back(la);
 		
 		inPortMap( la, "sigX_dprod", "signP");
@@ -166,10 +166,10 @@ namespace flopoco{
 		vhdl << tab << "AccOverflow <= accAccOverflow;"<<endl;
 	}
 
-	DotProduct::~DotProduct() {
+	FPDotProduct::~FPDotProduct() {
 	}
 
-	void DotProduct::test_precision(int n) {
+	void FPDotProduct::test_precision(int n) {
 		mpfr_t ref_acc, long_acc, fp_acc, x, y, r_mul_longAcc, r_mul_fp, d, one, two, msb;
 		double sum, error;
 
@@ -258,7 +258,7 @@ namespace flopoco{
 		sum=mpfr_get_d(fp_acc, GMP_RNDN);
 		cout << "   FPAcc="<< sum;
 		sum=mpfr_get_d(long_acc, GMP_RNDN);
-		cout << "   LongAcc="<< sum;
+		cout << "   FPLargeAccumulator="<< sum;
 
 		cout <<endl << n << " & ";
 		// compute the error for the FP adder
@@ -331,7 +331,7 @@ namespace flopoco{
 		sum=mpfr_get_d(fp_acc, GMP_RNDN);
 		cout << "   FPAcc="<< sum;
 		sum=mpfr_get_d(long_acc, GMP_RNDN);
-		cout << "   LongAcc="<< sum;
+		cout << "   FPLargeAccumulator="<< sum;
 		cout <<endl;
 	}
 }

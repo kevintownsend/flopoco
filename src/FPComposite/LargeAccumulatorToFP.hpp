@@ -1,18 +1,18 @@
-#ifndef LONGACC2FP_HPP
-#define LONGACC2FP_HPP
+#ifndef LARGACCUMULATORTOFP_HPP
+#define LARGACCUMULATORTOFP_HPP
 #include <gmp.h>
 #include <mpfr.h>
 #include <gmpxx.h>
 #include "Operator.hpp"
-#include "Shifters.hpp"
-#include "LZOCShifterSticky.hpp"
-#include "IntAdder.hpp"
+#include "ShiftersEtc/LZOCShifterSticky.hpp"
+#include "IntAddSubCmp/IntAdder.hpp"
+
 
 namespace flopoco{
 
 	/** Operator which converts the output of the long accumulator to the desired FP format
 	 */
-	class LongAcc2FP : public Operator
+	class LargeAccumulatorToFP : public Operator
 	{
 	public:
 
@@ -24,10 +24,10 @@ namespace flopoco{
 		 * @param wEOut the width of the output exponent 
 		 * @param eFOut the width of the output fractional part
 		 */ 
-		LongAcc2FP(Target* target, int LSBA, int MSBA, int wEOut, int wFOut);
+		LargeAccumulatorToFP(Target* target, int MSBA, int LSBA, int wEOut, int wFOut);
 
 		/** Destructor */
-		~LongAcc2FP();
+		~LargeAccumulatorToFP();
 		
 		void emulate(TestCase * tc);
 		
