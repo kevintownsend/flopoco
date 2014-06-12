@@ -125,8 +125,8 @@ noinst_HEADERS = \
           IntMultipliers/FixSinPoly.hpp \
           IntMultipliers/FixXPow3Div6.hpp \
           ConstMult/IntConstDiv3.hpp \
-          LongAcc2FP.hpp \
-          LongAcc.hpp LZOC.hpp \
+          LargeAccToFP.hpp \
+          FPLargeAcc.hpp LZOC.hpp \
           OutputIEEE.hpp \
           Shifters.hpp \
           FixedPointFunctions/Function.hpp \
@@ -296,8 +296,8 @@ libflopoco_la_SOURCES = \
                         FPLog.cpp \
                         FPExp.cpp \
                         FPPow.cpp \
-                        LongAcc.cpp \
-                        LongAcc2FP.cpp \
+                        FPLargeAcc.cpp \
+                        LargeAccToFP.cpp \
                         FPSumOf3Squares.cpp \
                         Fix2FP.cpp \
                         InputIEEE.cpp \

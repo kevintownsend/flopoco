@@ -212,12 +212,12 @@ flopoco FPSqrtPoly 11 52 5
 #    CRFPConstMult wE_in wF_in wE_out wF_out constant_expr
 #TODO
 
-#    LongAcc wE_in wF_in MaxMSB_in LSB_acc MSB_acc
+#    FPLargeAcc wE_in wF_in MaxMSB_in LSB_acc MSB_acc
 #TODO, no EMULATE YET
-#flopoco LongAcc 8 23 30 -30 50
-#flopoco LongAcc 11 52 50 -50 60
+#flopoco FPLargeAcc 8 23 30 -30 50
+#flopoco FPLargeAcc 11 52 50 -50 60
 
-#    LongAcc2FP LSB_acc MSB_acc wE_out wF_out
+#    LargeAccToFP LSB_acc MSB_acc wE_out wF_out
 #TODO
 
 

@@ -22,7 +22,7 @@ _flopoco()
 			FPMult FPMultFaithful FPMultKaratsuba FPMultExpert FPSquare \ 
 			FPDiv FPSqrt FP2DNorm FPSqrtPoly \ 
 			FPConstMult CRFPConstMult FPConstMultRational FPConstMultExpert FPRealKCM \ 
-			LongAcc LongAcc2FP DotProduct \ 
+			FPLargeAcc LargeAccToFP DotProduct \ 
 			FPExp FPExpExpert FPLog FPPowr FPPow FPPower FPPowerExpert \ 
 			OutputIEEE InputIEEE \ 
 			FixSinCos FixSinOrCos SinCos CordicSinCos \ 
@@ -36,7 +36,7 @@ _flopoco()
 			
 	shopt -s extglob
 	
-	shortops='+(UserDefinedOperator|LeftShifter|RightShifter|LZOC|LZOCShifter|LZCShifte|LOCShifter|LZOCShifterSticky|LZCShifterSticky|LOCShifterSticky|IntAdder|IntAdderExpert|LongIntAdderAddAddMux|LongIntAdderCmpAddInc|LongIntAdderCmpCmpAdd|\IntDualSub|IntNAdder|IntMultiAdder|IntCompressorTree|NewCompressorTree|PopCount|BasicCompressor|IntMultiplier|FixSinPoly|FixXPow3Div6|IntConstDiv3|IntMultAdd|IntKaratsuba|IntSquarer|IntPower|IntConstMult|IntIntKCM|FixRealKCM|FixedPointFIR|FixedPointDCT|IntConstDiv|IntConstRem|FPConstDiv|FPPipeline|Fix2FP|FP2Fix|FPAdd|FPAddDualPath|FPAdd3Input|FPAddSub|FPMult|FPMultFaithful|FPMultKaratsuba|FPMultExpert|FPSquare|FPDiv|FPSqrt|FP2DNorm|FPSqrtPoly|FPConstMult|CRFPConstMult|FPConstMultRational|FPConstMultExpert|FPRealKCM|LongAcc|LongAcc2FP|DotProduct|FPExp|FPExpExpert|FPLog|FPPowr|FPPow|FPPower|FPPowerExpert|OutputIEEE|InputIEEE|FixSinCos|FixSinOrCos|SinCos|CordicSinCos|FunctionEvaluator|HOTBM|HOTBMFX|HOTBMRange|Complex|FixComplexAdder|FixComplexMultiplier|LNSAddSub|LNSMul|LNSDiv|LNSSqrt|LNSAddSub|LNSMul|LNSDiv|LNSSqrt|AtanPow|Collision|FPSumOf3Squares)'
+	shortops='+(UserDefinedOperator|LeftShifter|RightShifter|LZOC|LZOCShifter|LZCShifte|LOCShifter|LZOCShifterSticky|LZCShifterSticky|LOCShifterSticky|IntAdder|IntAdderExpert|LongIntAdderAddAddMux|LongIntAdderCmpAddInc|LongIntAdderCmpCmpAdd|\IntDualSub|IntNAdder|IntMultiAdder|IntCompressorTree|NewCompressorTree|PopCount|BasicCompressor|IntMultiplier|FixSinPoly|FixXPow3Div6|IntConstDiv3|IntMultAdd|IntKaratsuba|IntSquarer|IntPower|IntConstMult|IntIntKCM|FixRealKCM|FixedPointFIR|FixedPointDCT|IntConstDiv|IntConstRem|FPConstDiv|FPPipeline|Fix2FP|FP2Fix|FPAdd|FPAddDualPath|FPAdd3Input|FPAddSub|FPMult|FPMultFaithful|FPMultKaratsuba|FPMultExpert|FPSquare|FPDiv|FPSqrt|FP2DNorm|FPSqrtPoly|FPConstMult|CRFPConstMult|FPConstMultRational|FPConstMultExpert|FPRealKCM|FPLargeAcc|LargeAccToFP|DotProduct|FPExp|FPExpExpert|FPLog|FPPowr|FPPow|FPPower|FPPowerExpert|OutputIEEE|InputIEEE|FixSinCos|FixSinOrCos|SinCos|CordicSinCos|FunctionEvaluator|HOTBM|HOTBMFX|HOTBMRange|Complex|FixComplexAdder|FixComplexMultiplier|LNSAddSub|LNSMul|LNSDiv|LNSSqrt|LNSAddSub|LNSMul|LNSDiv|LNSSqrt|AtanPow|Collision|FPSumOf3Squares)'
 			
 	case "${prev}" in
 		-outputfile)

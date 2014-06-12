@@ -77,7 +77,7 @@ ConstMult:
 * compare with Spiral.net and Gustafsson papers
 * Implement the continued fraction stuff for FPCRConstMult
 
-SumOfProducts, LongAcc
+SumOfProducts, FPLargeAcc
 * add test bench generation
 
 Shifters
@@ -93,7 +93,7 @@ Tentative roadmap
 We have left  0.xx for 1.xx when all the basic operators have been backported with working pipeline):
 
 Version 0.1: IntConstMult, FPConstMult, FPCRConstMult
-Version 0.4: LongAccumulator, FPMult
+Version 0.4: FPLargeAccumulator, FPMult
 Version 0.5 : HOTBM integration 
 Version 0.6 : FPLog
 Version 0.7 : FPExp

@@ -189,7 +189,7 @@
 #include "FPSqrtPoly.hpp"
 
 #include "FPComposite/FPLargeAcc.hpp"
-#include "FPLargeAcc2FP.hpp"
+#include "LargeAccToFP.hpp"
 
 #include "FPFPComposite/FPDotProduct.hpp"
 #include "FPSumOf3Squares.hpp"

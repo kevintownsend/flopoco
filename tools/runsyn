@@ -290,7 +290,7 @@ if [ $# -gt 2 ]; then
 	echo "                > op3={yes|no|auto} the synthetis option for use DSP48"
 	echo "======================================================================="
 	echo "Example: "
-	echo "runsyn LongAcc_8_23_15_M30_20 seq_400_auto"
+	echo "runsyn FPLargeAcc_8_23_15_M30_20 seq_400_auto"
 	echo "Exiting ..."
 	exit
 fi

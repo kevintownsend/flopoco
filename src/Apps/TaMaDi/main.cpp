@@ -1409,7 +1409,7 @@ bool parseCommandLine(int argc, char* argv[], vector<Operator*> &oplist){
 			}    
 		}
 
-		else if(opname=="FPLargeAcc2FP"){
+		else if(opname=="LargeAccToFP"){
 			int nargs = 4;
 			if (i+nargs > argc)
 				usage(argv[0],opname);
@@ -1419,7 +1419,7 @@ bool parseCommandLine(int argc, char* argv[], vector<Operator*> &oplist){
 				int wE_out = checkStrictlyPositive(argv[i++], argv[0]);
 				int wF_out = checkStrictlyPositive(argv[i++], argv[0]);
 				cerr << "> Post-Normalization unit for Long accumulator, LSBA="<<LSBA<<", MSBA="<<MSBA<<" wE_out="<<wE_out<<", wF_out="<<wF_out<<"\n";
-				op = new FPLargeAcc2FP(target, LSBA, MSBA, wE_out, wF_out);
+				op = new LargeAccToFP(target, LSBA, MSBA, wE_out, wF_out);
 				addOperator(oplist, op);
 			}
 		}

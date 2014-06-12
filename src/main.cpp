@@ -308,8 +308,8 @@ void usage(char *name, string opName = ""){
 		OP( "FPLargeAcc","wE_in wF_in MaxMSB_in  MSB_acc LSB_acc");
 		cerr << "Accumulator of floating-point numbers into a large fixed-point accumulator\n";
 	}		
-	if ( full || opName == "LargAccumulatorToFP" || opName == "FPLargeAcc"){
-		OP( "LargAccumulatorToFP","MSB_acc LSB_acc wE_out wF_out");
+	if ( full || opName == "LargAccToFP" || opName == "FPLargeAcc"){
+		OP( "LargAccToFP","MSB_acc LSB_acc wE_out wF_out");
 		cerr << "Post-normalisation unit for FPLargeAcc\n";
 	}
 	if ( full || opName == "DotProduct"){					

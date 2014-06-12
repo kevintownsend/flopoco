@@ -4,7 +4,7 @@ Get rid of the useBitHeap arg in KCMs
 	 This is triggered by FunctionTable being renamed to FixFunctionByTable
    (not that bad, need to replace wIn with lsbIn=-wIn, and exchange lsbOut and msbOut)
 
--reverse MSB and LSB in LongAcc etc
+-reverse MSB and LSB in FPLargeAcc etc
 
 
 - Check all these registered etc nonsense in Signal. Is it really used?
