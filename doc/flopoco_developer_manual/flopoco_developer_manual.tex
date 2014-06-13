@@ -53,7 +53,7 @@ In FloPoCo, everything is an \texttt{Operator}. Operator is a virtual
 class, all FloPoCo operators inherit this class. A good way to design
 a new operator is to imitate a simple one. We suggest
 %\texttt{IntAdder} or 
-\texttt{Shifter} for simple integer operators, and \texttt{FPAdderSinglePath}
+\texttt{Shifter} for simple integer operators, and \texttt{FPAddSinglePath}
 for a complex operator with several sub-components. An example of
 assembling several FP operators in a larger pipeline is
 \texttt{Collision}.
@@ -294,7 +294,7 @@ Some more notes:
     signals by setting \verb!currentCycle! to the max of their
     \verb!cycle!.
 
-See \verb!FPAdderSinglePath! or \verb!FPLog! for examples of
+See \verb!FPAddSinglePath! or \verb!FPLog! for examples of
   such synchronisations. 
   \end{itemize}
 
@@ -487,8 +487,8 @@ to be overloaded by each Operator. As the name indicates, this method
 provides a bit-accurate simulation of the operator.
  
 Once this method is available, the command\\
- \texttt{flopoco FPAdder 8 23 TestBenchFile 500} \\
-produces a test bench of 500 test vectors to exercise \texttt{\small FPAdder}. 
+ \texttt{flopoco FPAdd 8 23 TestBenchFile 500} \\
+produces a test bench of 500 test vectors to exercise \texttt{\small FPAdd}. 
 
 This test bench is properly synchronized in case of a combinatorial
 operator. This is managed by the \texttt{\small TestBenchFile} operator:
@@ -540,7 +540,7 @@ When the input/outputs are floating-point numbers, the most convenient multiple-
 \item compute the expected results, using functions from the MPFR library;
 \item convert the resulting MPFR number into its bit vector, encoded in an \texttt{\small mpz\_class}, before completing the \texttt{\small TestCase}. 
 \end{itemize}
-This double conversion is a bit cumbersome, but may be copy-pasted from one existing operator: Imitate \texttt{\small FPAdderSinglePath} or \texttt{\small FPExp}.
+This double conversion is a bit cumbersome, but may be copy-pasted from one existing operator: Imitate \texttt{\small FPAddSinglePath} or \texttt{\small FPExp}.
 
 
 \subsubsection{Fully and weakly specified operators}
@@ -549,7 +549,7 @@ This double conversion is a bit cumbersome, but may be copy-pasted from one exis
   \texttt{\small IntAdder} above. For floating-point
   operators, this unique output is the combination of a mathematical
   function and a well-defined rounding mode. The bit-exact MPFR
-  library is used in this case. Imitate \texttt{\small FPAdderSinglePath} in this case.
+  library is used in this case. Imitate \texttt{\small FPAddSinglePath} in this case.
 
  Other operators are not defined so strictly, and may have
   several acceptable output values. The last parameter of \texttt{\small addOutput}
@@ -595,7 +595,7 @@ generation. Let us just take two examples.
 \subsection{Corner-cases and regression tests}
 Finally, \texttt{\small buildStandardTestCases()} allows to test
 corner cases which random testing has little chance to find. See
-\texttt{\small FPAdderSinglePath.cpp} for examples. 
+\texttt{\small FPAddSinglePath.cpp} for examples. 
 
 Here, it is often useful to add
 a comment to a test case using \texttt{\small addComment}: these comments

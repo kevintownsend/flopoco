@@ -54,8 +54,8 @@ The new version brings with it:
 - FPPipeline assembles floating-point computational pipelines 
   from a C-like description (early alpha)
 - a smaller (single path) architecture for floating-point addition
-  (now the default architecture when calling FPAdder)
-- 3-operand FPAdder
+  (now the default architecture when calling FPAdd)
+- 3-operand FPAdd
 - KCM constant multipliers, including a FixRealKCM and FPRealKCM
 - some bug-fixes
 - plenty of other improvements of other operators, especially due to 
@@ -99,7 +99,7 @@ There are few new operators, but they will boost future developments:
 
 ======================================================================
 Version 1.15.2
-- fixes a bug in LongAcc2FP
+- fixes a bug in LargeAccToFP
 - introduces autotools support thanks to Daniele Mastrandrea, 
     for people wanting to link to an autotools-based project
 - introduces a Tobin Tax restriction in the license, 
@@ -118,7 +118,7 @@ Heaps of bugfixes, too.
 
 ======================================================================
 Version 1.15.0 adds a Karatsuba multiplier (Virtex-only so far),
-FPSquarer, FPSQrt, Fix2FP, InputIEEE, and a lot of cleaning up and bug fixes.
+FPSquare, FPSQrt, Fix2FP, InputIEEE, and a lot of cleaning up and bug fixes.
 With FPSqrt, we now have the 4 basic operations, so we proudly leave
 the 0.xxx version numbers for 1.xxx, and drop FPLibrary for good.
 
@@ -130,7 +130,7 @@ version is the first with Pipeline Made Easy, the new framework for
 cycle-based pipeline description.
 
 ======================================================================
-Version 0.9.3 corrects a bug in FPAdder (adding zero was giving wrong
+Version 0.9.3 corrects a bug in FPAdd (adding zero was giving wrong
 results). Thanks to A. Rolim for pointing it out.
 
 ======================================================================
@@ -138,7 +138,7 @@ Version 0.9.2 corrects bugs in FPConstMult and cleans up the pipeline
 framework.
 
 ======================================================================
-Version 0.9.1 vastly improves FPAdder, stabilizes LongAcc, and sees an
+Version 0.9.1 vastly improves FPAdd, stabilizes FPLargeAcc, and sees an
 invasion of Logarithm Number System operators developed by external
 contributor Sylvain Collange.
 
@@ -149,9 +149,9 @@ accurate. It may be the right thing for your application.
 
 ======================================================================
 Version 0.8beta introduces FPLog and FPExp operators (currently not
-pipelined) and LongAcc2FP. It improves automatic test bench
+pipelined) and LargeAccToFP. It improves automatic test bench
 generation.  It also introduces the Altera Stratix II target.  It
-improves pipelining of LongAcc and FPMultiplier, and introduces
+improves pipelining of FPLargeAcc and FPMult, and introduces
 pipelined version of IntConstMult (still buggy for some large
 constants).  This is still a beta release, comments and bug reports
 welcome.
@@ -176,12 +176,12 @@ defined and n-times continuously differentiable on the domain).
 Version 0.4beta provides the following operators:
     LeftShifter, RightShifter, LZOC, IntAdder 
        building blocks of FP computing, pipelined
-    LongAcc
+    FPLargeAcc
        An operator for efficient and accurate accumulation 
        of floating-point numbers, partly pipelined 
     IntConstMult, FPConstMult
        optimized constant multipliers in integer and FP flavor 
-    IntMultiplier, FPMultiplier 
+    IntMultiplier, FPMult 
        multipliers with automatic pipeline generation
 
 In addition, this distribution provides the useful conversion tools 

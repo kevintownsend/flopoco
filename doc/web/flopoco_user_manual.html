@@ -122,7 +122,7 @@ especially if you are using a svn snapshot.</p>
 binary string of a floating-point number to human-readable form
 (<code>bin2fp</code>) and back (<code>fp2bin</code>). The
 <code>longacc2fp</code> utility converts the fixed-point output of the
-LongAcc operator (see below) to human-readable form.</p>
+FPLargeAcc operator (see below) to human-readable form.</p>
 
 <p></p>
 
@@ -252,8 +252,8 @@ operators that follow them.
 		higher one). However, in such cases, increasing or decreasing
 		the target frequency should also increase or decrease the
 		obtained frequency. Note that you may do so on a per-operator
-		basis, as in: <code>flopoco -frequency=200 FPAdder 11 52
-		-frequency=300 FPMultiplier 8 23</code></li>
+		basis, as in: <code>flopoco -frequency=200 FPAdd 11 52
+		-frequency=300 FPMult 8 23</code></li>
 
 	 <li> If the obtained frequency is higher than needed, reducing
 	 the <code>-frequency</code> option may save resources.</li>
@@ -388,15 +388,15 @@ compatible with IEEE-754, with the exception that subnormal numbers
 are flushed to zero.
 
 <dl>
-  <dt><code style="color: blue;">FPMultiplier wE wF</code></dt>
+  <dt><code style="color: blue;">FPMult wE wF</code></dt>
     <dd>A floating-point multiplier. The actual FloPoCo
       component supports different input and output sizes, but this is
       not available from the command line.</dd>
-  <dt><code style="color: blue;">FPAdder wE wF</code></dt>
+  <dt><code style="color: blue;">FPAdd wE wF</code></dt>
     <dd>A floating-point adder with a new, more compact single-path architecture.</dd>
-  <dt><code style="color: blue;">FPAdderDualPath wE wF</code></dt>
-    <dd>A previous FPAdder architecture. Trades a larger circuit size for a smaller latency.</dd>
-  <dt><code style="color: blue;">FPAdder3Input wE wF</code></dt>
+  <dt><code style="color: blue;">FPAddDualPath wE wF</code></dt>
+    <dd>A previous FPAdd architecture. Trades a larger circuit size for a smaller latency.</dd>
+  <dt><code style="color: blue;">FPAdd3Input wE wF</code></dt>
     <dd>A 3-operand floating-point adder</dd>
   <dt><code style="color: blue;">FPAddSub wE wF</code></dt>
     <dd>A fused floating-point adder and subtracter, computes both a+b and a-b</dd>
@@ -406,7 +406,7 @@ are flushed to zero.
     <dd>A floating-point square root using the classical digit-recurrence algorithm. This implementation returns a correctly rounded result, uses no DSP nor RAM blocks and has low LUT usage. However, the latency can be as high as wF for high frequencies, and the frequency is limited for large wF. An alternative is FPSqrtPoly below.</dd>
   <dt><code style="color: blue;">FPSqrtPoly wE wF  CorrectlyRounded Degree</code></dt>
     <dd>A floating-point square root using a polynomial approximation. It consumes DSP and RAM blocks, but can reach higher frequencies than FPSqrt, and has lower latency. CorrectlyRounded (0/1) is a boolean selecting the rounding mode. If set to 0, the operator will only be faithful (last-bit accurate, but not necessarily correctly rounded). This saves a lot of resources. Degree is an integer (typically between 2 and 5) that defines the degree of the polynomial approximation, and allows the user to trade-off between DSP usage, latency and memory consumption. Lower degree means lower latency and DSP count, but larger consumption of embedded memory. </dd>
-  <dt><code style="color: blue;">FPSquarer wE wF</code></dt>
+  <dt><code style="color: blue;">FPSquare wE wF</code></dt>
     <dd>A floating-point squarer, using IntSquarer for the mantissa.</dd>
 </dl>
 
@@ -457,7 +457,7 @@ These operators are described in all the gory details
 in <a href="http://prunel.ccsd.cnrs.fr/ensl-00268348/">this
 article</a>.
 <dl>
-  <dt><code style="color: blue;">LongAcc wE_in wF_in MaxMSB_in LSB_acc MSB_acc</code></dt>
+  <dt><code style="color: blue;">FPLargeAcc wE_in wF_in MaxMSB_in LSB_acc MSB_acc</code></dt>
     <dd>Long fixed-point accumulator. By tuning
     the <code>MaxMSB_in</code>, <code>LSB_acc</code>
     and <code>MSB_acc</code> parameters to a given application, it
@@ -465,14 +465,14 @@ article</a>.
     level (and in some case to avoid any rounding), for a very small hardware cost compared to using a
     floating-point adder for accumulation.
 	 </dd>
-  <dt><code style="color: blue;">DotProduct wE_in wF_X wF_Y MaxMSB_in LSB_acc MSB_acc</code></dt>
+  <dt><code style="color: blue;">FPDotProduct wE_in wF_X wF_Y MaxMSB_in LSB_acc MSB_acc</code></dt>
     <dd>Dot product operator. It feeds a long accumulator with the
       unrounded result of a floating-point multiplier, thus removing
       rounding errors from the multiplication as well.
 	 </dd>
-  <dt><code style="color: blue;">LongAcc2FP MaxMSB_in LSB_acc MSB_acc wE_out wF_out</code></dt>
-    <dd>  Post-normalisation unit for LongAcc. It converts the output of a
-      LongAcc or DotProduct (with the same parameters) into a floating-point
+  <dt><code style="color: blue;">LargeAccToFP MaxMSB_in LSB_acc MSB_acc wE_out wF_out</code></dt>
+    <dd>  Post-normalisation unit for FPLargeAcc. It converts the output of a
+      FPLargeAcc or FPDotProduct (with the same parameters) into a floating-point
       number.
 	 </dd>
 </dl>
@@ -767,7 +767,7 @@ The test vectors are coded in the VHDL of the test bench, and can therefore be e
 <p>If n=-2, and exhaustive test is generated. If n=-1, no file is generated.</p>
 
 <p>Example:<br/>
-<code>flopoco FPAdder 8 16  TestBenchFile 20000</code>
+<code>flopoco FPAdd 8 16  TestBenchFile 20000</code>
 </p>
 	</dd>
 </dl>
