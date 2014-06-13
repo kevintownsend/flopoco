@@ -36,7 +36,8 @@ namespace flopoco{
 #define DEBUGVHDL 0
 
 
-FPAddSinglePath::FPAddSinglePath(Target* target, int wEX, int wFX, int wEY, int wFY, int wER, int wFR, map<string, double> inputDelays) :
+FPAddSinglePath::FPAddSinglePath(Target* target, int wEX, int wFX, int wEY, int
+		wFY, int wER, int wFR, bool sub, map<string, double> inputDelays) :
 		Operator(target), wEX(wEX), wFX(wFX), wEY(wEY), wFY(wFY), wER(wER), wFR(wFR) {
 
 		srcFileName="FPAddSinglePath";
@@ -113,7 +114,10 @@ FPAddSinglePath::FPAddSinglePath(Target* target, int wEX, int wFX, int wEY, int 
 		vhdl << tab << declare("excX",2)  << "<= newX"<<range(wE+wF+2,wE+wF+1)<<";"<<endl;
 		vhdl << tab << declare("excY",2)  << "<= newY"<<range(wE+wF+2,wE+wF+1)<<";"<<endl;
 		vhdl << tab << declare("signX")   << "<= newX"<<of(wE+wF)<<";"<<endl;
-		vhdl << tab << declare("signY")   << "<= newY"<<of(wE+wF)<<";"<<endl;
+		if ( sub )
+			vhdl << tab << declare("signY")   << "<= not(newY"<<of(wE+wF)<<");"<<endl;
+		else
+			vhdl << tab << declare("signY")   << "<= newY"<<of(wE+wF)<<";"<<endl;
 		vhdl << tab << declare("EffSub") << " <= signX xor signY;"<<endl;
 		vhdl << tab << declare("sXsYExnXY",6) << " <= signX & signY & excX & excY;"<<endl; 
 		vhdl << tab << declare("sdExnXY",4) << " <= excX & excY;"<<endl; 
