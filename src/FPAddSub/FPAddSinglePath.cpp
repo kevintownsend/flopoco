@@ -11,6 +11,9 @@
   All right reserved.
 
   */
+
+#include "FPAddSinglePath.hpp"
+
 #include <iostream>
 #include <sstream>
 #include <vector>
@@ -24,7 +27,6 @@
 #include <utils.hpp>
 #include <Operator.hpp>
 
-#include "FPAddSinglePath.hpp"
 
 using namespace std;
 
@@ -36,18 +38,20 @@ namespace flopoco{
 #define DEBUGVHDL 0
 
 
-FPAddSinglePath::FPAddSinglePath(Target* target, int wEX, int wFX, int wEY, int
-		wFY, int wER, int wFR, bool sub, map<string, double> inputDelays) :
-		Operator(target), wEX(wEX), wFX(wFX), wEY(wEY), wFY(wFY), wER(wER), wFR(wFR) {
+FPAddSinglePath::FPAddSinglePath(Target* target, 
+																 int wE, int wF, 
+																 bool sub, map<string, double> inputDelays) :
+	Operator(target), wE(wE), wF(wF), sub(sub) {
 
 		srcFileName="FPAddSinglePath";
 			
-		//parameter set up. For now all wEX=wEY=wER and the same holds for fractions
-		wF = wFX;
-		wE = wEX;
-			
 		ostringstream name;
-		name<<"FPAdd_"<<wE<<"_"<<wF<<"_uid"<<getNewUId(); 
+		if(sub)
+			name<<"FPSub_";
+		else
+			name<<"FPAdd_";
+
+				name <<wE<<"_"<<wF<<"_uid"<<getNewUId(); 
 		setName(name.str()); 
 
 		setCopyrightString("Bogdan Pasca, Florent de Dinechin (2010)");		
@@ -55,7 +59,7 @@ FPAddSinglePath::FPAddSinglePath(Target* target, int wEX, int wFX, int wEY, int
 		sizeRightShift = intlog2(wF+3);
 
 		/* Set up the IO signals */
-		/* Inputs: 2b(Exception) + 1b(Sign) + wEX bits (Exponent) + wFX bits(Fraction) */
+		/* Inputs: 2b(Exception) + 1b(Sign) + wE bits (Exponent) + wF bits(Fraction) */
 		// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 		addFPInput ("X", wE, wF);
 		addFPInput ("Y", wE, wF);
@@ -106,18 +110,23 @@ FPAddSinglePath::FPAddSinglePath(Target* target, int wEX, int wFX, int wEY, int
 		double cpswap = getCriticalPath();
 		
 		manageCriticalPath(target->localWireDelay() + target->lutDelay());
+
+		string pmY="Y";
+		if ( sub ) {
+			vhdl << tab << declare("mY",wE+wF+3)   << " <= Y" << range(wE+wF+2,wE+wF+1) << " & not(Y"<<of(wE+wF)<<") & Y" << range(wE+wF-1,0) << ";"<<endl;
+			pmY = "mY";
+		}
+
 		// depending on the value of swap, assign the corresponding values to the newX and newY signals 
-		vhdl<<tab<<declare("newX",wE+wF+3) << " <= X     when swap = '0' else Y;"<<endl;
-		vhdl<<tab<<declare("newY",wE+wF+3) << " <= Y     when swap = '0' else X;"<<endl;
+
+		vhdl<<tab<<declare("newX",wE+wF+3) << " <= X when swap = '0' else "<< pmY << ";"<<endl;
+		vhdl<<tab<<declare("newY",wE+wF+3) << " <= " << pmY <<" when swap = '0' else X;"<<endl;
 		//break down the signals
 		vhdl << tab << declare("expX",wE) << "<= newX"<<range(wE+wF-1,wF)<<";"<<endl;
 		vhdl << tab << declare("excX",2)  << "<= newX"<<range(wE+wF+2,wE+wF+1)<<";"<<endl;
 		vhdl << tab << declare("excY",2)  << "<= newY"<<range(wE+wF+2,wE+wF+1)<<";"<<endl;
 		vhdl << tab << declare("signX")   << "<= newX"<<of(wE+wF)<<";"<<endl;
-		if ( sub )
-			vhdl << tab << declare("signY")   << "<= not(newY"<<of(wE+wF)<<");"<<endl;
-		else
-			vhdl << tab << declare("signY")   << "<= newY"<<of(wE+wF)<<";"<<endl;
+		vhdl << tab << declare("signY")   << "<= newY"<<of(wE+wF)<<";"<<endl;
 		vhdl << tab << declare("EffSub") << " <= signX xor signY;"<<endl;
 		vhdl << tab << declare("sXsYExnXY",6) << " <= signX & signY & excX & excY;"<<endl; 
 		vhdl << tab << declare("sdExnXY",4) << " <= excX & excY;"<<endl; 
@@ -156,7 +165,7 @@ FPAddSinglePath::FPAddSinglePath(Target* target, int wEX, int wFX, int wEY, int
 		if (wE>sizeRightShift) {
 			manageCriticalPath(target->localWireDelay() + target->lutDelay());
 			vhdl<<tab<<declare("shiftVal",sizeRightShift) << " <= expDiff("<< sizeRightShift-1<<" downto 0)"
-			<< " when shiftedOut='0' else CONV_STD_LOGIC_VECTOR("<<wFX+3<<","<<sizeRightShift<<") ;" << endl; 
+			<< " when shiftedOut='0' else CONV_STD_LOGIC_VECTOR("<<wF+3<<","<<sizeRightShift<<") ;" << endl; 
 		}		
 		else if (wE==sizeRightShift) {
 			vhdl<<tab<<declare("shiftVal", sizeRightShift) << " <= expDiff" << range(sizeRightShift-1,0) << ";" << endl ;
@@ -341,18 +350,21 @@ FPAddSinglePath::FPAddSinglePath(Target* target, int wEX, int wFX, int wEY, int
 		mpz_class svY = tc->getInputValue("Y");
 	
 		/* Compute correct value */
-		FPNumber fpx(wEX, wFX, svX);
-		FPNumber fpy(wEY, wFY, svY);
+		FPNumber fpx(wE, wF, svX);
+		FPNumber fpy(wE, wF, svY);
 		mpfr_t x, y, r;
-		mpfr_init2(x, 1+wFX);
-		mpfr_init2(y, 1+wFY);
-		mpfr_init2(r, 1+wFR); 
+		mpfr_init2(x, 1+wF);
+		mpfr_init2(y, 1+wF);
+		mpfr_init2(r, 1+wF); 
 		fpx.getMPFR(x);
 		fpy.getMPFR(y);
-		mpfr_add(r, x, y, GMP_RNDN);
+		if(sub)
+			mpfr_sub(r, x, y, GMP_RNDN);
+		else
+			mpfr_add(r, x, y, GMP_RNDN);
 
 		// Set outputs 
-		FPNumber  fpr(wER, wFR, r);
+		FPNumber  fpr(wE, wF, r);
 		mpz_class svR = fpr.getSignalValue();
 		tc->addExpectedOutput("R", svR);
 

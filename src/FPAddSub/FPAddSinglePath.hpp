@@ -23,15 +23,10 @@ namespace flopoco{
 		/**
 		 * The FPAddSinglePath constructor
 		 * @param[in]		target		the target device
-		 * @param[in]		wEX			the the with of the exponent for the f-p number X
-		 * @param[in]		wFX			the the with of the fraction for the f-p number X
-		 * @param[in]		wEY			the the with of the exponent for the f-p number Y
-		 * @param[in]		wFY			the the with of the fraction for the f-p number Y
-		 * @param[in]		wER			the the with of the exponent for the addition result
-		 * @param[in]		wFR			the the with of the fraction for the addition result
+		 * @param[in]		wE			the the with of the exponent 
+		 * @param[in]		wF			the the with of the fraction 
 		 */
-		FPAddSinglePath(Target* target, int wEX, int wFX, int wEY, int wFY, int
-				wER, int wFR, bool sub=0, map<string, double> inputDelays = emptyDelayMap);
+		FPAddSinglePath(Target* target, int wE, int wF, bool sub=false, map<string, double> inputDelays = emptyDelayMap);
 
 		/**
 		 * FPAddSinglePath destructor
@@ -46,19 +41,12 @@ namespace flopoco{
 
 
 	private:
-		/** The width of the exponent for the input X */
-		int wEX; 
-		/** The width of the fraction for the input X */
-		int wFX; 
-		/** The width of the exponent for the input Y */
-		int wEY; 
-		/** The width of the fraction for the input Y */
-		int wFY; 
-		/** The width of the exponent for the output R */
-		int wER; 
-		/** The width of the fraction for the output R */
-		int wFR;
-		/** Signal if the output of the operator is to be or not normalized*/
+		/** The width of the exponent */
+		int wE; 
+		/** The width of the fraction */
+		int wF;
+		/** Is this an FPAdd or an FPSub? */
+		bool sub;
 
 		/** The combined leading zero counter and shifter for the close path */
 		LZOCShifterSticky* lzocs; 
@@ -73,9 +61,6 @@ namespace flopoco{
 		/** The right shifter for the far path */
 		Shifter* rightShifter;	
 
-
-		int wF;
-		int wE;
 		int sizeRightShift;
 	
 	};

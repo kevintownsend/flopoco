@@ -179,7 +179,7 @@ void usage(char *name, string opName = ""){
 	}	
 	if ( full || opName == "FPSub"){					
 		OP( "FPSub","wE wF");
-		cerr << "Floating-point substracter (default architecture is now single-path)\n";
+		cerr << "Floating-point subtracter\n";
 	}	
 	if ( full || opName == "FPAdd" || opName == "FPAddDualPath"){					
 		OP( "FPAddDualPath","wE wF");
@@ -891,7 +891,7 @@ bool parseCommandLine(int argc, char* argv[]){
 			else {
 				int wE = checkStrictlyPositive(argv[i++], argv[0]);
 				int wF = checkStrictlyPositive(argv[i++], argv[0]);
-				op = new FPAddSinglePath(target, wE, wF, wE, wF, wE, wF);
+				op = new FPAddSinglePath(target, wE, wF);
 				
 				addOperator(op);
 			}
@@ -903,7 +903,7 @@ bool parseCommandLine(int argc, char* argv[]){
 			else {
 				int wE = checkStrictlyPositive(argv[i++], argv[0]);
 				int wF = checkStrictlyPositive(argv[i++], argv[0]);
-				op = new FPAddSinglePath(target, wE, wF, wE, wF, wE, wF, 1);
+				op = new FPAddSinglePath(target, wE, wF, true /*subtractor*/);
 				
 				addOperator(op);
 			}
