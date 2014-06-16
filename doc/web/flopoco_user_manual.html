@@ -393,11 +393,13 @@ are flushed to zero.
       component supports different input and output sizes, but this is
       not available from the command line.</dd>
   <dt><code style="color: blue;">FPAdd wE wF</code></dt>
-    <dd>A floating-point adder with a new, more compact single-path architecture.</dd>
+    <dd>A floating-point adder, using the more compact single-path architecture.</dd>
+  <dt><code style="color: blue;">FPSub wE wF</code></dt>
+    <dd>A floating-point subtracter, using the more compact single-path architecture.</dd>
   <dt><code style="color: blue;">FPAddDualPath wE wF</code></dt>
     <dd>A previous FPAdd architecture. Trades a larger circuit size for a smaller latency.</dd>
   <dt><code style="color: blue;">FPAdd3Input wE wF</code></dt>
-    <dd>A 3-operand floating-point adder</dd>
+    <dd>A correctly rounded 3-operand floating-point adder</dd>
   <dt><code style="color: blue;">FPAddSub wE wF</code></dt>
     <dd>A fused floating-point adder and subtracter, computes both a+b and a-b</dd>
   <dt><code style="color: blue;">FPDiv wE wF</code></dt>
