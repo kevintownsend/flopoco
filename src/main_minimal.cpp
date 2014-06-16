@@ -45,7 +45,7 @@ int main(int argc, char* argv[] )
 	int wE = 9;
 	int wF = 33;
 	
-	Operator*	op = new FPAddSinglePath(target, wE, wF, wE, wF, wE, wF);
+	Operator*	op = new FPAddSinglePath(target, wE, wF);
 	
 	ofstream file;
 	file.open("FPAdd.vhdl", ios::out);
