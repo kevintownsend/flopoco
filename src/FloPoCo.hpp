@@ -67,7 +67,6 @@
 /* Integer and fixed-point multipliers ------------------------ */
 #include "IntMult//IntMultiplier.hpp"
 #include "IntMult//FixMultAdd.hpp"
-#include "IntMult//FixMultAddBitheap.hpp"
 // #include "IntMult//IntKaratsuba.hpp"
 #include "IntMult//IntSquarer.hpp"
 // #include "IntMult//GenericBinaryPolynomial.hpp"

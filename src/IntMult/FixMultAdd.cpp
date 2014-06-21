@@ -2,7 +2,7 @@
 /*
    A multiply-and-add in a single bit heap
 
-Author:  Florent de Dinechin
+Author:  Florent de Dinechin, Matei Istoan
 
 This file is part of the FloPoCo project
 developed by the Arenaire team at Ecole Normale Superieure de Lyon
@@ -14,7 +14,6 @@ All rights reserved.
 */
 
 
-
 #include <cstdlib>
 #include <iostream>
 #include <sstream>
@@ -23,6 +22,7 @@ All rights reserved.
 #include <gmp.h>
 #include <mpfr.h>
 #include <gmpxx.h>
+
 #include "utils.hpp"
 #include "Operator.hpp"
 #include "FixMultAdd.hpp"
@@ -31,245 +31,271 @@ All rights reserved.
 using namespace std;
 
 namespace flopoco {
-#if 0
-#define vhdl parentOp->vhdl
-#define declare parentOp->declare
-#define inPortMap parentOp->inPortMap
-#define outPortMap parentOp->outPortMap
-#define instance parentOp->instance
-#define manageCriticalPath parentOp->manageCriticalPath
-#define getCriticalPath parentOp->getCriticalPath
-#define setCycle parentOp->setCycle
-#define oplist parentOp->getOpListR()
-#endif
 
 
-
-#if 0
- 	// The virtual constructor TODO
-	FixMultAdd::FixMultAdd (Operator* parentOp_, BitHeap* bitHeap_, Signal* x_, Signal* y_, int wX_, 
-			int wY_, int wOut_, int lsbWeight_, bool negate_, bool signedIO_, float ratio_):
-		Operator ( parentOp_->getTarget()), 
-		wxDSP(0), wyDSP(0), wXdecl(wX_), wYdecl(wY_), wX(0), wY(0), wOut(wOut_), ratio(ratio_),  maxError(0.0), 
-		parentOp(parentOp_), bitHeap(bitHeap_), lsbWeight(lsbWeight_),
-		x(x_), y(y_), negate(negate_), signedIO(signedIO_) 
-	{
-
-		isOperator=false;
-		// leave the compression to the parent op
-	}
-
-#endif
-
-
-
-
-#define USEFIXIO 1
-
-	// The constructor for a stand-alone operator, see the .hpp for parameter explanation
+	// The constructor for a stand-alone operator
 	FixMultAdd::FixMultAdd(Target* target, Signal* x_, Signal* y_, Signal* a_, int outMSB_, int outLSB_,
 												 float ratio_, bool enableSuperTiles_, map<string, double> inputDelays_):
 		Operator ( target, inputDelays_ ),
 		x(x_), y(y_), a(a_),
-		// wX(wX_), wY(wY_), wA(wA_), 
-		wOut(outMSB_-outLSB_+1),
-		outMSB(outMSB_), 
-		outLSB(outLSB_), 
-		ratio(ratio_), 
-		enableSuperTiles(enableSuperTiles_) 
+		outMSB(outMSB_),
+		outLSB(outLSB_),
+		wOut(outMSB_- outLSB_ + 1),
+		ratio(ratio_),
+		enableSuperTiles(enableSuperTiles_)
 {
 
 		srcFileName="FixMultAdd";
-		setCopyrightString ( "Florent de Dinechin, 2012-2014" );
-
-		signedIO = (x->isSigned() || y->isSigned());
-		// TODO manage the case when one is signed and not the other.
-		{
-			ostringstream name;
-			name <<"FixMultAdd_";
-			// name << wX << "x" << wY << "p" << wA << "r" << wOut << "" << (signedIO?"s":"u");
-			name << Operator::getNewUId();
-			setName ( name.str() );
-			REPORT(DEBUG, "Building " << name.str() );
-		}
+		setCopyrightString ( "Matei Istoan, Florent de Dinechin, 2012-2014" );
 
 		// Set up the VHDL library style
-		useNumericStd();
+		//useNumericStd();
 
 		wX = x->MSB() - x->LSB() +1;
 		wY = y->MSB() - y->LSB() +1;
 		wA = a->MSB() - a->LSB() +1;
-		
+
+		signedIO = (x->isFixSigned() && y->isFixSigned());
+		// TODO: manage the case when one is signed and not the other.
+		if((x->isFixSigned() && !y->isFixSigned()) || (!x->isFixSigned() && y->isFixSigned()))
+			THROWERROR("One operator signed and the other unsigned is currently not supported.")
+
+		// Set the operator name
+		{
+			ostringstream name;
+			name <<"FixMultAdd_";
+			name << wX << "x" << wY << "p" << wA << "r" << wOut << "" << (signedIO?"signed":"unsigned");
+			name << Operator::getNewUId();
+			setName(name.str());
+			REPORT(DEBUG, "Building " << name.str());
+		}
+
 		// Set up the IO signals
 		xname="X";
 		yname="Y";
 		aname="A";
 		rname="R";
 
-#if USEFIXIO
-		addFixInput ( xname, x->isSigned(), x->MSB(), x->LSB() );
-		addFixInput ( yname, y->isSigned(), y->MSB(), y->LSB() );
-		addFixInput ( aname, a->isSigned(), a->MSB(), a->LSB() );
-		addFixOutput (rname, signedIO, outMSB, outLSB, possibleOutputs);
-#else
-		addInput ( xname,  wX);
-		addInput ( yname,  wY);
-		addInput ( aname,  wA);
-		addOutput ( "R",  wOut, possibleOutputs);
-		// Build internal fix-point signals
-		vhdl << tab << declareFixPoint("iX", x->isSigned(), x->MSB(), x->LSB()) << " <= " << (x->isSigned()? "signed":"unsigned" ) << "(X);" << endl;
-		vhdl << tab << declareFixPoint("iY", x->isSigned(), y->MSB(), y->LSB()) << " <= " << (x->isSigned()? "signed":"unsigned" ) << "(Y);" << endl;
-		vhdl << tab << declareFixPoint("iA", x->isSigned(), a->MSB(), a->LSB()) << " <= " << (x->isSigned()? "signed":"unsigned" ) << "(A);" << endl;
+		// Determine the msb and lsb of the full product X*Y
+		pMSB = x->MSB() + y->MSB() + 1;
+		pLSB = x->LSB() + y->LSB();
 
-#endif
-
-		// Write the exact product
-		int pMSB = x->MSB() + y->MSB() + 1;
-		int pLSB = x->LSB() + y->LSB();
-
-#if USEFIXIO
-		vhdl << tab << declareFixPoint("P", signedIO, pMSB, pLSB)   << " <= X * Y;" << endl;
-		resizeFixPoint("Aresized", "A", outMSB, outLSB);
-#else
-		vhdl << tab << declareFixPoint("P", signedIO, pMSB, pLSB)   << " <= iX * iY;" << endl;
-		resizeFixPoint("Aresized", "iA", outMSB, outLSB);
-#endif
-		resizeFixPoint("Presized", "P", outMSB, outLSB);
-			
-		vhdl << tab << declareFixPoint("iR", signedIO,  outMSB, outLSB) << " <= Aresized + Presized;" << endl; 
-#if USEFIXIO
-		vhdl << tab << "R <= iR;" << endl; 
-#else
-		vhdl << tab << "R <= std_logic_vector(iR);" << endl; 
-#endif
+		// Determine the actual msb and lsb of the product,
+		// from the output's msb and lsb, and the (possible) number of guard bits
 
 
-
-#if 0
-		parentOp=this;
-
-		// TODO the following assumes that lsbA is positive
-		if(lsbA<0){
-			THROWERROR("lsbA<0: this is currently unsupported, if you ask nicely we could fix it")
+		// workPLSB is the actual weight of the bit that has weight 0 in the bit heap
+		int PlsbWeightInBitHeap;
+		//lsb
+		if(pLSB < outLSB)	{
+			possibleOutputs = 2;
+			REPORT(DEBUG, "pLSB="<<pLSB<<" < outLSB="<< outLSB<< ", the result of the multiplication will be truncated and the architecture will be faithful");
+			// workPLSB = outLSB;
+			g = IntMultiplier::neededGuardBits(target, wX, wY, workPMSB-workPLSB+1);
+			// workPLSB -= g;
+			//			REPORT(DETAILED,  "Multiplication of " << wX << " by " << wY << " bits, with the result truncated to weight " << workPLSB);
+		}
+		else { // pLSB>=outLSB: the result of the multiplication will not be truncated
+			//workPLSB = pLSB;
+      g=0;
+			//			PlsbWeightInBinHeap=
+			possibleOutputs = 1; // No faithful rounding
+			REPORT(DETAILED, "Exact architecture: Full multiplication of " << wX << " by " << wY);
 		}
 
-		if(lsbPfull >= 0) { // no truncation needed, we can add all the bits of the product 
-			wOutP = wX+wY; // the parameter we'll pass to IntMultiplier
-			g=0;
-			possibleOutputs=1; // No faithful rounding
-			REPORT(DETAILED, " Exact architecture" )
+		//msb
+		if(pMSB <= outMSB)	{	    //all msbs of the product are used
+			workPMSB = pMSB;
 		}
-		else { // there is a truncation of the product
-			// we will add g guard bits to the bit heap
-			wOutP=msbP;
-			g = IntMultiplier::neededGuardBits(wX, wY, wOutP); 
-			possibleOutputs=2; // No faithful rounding
-			REPORT(DETAILED, " Faithfully rounded architecture" )
+		else	{                   //not all msbs of the product are used
+			workPMSB = outMSB;
 		}
 
-		// The bit heap
-		bitHeap = new BitHeap(this, wOut+g, enableSuperTiles);
+		// Determine the actual msb and lsb of the addend, from the output's msb and lsb
 
+		//lsb
+		if(a->LSB() < outLSB) {	  //truncate the addend
+			workALSB = (outLSB-g < a->LSB()) ? a->LSB() : outLSB-g;
+		}
+		else	{                   //keep the full addend
+			workALSB = a->LSB();
+		}
+		//msb
+		if(a->MSB() <= outMSB)	{	//all msbs of the addend are used
+			workAMSB = a->MSB();
+		}
+		else	{	                  //not all msbs of the addend are used
+			workAMSB = outMSB;
+		}
 
-		// TODO should be a parameter to the bit heap constructor
+		//create the inputs and the outputs of the operator
+		addInput (xname,  wX);
+		addInput (yname,  wY);
+		addInput (aname,  wA);
+		addOutput(rname,  wOut, possibleOutputs);
+
+		//create the bit heap
+		REPORT(DETAILED, "Creating bit heap of size " << wOut+g << ", out of which " << g << " guard bits");
+		
+		bitHeap = new BitHeap(this,								//parent operator
+													wOut+g,							//size of the bit heap
+													enableSuperTiles);	//whether super-tiles are used
 		bitHeap->setSignedIO(signedIO);
 
-
-		// initialize the critical path
-		setCriticalPath(getMaxInputDelays ( inputDelays_ ));
-
-		// TODO if it fits in a DSP block just write A*B+C
+		//create the multiplier
+		//	this is a virtual operator, which uses the bit heap to do all its computations
+		mult = new IntMultiplier(this,							//parent operator
+														 bitHeap,						//the bit heap that performs the compression
+														 getSignalByName(xname),		//first input to the multiplier (a signal)
+														 getSignalByName(yname),		//second input to the multiplier (a signal)
+														 workPLSB-g,			                  //offset of the LSB of the multiplier in the bit heap
+														 false /*negate*/,				//whether to subtract the result of the multiplication from the bit heap
+														 signedIO,						//signed/unsigned operator
+														 ratio);						//DSP ratio
 		
-		fillBitHeap();
+		//add the addend to the bit heap
+		int addendWeight;
 
-		bitHeap -> generateCompressorVHDL();			
-		vhdl << tab << "R" << " <= " << bitHeap-> getSumName() << range(wOut+g-1, g) << ";" << endl;
+		//if the addend is truncated, no shift is needed
+		//	else, compute the shift from the output lsb
+		//the offset for the signal in the bitheap can be either positive (signal's lsb < than bitheap's lsb), or negative
+		//	the case of a negative offset is treated with a correction term, as it makes more sense in the context of a bitheap
+		//addendWeight = (a->LSB() < outLSB) ? 0 : outLSB - a->LSB();
+		addendWeight = a->LSB()-(outLSB-g);
 
-#endif
-	}
+		if(signedIO)		{
+			bitHeap->addSignedBitVector(addendWeight,			//weight of signal in the bit heap
+																	aname,					//name of the signal
+																	workAMSB-workALSB+1,	//size of the signal added
+																	workALSB-a->LSB(),		//index of the lsb in the bit vector from which to add the bits of the addend
+																	(addendWeight<0));		//if we are correcting the index in the bit vector with a negative weight
+		}
+		else		{
+			bitHeap->addUnsignedBitVector(addendWeight,			//weight of signal in the bit heap
+																		aname,				//name of the signal
+																		workAMSB-workALSB+1,	//size of the signal added
+																		(a->MSB()-a->LSB())-(workAMSB-a->MSB()),
+																		//index of the msb in the actual bit vector from which to add the bits of the addend
+																		workALSB-a->LSB(),	//index of the lsb in the actual bit vector from which to add the bits of the addend
+																		(addendWeight<0));	//if we are correcting the index in the bit vector with a negative weight
+		}
+
+		//final rounding, if needed
+		if(g >=1 )	{
+			bitHeap -> addConstantOneBit(g-1);
+		}
+
+		//compress the bit heap
+		bitHeap -> generateCompressorVHDL();
+
+		vhdl << tab << rname << " <= " << bitHeap-> getSumName() << range(wOut+g-1, g) << ";" << endl;
+}
 
 
 
 
-	FixMultAdd::~FixMultAdd() {
-		if(mult) 
+	FixMultAdd::~FixMultAdd()
+	{
+		if(mult)
 			free(mult);
+		if(plotter)
+			free(plotter);
 	}
 
 
 	FixMultAdd* FixMultAdd::newComponentAndInstance(Operator* op,
-																									string instanceName,
-																									string xSignalName,
-																									string ySignalName,
-																									string aSignalName,
-																									string rSignalName,
-																									int rMSB, 
-																									int rLSB
-																									) {
-		FixMultAdd* f = new FixMultAdd(op->getTarget(), 
-																	 op->getSignalByName(xSignalName), 
-																	 op->getSignalByName(ySignalName), 
-																	 op->getSignalByName(aSignalName), 
-																	 rMSB, rLSB);   
+																	string instanceName,
+																	string xSignalName,
+																	string ySignalName,
+																	string aSignalName,
+																	string rSignalName,
+																	int rMSB,
+																	int rLSB
+																)
+	{
+		Signal* x = op->getSignalByName(xSignalName);
+		Signal* y = op->getSignalByName(ySignalName);
+		Signal* a = op->getSignalByName(aSignalName);
+		FixMultAdd* f = new FixMultAdd(op->getTarget(),
+																	 x, y, a,
+																	 rMSB, rLSB);
+
+		op->vhdl << tab << "-- FixMultAdd: X("<<x->MSB()<<", "<<x->LSB()<<")  Y("<<y->MSB()<<", "<<y->LSB()<<") A("<<a->MSB()<<", "<<a->LSB()<<") R("<<rMSB<<", "<<rLSB<<")" << endl;
 		op->addSubComponent(f);
 		op->inPortMap(f, "X", xSignalName);
 		op->inPortMap(f, "Y", ySignalName);
 		op->inPortMap(f, "A", aSignalName);
-#if USEFIXIO
-		op->outPortMap(f, "R", rSignalName);
-		op->vhdl << op->instance(f, instanceName);
-		op->getSignalByName(rSignalName)->promoteToFix(f->signedIO, rMSB, rLSB);
-#else
+
 		op->outPortMap(f, "R", join(rSignalName, "_slv"));
+
 		op->vhdl << op->instance(f, instanceName);
 		op->vhdl << tab << op->declareFixPoint(rSignalName,f->signedIO, rMSB, rLSB) << " <= " <<  "signed(" << (join(rSignalName, "_slv")) << ");" << endl;
-#endif
+
+		return f;
 	}
 
 
-
-
-	void FixMultAdd::fillBitHeap() {
-		//  throw the addend to the bit heap
-#if 0
-		bitHeap -> addSignedBitVector(lsbA+g, aname, wA);
-		
-		//  throw the product to the bit heap
-		int lsbWeight = msbP+1 - wOutP;
-		// TODO we could read wX and wY from the signal.
-		mult = new IntMultiplier (this, bitHeap, getSignalByName("X"), getSignalByName("Y"), wX, wY, wOutP, lsbWeight, false /*negate*/, signedIO, ratio);
-#endif
-	}
-
-
-
-
-	void FixMultAdd::emulate ( TestCase* tc ) {
+	//FIXME: is this right? emulate function needs to be checked
+	//		 it makes no assumptions on the signals, except their relative alignments,
+	//		 so it should work for all combinations of the inputs
+	void FixMultAdd::emulate ( TestCase* tc )
+	{
 		mpz_class svX = tc->getInputValue("X");
 		mpz_class svY = tc->getInputValue("Y");
 		mpz_class svA = tc->getInputValue("A");
-		mpz_class svP, svR;
+
+		mpz_class svP, svR, svRAux;
 		mpz_class twoToWR = (mpz_class(1) << (wOut));
 		mpz_class twoToWRm1 = (mpz_class(1) << (wOut-1));
 
-		if (! signedIO){
-			svP = svX * svY;
-			svR = svA<<lsbA;
-			//align the product
-			if(lsbPfull>=0)
-				svR += svP << lsbPfull;
-			else 
-				svR += (svP >>(-lsbPfull));
+		if(!signedIO)
+		{
+			int outShift;
 
-			tc->addExpectedOutput("R", svR);
-			if(possibleOutputs==2) {
+			svP = svX * svY;
+
+			//align the product and the addend
+			if(a->LSB() < pLSB)
+			{
+				svP = svP << (pLSB-a->LSB());
+				outShift = outLSB - a->LSB();
+			}
+			else
+			{
+				svA = svA << (a->LSB()-pLSB);
+				outShift = outLSB - pLSB;
+			}
+
+			svR = svP + svA;
+
+			//align the multiply-and-add with the output format
+			if(outShift > 0)
+			{
+				svR = svR >> outShift;
+				possibleOutputs = 2;
+			}
+			else
+			{
+				svR = svR << (-outShift);
+				possibleOutputs = 1;
+			}
+
+			//add only the bits corresponding to the output format
+			svRAux = svR & (twoToWR -1);
+
+			tc->addExpectedOutput("R", svRAux);
+			if(possibleOutputs==2)
+			{
 				svR++;
 				svR &= (twoToWR -1);
 				tc->addExpectedOutput("R", svR);
 			}
 		}
+		else
+		{
+			int outShift;
 
-		else{ // Manage signed digits
+			// Manage signed digits
 			mpz_class twoToWX = (mpz_class(1) << (wX));
 			mpz_class twoToWXm1 = (mpz_class(1) << (wX-1));
 			mpz_class twoToWY = (mpz_class(1) << (wY));
@@ -287,24 +313,43 @@ namespace flopoco {
 				svA -= twoToWA;
 
 			svP = svX * svY; //signed
-			if(lsbPfull>=0) { // no truncation
-				svR = (svA << lsbA) + (svP << lsbPfull); // signed
-				// manage two's complement at output
-				if ( svR < 0)
-					svR += twoToWR; 
-				tc->addExpectedOutput("R", svR);
-				return;
+
+			//align the product and the addend
+			if(a->LSB() < pLSB)
+			{
+				svP = svP << (pLSB-a->LSB());
+				outShift = outLSB - a->LSB();
 			}
-			else {//lsbPfull<0
-				int shift=-lsbPfull;
-				// fully accurate result, product-anchored
-				svR = (svA<<(lsbA + shift)) + svP; 
-				// manage its two's complement
-				if ( svR < 0)
-					svR += (mpz_class(1) << (wOut+shift));
-				// shift back to place: truncation
-				svR = svR >> shift;
-				tc->addExpectedOutput("R", svR); // this was rounded down
+			else
+			{
+				svA = svA >> (a->LSB()-pLSB);
+				outShift = outLSB - pLSB;
+			}
+
+			svR = svP + svA;
+
+			//align the multiply-and-add with the output format
+			if(outShift > 0)
+			{
+				svR = svR >> outShift;
+				possibleOutputs = 2;
+			}
+			else
+			{
+				svR = svR << (-outShift);
+				possibleOutputs = 1;
+			}
+
+			// manage two's complement at output
+			if(svR < 0)
+				svR += twoToWR;
+
+			//add only the bits corresponding to the output format
+			svRAux = svR & (twoToWR -1);
+
+			tc->addExpectedOutput("R", svRAux);
+			if(possibleOutputs == 2)
+			{
 				svR++;
 				svR &= (twoToWR -1);
 				tc->addExpectedOutput("R", svR);
@@ -316,38 +361,7 @@ namespace flopoco {
 
 	void FixMultAdd::buildStandardTestCases(TestCaseList* tcl)
 	{
-#if 0
-		TestCase *tc;
-
-		mpz_class x, y;
-
-		// 1*1
-		x = mpz_class(1); 
-		y = mpz_class(1); 
-		tc = new TestCase(this); 
-		tc->addInput("X", x);
-		tc->addInput("Y", y);
-		emulate(tc);
-		tcl->add(tc);
-
-		// -1 * -1
-		x = (mpz_class(1) << wXdecl) -1; 
-		y = (mpz_class(1) << wYdecl) -1; 
-		tc = new TestCase(this); 
-		tc->addInput("X", x);
-		tc->addInput("Y", y);
-		emulate(tc);
-		tcl->add(tc);
-
-		// The product of the two max negative values overflows the signed multiplier
-		x = mpz_class(1) << (wXdecl -1); 
-		y = mpz_class(1) << (wYdecl -1); 
-		tc = new TestCase(this); 
-		tc->addInput("X", x);
-		tc->addInput("Y", y);
-		emulate(tc);
-		tcl->add(tc);
-#endif
+		//TODO
 	}
 
 

@@ -17,7 +17,7 @@ namespace flopoco {
 		/**
 		 * The default constructor
 		 */
-		MultiplierBlock(int wX, int wY, int topX, int topY, string input1, string input2, int weightShift = 0, int cycle = -1);
+		MultiplierBlock(int wX, int wY, int lsbX, int lsbY, string input1, string input2, int weightShift = 0, int cycle = -1);
 	
 		
 		/**
@@ -141,8 +141,8 @@ namespace flopoco {
 			
 		int wX; 							/**< x size */
 		int wY; 							/**< y size */
-		int topX; 							/**< x position in a larger multiplier (top right corner) */
-		int topY; 							/**< y position (top right corner */
+		int lsbX; 							/**< x position in a larger multiplier (top right corner) */
+		int lsbY; 							/**< y position (top right corner */
 		int cycle;							/**< cycle */
 		MultiplierBlock* previous;
 		MultiplierBlock* next;

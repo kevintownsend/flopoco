@@ -25,13 +25,13 @@ namespace flopoco{
 			 @param[int]    msbOut  output MSB weight, used to determine wOut
 			 @param[bool]   finalRounding: if false, the operator outputs its guard bits as well, saving the half-ulp rounding error. 
 			                 This makes sense in situations that further process the result with further guard bits.
-
+			 @param[bool]   plainStupidVHDL: if true, generate * and +; if false, use BitHeap-based FixMultAdd
 			 
 			 One could argue that MSB weight is redundant, as it can be deduced from an analysis of the function. 
 			 This would require quite a lot of work for non-trivial functions (isolating roots of the derivative etc).
 			 So this is currently left to the user.
 		 */
-		FixFunctionBySimplePoly(Target* target, string func, int msbIn, int lsbOut, int msbOut, bool finalRounding = true, map<string, double> inputDelays = emptyDelayMap);
+		FixFunctionBySimplePoly(Target* target, string func, int msbIn, int lsbOut, int msbOut, bool finalRounding = true, bool plainStupidVHDL=false,  map<string, double> inputDelays = emptyDelayMap);
 
 		/**
 		 * FixFunctionBySimplePoly destructor

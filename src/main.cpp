@@ -106,7 +106,7 @@ void usage(char *name, string opName = ""){
 	}
 	if ( full || opName == "IntAdderExpert" || opName == "IntAdder"){ 		
 		OP("IntAdderExpert","wIn optimizeType srl implementation bufferedInputs inputDelay");
-		cerr << "Integer adder, multple parameters, possibly pipelined\n";
+		cerr << "Integer adder, multiple parameters, possibly pipelined\n";
 		cerr << "optimizeType=<0,1,2,3> 0=LUT 1=REG 2=SLICE 3=LATENCY\n";
 		cerr << "srl=<0,1> Allow SRLs\n";
 		cerr << "implementation=<-1,0,1,2> -1=optimizeType dependent,\n";  
@@ -150,17 +150,15 @@ void usage(char *name, string opName = ""){
 		OP ("IntMultAdd","wIn");
 		cerr << "  A+B*C with B and C on wIn bits and A on2*wIn bits\n";		
 	}
-	
-	if ( full || opName == "FixMultAddBitheap"){
-		OP( "FixMultAddBitheap","msbX lsbX msbY lsbY msbA lsbA msbR lsbR signedIO");
+#endif
+
+	if ( full || opName == "FixMultAdd"){
+		OP( "FixMultAdd","msbX lsbX msbY lsbY msbA lsbA msbR lsbR signedIO");
 		cerr << "  A fused multiply-add operator (computing X*Y+A), using bitheaps \n";
-		cerr << "    msbX, lsbX: weight of input X's (the first multiplicand) MSB and LSB\n";
-		cerr << "    msbY, lsbY: weight of input Y's (the second multiplicand) MSB and LSB\n";
-		cerr << "    msbA, lsbA: weight of input A's (the addend) MSB and LSB\n";
-		cerr << "    msbO and lsbO: weights of output MSB and LSB,\n";
+		cerr << "   X: first multiplicand,  Y: second multiplicand, A: addend, R: result\n";
+		cerr << "    msb and lsb: are the weights of MSB and LSB\n";
 		cerr << "    signedIO: signed (1) or unsigned (0) inputs\n";
 	}
-#endif
 
 #if 0
 	if ( full || opName == "IntMultiplier" || opName == "IntKaratsuba"){			
@@ -383,7 +381,7 @@ void usage(char *name, string opName = ""){
 	}
 
 	if ( full || opName == "FixFunctionBySimplePoly" || opName == "FixFunction"){					
-		OP( "FixFunctionBySimplePoly","f lsbI msbO lsbO ");
+		OP( "FixFunctionBySimplePoly","f lsbI msbO lsbO plainVHDL");
 		cerr << "Evaluator of function f on [0,1), using a single polynomial with Horner scheme \n";
 	}
 
@@ -858,8 +856,7 @@ bool parseCommandLine(int argc, char* argv[]){
 		}
 #endif
 
-#if 0		
-		else if (opname == "FixMultAddBitheap") {
+		else if (opname == "FixMultAdd") {
 			int nargs = 9;
 			if (i+nargs > argc)
 				usage(argv[0],opname);
@@ -872,14 +869,13 @@ bool parseCommandLine(int argc, char* argv[]){
 			int msbO = atoi(argv[i++]);
 			int lsbO = atoi(argv[i++]);
 			int signedIO = atoi(argv[i++]);
-			Operator* op = new FixMultAddBitheap(target,
+			Operator* op = new FixMultAdd(target,
 												 new Signal("Xin", Signal::in, (signedIO==1), msbX, lsbX),
 												 new Signal("Yin", Signal::in, (signedIO==1), msbY, lsbY),
 												 new Signal("Ain", Signal::in, (signedIO==1), msbA, lsbA),
 												 msbO, lsbO);
 			addOperator(op);
 		}
-#endif
 
 		//--------------FP ADDERS --------------------------------
 
@@ -1341,14 +1337,15 @@ bool parseCommandLine(int argc, char* argv[]){
 		}
 
 		else if (opname == "FixFunctionBySimplePoly") {
-			int nargs = 4;
+			int nargs = 5;
 			if (i+nargs > argc)
 				usage(argv[0],opname); // and exit
 			string func = argv[i++];
 			int lsbI = atoi(argv[i++]);
 			int msbO = atoi(argv[i++]);
 			int lsbO = atoi(argv[i++]);
-			Operator* tg = new FixFunctionBySimplePoly(target, func, lsbI, msbO, lsbO);
+			int plain = atoi(argv[i++]);
+			Operator* tg = new FixFunctionBySimplePoly(target, func, lsbI, msbO, lsbO, 1 /*final rounding*/, plain);
 			addOperator(tg);
 		}
 

@@ -6,12 +6,12 @@ using namespace std;
 namespace flopoco{
 
 
-		MultiplierBlock::MultiplierBlock(int wX, int wY, int topX, int topY, string input1, string input2, int weightShift_, int cycle) :
-			wX(wX), wY(wY), topX(topX), topY(topY), weightShift(weightShift_), inputName1(input1), inputName2(input2)
+		MultiplierBlock::MultiplierBlock(int wX, int wY, int lsbX, int lsbY, string input1, string input2, int weightShift_, int cycle) :
+			wX(wX), wY(wY), lsbX(lsbX), lsbY(lsbY), weightShift(weightShift_), inputName1(input1), inputName2(input2)
 		{
 			srcFileName=":MultiplierBlock"; 
 			cycle=cycle;
-			weight=topX+topY-weightShift;
+			weight=lsbX+lsbY-weightShift;
 			previous=NULL;
 			next=NULL;			
 		}
@@ -56,23 +56,23 @@ namespace flopoco{
 
 		int MultiplierBlock::gettopX()
 		{
-			return topX;
+			return lsbX;
 		}
 
 		int MultiplierBlock::gettopY()
 		{
-			return topY;
+			return lsbY;
 		}
 
 
 		int MultiplierBlock::getbotX()
 		{
-			return topX+wX;
+			return lsbX+wX;
 		}
 
 		int MultiplierBlock::getbotY()
 		{
-			return topY+wY;
+			return lsbY+wY;
 		}
 
 
@@ -150,15 +150,15 @@ namespace flopoco{
 
 		bool MultiplierBlock::neighbors(MultiplierBlock* next)
 		{
-			if((((this->topX==next->gettopX()) &&
-					(this->topY==next->gettopY()+17)) ||
-				((this->topY==next->gettopY()) &&
-					(this->topX==next->gettopX()+17)) )  ||
+			if((((this->lsbX==next->gettopX()) &&
+					(this->lsbY==next->gettopY()+17)) ||
+				((this->lsbY==next->gettopY()) &&
+					(this->lsbX==next->gettopX()+17)) )  ||
 				
-				(((this->topX==next->gettopX()) &&
-					(this->topY==next->gettopY()-17)) ||
-				((this->topY==next->gettopY()) &&
-					(this->topX==next->gettopX()-17)) )) 
+				(((this->lsbX==next->gettopX()) &&
+					(this->lsbY==next->gettopY()-17)) ||
+				((this->lsbY==next->gettopY()) &&
+					(this->lsbX==next->gettopX()-17)) )) 
 				return true;
 			else
 				return false;

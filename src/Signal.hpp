@@ -110,7 +110,11 @@ namespace flopoco{
 
 		/** Reports if the signal is a signed fixed-point signal
 		 */	
-		bool isSigned() const;
+		bool isFixSigned() const;
+
+		/** Reports if the signal is an unsigned fixed-point signal
+		 */	
+		bool isFixUnsigned() const;
 
 		/** Reports if the signal is an IEEE floating-point signal
 		 */	

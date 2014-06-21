@@ -27,7 +27,7 @@
 
 
 #include "FixFunctionBySimplePoly.hpp"
-#include "IntMult//FixMultAdd.hpp"
+#include "IntMult/FixMultAdd.hpp"
 
 #ifdef HAVE_SOLLYA
 
@@ -38,11 +38,10 @@ namespace flopoco{
 #define DEBUGVHDL 0
 
 
-	FixFunctionBySimplePoly::FixFunctionBySimplePoly(Target* target, string func, int lsbIn, int msbOut, int lsbOut, bool finalRounding_, map<string, double> inputDelays):
+	FixFunctionBySimplePoly::FixFunctionBySimplePoly(Target* target, string func, int lsbIn, int msbOut, int lsbOut, bool finalRounding_, bool plainStupidVHDL, map<string, double> inputDelays):
 		Operator(target, inputDelays), finalRounding(finalRounding_){
 		f=new FixFunction(func, lsbIn, msbOut, lsbOut);
 		
-		bool plainStupidVHDL=false;
 		srcFileName="FixFunctionBySimplePoly";
 		
 		ostringstream name;
@@ -100,13 +99,18 @@ namespace flopoco{
 				 << " <= " << join("A", degree)  << ";" << endl;
 
 		for(int i=degree-1; i>=0; i--) {
+
+			int xTruncLSB = max(lsbIn, sigmaLSB-sigmaMSB);
+
 			int pMSB=sigmaMSB+0 + 1;
 			sigmaMSB = max(pMSB-1, coeffMSB[i]) +1; // +1 to absorb addition overflow
 			sigmaLSB = coeffLSB[i];
 
+			resizeFixPoint(join("XsTrunc", i), "Xs", 0, xTruncLSB);			
+
 			if(plainStupidVHDL) {
-				vhdl << tab << declareFixPoint(join("P", i), true, pMSB,  sigmaLSB  + f->lsbIn /*LSB*/) 
-						 <<  " <= Xs * Sigma" << i+1 << ";" << endl;
+				vhdl << tab << declareFixPoint(join("P", i), true, pMSB,  sigmaLSB  + xTruncLSB /*LSB*/) 
+						 <<  " <= "<< join("XsTrunc", i) <<" * Sigma" << i+1 << ";" << endl;
 				// However the bit of weight pMSB is a 0. We want to keep the bits from  pMSB-1
 				resizeFixPoint(join("Ptrunc", i), join("P", i), sigmaMSB, sigmaLSB);
 				resizeFixPoint(join("Aext", i), join("A", i), sigmaMSB, sigmaLSB);
@@ -115,14 +119,14 @@ namespace flopoco{
 			}
 
 			else { // using FixMultAdd
-				REPORT(DEBUG, "DDDDD i=" << i << "    " << sigmaMSB << " " << sigmaLSB << "  " << join("A", i));
+				REPORT(DEBUG, " i=" << i << "    ");
 				FixMultAdd::newComponentAndInstance(this,
 																						join("Step",i),     // instance name
-																						"Xs",               // x
+																						join("XsTrunc",i),  // x
 																						join("Sigma", i+1), // y
-																						join("A", i),        // a
+																						join("A", i),       // a
 																						join("Sigma", i),   // result 
-																						sigmaMSB, sigmaLSB
+																						sigmaMSB, sigmaLSB  // outMSB, outLSB
 																						);
 			}
 		}

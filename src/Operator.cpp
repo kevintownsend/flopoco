@@ -836,7 +836,7 @@ namespace flopoco{
 	 */
 	void  Operator::resizeFixPoint(string lhsName, string rhsName, const int MSB, const int LSB, const int indentLevel){
 		Signal* rhsSignal=getSignalByName(rhsName); 
-		bool isSigned = rhsSignal->isSigned();
+		bool isSigned = rhsSignal->isFixSigned();
 		int oldMSB = rhsSignal->MSB();
 		int oldLSB = rhsSignal->LSB();
 		REPORT(DEBUG, "Resizing signal " << rhsName << " from (" << oldMSB << ", " << oldLSB << ") to (" << MSB << ", " << LSB << ")"); 
@@ -1118,8 +1118,26 @@ namespace flopoco{
 			if (it!=op->portMap_.begin() || op->isSequential())				
 				o << "," << endl <<  tab << tab << "           ";
 
-			//			Signal* lhs = op->getSignalByName((*it).first);
-			o << (*it).first << " => " << (*it).second;
+			// The following code assumes that the IO is declared as standard_logic_vector
+			// If the actual parameter is a signed or unsigned, we want to automatically convert it 
+			Signal* rhs;
+			string rhsString;
+			try{
+				rhs = getSignalByName((*it).second);
+				if (rhs->isFix()){
+						rhsString = std_logic_vector((*it).second);
+					}
+				else {
+						rhsString = (*it).second;
+				}
+
+			}
+			catch(string e) {
+				//constant here
+				rhsString=(*it).second;
+			}
+			
+			o << (*it).first << " => " << rhsString;
 			
 			if ( outputSignal && parsing ){
 				vhdl << o.str();

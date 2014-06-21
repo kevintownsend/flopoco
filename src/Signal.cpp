@@ -67,7 +67,9 @@ namespace flopoco{
 
 	bool Signal::isFix() const {return isFix_;}
 
-	bool Signal::isSigned() const {return isFix_ && isSigned_;}
+	bool Signal::isFixSigned() const {return isFix_ && isSigned_;}
+
+	bool Signal::isFixUnsigned() const {return isFix_ && !isSigned_;}
 
 	bool Signal::isIEEE() const {return isIEEE_;}
 

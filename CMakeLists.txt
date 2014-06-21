@@ -259,7 +259,6 @@ src/Conversions/Fix2FP
 # Multiplication related --------------------------------------------
  src/IntMult//IntMultiplier
  src/IntMult//FixMultAdd
- src/IntMult//FixMultAddBitheap
  src/IntMult//MultiplierBlock
  src/IntMult//IntSquarer
 

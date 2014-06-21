@@ -732,7 +732,7 @@ namespace flopoco
 		if (w<0)
 			THROWERROR("Negative weight (" << w << ") in addBit");
 			
-		REPORT(DEBUG, "addBit at weigth " <<w <<"   for rhs=" << rhs );
+		REPORT(FULL, "addBit at weigth " <<w <<"   for rhs=" << rhs );
 		
 		// ignore bits beyond the declared maxWeight
 		if((unsigned)w >= maxWeight)
@@ -1291,7 +1291,7 @@ namespace flopoco
 
 						while(i<maxWeight)
 						{
-							REPORT(DEBUG, "i= "<< i << " cnt= " << cnt[i]);
+							REPORT(FULL, "i= "<< i << " cnt= " << cnt[i]);
 							// Now we are sure cnt[i] is 3
 							if (i==maxWeight-1)
 							{
@@ -2006,7 +2006,7 @@ namespace flopoco
 			i = maxIndex-1;
 			while(i >= minIndex)
 			{
-				REPORT(DEBUG,"i=   " << i);
+				REPORT(FULL,"i=   " << i);
 				if(i >= 0)
 				{
 					list<WeightedBit*>::iterator it = bits[i].begin();
@@ -2103,7 +2103,7 @@ namespace flopoco
 			//forming the input signals for the first, second and third line
 			while((i>=minWeight)&&(i<maxWeight))
 			{
-				REPORT(DEBUG,"i=   "<<i);
+				REPORT(FULL,"i=   "<<i);
 				if(i>=0)
 				{
 					list<WeightedBit*>::iterator it = bits[i].begin();
@@ -2416,7 +2416,7 @@ namespace flopoco
 		REPORT(DEBUG, "Column height before compression");
 		for (w=0; w<bits.size(); w++)
 		{
-			REPORT(DEBUG, "   w=" << w << ":\t height=" << bits[w].size() << "\t cnt[w]=" << cnt[w]);
+			REPORT(FULL, "   w=" << w << ":\t height=" << bits[w].size() << "\t cnt[w]=" << cnt[w]);
 			printColumnInfo(w);
 		}
 		
