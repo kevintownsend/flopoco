@@ -1511,7 +1511,7 @@ bool parseCommandLine(int argc, char* argv[]){
 #endif
 			cerr <<  "ghdl -a " << simlibs << "-fexplicit "<< filename <<endl;
 			cerr <<  "ghdl -e " << simlibs << "-fexplicit " << op->getName() <<endl;
-			cerr <<  "ghdl -r " << simlibs << op->getName() << " --vcd=" << op->getName() << ".vcd" <<endl;
+			cerr <<  "ghdl -r " << simlibs << op->getName() << " --vcd=" << op->getName() << ".vcd --stop-time=" << ((TestBench*)op)->getSimulationTime() << "ns" <<endl;
 			cerr <<  "gtkwave " << op->getName() << ".vcd" << endl;
 		}
 

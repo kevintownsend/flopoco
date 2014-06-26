@@ -318,7 +318,7 @@ namespace flopoco{
 		vhdl << tab << tab << tab << "counter := counter + 2;" << endl; // incrementing by 2 because a testcase takes two lines (one for input, one for output)
 		vhdl << tab << tab << "end loop;" << endl;
 		vhdl << tab << tab << "report (integer'image(errorCounter) & \" error(s) encoutered.\");" << endl;
-		vhdl << tab << tab << "assert false report \"End of simulation\" severity failure;" <<endl;
+		vhdl << tab << tab << "report \"End of simulation\" severity note;" <<endl;
 		vhdl << tab << "end process;" <<endl;
 
 		/* Setting the computed simulation Time */	
