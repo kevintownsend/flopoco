@@ -43,153 +43,213 @@ namespace flopoco {
 		wOut(outMSB_- outLSB_ + 1),
 		ratio(ratio_),
 		enableSuperTiles(enableSuperTiles_)
-{
+	{
 
-		srcFileName="FixMultAdd";
-		setCopyrightString ( "Matei Istoan, Florent de Dinechin, 2012-2014" );
+			srcFileName="FixMultAddBitheap";
+			setCopyrightString ( "Florent de Dinechin, Matei Istoan, 2012-2014" );
 
-		// Set up the VHDL library style
-		//useNumericStd();
+			// Set up the VHDL library style
+			//useNumericStd();
 
-		wX = x->MSB() - x->LSB() +1;
-		wY = y->MSB() - y->LSB() +1;
-		wA = a->MSB() - a->LSB() +1;
+			wX = x->MSB() - x->LSB() +1;
+			wY = y->MSB() - y->LSB() +1;
+			wA = a->MSB() - a->LSB() +1;
 
-		signedIO = (x->isFixSigned() && y->isFixSigned());
-		// TODO: manage the case when one is signed and not the other.
-		if((x->isFixSigned() && !y->isFixSigned()) || (!x->isFixSigned() && y->isFixSigned()))
-			THROWERROR("One operator signed and the other unsigned is currently not supported.")
+			signedIO = (x->isFixSigned() && y->isFixSigned());
+			// TODO: manage the case when one is signed and not the other.
+			if((x->isFixSigned() && !y->isFixSigned()) || (!x->isFixSigned() && y->isFixSigned()))
+			{
+				THROWERROR("One operator signed and the other unsigned is currently not supported.");
+			}
 
-		// Set the operator name
-		{
-			ostringstream name;
-			name <<"FixMultAdd_";
-			name << wX << "x" << wY << "p" << wA << "r" << wOut << "" << (signedIO?"signed":"unsigned");
-			name << Operator::getNewUId();
-			setName(name.str());
-			REPORT(DEBUG, "Building " << name.str());
-		}
+			// Set the operator name
+			{
+				ostringstream name;
+				name <<"FixMultAddBitheap_";
+				name << wX << "x" << wY << "p" << wA << "r" << wOut << "" << (signedIO?"signed":"unsigned");
+				name << Operator::getNewUId();
+				setName(name.str());
+				REPORT(DEBUG, "Building " << name.str());
+			}
 
-		// Set up the IO signals
-		xname="X";
-		yname="Y";
-		aname="A";
-		rname="R";
+			// Set up the IO signals
+			xname="X";
+			yname="Y";
+			aname="A";
+			rname="R";
 
-		// Determine the msb and lsb of the full product X*Y
-		pMSB = x->MSB() + y->MSB() + 1;
-		pLSB = x->LSB() + y->LSB();
+			// Determine the msb and lsb of the full product X*Y
+			pLSB = x->LSB() + y->LSB();
+			pMSB = pLSB + (wX + wY + (signedIO ? -1 : 0)) - 1;
 
-		// Determine the actual msb and lsb of the product,
-		// from the output's msb and lsb, and the (possible) number of guard bits
+			g = ((a->LSB()>outLSB && pLSB>a->LSB()) || (a->LSB()>outLSB && a->LSB()>pMSB)) ? 1 : 0;		//use 1 guard bit as default when we need to truncate A (and when either pLSB>aLSB or vice versa)
+			//g = 1;
 
+			// Determine the actual msb and lsb of the product,
+			// from the output's msb and lsb, and the (possible) number of guard bits
+			//lsb
+			if(((pLSB <= outLSB-g) && (g==1)) || ((pLSB < outLSB) && (g==0)))
+			{
+				//the result of the multiplication will be truncated
+				workPLSB = outLSB-g;
 
-		// workPLSB is the actual weight of the bit that has weight 0 in the bit heap
-		int PlsbWeightInBitHeap;
-		//lsb
-		if(pLSB < outLSB)	{
-			possibleOutputs = 2;
-			REPORT(DEBUG, "pLSB="<<pLSB<<" < outLSB="<< outLSB<< ", the result of the multiplication will be truncated and the architecture will be faithful");
-			// workPLSB = outLSB;
-			g = IntMultiplier::neededGuardBits(target, wX, wY, workPMSB-workPLSB+1);
-			// workPLSB -= g;
-			//			REPORT(DETAILED,  "Multiplication of " << wX << " by " << wY << " bits, with the result truncated to weight " << workPLSB);
-		}
-		else { // pLSB>=outLSB: the result of the multiplication will not be truncated
-			//workPLSB = pLSB;
-      g=0;
-			//			PlsbWeightInBinHeap=
-			possibleOutputs = 1; // No faithful rounding
-			REPORT(DETAILED, "Exact architecture: Full multiplication of " << wX << " by " << wY);
-		}
+				possibleOutputs = 2;
+				REPORT(DETAILED, "Faithfully rounded architecture");
 
-		//msb
-		if(pMSB <= outMSB)	{	    //all msbs of the product are used
-			workPMSB = pMSB;
-		}
-		else	{                   //not all msbs of the product are used
-			workPMSB = outMSB;
-		}
+				ostringstream dbgMsg;
+				dbgMsg << "Multiplication of " << wX << " by " << wY << " bits, with the result truncated to weight " << workPLSB;
+				REPORT(DETAILED, dbgMsg.str());
+			}
+			else
+			{
+				//the result of the multiplication will not be truncated
+				workPLSB = pLSB;
 
-		// Determine the actual msb and lsb of the addend, from the output's msb and lsb
+				possibleOutputs = 1; // No faithful rounding
+				REPORT(DETAILED, "Exact architecture");
 
-		//lsb
-		if(a->LSB() < outLSB) {	  //truncate the addend
-			workALSB = (outLSB-g < a->LSB()) ? a->LSB() : outLSB-g;
-		}
-		else	{                   //keep the full addend
-			workALSB = a->LSB();
-		}
-		//msb
-		if(a->MSB() <= outMSB)	{	//all msbs of the addend are used
-			workAMSB = a->MSB();
-		}
-		else	{	                  //not all msbs of the addend are used
-			workAMSB = outMSB;
-		}
+				ostringstream dbgMsg;
+				dbgMsg << "Full multiplication of " << wX << " by " << wY;
+				REPORT(DETAILED, dbgMsg.str());
+			}
+			//msb
+			if(pMSB <= outMSB)
+			{
+				//all msbs of the product are used
+				workPMSB = pMSB;
+			}
+			else
+			{
+				//not all msbs of the product are used
+				workPMSB = outMSB;
+			}
 
-		//create the inputs and the outputs of the operator
-		addInput (xname,  wX);
-		addInput (yname,  wY);
-		addInput (aname,  wA);
-		addOutput(rname,  wOut, possibleOutputs);
+			//compute the needed guard bits and update the lsb
+			if(pMSB >= outLSB-g)
+			{
+				//workPLSB += ((g==1 && !(workPLSB==workPMSB && pMSB==(outLSB-1))) ? 1 : 0);			//because of the default g=1 value
+				g = IntMultiplier::neededGuardBits(target, wX, wY, workPMSB-workPLSB+1);
+				workPLSB -= g;
+			}
 
-		//create the bit heap
-		REPORT(DETAILED, "Creating bit heap of size " << wOut+g << ", out of which " << g << " guard bits");
-		
-		bitHeap = new BitHeap(this,								//parent operator
-													wOut+g,							//size of the bit heap
-													enableSuperTiles);	//whether super-tiles are used
-		bitHeap->setSignedIO(signedIO);
+			// Determine the actual msb and lsb of the addend,
+			// from the output's msb and lsb
+			//lsb
+			if(a->LSB() < outLSB)
+			{
+				//truncate the addend
+				workALSB = (outLSB-g < a->LSB()) ? a->LSB() : outLSB-g;
+				//need to correct the lsb of A, because of the default value of g=1 when the multiplier is truncated as well
+				/*
+				if((workALSB > a->LSB()) && (g>1))
+				{
+					workALSB += (pMSB==(outLSB-1) ? -1 : 0);
+				}
+				*/
+			}
+			else
+			{
+				//keep the full addend
+				workALSB = a->LSB();
+			}
+			//msb
+			if(a->MSB() <= outMSB)
+			{
+				//all msbs of the addend are used
+				workAMSB = a->MSB();
+			}
+			else
+			{
+				//not all msbs of the product are used
+				workAMSB = outMSB;
+			}
 
-		//create the multiplier
-		//	this is a virtual operator, which uses the bit heap to do all its computations
-		mult = new IntMultiplier(this,							//parent operator
-														 bitHeap,						//the bit heap that performs the compression
-														 getSignalByName(xname),		//first input to the multiplier (a signal)
-														 getSignalByName(yname),		//second input to the multiplier (a signal)
-														 workPLSB-g,			                  //offset of the LSB of the multiplier in the bit heap
-														 false /*negate*/,				//whether to subtract the result of the multiplication from the bit heap
-														 signedIO,						//signed/unsigned operator
-														 ratio);						//DSP ratio
-		
-		//add the addend to the bit heap
-		int addendWeight;
+			//create the inputs and the outputs of the operator
+			addInput (xname,  wX);
+			addInput (yname,  wY);
+			addInput (aname,  wA);
+			addOutput(rname,  wOut, possibleOutputs);
 
-		//if the addend is truncated, no shift is needed
-		//	else, compute the shift from the output lsb
-		//the offset for the signal in the bitheap can be either positive (signal's lsb < than bitheap's lsb), or negative
-		//	the case of a negative offset is treated with a correction term, as it makes more sense in the context of a bitheap
-		//addendWeight = (a->LSB() < outLSB) ? 0 : outLSB - a->LSB();
-		addendWeight = a->LSB()-(outLSB-g);
+			//create the bit heap
+			{
+				ostringstream dbgMsg;
+				dbgMsg << "Using " << g << " guard bits" << endl;
+				dbgMsg << "Creating bit heap of size " << wOut+g << ", out of which " << g << " guard bits";
+				REPORT(DETAILED, dbgMsg.str());
+			}
+			bitHeap = new BitHeap(this,								//parent operator
+								  wOut+g,							//size of the bit heap
+								  enableSuperTiles);				//whether super-tiles are used
+			bitHeap->setSignedIO(signedIO);
 
-		if(signedIO)		{
-			bitHeap->addSignedBitVector(addendWeight,			//weight of signal in the bit heap
-																	aname,					//name of the signal
-																	workAMSB-workALSB+1,	//size of the signal added
-																	workALSB-a->LSB(),		//index of the lsb in the bit vector from which to add the bits of the addend
-																	(addendWeight<0));		//if we are correcting the index in the bit vector with a negative weight
-		}
-		else		{
-			bitHeap->addUnsignedBitVector(addendWeight,			//weight of signal in the bit heap
-																		aname,				//name of the signal
-																		workAMSB-workALSB+1,	//size of the signal added
-																		(a->MSB()-a->LSB())-(workAMSB-a->MSB()),
+			//FIXME: are the guard bits included in the bits output by the multiplier?
+
+			//create the multiplier
+			//	this is a virtual operator, which uses the bit heap to do all its computations
+			if(pMSB >= outLSB-g)
+			{
+				mult = new IntMultiplier(this,							//parent operator
+										 bitHeap,						//the bit heap that performs the compression
+										 getSignalByName(xname),		//first input to the multiplier (a signal)
+										 getSignalByName(yname),		//second input to the multiplier (a signal)
+										 //workPLSB-g,			        //offset of the LSB of the multiplier in the bit heap
+										 workPLSB-(outLSB-g),
+										 false /*negate*/,				//whether to subtract the result of the multiplication from the bit heap
+										 signedIO,						//signed/unsigned operator
+										 ratio);						//DSP ratio
+			}
+
+			//add the addend to the bit heap
+			int addendWeight;
+
+			//if the addend is truncated, no shift is needed
+			//	else, compute the shift from the output lsb
+			//the offset for the signal in the bitheap can be either positive (signal's lsb < than bitheap's lsb), or negative
+			//	the case of a negative offset is treated with a correction term, as it makes more sense in the context of a bitheap
+			addendWeight = a->LSB()-(outLSB-g);
+			//needed to correct the value of g=1, when the multiplier s truncated as well
+			if((workALSB >= a->LSB()) && (g>1))
+			{
+				addendWeight += (pMSB==(outLSB-1) ? 1 : 0);
+			}
+			if(a->MSB() >= outLSB-g)
+			{
+				if(signedIO)
+				{
+					bitHeap->addSignedBitVector(addendWeight,			//weight of signal in the bit heap
+												aname,	//name of the signal
+												workAMSB-workALSB+1,	//size of the signal added
+												workALSB-a->LSB(),		//index of the lsb in the bit vector from which to add the bits of the addend
+												(addendWeight<0));		//if we are correcting the index in the bit vector with a negative weight
+				}
+				else
+				{
+					bitHeap->addUnsignedBitVector(addendWeight,			//weight of signal in the bit heap
+												  aname,	//name of the signal
+												  workAMSB-workALSB+1,	//size of the signal added
+												  (a->MSB()-a->LSB())-(workAMSB-a->MSB()),
 																		//index of the msb in the actual bit vector from which to add the bits of the addend
-																		workALSB-a->LSB(),	//index of the lsb in the actual bit vector from which to add the bits of the addend
-																		(addendWeight<0));	//if we are correcting the index in the bit vector with a negative weight
-		}
+												  workALSB-a->LSB(),	//index of the lsb in the actual bit vector from which to add the bits of the addend
+												  (addendWeight<0));	//if we are correcting the index in the bit vector with a negative weight
+				}
+			}
 
-		//final rounding, if needed
-		if(g >=1 )	{
-			bitHeap -> addConstantOneBit(g-1);
-		}
+			//correct the number of guard bits, if needed, because of the corner cases
+			if((pMSB==(outLSB-1)) && (workPMSB<workAMSB) && (g>1))
+			{
+				g++;
+			}
 
-		//compress the bit heap
-		bitHeap -> generateCompressorVHDL();
+			//add the rounding bit
+			if(g>0)
+				bitHeap->addConstantOneBit(g-1);
 
-		vhdl << tab << rname << " <= " << bitHeap-> getSumName() << range(wOut+g-1, g) << ";" << endl;
-}
+			//compress the bit heap
+			bitHeap -> generateCompressorVHDL();
+
+			//assign the output
+			vhdl << tab << rname << " <= " << bitHeap->getSumName() << range(wOut+g-1, g) << ";" << endl;
+	}
 
 
 
