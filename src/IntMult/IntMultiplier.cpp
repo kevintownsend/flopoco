@@ -490,10 +490,15 @@ namespace flopoco {
 				s.str("");
 				s << "not DSP_mult_" << getuid();
 			}
-			for (int w=0; w<wFullP; w++) 	{
+
+			//FIXME: the position where the bits are added in the bitheap is no longer the same as the index of the multiplier output
+			for (int w=0; w<wFullP; w++)
+			{
 				int wBH = w+lsbWeightInBitHeap;
 				if(wBH >= 0) {
-					bitHeap->addBit(wBH, join(s.str(), of(wBH))); 
+					//old version
+					//bitHeap->addBit(wBH, join(s.str(), of(wBH)));
+					bitHeap->addBit(wBH, join(s.str(), of(w)));
 				}
 			}
 						

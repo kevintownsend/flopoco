@@ -15,27 +15,27 @@ namespace flopoco {
 
 	/*
 	  Definition of the DSP use threshold t:
-	  Consider a submultiplier block, by definition smaller than (or equal to) a DSP in both dimensions
-	  let r=(submultiplier area)/(DSP area); r is between 0 and 1
+	  Consider a sub-multiplier block, by definition smaller than (or equal to) a DSP in both dimensions
+	  let r=(sub-multiplier area)/(DSP area); r is between 0 and 1
 	  if r >= 1-t   then use a DSP for this block 
-	  So: t=0 means: any submultiplier that does not fill a DSP goes to logic
-        t=1 means: any submultiplier, even very small ones, go to DSP
+	  So: t=0 means: any sub-multiplier that does not fill a DSP goes to logic
+        t=1 means: any sub-multiplier, even very small ones, go to DSP
 	*/
 
 	/*
 			Corner cases that one has to understand and support:
 		 
-			related to g, so standalone only: in general, g>0 when wOut<wX+wY. 
+			related to g, so stand-alone only: in general, g>0 when wOut<wX+wY.
 			However, one situation where g=0 and wOut!=wX+wY is the tabulation of a small rounded multiplier.
-			To manage this case, 1/ neededGuardBits should anticipate it et 2/ the rounding should always be at the bit 0 of the bit heap.
+			To manage this case, 1/ neededGuardBits should anticipate it and 2/ the rounding should always be at the bit 0 of the bit heap.
 
 			
 
-			Final rounding: to do only in case of a standalone operator. Therefore, it shouldn't be in fillBitHeap()
+			Final rounding: to do only in case of a stand-alone operator. Therefore, it shouldn't be in fillBitHeap()
 
 
-			Workflow for the sdandalone and virtual multipliers
-			STANDALONE:
+			Workflow for the stand-alone and virtual multipliers
+			STAND-ALONE:
 			inputs wOut, computes g out of it, computes lsbWeightInBitHeap, instantiates a bit heap, and throws bits in it.
 			In case of truncation, needs to add a round bit
 
@@ -45,9 +45,9 @@ namespace flopoco {
 			No addition of rounding bits: this is the responsibility of parentOp
 
 		As a consequence, attributes of IntMultiplier:
-			- there should be no global attribute g, because it is used only in the standalone case. 
-			- there should be no global attribute wOut, because it is used only in the standalone case. 
-			Actuually there is a global attribute wOut, but to be used only by emulate()
+			- there should be no global attribute g, because it is used only in the stand-alone case.
+			- there should be no global attribute wOut, because it is used only in the stand-alone case.
+			Actually there is a global attribute wOut, but to be used only by emulate()
 			- fillBitHeap and the other methods should not refer to g or wOut
 	 */
 

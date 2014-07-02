@@ -65,16 +65,35 @@ namespace flopoco {
 		 */
 		~FixMultAdd();
 
-		/** Generates a component, and produces VHDL code for the instance inside an operator */
+		/**
+		 * Generates a component, and produces VHDL code for the instance inside an operator.
+		 * The parent operator uses the std_logic_vector type.
+		 */
 		static FixMultAdd* newComponentAndInstance(Operator* op,
+														string instanceName,
+														string xSignalName,
+														string ySignalName,
+														string aSignalName,
+														string rSignalName,
+														int rMSB,
+														int rLSB,
+														bool isSigned = false
+													);
+
+		/**
+		 * Generates a component, and produces VHDL code for the instance inside an operator.
+		 * The parent operator uses the signed/unsigned types.
+		 */
+		static FixMultAdd* newComponentAndInstanceNumericStd(Operator* op,
 																string instanceName,
 																string xSignalName,
 																string ySignalName,
 																string aSignalName,
 																string rSignalName,
 																int rMSB,
-																int rLSB
-																);
+																int rLSB,
+																bool isSigned = false
+															);
 
 		/**
 		 * The emulate function.
@@ -95,7 +114,6 @@ namespace flopoco {
 		int outMSB;                 /**< output MSB */
 		int outLSB;                 /**< output LSB */
 		int wOut;                   /**< size of the result */
-		int msbP;                   /**< weight +1 of the MSB product */
 		int lsbPfull;               /**< equal to msbP - wX -wY */
 		int lsbA;                  	/**< weight of the LSB of A */
 
@@ -128,7 +146,6 @@ namespace flopoco {
 		int workPLSB;				/**< LSB of the product, aligned with the output precision */
 		int workAMSB;				/**< MSB of the addend, aligned with the output precision */
 		int workALSB;				/**< LSB of the addend, aligned with the output precision */
-
 
 	};
 
