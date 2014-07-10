@@ -1134,12 +1134,21 @@ namespace flopoco
 
 		REPORT(DEBUG, "Adding the constant bits");
 		op->vhdl << endl << tab << "-- Adding the constant bits" << endl;
+		bool isConstantNonzero = false;
 
 		for (unsigned w=0; w<maxWeight; w++){
-			if (1 == ((constantBits>>w) & 1) )
+			if (1 == ((constantBits>>w) & 1) ){
 				addBit(w, "'1'","",2);
+				isConstantNonzero = true;
+			}
 		}
 		
+		//when the constant bits are all zero, report it
+		if(!isConstantNonzero){
+			REPORT(DEBUG, "All the constant bits are zero, nothing to add");
+			op->vhdl << tab << tab << "-- All the constant bits are zero, nothing to add" << endl;
+		}
+
 		op->vhdl << endl;
 
 		printBitHeapStatus();

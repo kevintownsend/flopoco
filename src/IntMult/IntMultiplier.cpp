@@ -123,7 +123,7 @@ namespace flopoco {
 
 	void IntMultiplier::initialize() 
 	{
-		if(wXdecl<0 || wYdecl<0) {
+		if(wXdecl<0 || wYdecl<0){
 			THROWERROR("negative input size");
 		}
 		wFullP = wXdecl+wYdecl;
@@ -133,24 +133,26 @@ namespace flopoco {
 		// After which we negate y (the smaller) by 1/ complementing it and 2/  adding it back to the bit heap
 
 		string newxname, newyname;
-		if(wYdecl> wXdecl) {
+		if(wYdecl > wXdecl){
 			REPORT(DEBUG, "initialize(): Swapping X and Y")
 			wX=wYdecl;	 
 			wY=wXdecl;	 
 			newxname=yname;
 			newyname=xname;
 		}
-		else {
+		else{
 			wX=wXdecl;	 
 			wY=wYdecl;
 			newxname=xname;
 			newyname=yname;
 		}
 
-		// The larger of the two 
-		vhdl << tab << declare(addUID("XX"), wX, true) << " <= " << newxname << " ;" << endl;	 
-		// possibly negate the smaller
-		if(!negate)
+		// The larger of the two inputs
+		vhdl << tab << declare(addUID("XX"), wX, true) << " <= " << newxname << " ;" << endl;
+
+		// possibly negate the smaller of the two inputs
+		// 	there is no need for the initialize() for the corner cases, as they handle the negation themselves
+		if(!negate || tabulatedMultiplierP(parentOp->getTarget(), wX, wY) || wY<3)
 			vhdl << tab << declare(addUID("YY"), wY, true) << " <= " << newyname << " ;" << endl;	 
 		else
 		{
@@ -214,7 +216,7 @@ namespace flopoco {
 		setCopyrightString ( "Florent de Dinechin, Kinga Illyes, Bogdan Popa, Bogdan Pasca, 2012" );
 
 		// useDSP or not? 
-		useDSP = (DSPThreshold>=0)&&target->hasHardMultipliers();
+		useDSP = (DSPThreshold>=0) && target->hasHardMultipliers();
 		{
 			ostringstream name;
 			name <<"IntMultiplier";
@@ -228,7 +230,7 @@ namespace flopoco {
 		}
 
 		if(wOut<0)
-			THROWERROR("in standalone constructor: negative wOut");
+			THROWERROR("in stand-alone constructor: negative wOut");
 
 		parentOp=this;
 		multiplierUid=parentOp->getNewUId();
@@ -236,6 +238,7 @@ namespace flopoco {
 		yname="Y";
 		
 		initialize();
+
 		int g = neededGuardBits(parentOp->getTarget(), wXdecl, wYdecl, wOut);
 		int possibleOutputs=1;
 		if(g>=0)
@@ -275,12 +278,10 @@ namespace flopoco {
 		// initialize the critical path
 		setCriticalPath(getMaxInputDelays ( inputDelays_ ));
 
-		//FIXME: for testing purposes only
-		//negate = true;
 
 		fillBitHeap();
 
-		// For a standalone operator, we add the rounding-by-truncation bit, 
+		// For a stand-alone operator, we add the rounding-by-truncation bit,
 		// The following turns truncation into rounding, except that the overhead is large for small multipliers.
 		// No rounding needed for a tabulated multiplier.
 		if(lsbWeightInBitHeap<0 && !tabulatedMultiplierP(target, wX, wY))
@@ -288,13 +289,10 @@ namespace flopoco {
 			//int weight = -lsbWeightInBitHeap-1;
 			int weight = g-1;
 
-			if(negate)
-				bitHeap->subConstantOneBit(weight);
-			else
-				bitHeap->addConstantOneBit(weight);
+			bitHeap->addConstantOneBit(weight);
 		}
 		
-		bitHeap -> generateCompressorVHDL();			
+		bitHeap -> generateCompressorVHDL();
 
 		vhdl << tab << "R" << " <= " << bitHeap-> getSumName() << range(wOut+g-1, g) << ";" << endl;
 	}
@@ -357,23 +355,71 @@ namespace flopoco {
 		// Multiplication by 1-bit integer is simple
 		if(wY == 1)
 		{
+			ostringstream signExtensionX;
+			int xSize = wX;
+
+			if(negate){
+				vhdl << tab << "-- we compute -(x*y) as (not(x)+1)*y" << endl;
+
+				if(signedIO)
+					signExtensionX << "not(" << addUID("XX") << of(wX-1) << ") & ";
+				else
+					signExtensionX << "\'1\' & ";
+				for(int i=wX+1; i<(int)bitHeap->getMaxWeight(); i++)
+					if(signedIO)
+						signExtensionX << "not(" << addUID("XX") << of(wX-1) << ") & ";
+					else
+						signExtensionX << "\'1\' & ";
+
+				vhdl << tab << declare(addUID("XX")+"_neg", wX+(wX+1>=(int)bitHeap->getMaxWeight() ? 1 : 1+bitHeap->getMaxWeight()-wX))
+					<< " <= " << signExtensionX.str() << "not(" << addUID("XX") << ");" << endl;
+				xSize += (wX+1>(int)bitHeap->getMaxWeight() ? 1 : 1+bitHeap->getMaxWeight()-wX);
+			}else{
+				if(signedIO)
+					signExtensionX << addUID("XX") << of(wX-1) << " & ";
+				else
+					signExtensionX << "\'0\' & ";
+				for(int i=wX+1; i<(int)bitHeap->getMaxWeight(); i++)
+					if(signedIO)
+						signExtensionX << addUID("XX") << of(wX-1) << " & ";
+					else
+						signExtensionX << "\'0\' & ";
+			}
+
 			vhdl << tab << "-- How to obfuscate multiplication by 1 bit: first generate a trivial bit vector" << endl;
+
 			if (signedIO){
 				manageCriticalPath(  parentOp->getTarget()->localWireDelay(wX) +  parentOp->getTarget()->adderDelay(wX+1) );				
-				vhdl << tab << declare(addUID("RR"), wX+wY)  << " <= (" << zg(wX+1)  << " - ("<<addUID("XX")<< of(wX-1) 
-				     << " & "<<addUID("XX")<<")) when "<<addUID("YY")<<"(0)='1' else "<< zg(wX+1,0)<<";"<<endl;	
+
+				vhdl << tab << declare(addUID("RR"), bitHeap->getMaxWeight())  << " <= (" << zg(bitHeap->getMaxWeight())
+						<< " - (" << (negate ? addUID("XX")+"_neg" : signExtensionX.str()+addUID("XX"))+((wX>wOut || lsbWeightInBitHeap<0) ? range(xSize-1, xSize-bitHeap->getMaxWeight()) : "") << "))"
+						<< " when " << addUID("YY") << "(0)='1' else " << zg(bitHeap->getMaxWeight(), 0) << ";" << endl;
 			}
-			else {
+			else{
 				manageCriticalPath(  parentOp->getTarget()->localWireDelay(wX) +  parentOp->getTarget()->lutDelay() );
-				vhdl << tab  << declare(addUID("RR"), wX+wY) << " <= (\"0\" & "<<addUID("XX")<<") when "<< addUID("YY")<<"(0)='1' else "<<zg(wX+1,0)<<";"<<endl;	
+
+				vhdl << tab  << declare(addUID("RR"), bitHeap->getMaxWeight()) << " <= ("
+						<< (negate ? addUID("XX")+"_neg" : signExtensionX.str()+addUID("XX"))+((wX>wOut || lsbWeightInBitHeap<0) ? range(xSize-1, xSize-bitHeap->getMaxWeight()) : "") << ")"
+						<< " when " << addUID("YY") << "(0)='1' else " << zg(bitHeap->getMaxWeight(), 0) << ";" << endl;
 			}
+
 			vhdl << tab << "-- then send its relevant bits to a useless bit heap " << endl;
-			for (int w=0; w<wFullP; w++) 	{
-				int wBH = w+lsbWeightInBitHeap;
-				if(wBH >= 0) 
-					bitHeap->addBit(wBH, join(addUID("RR"), of(wBH))); 
-			}		
+
+			for (int w=0; w<(int)bitHeap->getMaxWeight(); w++){
+				int wBH = w+(lsbWeightInBitHeap>0 ? lsbWeightInBitHeap : 0);
+				if(wBH >= 0)
+					bitHeap->addBit(wBH, join(addUID("RR"), of(wBH)));
+			}
+			if((negate) && (lsbWeightInBitHeap >= 0)){
+				//bitHeap->addBit(lsbWeightInBitHeap, addUID("YY")+of(0));
+				if(signedIO)
+					bitHeap->subtractUnsignedBitVector(lsbWeightInBitHeap, addUID("YY"), 1);
+				else
+					bitHeap->addUnsignedBitVector(lsbWeightInBitHeap, addUID("YY"), 1);
+			}
+
 			vhdl << tab << "-- then compress this height-1 bit heap by doing nothing" << endl;
+
 			outDelayMap[addUID("R")] = getCriticalPath();
 			return;
 		}
@@ -520,17 +566,16 @@ namespace flopoco {
 			}
 			//treat the msb bit of x*y differently, as sign extension might be needed
 			if(signedIO && ((int)bitHeap->getMaxWeight()>(wFullP+lsbWeightInBitHeap)))
-				bitHeap->addBit(wFullP+lsbWeightInBitHeap, "not("+s.str()+of(wFullP-1)+")");
+				bitHeap->addBit(wFullP-1+lsbWeightInBitHeap, "not("+s.str()+of(wFullP-1)+")");
 			else
 				//no sign extension needed
 				bitHeap->addBit(wFullP-1+lsbWeightInBitHeap, s.str()+of(wFullP-1));
-						
-#if 1 // FIXME: this should be redone
 
 			//keep sign-extending the product, if necessary
 			if(signedIO && ((int)bitHeap->getMaxWeight()>(wFullP+lsbWeightInBitHeap)))
 				for(int w=wFullP-1+lsbWeightInBitHeap; w<(int)bitHeap->getMaxWeight(); w++)
-					bitHeap->addConstantOneBit(w);
+					if(w >= 0)
+						bitHeap->addConstantOneBit(w);
 			
 			//if the product is negated, then add the bits of x, (not x)<<2^wY, 2^wY
 			if(negate)
@@ -540,7 +585,7 @@ namespace flopoco {
 					if(w+lsbWeightInBitHeap >= 0)
 						bitHeap->addBit(w+lsbWeightInBitHeap, join(addUID("XX"), of(w)));
 				//treat the msb bit of x differently, as sign extension might be needed
-				if(signedIO && ((int)bitHeap->getMaxWeight()>(wX-1+lsbWeightInBitHeap)))
+				if(signedIO && ((int)bitHeap->getMaxWeight()>(wX+lsbWeightInBitHeap)))
 					bitHeap->addBit(wX-1+lsbWeightInBitHeap, "not("+addUID("XX")+of(wX-1)+")");
 				else
 					//no sign extension needed
@@ -548,29 +593,10 @@ namespace flopoco {
 					
 				//x, when added and using signed operators, should be sign-extended
 				if(signedIO && ((int)bitHeap->getMaxWeight()>(wX+lsbWeightInBitHeap)))
-					for(int w=wX-1; w<(int)bitHeap->getMaxWeight(); w++)
-						if(w+lsbWeightInBitHeap >= 0)
-							bitHeap->addBit(w+lsbWeightInBitHeap, join(addUID("XX"), of(wX-1)));
-
-				/*
-				if(!signedIO)
-				{
-					//add (not x)<<2^(wY+1)
-					endingIndex	  = wX+wY-(wX+wY-wOut-g);
-					startingIndex = wY-(wX+wY-wOut-g);
-					for(int w=startingIndex; w<endingIndex; w++){
-						ostringstream s;						
-						s << "not(" << addUID("XX") << of(w-startingIndex) << ")";
-						if((w >= 0) && (w < wOut+g))
-							bitHeap->addBit(w, s.str());
-					}
-				 	//add 2^(wY+1)
-					if(wY+1-(wX+wY-wOut-g) >= 0)
-						bitHeap->addConstantOneBit(wY+1-(wX+wY-wOut-g));
-				}
-				*/
+					for(int w=wX-1+lsbWeightInBitHeap; w<(int)bitHeap->getMaxWeight(); w++)
+						if(w >= 0)
+							bitHeap->addConstantOneBit(w);
 			}
-#endif // TODO replug it 
 
 			// this should be it
 			return;
@@ -623,12 +649,12 @@ namespace flopoco {
 		}
 #endif
 
-		if(useDSP) 	{
+		if(useDSP) {
 			REPORT(DETAILED,"useDSP");
 			parentOp->getTarget()->getDSPWidths(wxDSP, wyDSP, signedIO);
 			buildTiling();
 		}
-		else 	{
+		else{
 			// This target has no DSP, going for a logic-only implementation	
 			buildLogicOnly();
 		}
