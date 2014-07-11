@@ -16,10 +16,10 @@
 <hr/>
 <h2>Installation</h2>
 
-<h3>Single-line installation on Ubuntu 12.10</h3>
-Copy this in a dash/bash shell (and enter your password when prompted):
+<h3>Single-line installation on Ubuntu 14.04</h3>
+Copy this in a dash/bash shell (and enter your password when prompted, and of course you should check what these commands do):
 
-<p><kbd>yes | sudo apt-get install g++ libgmp3-dev libmpfr-dev libxml2-dev bison libmpfi-dev flex cmake libboost-all-dev libgsl0-dev && wget perso.ens-lyon.fr/damien.stehle/fplll/libfplll-3.0.12.tar.gz && tar xzf libfplll-3.0.12.tar.gz && cd libfplll-3.0.12/ && ./configure && make -j2  && sudo make install && cd .. && wget https://gforge.inria.fr/frs/download.php/28571/sollya-3.0.tar.gz && tar xzf sollya-3.0.tar.gz && cd sollya-3.0/ && ./configure && make -j2  && sudo make install && cd .. && wget https://gforge.inria.fr/frs/download.php/32591/flopoco-2.5.0.tgz && tar xzf flopoco-2.5.0.tgz && cd flopoco-2.5.0/ && cmake . && make -j2  && ./flopoco</kbd></p>
+<p><kbd>yes | sudo apt-get install g++ libgmp3-dev libmpfr-dev libxml2-dev bison libmpfi-dev flex cmake libboost-all-dev libgsl0-dev && wget http://perso.ens-lyon.fr/damien.stehle/fplll/libfplll-4.0.4.tar.gz && tar xzf libfplll-4.0.4.tar.gz && cd libfplll-4.0.4/ && ./configure && make -j2  && sudo make install && cd .. && wget https://gforge.inria.fr/frs/download.php/33151/sollya-4.1.tar.gz && tar xzf sollya-4.1.tar.gz && cd sollya-4.1/ && ./configure && make -j2  && sudo make install && cd .. && wget https://gforge.inria.fr/frs/download.php/32591/flopoco-3.0.0.tgz && tar xzf flopoco-3.0.0.tgz && cd flopoco-3.0.0/ && cmake . && make -j2  && ./flopoco</kbd></p>
 
 <em>We would welcome similar installation scripts for other platforms.</em>
 
@@ -40,7 +40,7 @@ against <a href="http://sollya.gforge.inria.fr/">Sollya</a>. This
 enables the more advanced operators (HOTBM, FunctionEvaluator). For this purpose, you
 must download,
 compile and install <a href="http://sollya.gforge.inria.fr/">Sollya</a>.
-FloPoCo is demonstrated to work with version 3.0 of Sollya and should work with future releases.
+FloPoCo is demonstrated to work with version 4.1 of Sollya and should work with future releases.
 </p>
 
 <p>Compilation is a two-step process:</p>
