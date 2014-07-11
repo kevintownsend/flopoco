@@ -425,45 +425,84 @@ namespace flopoco {
 		}
 
 		// Multiplication by 2-bit integer is one addition, which is delegated to BitHeap compression anyway
-		// TODO this code mostly works but it is large and unoptimal (adding 0s to bit heap)
+		// TODO this code mostly works but it is large and sub-optimal (adding 0s to bit heap)
 		if(wY == 2)
 		{
-			string x = addUID("XX");
-			string y = addUID("YY");
+			string x 	= addUID("XX");
+			string y 	= addUID("YY");
+			string xneg = x + "_neg";
+			ostringstream signExtensionR0, signExtensionR1_pre, signExtensionR1_post;
 
-			vhdl << tab << declare(addUID("R0"),wX+2) << " <= (";
-			if (signedIO) 
-				vhdl << x << of(wX-1) << " & "<< x << of(wX-1);  
-			else  
-				vhdl << "\"00\"";
-			vhdl <<  " & "<< x <<") when "<< y <<"(0)='1' else " << zg(wX+2,0) << ";" << endl;
+			if(negate){
+				vhdl << tab << "-- we compute -(x*y) as (not(x)+1)*y" << endl;
+				vhdl << tab << declare(xneg, wX) << " <= not(" << x << ");" << endl;
+			}
 
-			vhdl << tab << declare(addUID("R1i"),wX+2) << " <= ";
-			if (signedIO) 
-				vhdl << "("<< x << of(wX-1) << "  &  " << x <<" & \"0\")";
-			else  
-				vhdl << "(\"0\" & "<< x <<" & \"0\")";
-			vhdl << " when "<< y <<"(1)='1' else " << zg(wX+2,0) << ";"<<endl;	
+			//sign extensions
+			if(signedIO){
+				signExtensionR0 << (negate ? "not(" : "") << addUID("XX") << of(wX-1) << (negate ? ")" : "") << " & "
+					<< (negate ? "not(" : "") << addUID("XX") << of(wX-1) << (negate ? ")" : "") << " & ";
+				signExtensionR1_pre		<< (negate ? "not(" : "") << addUID("XX") << of(wX-1) << (negate ? ")" : "") << " & ";
+				signExtensionR1_post	<< " & \'0\'";
+			}else{
+				signExtensionR0 << (negate ? "\"11\"" : "\"00\"") << " & ";
+				signExtensionR1_pre << (negate ? "\'1\'" : "\'0\'") << " & ";
+				signExtensionR1_post << " & \'0\'";
+			}
 
-			vhdl << tab << declare(addUID("R1"),wX+2) << " <= ";
-			if (signedIO) 
-				vhdl << "not "<<addUID("R1i")<<";" <<endl;
-			else  
-				vhdl << addUID("R1i")<<";"<<endl;
+			//create the intermediary signals for the multiplication
+			vhdl << tab << declare(addUID("R0"),wX+2) << " <= ("
+					<< signExtensionR0.str() << (negate ? xneg : x) << ") when " << y << "(0)='1' else " << zg(wX+2,0) << ";" << endl;
 
+			vhdl << tab << declare(addUID("R1i"),wX+2) << " <= ("
+					<< signExtensionR1_pre.str() << (negate ? xneg : x) << signExtensionR1_post.str() << ") when " << y << "(1)='1' else " << zg(wX+2,0) << ";" << endl;
 
-			for (int w=0; w<wFullP; w++) 	{
+			vhdl << tab << declare(addUID("R1"),wX+2) << " <= "
+					<< (signedIO ? "not " : "") << addUID("R1i") << ";" << endl;
+
+			//add the bits to the bitheap
+			for(int w=0; w<wX+1; w++){
 				int wBH = w+lsbWeightInBitHeap;
-				if(wBH >= 0) {
+
+				if(wBH >= 0){
 					bitHeap->addBit(wBH, join(addUID("R0"), of(w))); 
 					bitHeap->addBit(wBH, join(addUID("R1"), of(w))); 
 				}	
-			}	
+			}
+			//sign extension, if needed (no point in sign extending for just one bit)
+			if(wX+2<(int)bitHeap->getMaxWeight()){
+				bitHeap->addBit(wX+1+lsbWeightInBitHeap, "not("+join(addUID("R0")+")", of(wX+1)));
+				bitHeap->addBit(wX+1+lsbWeightInBitHeap, "not("+join(addUID("R1")+")", of(wX+1)));
 
-			// carry in bit for signed inputs
-			if(signedIO)
-				bitHeap->addConstantOneBit(0);
-			// and that's it
+				for(int w=wX+1+lsbWeightInBitHeap; w<(int)bitHeap->getMaxWeight(); w++){
+					bitHeap->addConstantOneBit(w);
+					bitHeap->addConstantOneBit(w);
+				}
+			}else{
+				bitHeap->addBit(wX+1+lsbWeightInBitHeap, join(addUID("R0"), of(wX+1)));
+				bitHeap->addBit(wX+1+lsbWeightInBitHeap, join(addUID("R1"), of(wX+1)));
+			}
+
+			//add y to the bit-heap, if needed
+			if((negate)){
+				if(signedIO){
+					if(lsbWeightInBitHeap >= 0)
+						bitHeap->addSignedBitVector(lsbWeightInBitHeap, addUID("YY"), 2);
+					else if(lsbWeightInBitHeap >= -1)
+						bitHeap->addSignedBitVector(lsbWeightInBitHeap+1, addUID("YY")+of(1), 1);
+				}else{
+					if(lsbWeightInBitHeap >= 0)
+						bitHeap->addUnsignedBitVector(lsbWeightInBitHeap, addUID("YY"), 2);
+					else if(lsbWeightInBitHeap >= -1)
+						bitHeap->addUnsignedBitVector(lsbWeightInBitHeap+1, addUID("YY")+of(1), 1);
+				}
+			}
+
+			//add one bit to complete the negation of R1
+			if(signedIO && lsbWeightInBitHeap>=0){
+				bitHeap->addConstantOneBit(lsbWeightInBitHeap);
+			}
+
 			return;
 		}
 		
