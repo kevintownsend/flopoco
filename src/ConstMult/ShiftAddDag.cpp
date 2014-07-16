@@ -93,6 +93,12 @@ namespace flopoco{
 		}
 	}
 
-
+	ShiftAddOp* ShiftAddDag::sadAppend(ShiftAddDag* patch){
+		for (unsigned int i=0; i<patch->saolist.size(); i++){
+			this->saolist.push_back(patch->saolist[i]);
+		}
+		return patch->result;
+	
+	}
 
 }
