@@ -1,11 +1,11 @@
 #ifndef CORDICATAN2_HPP
 #define CORDICATAN2_HPP
 
-#include "../Operator.hpp"
-#include "../utils.hpp"
-#include "../IntMultiplier.hpp"
-#include "../IntAdder.hpp"
-#include "../ConstMult/FixRealKCM.hpp"
+#include "Operator.hpp"
+#include "utils.hpp"
+#include "IntMult/IntMultiplier.hpp"
+#include "IntAddSubCmp/IntAdder.hpp"
+#include "ConstMult/FixRealKCM.hpp"
 
 
 #include <vector>

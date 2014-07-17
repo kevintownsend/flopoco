@@ -69,6 +69,7 @@ namespace flopoco{
 		eps=maxIterations*0.5; // only the rounding error in the atan constant
 
 		gA = 1 + (int) ceil(log2(eps)); // +1 for the final rounding 
+
 		REPORT(DEBUG, "Error analysis computes eps=" << eps << " ulps on the XY datapath, hence  gXY=" << gXY 
 					 <<"    and eps=" << eps << " ulps on the A datapath, hence  gA=" << gA );
 
@@ -96,7 +97,7 @@ namespace flopoco{
 		mpfr_set_d(scale, -1.0, GMP_RNDN);           // exact
 		mpfr_mul_2si(scale, scale, -w+1, GMP_RNDN); // exact
 		mpfr_add_d(scale, scale, 1.0, GMP_RNDN);     // exact
-		REPORT(DEBUG, "scale=" << printMPFR(scale, 15));
+		REPORT(DEBUG, "scale=" << printMPFR(scale));
 		
 
 		// declaring inputs. 
@@ -212,7 +213,7 @@ namespace flopoco{
 			mpfr_div_2si(zatan, zatan, stage, GMP_RNDN);
 			mpfr_atan(zatan, zatan, GMP_RNDN);
 			mpfr_div(zatan, zatan, constPi, GMP_RNDN);
-			REPORT(DEBUG, "stage=" << stage << "  atancst=" << printMPFR(zatan, 15));		
+			REPORT(DEBUG, "stage=" << stage << "  atancst=" << printMPFR(zatan));		
 			//create the arctangent factor to be added to Zin
 								
 
@@ -228,7 +229,7 @@ namespace flopoco{
 				mpfr_t roundBit;
 				mpfr_init2(roundBit, 3*sizeZ);
 				mpfr_set_d(roundBit, 1.0, GMP_RNDN);
-				mpfr_div_2si(roundBit, roundBit,  w, GMP_RNDN);
+				mpfr_div_2si(roundBit, roundBit, w, GMP_RNDN);
 				mpfr_add(roundBit, zatan, roundBit, GMP_RNDN);
 				vhdl << tab << declare(join("atan2PowStageAdd", stage), sizeZ) << " <= " << unsignedFixPointNumber(roundBit, zMSB, zLSB) << ";" <<endl;
 				mpfr_set_d(roundBit, 1.0, GMP_RNDN);
