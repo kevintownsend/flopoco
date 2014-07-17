@@ -647,7 +647,8 @@ namespace flopoco{
 		nextCycle(); //this gets absorbed into the bram
 
 		// TODO: somehow arbitrary
-		if( target->isPipelined() && a[0]+1>=9) {  
+		// TODO: unplugged
+		if(false && target->isPipelined() && a[0]+1>=9) {  
 			IntMultiplier* p0 = new IntMultiplier(target, a[0]+1, wF+2, 0, false /*unsigned*/);
 			oplist.push_back(p0);
 			inPortMap  (p0, "X", "InvA0");
@@ -682,7 +683,7 @@ namespace flopoco{
 			else
 				vhdl << range(s[i]-1, s[i]-psize[i])  << ";" << endl;   
 
-#if 1
+#if 0 // TODO unplugged
 			// TODO experiment with logic-based by setting the ratio to 0
 			IntMultiplier* pi = new IntMultiplier(target, a[i], psize[i], 0, false, 1.0, inDelayMap("X", getCriticalPath()) );
 			oplist.push_back(pi);
