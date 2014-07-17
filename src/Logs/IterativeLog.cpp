@@ -20,13 +20,10 @@
 #include <fstream>
 #include <sstream>
 #include <math.h>	// for NaN
-#include "FPLog.hpp"
+#include "IterativeLog.hpp"
 #include "TestBenches/FPNumber.hpp"
 #include "utils.hpp"
-#include "IntSquarer.hpp"
-#include "FPLogTables/FirstInvTable.hpp"
-#include "FPLogTables/FirstLogTable.hpp"
-#include "FPLogTables/OtherLogTable.hpp"
+#include "IntMult/IntSquarer.hpp"
 #include "ConstMult/IntIntKCM.hpp"
 
 
@@ -37,8 +34,320 @@ namespace flopoco{
 
 
 
+	IterativeLog::FirstInvTable::FirstInvTable(Target* target, int wIn, int wOut) : 
+		Table(target, wIn, wOut)
+	{
+		ostringstream name; 
+		name <<"InvTable_0_"<<wIn<<"_"<<wOut;
+		setName(name.str());
 
-	FPLog::FPLog(Target* target, 
+	}
+
+	IterativeLog::FirstInvTable::~FirstInvTable() {}
+  
+
+	int    IterativeLog::FirstInvTable::double2input(double x){
+		int result;
+		cerr << "??? IterativeLog::FirstInvTable::double2input not yet implemented ";
+		exit(1);
+		return result;
+	}
+
+
+	double IterativeLog::FirstInvTable::input2double(int x) {
+		double y;
+		if(x>>(wIn-1)) //MSB of input
+			y= ((double)(x+(1<<wIn))) //      11xxxx (binary)
+				/  ((double)(1<<(wIn+1))); // 0.11xxxxx (binary)
+		else
+			y= ((double)(x+(1<<wIn))) //   10xxxx (binary)
+				/  ((double)(1<<(wIn))); // 1.0xxxxx (binary)
+		return(y);
+	}
+
+	mpz_class IterativeLog::FirstInvTable::double2output(double x){
+		mpz_class result;
+		result =  mpz_class(floor(x*((double)(1<<(wOut-1)))));
+		return result;
+	}
+
+	double IterativeLog::FirstInvTable::output2double(mpz_class x) {
+		double y=((double)x.get_si()) /  ((double)(1<<(wOut-1)));
+		return(y);
+	}
+
+
+	mpz_class IterativeLog::FirstInvTable::function(int x)
+	{
+		double d;
+		mpz_class r;
+		d=input2double(x);
+		r =  ceil( ((double)(1<<(wOut-1))) / d); // double rounding, but who cares really
+		// The following line allows us to prove that the case a0=5 is lucky enough to need one bit less than the general case
+		//cout << "FirstInvTable> x=" << x<< "  r=" <<r << "  error=" << ceil( ((double)(1<<(wOut-1))) / d)  - ( ((double)(1<<(wOut-1))) / d) << endl;
+		return r;
+	}
+
+
+
+#if 0
+	int IterativeLog::FirstInvTable::check_accuracy(int wF) {
+		int i;
+		mpz_class j;
+		double x1,x2,y,e1,e2;
+		double maxerror=0.0;
+		double prod=0.0;
+
+		maxMulOut=0;
+		minMulOut=2;
+
+		for (i=minIn; i<=maxIn; i++) {
+			// x1 and x2 are respectively the smallest and largest FP possible
+			// values leading to input i
+			x1=input2double(i); 
+			if(i>>(wIn-1)) //MSB of input
+				x2= - negPowOf2(wF)          // <--wF --->
+					+ ((double)(i+1+(1<<wIn))) //   11 11...11 (binary)
+					/ ((double)(1<<(wIn+1))); // 0.11 11...11 (binary)
+			else
+				x2= - negPowOf2(wF-1) 
+					+ ((double)(i+1+(1<<wIn))) //  10 11...11 (binary)
+					/ ((double)(1<<(wIn))); // 1.0 11...11 (binary)
+			j=function(i);
+			y=output2double(j);
+			if(verbose)
+				cout << "i="<<i<< " ("<<input2double(i)<<") j="<<j
+					  <<" min="<< x1*y <<" max="<< x2*y<< endl;
+			prod=x1*y; if (prod<minMulOut) minMulOut=prod;
+			prod=x2*y; if (prod>maxMulOut) maxMulOut=prod;
+			e1= fabs(x1*y-1); if (e1>maxerror) maxerror=e1;
+			e2= fabs(x2*y-1); if (e2>maxerror) maxerror=e2;
+		} 
+		cout << "FirstInvTable: Max error=" <<maxerror << "  log2=" << log2(maxerror) <<endl; 
+		cout << "               minMulOut=" <<minMulOut << " maxMulOut=" <<maxMulOut  <<endl; 
+
+		printf("%1.30e\n", log2(maxerror));
+
+		return (int) (ceil(log2(maxerror)));
+	}
+
+#endif
+
+
+
+
+
+
+
+	IterativeLog::FirstLogTable::FirstLogTable(Target *target, int wIn, int wOut, FirstInvTable* fit, IterativeLog* op_) : 
+		Table(target, wIn, wOut), fit(fit), op(op_)  
+	{
+		ostringstream name; 
+		name <<"LogTable_0_"<<wIn<<"_"<<wOut;
+		setName(name.str());
+
+		minIn = 0;
+		maxIn = (1<<wIn) -1;
+		if (wIn!=fit->wIn) {
+			cerr<< "IterativeLog::FirstLogTable::FirstLogTable should use same wIn as FirstInvTable"<<endl;
+			exit(1);
+		}
+	}
+
+	IterativeLog::FirstLogTable::~FirstLogTable() {}
+
+
+	int    IterativeLog::FirstLogTable::double2input(double x){
+		int result;
+		cerr << "??? IterativeLog::FirstLogTable::double2input not yet implemented ";
+		exit(1);
+		//   result = (int) floor(x*((double)(1<<(wIn-1))));
+		//   if( result < minIn || result > maxIn) {
+		//     cerr << "??? IterativeLog::FirstLogTable::double2input:  Input "<< result <<" out of range ["<<minIn<<","<<maxIn<<"]";
+		//     exit(1);
+		//  }
+		return result;
+	}
+
+	double IterativeLog::FirstLogTable::input2double(int x) {
+		return(fit->input2double(x));
+	}
+
+	mpz_class    IterativeLog::FirstLogTable::double2output(double y){
+		//Here y is between -0.5 and 0.5 strictly, whatever wIn.  Therefore
+		//we multiply y by 2 before storing it, so the table actually holds
+		//2*log(1/m)
+		double z = floor(2*y*((double)(1<<(wOut-1)))); 
+
+		// otherwise, signed arithmetic on wOut bits
+		if(z>=0)
+			return (mpz_class) z;
+		else
+			return (z + (double)(1<<wOut));
+    
+	}
+
+	double IterativeLog::FirstLogTable::output2double(mpz_class x) {
+		cerr<<" IterativeLog::FirstLogTable::output2double TODO"; exit(1);
+		//  double y=((double)x) /  ((double)(1<<(wOut-1)));
+		//return(y);
+	}
+
+
+	mpz_class IterativeLog::FirstLogTable::function(int x)
+	{ 
+		mpz_class result;
+		double apprinv;
+		mpfr_t i,l;
+		mpz_t r;
+
+		mpfr_init(i);
+		mpfr_init2(l,wOut);
+		mpz_init2(r,400);
+		apprinv = fit->output2double(fit->function(x));;
+		// result = double2output(log(apprinv));
+		mpfr_set_d(i, apprinv, GMP_RNDN);
+		mpfr_log(l, i, GMP_RNDN);
+		mpfr_neg(l, l, GMP_RNDN);
+
+		// Remove the sum of small offsets that are added to the other log tables
+		for(int j=1; j<=op->stages; j++){
+			mpfr_set_d(i, 1.0, GMP_RNDN);
+			int pi=op->p[j];
+			mpfr_mul_2si(i, i, -2*pi, GMP_RNDN);
+			mpfr_sub(l, l, i,  GMP_RNDN);
+		}
+
+		// code the log in 2's compliment
+		mpfr_mul_2si(l, l, wOut, GMP_RNDN);
+		mpfr_get_z(r, l, GMP_RNDN);
+		result = mpz_class(r); // signed
+
+		// This is a very inefficient way of converting
+		mpz_class t = mpz_class(1) << wOut; 
+		result = t+result;
+		if(result>t) result-=t;
+
+		//  cout << "x="<<x<<" apprinv="<<apprinv<<" logapprinv="<<log(apprinv)<<" result="<<result<<endl;
+		mpfr_clear(i);
+		mpfr_clear(l);
+		mpz_clear(r);
+		return  result;
+	}
+
+
+
+	 // A table of log 
+	 // -log(1-x) where x < 2^-p and x on a+1 bits.
+	 // the log is then smaller than 2^-p+1
+	 //  outputPrecision is the weight of the last bit in the real domain
+	 IterativeLog::OtherLogTable::OtherLogTable(Target* target, int wIn, int outputPrecision, int which, int ai, int pi) : 
+		 Table(target, wIn, outputPrecision, 0, -1, 1),  which(which), ai(ai), pi(pi)
+		// TODO this forces a logic-based table
+
+	 {
+		 ostringstream name; 
+		 name <<"LogTable_"<<which<<"_"<<wIn<<"_"<<wOut;
+		 setName(name.str());
+	 }
+
+	 IterativeLog::OtherLogTable::~OtherLogTable() {}
+
+
+	 int    IterativeLog::OtherLogTable::double2input(double x){
+		 int result;
+		 cerr << "??? IterativeLog::OtherLogTable::double2input not yet implemented ";
+		 exit(1);
+		 return result;
+	 }
+
+
+	 double IterativeLog::OtherLogTable::input2double(int x) {
+		 double d; 
+		 // function uses log1p, so we prepare d for that 
+		 // computation in double is exact as long as we don't want a quad
+		 // operator...
+
+		 double Ei;
+		 if((which>1) || (which==1 && (1==(x>>(wIn-1)))) ) 
+			 Ei = 1.0 / ((double) (((uint64_t) 1)<<(2*pi)));
+		 else
+			 Ei = 1.0 / ((double) (((uint64_t) 1)<<(2*pi+1)));
+
+		 d = ((double) (-x))   /   ((double) (((uint64_t) 1)<<(pi+wIn)));
+
+		 //cout << endl << d << " " << Ei << "   " ;
+		 d += Ei;
+		 //cout << d;
+		 return d; 
+	 }
+
+
+
+
+
+	 mpz_class    IterativeLog::OtherLogTable::double2output(double y){
+		 mpz_class z; 
+		 z = (mpz_class) (  y *  ((double)(((int64_t)1)<< outputPrecision)) );
+		 // TODO fix for more than 64-bit
+		 //  z = (mpz_class(1)<< outputPrecision)  (  y *  ((double)(((int64_t)1)) );
+		 if (0 != z>>wOut) {
+			 cerr<<"IterativeLog::OtherLogTable::double2output: output does not fit output format"<<endl; 
+		 }
+		 return z; 
+	 }
+
+
+
+	 double IterativeLog::OtherLogTable::output2double(mpz_class x) {
+		 cerr<<" IterativeLog::OtherLogTable::output2double TODO"; exit(1);
+		 //double y=((long double)x) /  ((long double)(1<<outputPrecision));
+		 //return(y);
+	 }
+
+
+
+
+
+	 mpz_class IterativeLog::OtherLogTable::function(int x) {
+		 mpz_class result;
+		 double apprinv;
+		 mpfr_t i,l;
+		 mpz_t r;
+
+		 mpfr_init(i);
+		 mpfr_init2(l,wOut);
+		 mpz_init2(r,400);
+
+
+		 apprinv = input2double(x);
+		 mpfr_set_d(i, apprinv, GMP_RNDN);
+		 mpfr_log1p(l, i, GMP_RNDN);
+		 mpfr_neg(l, l, GMP_RNDN);
+		 // cout << "which=" << which <<  " div" << (pi+wIn+1) << "  x=" << x << "  apprinv=" << apprinv << "  l=" << mpfr_get_d(l, GMP_RNDN) << endl; 
+		 // Add the small offset that ensures that it never gets negative (the sum of these offsets will be subtracted to L0)
+		 mpfr_set_d(i, 1.0, GMP_RNDN);
+		 mpfr_mul_2si(i, i, -2*pi, GMP_RNDN);
+		 mpfr_add(l, l, i,  GMP_RNDN);
+
+		 mpfr_mul_2si(l, l, pi+wOut, GMP_RNDN);
+		 mpfr_get_z(r, l, GMP_RNDN);
+		 result=mpz_class(r);
+		 mpfr_clear(i);
+		 mpfr_clear(l);
+		 mpz_clear(r);
+		 return  result;
+	 }
+
+
+
+
+
+
+
+
+
+	IterativeLog::IterativeLog(Target* target, 
 	             int wE, int wF, 
 	             int inTableSize, 
                map<string, double> inputDelays)
@@ -48,9 +357,9 @@ namespace flopoco{
 		setCopyrightString("F. de Dinechin, C. Klein  (2008-2011)");
 
 		ostringstream o;
-		srcFileName = "FPLog";
+		srcFileName = "IterativeLog";
 
-		o << "FPLog_" << wE << "_" << wF << "_" << inTableSize << "_";
+		o << "IterativeLog_" << wE << "_" << wF << "_" << inTableSize << "_";
 		if(target->isPipelined()) 
 			o << target->frequencyMHz() ;
 		else
@@ -72,7 +381,7 @@ namespace flopoco{
 			bitsPerStage=inTableSize;
 
 		if(bitsPerStage <6)
-			throw string("FPLog error: tables need at least 6 input bits");
+			throw string("IterativeLog error: tables need at least 6 input bits");
 
 
 
@@ -118,9 +427,9 @@ namespace flopoco{
 		gLog=max(4, intlog2(3+0.5+0.5+3*stages));
 	
 		if(verbose>=2) {
-			cerr << "> FPLog\t Initial parameters:" << endl;
+			cerr << "> IterativeLog\t Initial parameters:" << endl;
 			for(i=0; i<=stages; i++) {
-				cerr << "> FPLog\t";
+				cerr << "> IterativeLog\t";
 				cerr<<"\tp"<<i<<"=" << p[i];
 				cerr<<"\ta"<<i<<"=" << a[i];
 				cerr <<endl;
@@ -131,7 +440,7 @@ namespace flopoco{
 		int extraBits = pfinal - ((wF+gLog-2)>>1);
 		int extraBitsperstage =  floor(((double)extraBits) / ((double)(stages+1)));
 		if(verbose)
-			cerr << "> FPLog\t before optimization:  pfinal=" << pfinal << "--- extraBits=" << extraBits << "---extraBitsperstage=" << extraBitsperstage << endl;
+			cerr << "> IterativeLog\t before optimization:  pfinal=" << pfinal << "--- extraBits=" << extraBits << "---extraBitsperstage=" << extraBitsperstage << endl;
 		if(bitsPerStage>6) {
 			for (i=0; i<= stages; i++)
 				a[i] -= extraBitsperstage;
@@ -166,16 +475,16 @@ namespace flopoco{
 		extraBits = pfinal -  ((wF+gLog-2)>>1);
 
 		if(verbose>=2)
-			cerr << "> FPLog\t after optimization:   pfinal=" << pfinal << "--- extraBits=" << extraBits << endl;
+			cerr << "> IterativeLog\t after optimization:   pfinal=" << pfinal << "--- extraBits=" << extraBits << endl;
 	
  
 		if(verbose)
-			cerr << "> FPLog"<<tab<<"Guard bits: " << gLog << endl;
+			cerr << "> IterativeLog"<<tab<<"Guard bits: " << gLog << endl;
 
 
 		target_prec = wF + pfinal +gLog;
 		if(verbose==2)
-			cerr << "> FPLog"<<tab<<"Target precision: " << target_prec << endl;
+			cerr << "> IterativeLog"<<tab<<"Target precision: " << target_prec << endl;
 
 		s[0] = wF+2;  
 		psize[0] = s[0] + a[0]+1;
@@ -223,17 +532,17 @@ namespace flopoco{
 
 
 		if(verbose)
-			cerr<<"> FPLog\t needs 1+"<<stages<<" range reduction stages"<<endl;
+			cerr<<"> IterativeLog\t needs 1+"<<stages<<" range reduction stages"<<endl;
 		if(verbose>=2) {
 			for(i=0; i<=stages; i++) {
-				cerr << "> FPLog\t";
+				cerr << "> IterativeLog\t";
 				cerr<<"\tp"<<i<<"=" << p[i];
 				cerr<<"\ta"<<i<<"=" << a[i];
 				cerr<<"\ts"<<i<<"=" << s[i];
 				cerr<<"\tpsize"<<i<<"=" << psize[i];
 				cerr <<endl;
 			}
-			cerr << "> FPLog\t\tsfinal=" << sfinal << "\tpfinal=" << pfinal << endl;
+			cerr << "> IterativeLog\t\tsfinal=" << sfinal << "\tpfinal=" << pfinal << endl;
 		
 		}
 
@@ -386,7 +695,7 @@ namespace flopoco{
 			setCriticalPath( pi->getOutputDelay("R") );
 			
 #else
-			if(verbose) cerr << "> FPLog: unpipelined multiplier for P"<<i<<", implemented as * in VHDL" << endl;  
+			if(verbose) cerr << "> IterativeLog: unpipelined multiplier for P"<<i<<", implemented as * in VHDL" << endl;  
 			nextCycle();//
 			vhdl << tab << declare(join("P",i),  psize[i] + a[i]) << " <= " << join("A",i) << "*" << join("ZM",i) << ";" << endl;
 			nextCycle();
@@ -835,7 +1144,7 @@ namespace flopoco{
 		outDelayMap["R"]=getCriticalPath();
 	}	
 
-	FPLog::~FPLog()
+	IterativeLog::~IterativeLog()
 	{
 #if 0 // probably to be performed on oplist
 		delete lzoc;
@@ -846,7 +1155,7 @@ namespace flopoco{
 #endif
 	}
 
-	void FPLog::emulate(TestCase * tc)
+	void IterativeLog::emulate(TestCase * tc)
 	{
 		/* Get I/O values */
 		mpz_class svX = tc->getInputValue("X");
@@ -881,7 +1190,7 @@ namespace flopoco{
 	// TEST FUNCTIONS
 
 
-	void FPLog::buildStandardTestCases(TestCaseList* tcl){
+	void IterativeLog::buildStandardTestCases(TestCaseList* tcl){
 		TestCase *tc;
 		mpz_class x;
 
@@ -912,7 +1221,7 @@ namespace flopoco{
 	// with special treatment for exponents 0 and -1, 
 	// and for the range reduction worst case.
  
-	TestCase* FPLog::buildRandomTestCase(int i){
+	TestCase* IterativeLog::buildRandomTestCase(int i){
 
 		TestCase *tc;
 		mpz_class a;

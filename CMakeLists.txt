@@ -304,8 +304,14 @@ src/Trigs/ConstDiv3ForSinPoly
 src/Trigs/FixSinPoly
 src/Trigs/FixSinCos
 src/Trigs/CordicSinCos
+# src/Trigs/CordicSinOrCos
+src/Trigs/CordicAtan2
 
+# Exp, Log and Power
+#src/Exp/FPExp
+src/Logs/IterativeLog
 )
+
 IF (SOLLYA_LIB)
 TARGET_LINK_LIBRARIES(
   FloPoCoLib

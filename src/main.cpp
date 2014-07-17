@@ -320,7 +320,7 @@ void usage(char *name, string opName = ""){
 	}
 
 	if ( full )
-		cerr << center("FIXED-POINT TRIGONOMETRICS", '_') << "\n";
+		cerr << center("ELEMENTARY FUNCTIONS", '_') << "\n";
 
 	if ( full || opName == "FixSinCos"  || opName == "SinCos"){
 		OP( "FixSinCos","lsbIn");
@@ -333,18 +333,25 @@ void usage(char *name, string opName = ""){
 		cerr << "if reduced=1, fewer iterations at the cost of two multiplications \n";
 	}
 
+	if ( full || opName == "FPLog"){					
+		OP( "FPLog","wE wF InTableSize");
+		cerr << "Floating-point logarithm function, iterative algorithm;\n";
+		cerr << "InTableSize is the table input size: O defaults to something sensible\n";
+	}
+
+	if ( full || opName == "CordicAtan2"){
+		OP( "CordicAtan2","w");
+		cerr << "Computes atan(x/y) as a=(angle in radian)/pi so a in [-1,1[;\n";
+		cerr << "w is the size of both inputs and outputs, all being two's complement signals\n";
+	}
+
 #if 0
-	// TODO: change the interface
+	// TODO: replug when poly eval works; change the interface
 	if ( full ||  opName == "FixSinOrCos" || opName == "SinCos"){
 		OP( "FixSinOrCos","w d");
 		cerr << "Computes (1-2^(-w)) sin(pi*x) or (1-2^(-w)) cos(pi*x) for x in -[1,1[, ;\n";
 		cerr << "w is the fixed-point precision of inputs and outputs, not counting the sign bit\n";
 		cerr << "d: degree of the polynomial-based method (-1 should default to something sensible)\n";
-	}
-	if ( full || opName == "CordicAtan2"){
-		OP( "CordicAtan2","w");
-		cerr << "Computes atan(x/y) as a=(angle in radian)/pi so a in [-1,1[;\n";
-		cerr << "w is the size of both inputs and outputs, all being two's complement signals\n";
 	}
 #endif
 
@@ -1384,7 +1391,7 @@ bool parseCommandLine(int argc, char* argv[]){
 			addOperator(tg);
 		}
 
-#if 0
+#if 0 // replug when poly approx fixed
 		else if (opname == "FixSinOrCos") {
 			int nargs = 2;
 			if (i+nargs > argc)
@@ -1394,7 +1401,7 @@ bool parseCommandLine(int argc, char* argv[]){
 			Operator* tg = new FixSinOrCos(target, w, degree);
 			addOperator(tg);
 		}
-
+#endif
 
 		else if (opname == "CordicAtan2") {
 			int nargs = 1;
@@ -1404,7 +1411,19 @@ bool parseCommandLine(int argc, char* argv[]){
 			Operator* tg = new CordicAtan2(target, w);
 			addOperator(tg);
 		}
-#endif
+
+
+		else if (opname == "FPLog")
+		{
+			int nargs = 3;
+			if (i+nargs > argc)
+				usage(argv[0],opname); // and exit
+			int wE = checkStrictlyPositive(argv[i++], argv[0]);
+			int wF = checkStrictlyPositive(argv[i++], argv[0]);
+			int inTableSize=atoi(argv[i++]);
+			op = new IterativeLog(target, wE, wF, inTableSize);
+			addOperator(op);
+		}
 
 		else if(opname=="Fix2FP"){
 			int nargs = 5;

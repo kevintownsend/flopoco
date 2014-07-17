@@ -114,10 +114,13 @@
 #include "FixFunctions/FixFunctionByTable.hpp"
 #include "FixFunctions/FixFunctionBySimplePoly.hpp"
 
-/*  Various trigonometric functions ----------------------------*/
+/*  Various elementary functions in fixed or floating point*/
 #include "Trigs/FixSinCos.hpp"
 #include "Trigs/CordicSinCos.hpp"
-// #include "CORDIC/FixedPointSinOrCos.hpp"
+#include "Trigs/CordicAtan2.hpp"
+// #include "Trigs/FixSinOrCos.hpp"  Replug when poly eval fixed
+#include "Logs/IterativeLog.hpp"
+
 
 #include "Conversions/Fix2FP.hpp"
 #include "Conversions/FP2Fix.hpp"
@@ -180,9 +183,9 @@
 #endif
 #endif
 
-#include "FPExp.hpp" 
-#include "FPLog.hpp"
-#include "FPPow.hpp"
+//#include "FPExp.hpp" 
+#include "IterativeLog.hpp"
+// #include "FPPow.hpp"
 
 // #include "FP2DNorm.hpp" // The world is not ready yet 
 #include "FPSqrtPoly.hpp"
