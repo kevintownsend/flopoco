@@ -11,7 +11,8 @@ namespace flopoco{
 		{
 			srcFileName=":MultiplierBlock"; 
 			cycle=cycle;
-			weight=lsbX+lsbY-weightShift;
+			//before update weight=lsbX+lsbY-weightShift;
+			weight=lsbX+lsbY+weightShift;
 			previous=NULL;
 			next=NULL;			
 		}

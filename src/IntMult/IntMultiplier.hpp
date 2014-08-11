@@ -40,7 +40,7 @@ namespace flopoco {
 			In case of truncation, needs to add a round bit
 
 			VIRTUAL: 
-			inputs lsbWeightInBitHeap (which may have been computed by parentOp after calls to neededGuardBits)
+			inputs lsbWeightInBitHeap (which may have been computed by parentOp after calls to neededGuardBits) lsbFullMultWeightInBitheap
 			and throws bits in it. No notion of guard bit: this belongs to parentOp. 
 			No addition of rounding bits: this is the responsibility of parentOp
 
@@ -94,8 +94,11 @@ namespace flopoco {
 		 * @param[in] signedIO     false=unsigned, true=signed
 		 * @param[in] DSPThreshold            DSP block use ratio
 		 **/
+		// FIXME: for now, lsbFullMultWeightInBitheap so as no to break compatibility with the rest of the code
 		IntMultiplier (Operator* parentOp, BitHeap* bitHeap,  Signal* x, Signal* y, 
-									 int lsbWeightInBitHeap, bool negate, bool signedIO, float DSPThreshold);
+									 int lsbWeightInBitHeap,
+									 bool negate, bool signedIO, float DSPThreshold,
+									 int lsbFullMultWeightInBitheap = 0);
 
 		/** How many guard bits will a truncated multiplier need? Needed to set up the BitHeap of an operator using the virtual constructor */
 		static int neededGuardBits(Target* target, int wX, int wY, int wOut);
@@ -159,11 +162,24 @@ namespace flopoco {
 		void buildFancy41x41Tiling();
 
 
-		/** is called when no more dsp-s fit in a row, because of the truncation line
-		 *	checks the DSPThreshold, if only DSPs should be used, only logic, or maybe both, and applies it **/
-		bool worthUsingOneDSP(int lsbX, int lsbY, int msbX, int msbY,int wxDSP,int wyDSP);
-		/** checks against the DSPThreshold the given block and adds a DSP or logic */
+		/**
+		 * checks the DSPThreshold, if only DSPs should be used, only logic, or maybe both, and applies it
+		 * is called when no more dsp-s fit in a row, because of the truncation line
+		 * @param topX, topY, botX, botY the coordinates of two opposite corners of the multiplication block
+		 * 								one with the lsb coodinates (top) and the other with the msb coordinates (bot)
+		 * 								Historical choice, because the paving is done from the corner
+		 * 								with larger coordinates to the corner with smaller coordinates
+		 */
+		bool worthUsingOneDSP(int topX, int topY, int botX, int botY, int wxDSP, int wyDSP);
+
+		/**
+		 * checks against the DSPThreshold the given block and adds a DSP or logic
+		 */
 		void addExtraDSPs(int lsbX, int lsbY, int msbX, int msbY, int wxDSP, int wyDSP);
+
+		/**
+		 * checks how many DSPs will be used in case of a tiling
+		 */
 		int checkTiling(int wxDSP, int wyDSP, int& horDSP, int& verDSP);
 
 
@@ -176,16 +192,20 @@ namespace flopoco {
 		int wFullP;                     /**< size of the full product: wX+wY  */
 		int wOut;                       /**< size of the output, to be used only in the standalone constructor and emulate.  */
 		int lsbWeightInBitHeap;       	/**< the weight in the bit heap of the lsb of the multiplier result ; equals g for standalone multipliers */
-		double DSPThreshold;					  /**<   says what proportion of a DSP area is allowed to be lost */
-		double initialCP;    			      /**< the initial delay, getMaxInputDelays ( inputDelays_ ).*/  
+		int lsbFullMultWeightInBitheap;	/**< the weight in the bit heap of the full multiplication result (used for truncated multiplications)  */
+		double DSPThreshold;			/**< says what proportion of a DSP area is allowed to be lost */
+		double initialCP;    			/**< the initial delay, getMaxInputDelays ( inputDelays_ ).*/
+
 	private:
+		void initialize();     			/**< initialization stuff common to both constructors*/
+
 		bool useDSP;
-		int wxDSP, wyDSP;               /**< the width for X/Y in DSP*/
+		int wxDSP, wyDSP;               /**< the width on X/Y in DSP(s)*/
 		Operator* parentOp;  			/**< For a virtual multiplier, adding bits to some external BitHeap, 
 												this is a pointer to the Operator that will provide the actual vhdl stream etc. */
 		BitHeap* bitHeap;    			/**< The heap of weighted bits that will be used to do the additions */
 		//Plotter* plotter;
-		// TODO the three following variable pairs seem uglily redundant
+		// TODO the three following variable pairs seem ugly redundant
 		Signal* x;
 		Signal* y; 
 		string xname;
@@ -194,9 +214,9 @@ namespace flopoco {
 		string inputName2;
 		bool negate;                    /**< if true this multiplier computes -xy */
 		int signedIO;                   /**< true if the IOs are two's complement */
-		bool enableSuperTiles;     		/** if true, supertiles are built (fewer resources, longer latency */
+		bool enableSuperTiles;     		/**< if true, supertiles are built (fewer resources, longer latency */
 		int multiplierUid;
-		void initialize();     			/**< initialization stuff common to both constructors*/
+
 		vector<MultiplierBlock*> localSplitVector;	
 		vector<int> multWidths;	
 		//vector<DSP*> dsps;
