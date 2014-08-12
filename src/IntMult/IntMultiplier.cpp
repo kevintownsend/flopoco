@@ -362,7 +362,8 @@ namespace flopoco {
 			// uncommented by Matei, who thinks he knows how to get around this problem (for now)
 			plotter->addSmallMult(0, 0, wX, wY);
 			//plotter->plotMultiplierConfiguration(getName(), localSplitVector, wX, wY, wOut, g);
-			plotter->plotMultiplierConfiguration(getName(), localSplitVector, wX, wY, wOut, wX+wY-wOut);
+			plotter->plotMultiplierConfiguration(getName(), localSplitVector, wX, wY, wOut,
+					(lsbWeightInBitHeap>0 ? lsbWeightInBitHeap-lsbFullMultWeightInBitheap : wX+wY+lsbWeightInBitHeap-wOut));
 #endif
 			// Copy all the output bits of the multiplier to the bit heap if they are positive
 			for (int w=0; w<wFullP; w++)
@@ -735,7 +736,9 @@ namespace flopoco {
 
 
 #if GENERATE_SVG
-		plotter->plotMultiplierConfiguration(getName(), localSplitVector, wX, wY, wOut, g);
+		// before update plotter->plotMultiplierConfiguration(getName(), localSplitVector, wX, wY, wOut, g);
+		plotter->plotMultiplierConfiguration(getName(), localSplitVector, wX, wY, wOut,
+				(lsbWeightInBitHeap>0 ? lsbWeightInBitHeap-lsbFullMultWeightInBitheap : wX+wY+lsbWeightInBitHeap-wOut));
 #endif
 	}
 	
@@ -1126,13 +1129,8 @@ namespace flopoco {
 		//if the block is on the margins of the multipliers, then the coordinates have to be reduced.
 		if(lsbX<0)
 			topx=0;
-		else
-			topx=lsbX;
-
 		if(lsbY<0)
-			topy=0;	
-		else
-			topy=lsbY;
+			topy=0;
 
 		//if the truncation line splits the block, then the used block is smaller, the coordinates need to be updated
 		// was		if((botx+boty > wFullP-wOut-g) && (topx+topy < wFullP-wOut-g))
@@ -1180,10 +1178,14 @@ namespace flopoco {
 		else
 		{
 			//build logic	
-			if((topx<botx)&&(topy<boty))
+			if((topx < botx) && (topy < boty))
+			{
+				REPORT(DEBUG, "in addExtraDSPs(): adding a multiplier as logic-only at coordinates topX=" << topx << " topY=" << topy
+						<< " botX=" << botx << " botY=" << boty);
 				buildHeapLogicOnly(topx, topy, botx, boty, parentOp->getNewUId());
+			}
 		}
-		REPORT(FULL, "in addExtraDSPs(): Exiting addExtraDSPs");
+		REPORT(DEBUG, "in addExtraDSPs(): Exiting addExtraDSPs");
 #endif
 	}
 

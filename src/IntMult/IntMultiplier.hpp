@@ -13,6 +13,9 @@
 
 namespace flopoco {
 
+//use to enable the generation of SVG drawings of the multiplier
+#define GENERATE_SVG 1
+
 	/*
 	  Definition of the DSP use threshold t:
 	  Consider a sub-multiplier block, by definition smaller than (or equal to) a DSP in both dimensions
