@@ -177,8 +177,10 @@ namespace flopoco {
 
 		/**
 		 * checks against the DSPThreshold the given block and adds a DSP or logic
+		 * @param isDSPImplementable whether the block has already been checked using worthUsingDSP
+		 * 			(so as to avoid an extra call that does the same thing)
 		 */
-		void addExtraDSPs(int lsbX, int lsbY, int msbX, int msbY, int wxDSP, int wyDSP);
+		void addExtraDSPs(int lsbX, int lsbY, int msbX, int msbY, int wxDSP, int wyDSP, bool isDSPImplementable = false);
 
 		/**
 		 * checks how many DSPs will be used in case of a tiling
