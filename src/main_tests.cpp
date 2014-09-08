@@ -190,7 +190,7 @@ void checkList ( string listOperator ){
 				iterator++;
 			}
 			// infinite loop : when end of file reached -> re-open the file and restart
-			if ( file.eof()	&& iterator < 6 ){
+			if ( file.eof()	&& iterator < 12 ){
 				file.close ();
 				file.open ( listOperator.c_str (), fstream::in );
 			}
