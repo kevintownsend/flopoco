@@ -49,7 +49,7 @@ void checkOperators ( string operatorName ){
 		cpyTestState = testState;
 	}
 	else{
-		REPORT ( DEBUG, "Operator " << operatorName << " doesn't exist or hasn't been treated yet." );
+		REPORT ( LIST, "Operator " << operatorName << " doesn't exist or hasn't been treated yet." );
 	}
 
 	// creation of the python cmd with correct arguments
@@ -138,7 +138,7 @@ void checkOperators ( string operatorName ){
 			if ( !pValue ){
 				Py_DECREF ( pArg );
 				Py_DECREF ( pModule );
-				REPORT ( DEBUG, "Error when try to get back the pythonCMd" );
+				REPORT ( LIST, "Error when try to get back the pythonCMd" );
 			}
 			PyTuple_SetItem ( pArg, 0, pValue );
 		
@@ -151,20 +151,20 @@ void checkOperators ( string operatorName ){
 			else {
 				Py_DECREF ( pFunc );
 				Py_DECREF ( pModule );
-				REPORT ( DEBUG, "Python Script Failed" );
+				REPORT ( LIST, "Python Script Failed" );
 			}
 		}
 		else {
 			if ( PyErr_Occurred () ){
-				REPORT ( DEBUG, "Python Error" );
+				REPORT ( LIST, "Python Error" );
 			}
-			REPORT ( DEBUG, "Cannot find Python Function " << pythonFunction );
+			REPORT ( LIST, "Cannot find Python Function " << pythonFunction );
 		}
 		Py_XDECREF ( pFunc );
 		Py_DECREF ( pModule );
 	}
 	else {
-		REPORT ( DEBUG, "Python Error with python module" << endl << "Failed to load " << pythonScript );
+		REPORT ( LIST, "Python Error with python module" << endl << "Failed to load " << pythonScript );
 	}
 	Py_Finalize ();
 }
@@ -172,7 +172,7 @@ void checkOperators ( string operatorName ){
 void checkList ( string listOperator ){
 	// if listOperator is  not determined, set default value
 	if ( listOperator == "" ){
-		listOperator = "listOperator.txt";
+		listOperator = "soaktestList.txt";
 	}
 	//open the file containing the list of Operator to treat
 	ifstream file;
@@ -198,7 +198,7 @@ void checkList ( string listOperator ){
 		file.close ();
 	}
 	else{
-		REPORT ( DEBUG, "An error happened at the opening of the file" );
+		REPORT ( LIST, "An error happened at the opening of the file " << listOperator );
 	}
 }
 
@@ -217,7 +217,7 @@ int main(int argc, char* argv[] )
 				listOp = option.substr ( pos + 5, option.size() - 5 );
 			}
 			else{
-				REPORT ( DEBUG, "Wrong arguments passed, waited : \"list=nameList\"" ) ;
+				REPORT ( LIST, "Wrong arguments passed, waited : \"list=nameList\"" ) ;
 				return 0;
 			}
 		} 
