@@ -278,7 +278,7 @@ namespace flopoco{
 	* it also update the multimap testMemory and increase the counter for the treated operator
 	**/
 	void FPMult::nextTest ( TestState * ts ){
-		string opName = "FPMultiplier";
+		string opName = "FPMult";
 
 		// establishment of the different values, pay attention to the order !!
 		do{

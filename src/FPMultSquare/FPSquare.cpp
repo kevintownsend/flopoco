@@ -193,7 +193,7 @@ namespace flopoco{
 	* it also update the multimap testMemory and increase the counter for the treated operator
 	**/
 	void FPSquare::nextTest ( TestState * ts ){
-		string opName = "FPSquarer";
+		string opName = "FPSquare";
 
 		// establishment of the different values, pay attention to the order !!
 		do{

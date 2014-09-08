@@ -28,7 +28,7 @@ void checkOperators ( string operatorName ){
 		FPConstDiv::nextTest ( testState );
 		cpyTestState = testState;
 	}
-	else if ( operatorName == "FPMultiplier" ){
+	else if ( operatorName == "FPMult" ){
 		static TestState * testState = new TestState ( "i i i" );
 		FPMult::nextTest ( testState );
 		cpyTestState = testState;
@@ -43,7 +43,7 @@ void checkOperators ( string operatorName ){
 		IntConstDiv::nextTest ( testState );
 		cpyTestState = testState;
 	}
-	else if ( operatorName == "FPSquarer"){
+	else if ( operatorName == "FPSquare"){
 		static TestState * testState = new TestState ( "i i i" );
 		FPSquare::nextTest ( testState );
 		cpyTestState = testState;
