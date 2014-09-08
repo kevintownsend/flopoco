@@ -5,6 +5,7 @@
 <head>
   <meta http-equiv="content-type" content="text/html; charset=iso-8859-1" />
   <title>FloPoCo user manual</title>
+  <meta name="generator" content="Amaya 9.54, see http://www.w3.org/Amaya/" />
 </head>
 
 <body>
@@ -16,10 +17,10 @@
 <hr/>
 <h2>Installation</h2>
 
-<h3>Single-line installation on Ubuntu 14.04</h3>
-Copy this in a dash/bash shell (and enter your password when prompted, and of course you should check what these commands do):
+<h3>Single-line installation on Ubuntu 12.10</h3>
+Copy this in a dash/bash shell (and enter your password when prompted):
 
-<p><kbd>yes | sudo apt-get install g++ libgmp3-dev libmpfr-dev libxml2-dev bison libmpfi-dev flex cmake libboost-all-dev libgsl0-dev && wget http://perso.ens-lyon.fr/damien.stehle/fplll/libfplll-4.0.4.tar.gz && tar xzf libfplll-4.0.4.tar.gz && cd libfplll-4.0.4/ && ./configure && make -j2  && sudo make install && cd .. && wget https://gforge.inria.fr/frs/download.php/33151/sollya-4.1.tar.gz && tar xzf sollya-4.1.tar.gz && cd sollya-4.1/ && ./configure && make -j2  && sudo make install && cd .. && wget https://gforge.inria.fr/frs/download.php/32591/flopoco-3.0.0.tgz && tar xzf flopoco-3.0.0.tgz && cd flopoco-3.0.0/ && cmake . && make -j2  && ./flopoco</kbd></p>
+<p><kbd>yes | sudo apt-get install g++ libgmp3-dev libmpfr-dev libxml2-dev bison libmpfi-dev flex cmake libboost-all-dev libgsl0-dev && wget http://perso.ens-lyon.fr/damien.stehle/downloads/libfplll-3.0.12.tar.gz && tar xzf libfplll-3.0.12.tar.gz && cd libfplll-3.0.12/ && ./configure && make -j2  && sudo make install && cd .. && wget https://gforge.inria.fr/frs/download.php/28571/sollya-3.0.tar.gz && tar xzf sollya-3.0.tar.gz && cd sollya-3.0/ && ./configure && make -j2  && sudo make install && cd .. && wget https://gforge.inria.fr/frs/download.php/31858/flopoco-2.4.0.tgz  && gunzip < flopoco-2.4.0.tgz    | tar xvf - && cd flopoco-2.4.0/ && cmake . && make -j2  && ./flopoco</kbd></p>
 
 <em>We would welcome similar installation scripts for other platforms.</em>
 
@@ -40,7 +41,7 @@ against <a href="http://sollya.gforge.inria.fr/">Sollya</a>. This
 enables the more advanced operators (HOTBM, FunctionEvaluator). For this purpose, you
 must download,
 compile and install <a href="http://sollya.gforge.inria.fr/">Sollya</a>.
-FloPoCo is demonstrated to work with version 4.1 of Sollya and should work with future releases.
+FloPoCo is demonstrated to work with version 3.0 of Sollya and should work with future releases.
 </p>
 
 <p>Compilation is a two-step process:</p>
@@ -122,7 +123,7 @@ especially if you are using a svn snapshot.</p>
 binary string of a floating-point number to human-readable form
 (<code>bin2fp</code>) and back (<code>fp2bin</code>). The
 <code>longacc2fp</code> utility converts the fixed-point output of the
-FPLargeAcc operator (see below) to human-readable form.</p>
+LongAcc operator (see below) to human-readable form.</p>
 
 <p></p>
 
@@ -252,8 +253,8 @@ operators that follow them.
 		higher one). However, in such cases, increasing or decreasing
 		the target frequency should also increase or decrease the
 		obtained frequency. Note that you may do so on a per-operator
-		basis, as in: <code>flopoco -frequency=200 FPAdd 11 52
-		-frequency=300 FPMult 8 23</code></li>
+		basis, as in: <code>flopoco -frequency=200 FPAdder 11 52
+		-frequency=300 FPMultiplier 8 23</code></li>
 
 	 <li> If the obtained frequency is higher than needed, reducing
 	 the <code>-frequency</code> option may save resources.</li>
@@ -388,18 +389,16 @@ compatible with IEEE-754, with the exception that subnormal numbers
 are flushed to zero.
 
 <dl>
-  <dt><code style="color: blue;">FPMult wE wF</code></dt>
+  <dt><code style="color: blue;">FPMultiplier wE wF</code></dt>
     <dd>A floating-point multiplier. The actual FloPoCo
       component supports different input and output sizes, but this is
       not available from the command line.</dd>
-  <dt><code style="color: blue;">FPAdd wE wF</code></dt>
-    <dd>A floating-point adder, using the more compact single-path architecture.</dd>
-  <dt><code style="color: blue;">FPSub wE wF</code></dt>
-    <dd>A floating-point subtracter, using the more compact single-path architecture.</dd>
-  <dt><code style="color: blue;">FPAddDualPath wE wF</code></dt>
-    <dd>A previous FPAdd architecture. Trades a larger circuit size for a smaller latency.</dd>
-  <dt><code style="color: blue;">FPAdd3Input wE wF</code></dt>
-    <dd>A correctly rounded 3-operand floating-point adder</dd>
+  <dt><code style="color: blue;">FPAdder wE wF</code></dt>
+    <dd>A floating-point adder with a new, more compact single-path architecture.</dd>
+  <dt><code style="color: blue;">FPAdderDualPath wE wF</code></dt>
+    <dd>A previous FPAdder architecture. Trades a larger circuit size for a smaller latency.</dd>
+  <dt><code style="color: blue;">FPAdder3Input wE wF</code></dt>
+    <dd>A 3-operand floating-point adder</dd>
   <dt><code style="color: blue;">FPAddSub wE wF</code></dt>
     <dd>A fused floating-point adder and subtracter, computes both a+b and a-b</dd>
   <dt><code style="color: blue;">FPDiv wE wF</code></dt>
@@ -408,11 +407,13 @@ are flushed to zero.
     <dd>A floating-point square root using the classical digit-recurrence algorithm. This implementation returns a correctly rounded result, uses no DSP nor RAM blocks and has low LUT usage. However, the latency can be as high as wF for high frequencies, and the frequency is limited for large wF. An alternative is FPSqrtPoly below.</dd>
   <dt><code style="color: blue;">FPSqrtPoly wE wF  CorrectlyRounded Degree</code></dt>
     <dd>A floating-point square root using a polynomial approximation. It consumes DSP and RAM blocks, but can reach higher frequencies than FPSqrt, and has lower latency. CorrectlyRounded (0/1) is a boolean selecting the rounding mode. If set to 0, the operator will only be faithful (last-bit accurate, but not necessarily correctly rounded). This saves a lot of resources. Degree is an integer (typically between 2 and 5) that defines the degree of the polynomial approximation, and allows the user to trade-off between DSP usage, latency and memory consumption. Lower degree means lower latency and DSP count, but larger consumption of embedded memory. </dd>
-  <dt><code style="color: blue;">FPSquare wE wF</code></dt>
+  <dt><code style="color: blue;">FPSquarer wE wF</code></dt>
     <dd>A floating-point squarer, using IntSquarer for the mantissa.</dd>
 </dl>
 
 <h3>Floating-point pipelined datapath generation </h3> 
+
+Current FloPoCo release is proud to offer in <i>early alpha</i> version:
 
   <dt><code style="color: blue;">FPPipeline filename wE wF</code></dt>
     <dd> The operator receives the <i>filename</i> containing an
@@ -447,19 +448,15 @@ are flushed to zero.
    		</tr>
    		</table>
 	<br/>
-	The currently supported operators are: +,-,*,/, sqr(), sqrt(), exp(), log(). For more than one output, use  <code>output x y z</code>.
+	The currently supported operators are: +,-,*,/, sqr(), sqrt(), exp(), log(). 
     </dd>
-
-FPPipeline is mostly a demonstrator of how FloPoCo could be used to assemble a correct-by-conclusion complex pipeline. Therefore this feature is not complete, doesn't include all the FloPoCo operators, doesn't implement even the most basic optimizations, etc.	<br/>
-
- For more power at barely more development cost, consider writing your pipeline as a FloPoCo class using the FloPoCo library.  <a href="flopoco_developer_manual.pdf">Documentation for this is here.</a>
 
 <h3>Long fixed-point accumulator, and derivatives</h3>
 These operators are described in all the gory details
 in <a href="http://prunel.ccsd.cnrs.fr/ensl-00268348/">this
 article</a>.
 <dl>
-  <dt><code style="color: blue;">FPLargeAcc wE_in wF_in MaxMSB_in LSB_acc MSB_acc</code></dt>
+  <dt><code style="color: blue;">LongAcc wE_in wF_in MaxMSB_in LSB_acc MSB_acc</code></dt>
     <dd>Long fixed-point accumulator. By tuning
     the <code>MaxMSB_in</code>, <code>LSB_acc</code>
     and <code>MSB_acc</code> parameters to a given application, it
@@ -467,14 +464,14 @@ article</a>.
     level (and in some case to avoid any rounding), for a very small hardware cost compared to using a
     floating-point adder for accumulation.
 	 </dd>
-  <dt><code style="color: blue;">FPDotProduct wE_in wF_X wF_Y MaxMSB_in LSB_acc MSB_acc</code></dt>
+  <dt><code style="color: blue;">DotProduct wE_in wF_X wF_Y MaxMSB_in LSB_acc MSB_acc</code></dt>
     <dd>Dot product operator. It feeds a long accumulator with the
       unrounded result of a floating-point multiplier, thus removing
       rounding errors from the multiplication as well.
 	 </dd>
-  <dt><code style="color: blue;">LargeAccToFP MaxMSB_in LSB_acc MSB_acc wE_out wF_out</code></dt>
-    <dd>  Post-normalisation unit for FPLargeAcc. It converts the output of a
-      FPLargeAcc or FPDotProduct (with the same parameters) into a floating-point
+  <dt><code style="color: blue;">LongAcc2FP MaxMSB_in LSB_acc MSB_acc wE_out wF_out</code></dt>
+    <dd>  Post-normalisation unit for LongAcc. It converts the output of a
+      LongAcc or DotProduct (with the same parameters) into a floating-point
       number.
 	 </dd>
 </dl>
@@ -769,8 +766,12 @@ The test vectors are coded in the VHDL of the test bench, and can therefore be e
 <p>If n=-2, and exhaustive test is generated. If n=-1, no file is generated.</p>
 
 <p>Example:<br/>
-<code>flopoco FPAdd 8 16  TestBenchFile 20000</code>
+<code>flopoco FPAdder 8 16  TestBenchFile 20000</code>
 </p>
+	</dd>
+	<dt><code style="color: blue;">./flopoco_soaktest [fileName]</code></dt>
+	<dd>
+<code>flopoco_soaktest</code> is the executable, result of the <code>main_test.cpp</code> which launch several testBenches on different implement operators. Operators to be treated are specified in the text file passed in parameters. By default, if no file are specified, it exists a file named <code>soaktestList</code> which contains the list of all operators which can be treated.
 	</dd>
 </dl>
 </p>
