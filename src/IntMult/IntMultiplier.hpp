@@ -8,6 +8,7 @@
 #include "Operator.hpp"
 #include "Table.hpp"
 #include "BitHeap.hpp"
+#include "TestState.hpp"
 
 #include "IntMult//MultiplierBlock.hpp"
 
@@ -120,6 +121,8 @@ namespace flopoco {
 
 		void buildStandardTestCases(TestCaseList* tcl);
 
+		// Static method used for tests on the Operator
+		static void nextTest ( TestState * ts );
 
 
 

@@ -229,5 +229,44 @@ namespace flopoco{
 		tcl->add(tc);
 	}
 
+	/**
+	* Method returning a vector containing values of the valid TestState ts up-to-dated
+	* it also update the multimap testMemory and increase the counter for the treated operator
+	**/
+	void FPConstDiv::nextTest ( TestState * ts ){
+		string opName = "FPConstDiv";
+
+		// establishment of the different values, pay attention to the order !!
+		do{
+			// pick a random num following a specific distribution
+			int wE;
+			do{
+				float wEf  = pickRandomNum ( );
+				wE = ceil ( wEf );
+			} while ( wE < 3 );
+			// modify the number pointed in the involved TestState
+			ts -> vectInt [ 0 ] = wE;
+
+			int wF;
+			do{
+				float wFf = pickRandomNum ( 3.0 * wE );
+				wF = ceil ( wFf );
+			}while ( wF <= wE );
+			ts -> vectInt [ 1 ] = wF;
+
+			int d;
+			do{
+				float df = pickRandomNum ( 0.0, 5, 3 );
+				d = ceil ( df );
+			}while ( d > 10 );
+			ts -> vectInt [ 2 ] = d;
+
+
+		}while ( Operator::checkExistence ( *ts, opName ) );
+		// Add the operator to testMemory (used by checkExistence for verification)
+		Operator::testMemory.insert ( pair < string, TestState > ( opName, *ts) );
+		// increase the counter of the treated operator indicating how many tests have been done on it
+		ts -> counter++;
+	}
 }
 

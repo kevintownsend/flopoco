@@ -5,6 +5,7 @@
 #include <gmpxx.h>
 #include "Operator.hpp"
 #include "IntConstDiv.hpp"
+#include "TestState.hpp"
 
 
 namespace flopoco{
@@ -29,6 +30,8 @@ namespace flopoco{
 		void emulate(TestCase *tc);
 		void buildStandardTestCases(TestCaseList* tcl);
 
+		// Static method used for tests on the Operator
+		static void nextTest ( TestState * ts );
 
 	private:
 		int d;

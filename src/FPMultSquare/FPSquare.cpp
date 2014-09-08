@@ -188,5 +188,35 @@ namespace flopoco{
 		mpfr_clears(x,r, NULL);
 	}
 
+	/**
+	* Method returning a vector containing values of the valid TestState ts up-to-dated
+	* it also update the multimap testMemory and increase the counter for the treated operator
+	**/
+	void FPSquare::nextTest ( TestState * ts ){
+		string opName = "FPSquarer";
+
+		// establishment of the different values, pay attention to the order !!
+		do{
+			// pick a random num following a specific distribution
+			float wEf  = pickRandomNum ( );
+			int wE = ceil ( wEf );
+			// modify the number pointed in the involved TestState
+			ts -> vectInt [ 0 ] = wE;
+
+			float wFinf = pickRandomNum ( 3.0 * wE );
+			int wFin = ceil ( wFinf );
+			ts -> vectInt [ 1 ] = wFin;
+
+			float wFoutf = pickRandomNum ( 0.0, 5, 3 );
+			int wFout = ceil ( wFoutf );
+			ts -> vectInt [ 2 ] = wFout;
+
+
+		}while ( Operator::checkExistence ( *ts, opName ) );
+		// Add the operator to testMemory (used by checkExistence for verification)
+		Operator::testMemory.insert ( pair < string, TestState > ( opName, *ts) );
+		// increase the counter of the treated operator indicating how many tests have been done on it
+		ts -> counter++;
+	}
 
 }

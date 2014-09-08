@@ -2026,7 +2026,54 @@ namespace flopoco {
 		tcl->add(tc);
 	}
 
+	/**
+	* Method returning a vector containing values of the valid TestState ts up-to-dated
+	* it also update the multimap testMemory and increase the counter for the treated operator
+	**/
+	void IntMultiplier::nextTest ( TestState * ts ){
+		string opName = "IntMultiplier";
+
+		// establishment of the different values, pay attention to the order !!
+		do{
+			// pick a random num following a specific distribution
+			int wInX;
+			do{
+				float wInXf = pickRandomNum ( );
+				wInX = ceil ( wInXf );
+			} while ( wInX < 17 || wInX > 68 );
+			// modify the number pointed in the involved TestState
+			ts -> vectInt [ 0 ] = wInX;
+
+			int wInY;
+			do{
+				float wInYf = pickRandomNum ( );
+				wInY = ceil ( wInYf );
+			} while ( wInY < 17 || wInY > 68 );
+			ts -> vectInt [ 1 ] = wInY;
+
+			int wOut;
+			do{
+				float wOutf = pickRandomNum ( 0, 5, 3 );
+				wOut = ceil ( wOutf );
+			}while ( wOut > wInX || wOut > wInY );
+			ts -> vectInt [ 2 ] = wOut;
+
+			// Parametres non generes aleatoirement 
+			int signedB = 0;
+			ts -> vectBool [ 0 ] = ( signedB == 1 );
+
+			float DSPThreshold = 1.0;
+			ts -> vectFloat [ 0 ] = DSPThreshold;
+
+			int enableSuperTiles = 0;
+			ts -> vectBool [ 1 ] = ( enableSuperTiles == 1 );
 
 
+		}while ( Operator::checkExistence ( *ts, opName ) );
+		// Add the operator to testMemory (used by checkExistence for verification)
+		Operator::testMemory.insert ( pair < string, TestState > ( opName, *ts) );
+		// increase the counter of the treated operator indicating how many tests have been done on it
+		ts -> counter++;
+	}
 
 }

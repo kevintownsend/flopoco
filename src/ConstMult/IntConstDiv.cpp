@@ -173,5 +173,38 @@ namespace flopoco{
 		tc->addExpectedOutput("R", R);
 	}
  
+	/**
+	* Method returning a vector containing values of the valid TestState ts up-to-dated
+	* it also update the multimap testMemory and increase the counter for the treated operator
+	**/
+	void IntConstDiv::nextTest ( TestState * ts ){
+		string opName = "IntConstDiv";
+
+		// establishment of the different values, pay attention to the order !!
+		do{
+			// pick a random num following a specific distribution
+			int n;
+			float nf  = pickRandomNum ( );
+			n = ceil ( nf );
+			// modify the number pointed in the involved TestState
+			ts -> vectInt [ 0 ] = n;
+
+			int d;
+			do{
+				float df = pickRandomNum ( 3.0 * n );
+				d = ceil ( df );
+			}while ( d&1 == 0 );
+			ts -> vectInt [ 1 ] = d;
+
+			int a = -1;
+			ts -> vectInt [ 2 ] = a;
+
+
+		}while ( Operator::checkExistence ( *ts, opName ) );
+		// Add the operator to testMemory (used by checkExistence for verification)
+		Operator::testMemory.insert ( pair < string, TestState > ( opName, *ts) );
+		// increase the counter of the treated operator indicating how many tests have been done on it
+		ts -> counter++;
+	}
 
 }

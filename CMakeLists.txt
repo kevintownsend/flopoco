@@ -52,6 +52,11 @@ FIND_LIBRARY(MPFI_LIB
 	HINTS "C:/Program Files/Microsoft Visual Studio 9.0/VC/lib"
 	DOC "Directory of the MPFI library")
 
+FIND_LIBRARY(PYTHON_LIB
+	NAMES libpython2.7.so.1
+	HINTS "/usr/lib/x86_64-linux-gnu"
+	DOC "Directory of the Python library"
+)
 
 
 # Detect Sollya's presence
@@ -64,6 +69,11 @@ ELSE (SOLLYA_LIB)
 	MESSAGE(STATUS "Sollya not found, many very nice operators won't be available")
 ENDIF (SOLLYA_LIB)
 
+IF ( PYTHON_LIB )
+	MESSAGE ( STATUS "Found Python : ${PYTHON_LIB}" )
+ELSE ( PYTHON_LIB )
+	MESSAGE ( FATAL_ERROR "Could not find PYTHON_LIB" )
+ENDIF ( PYTHON_LIB )
 
 IF (MPFR_H AND MPFR_LIB)
     SET(MPFR_FOUND TRUE)
@@ -162,6 +172,7 @@ ADD_LIBRARY(FloPoCoLib STATIC
  src/Signal
  src/utils
  src/FlopocoStream
+ src/TestState
  VHDLLexer
  
  # Resource Estimation related ---------------------------------------
@@ -325,6 +336,14 @@ TARGET_LINK_LIBRARIES(
 ENDIF (SOLLYA_LIB)
 SET(FLOPOCO_LIB FloPoCoLib)
 
+IF (PYTHON_LIB)
+TARGET_LINK_LIBRARIES(
+  FloPoCoLib
+  ${PYTHON_LIB}
+  )
+ENDIF (PYTHON_LIB)
+SET (FLOPOCO_LIB FloPoCoLib)
+
 ADD_EXECUTABLE(flopoco
  src/main 
 )
@@ -334,6 +353,13 @@ TARGET_LINK_LIBRARIES(
 	${FLOPOCO_LIB}
   )
 
+ADD_EXECUTABLE(flopoco_soaktest
+ src/main_tests
+)
+TARGET_LINK_LIBRARIES(
+  flopoco_soaktest  
+	${FLOPOCO_LIB}
+)
 
 
 
