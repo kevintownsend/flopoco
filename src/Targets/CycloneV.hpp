@@ -133,8 +133,8 @@ namespace flopoco{
 		// DSP parameters
 		int 	totalDSPs_;					/**< The total number of DSP blocks available on this target */
 		int	    nrConfigs_;					/**< The number of distinct predefinded multiplier widths */
-		int 	multiplierWidth_[2];		/**< The multiplier width available */
-		double multiplierDelay_[2];		/**< The corresponding delay for each multiplier width available */
+		int 	multiplierWidth_[3];		/**< The multiplier width available */
+		double multiplierDelay_[3];		/**< The corresponding delay for each multiplier width available */
 		
 		double RAMDelay_;
 		double RAMToLogicWireDelay_;
