@@ -13,8 +13,8 @@ All rights reserved.
 
 */
 
-#ifndef __PLOTTER_HPP
-#define __PLOTTER_HPP
+#ifndef PLOTTER_HPP
+#define PLOTTER_HPP
 
 #include <vector>
 #include <list>
@@ -126,7 +126,7 @@ namespace flopoco
 		/** 
 		 * draws a line between the specified coordinates 
 		 */
-		void drawLine(int wX, int wY, int wRez, int offsetX, int offsetY, int scalingFactor, bool isRectangle);
+		void drawLine(int wX, int wY, int wRez, int offsetX, int offsetY, int scalingFactor, bool isRectangle, std::string toolTip = "");
 
 		/** 
 		 * draws a DSP block 
