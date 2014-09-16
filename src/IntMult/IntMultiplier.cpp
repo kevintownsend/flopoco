@@ -922,23 +922,23 @@ namespace flopoco {
 			// Padding X to the right
 			vhdl << tab << declare(addUID("Xp", blockUid), sizeXPadded) << " <= "
 					<< addUID("XX") << range(msbX-1,lsbX) << " & " <<zg(padX) << ";" << endl;
-			REPORT(DETAILED, "in buildHeapLogicOnly(): " << addUID("XX") << range(msbX-1,lsbX) << " & " << zg(padX)<<";");
+			REPORT(DEBUG, "in buildHeapLogicOnly(): " << addUID("XX") << range(msbX-1,lsbX) << " & " << zg(padX)<<";");
 
 			// Padding Y to the right
 			vhdl << tab << declare(addUID("Yp",blockUid), sizeYPadded)<<" <= "
 					<< addUID("YY") << range(msbY-1,lsbY) << " & "<< zg(padY) << ";" << endl;
-			REPORT(DETAILED, "in buildHeapLogicOnly(): " << addUID("YY") << range(msbY-1,lsbY) << " & " << zg(padY)<<";");
+			REPORT(DEBUG, "in buildHeapLogicOnly(): " << addUID("YY") << range(msbY-1,lsbY) << " & " << zg(padY)<<";");
 			
 			//SPLITTING the inputs
 			for (int k=0; k<chunksX ; k++)
 			{
 				vhdl << tab << declare(join(addUID("x",blockUid),"_",k),dx) << " <= "<< addUID("Xp",blockUid) << range((k+1)*dx-1,k*dx)<<";"<<endl;
-				REPORT(DETAILED, "in buildHeapLogicOnly(): " << join(addUID("x",blockUid),"_",k) << " <= " << addUID("Xp",blockUid) << range((k+1)*dx-1,k*dx) << ";");
+				REPORT(DEBUG, "in buildHeapLogicOnly(): " << join(addUID("x",blockUid),"_",k) << " <= " << addUID("Xp",blockUid) << range((k+1)*dx-1,k*dx) << ";");
 			}	
 			for (int k=0; k<chunksY ; k++)
 			{
 				vhdl << tab << declare(join(addUID("y",blockUid),"_",k),dy) << " <= " << addUID("Yp",blockUid) << range((k+1)*dy-1, k*dy)<<";"<<endl;
-				REPORT(DETAILED, "in buildHeapLogicOnly(): " << join(addUID("y",blockUid),"_",k)<<" <= " << addUID("Yp",blockUid) << range((k+1)*dy-1,k*dy) << ";");
+				REPORT(DEBUG, "in buildHeapLogicOnly(): " << join(addUID("y",blockUid),"_",k)<<" <= " << addUID("Yp",blockUid) << range((k+1)*dy-1,k*dy) << ";");
 			}	
 
 			SmallMultTable *tUU, *tSU, *tUS, *tSS;
@@ -1006,7 +1006,7 @@ namespace flopoco {
 						useSoftRAM(t);
 
 						vhdl << tab << "-- Adding the relevant bits to the heap of bits" << endl;
-						REPORT(DETAILED, "in buildHeapLogicOnly(): " << "  Adding the relevant bits to the heap of bits");
+						REPORT(DEBUG, "in buildHeapLogicOnly(): " << "  Adding the relevant bits to the heap of bits");
 
 						// Two's complement management
 						// There are really 2 cases:

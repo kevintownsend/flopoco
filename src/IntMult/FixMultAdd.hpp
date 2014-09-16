@@ -67,7 +67,8 @@ namespace flopoco {
 
 		/**
 		 * Generates a component, and produces VHDL code for the instance inside an operator.
-		 * The parent operator uses the std_logic_vector type.
+		 * All the input and output signals are signals of the FloPoCo fixed-point types.
+		 This constructor reads the fixed-point parameters from them.
 		 */
 		static FixMultAdd* newComponentAndInstance(Operator* op,
 														string instanceName,
@@ -75,11 +76,12 @@ namespace flopoco {
 														string ySignalName,
 														string aSignalName,
 														string rSignalName,
+														bool isSigned,
 														int rMSB,
-														int rLSB,
-														bool isSigned = false
+														int rLSB
 													);
 
+#if 0
 		/**
 		 * Generates a component, and produces VHDL code for the instance inside an operator.
 		 * The parent operator uses the signed/unsigned types.
@@ -94,6 +96,9 @@ namespace flopoco {
 																int rLSB,
 																bool isSigned = false
 															);
+
+
+#endif
 
 		/**
 		 * The emulate function.

@@ -30,7 +30,7 @@ namespace flopoco {
 	// global const variables
 	static const map<string, double> emptyDelayMap;
 	const std::string tab = "   ";
-	
+
 	// Reporting levels
 #define LIST 0       // information necessary to the user of FloPoCo
 #define INFO 1       // information useful to the user of FloPoCo

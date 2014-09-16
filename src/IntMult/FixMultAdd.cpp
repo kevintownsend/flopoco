@@ -57,7 +57,9 @@ namespace flopoco {
 		// TODO: manage the case when one is signed and not the other.
 		if((x->isFixSigned() && !y->isFixSigned()) || (!x->isFixSigned() && y->isFixSigned()))
 		{
-			THROWERROR("One operator signed and the other unsigned is currently not supported.");
+			THROWERROR("Different signs: x is "
+								 << (x->isFixSigned()?"":"un")<<"signed and y is "
+								 << (y->isFixSigned()?"":"un")<<"signed. This case is currently not supported." );
 		}
 
 		// Set the operator name
@@ -248,6 +250,7 @@ namespace flopoco {
 
 		//assign the output
 		vhdl << tab << rname << " <= " << bitHeap->getSumName() << range(wOut+g-1, g) << ";" << endl;
+		
 	}
 
 
@@ -268,9 +271,9 @@ namespace flopoco {
 														string ySignalName,
 														string aSignalName,
 														string rSignalName,
+														bool isSigned,
 														int rMSB,
-														int rLSB,
-														bool isSigned
+														int rLSB
 													)
 	{
 		FixMultAdd* f = new FixMultAdd(op->getTarget(),
@@ -287,10 +290,11 @@ namespace flopoco {
 		op->outPortMap(f, "R", rSignalName);
 
 		op->vhdl << op->instance(f, instanceName);
-
+		op->getSignalByName(rSignalName) -> promoteToFix(isSigned, rMSB, rLSB);
 		return f;
 	}
 
+#if 0 // probablty nonsense but I'm not yet sure
 	FixMultAdd* FixMultAdd::newComponentAndInstanceNumericStd(Operator* op,
 																	string instanceName,
 																	string xSignalName,
@@ -336,6 +340,10 @@ namespace flopoco {
 
 		return f;
 	}
+#endif
+
+
+
 
 
 	//FIXME: is this right? emulate function needs to be checked

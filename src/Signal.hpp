@@ -205,6 +205,8 @@ namespace flopoco{
 		 */
 		std::string valueToVHDLHex(mpz_class v, bool quot = true);
 
+		void setName(std::string name);
+		void setType(SignalType t);
 
 	private:
 		std::string   name_;        /**< The name of the signal */

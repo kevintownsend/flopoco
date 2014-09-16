@@ -154,10 +154,10 @@ void usage(char *name, string opName = ""){
 
 	if ( full || opName == "FixMultAdd"){
 		OP( "FixMultAdd","msbX lsbX msbY lsbY msbA lsbA msbR lsbR signedIO");
-		cerr << "  A fused multiply-add operator (computing X*Y+A), using bitheaps \n";
-		cerr << "   X: first multiplicand,  Y: second multiplicand, A: addend, R: result\n";
-		cerr << "    msb and lsb: are the weights of MSB and LSB\n";
-		cerr << "    signedIO: signed (1) or unsigned (0) inputs\n";
+		cerr << "Multiply-add operator (computing X*Y+A), using bitheaps \n";
+		cerr << "X: first multiplicand,  Y: second multiplicand, A: addend, R: result\n";
+		cerr << "msb and lsb:  the weights of MSB and LSB\n";
+		cerr << "signedIO: signed (1) or unsigned (0) inputs\n";
 	}
 
 #if 0

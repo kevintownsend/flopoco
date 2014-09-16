@@ -119,19 +119,17 @@ namespace flopoco{
 			}
 
 			else { // using FixMultAdd
-				REPORT(DEBUG, " i=" << i << "    ");
+				REPORT(0, " i=" << i);
 				FixMultAdd::newComponentAndInstance(this,
 																						join("Step",i),     // instance name
 																						join("XsTrunc",i),  // x
 																						join("Sigma", i+1), // y
 																						join("A", i),       // a
 																						join("Sigma", i),   // result 
-																						sigmaMSB, sigmaLSB  // outMSB, outLSB
+																						true, sigmaMSB, sigmaLSB  // signed, outMSB, outLSB
 																						);
 			}
 		}
-
-
 
 		//Building the vector of sizes for FixHornerEvaluator
 		// a0 is a bit special

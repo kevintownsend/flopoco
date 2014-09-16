@@ -493,7 +493,7 @@ namespace flopoco{
 		// The local signals
 		outputVHDLSignalDeclarations(o);
 
-		o << endl <<  // Fixed by Bodgan
+		o << endl << 
 			tab << "-- FP compare function (found vs. real)\n" <<
 			tab << "function fp_equal(a : std_logic_vector; b : std_logic_vector) return boolean is\n" <<
 			tab << "begin\n" <<

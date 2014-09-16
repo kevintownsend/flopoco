@@ -987,11 +987,17 @@ namespace flopoco{
 			throw e.str();
 		}
 		if (newSignal) {
+#if 0 // commented out in r2782  because we keep adding fields to Signal
 			int width = formal -> width();
 			bool isbus = formal -> isBus();
 			// construct the signal (lifeSpan and cycle are reset to 0 by the constructor)
 			s = new Signal(actualSignalName, Signal::wire, width, isbus);
 			// define its cycle 
+#else
+			s = new Signal(*formal); // a copy using the default copy constructor
+			s->setName(actualSignalName); // except for the name
+			s->setType(Signal::wire); // ... and the fact that we declare a wire
+#endif
 			if(isSequential())
 				s->setCycle( this->currentCycle_ + op->getPipelineDepth() );
 		

@@ -245,5 +245,14 @@ namespace flopoco{
 		else
 			return "'" + o + "'";
 	}
-	
+
+
+	void Signal::setName(std::string name) {
+		name_=name;
+	}
+
+	void Signal::setType(SignalType t) {
+		type_ = t;
+	}
+
 }

@@ -2,6 +2,7 @@
 Version ???
 Shifts to Sollya 4.0 library. Polynomial evaluator rewritten in the process
 Sum of constant products, and a few filters.
+First steps towards fixed-point support in the framework.
 A few multi-operand adders removed: with bit heaps, these are no longer components.
 If somebody asks for it we will rebuild them using bit heaps
 ======================================================================
