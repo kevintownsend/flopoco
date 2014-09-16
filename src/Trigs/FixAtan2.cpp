@@ -39,44 +39,11 @@ namespace flopoco {
 		srcFileName = "FixAtan2";
 		setCopyrightString("Florent de Dinechin, Matei Istoan, 2014");
 
-		/*
-		//test the plane equation
-		cout << "Testing the plane equations" << endl;
+		int k = (wIn/4);//(wIn+1)/2;
 
-		Point *P1, *P2, *P3;
-		Plane* plane;
-
-		P1 = new Point(1, 2, 3);
-		P2 = new Point(3, 9, 8);
-		P3 = new Point(2, 4, 7);
-
-		plane = new Plane(P1, P2, P3);
-
-		cout << "Created the plane. Plane equation is: "
-				"(" << plane->getA() << ")*x + (" << plane->getB() << ")*y + (" << plane->getC() << ")*z + (" << plane->getD() << ") = 0" << endl << endl;
-
-		//test the distance from a point to plane
-		cout << "Testing the distance from a point to a plane" << endl;
-
-		Point *P12;
-		Plane* plane2;
-
-		P12 = new Point(9, 2, 3);
-
-		plane2 = new Plane(2, 5, 7, 9);
-
-		cout << "Created a point P(" << P12->getX() << ", " << P12->getY() << ", " << P12->getZ() << ")"
-				<< " and a plane of equation (" << plane2->getA() << ")*x + (" << plane2->getB() << ")*y + (" << plane2->getC() << ")*z + (" << plane2->getD() << ") = 0" << endl
-				<< tab << tab << "the distance from the point to the plane is: " << plane2->distanceToPlane(P12) << endl;
-		*/
-
-		int k = (wIn+1)/2;
-		//double aTable[1<<k][1<<(k-1)];
-		double **aTable;
-		double **bTable;
-		double **dTable;
-		double error, errorMax;
+		double error, errorMax, errorMin;
 		bool errorSatisfied;
+		double errorLimit = 1.0/(1 << wOut);
 
 		cout << "Beginning computations for Atan2, with wIn=" << wIn << " and wOut=" << wOut << endl;
 
@@ -84,23 +51,15 @@ namespace flopoco {
 		errorSatisfied = false;
 		while(!errorSatisfied)
 		{
+			bool runLoop = true;
 			cout << tab << tab << "trying k=" << k << endl;
 
-			cout << tab << tab << "computing the tables" << endl;
+			errorMax = 0.0;
+			errorMin = 1.0;
 
-			//allocate the tables
-			aTable = (double**)malloc((1<<k)*(1<<(k-1))*sizeof(double));
-			for(int i=0; i<(1<<k); i++)
-				aTable[i] = (double*)malloc((1<<(k-1))*sizeof(double));
-			bTable = (double**)malloc((1<<k)*(1<<(k-1))*sizeof(double));
-			for(int i=0; i<(1<<k); i++)
-				bTable[i] = (double*)malloc((1<<(k-1))*sizeof(double));
-			dTable = (double**)malloc((1<<k)*(1<<(k-1))*sizeof(double));
-			for(int i=0; i<(1<<k); i++)
-				dTable[i] = (double*)malloc((1<<(k-1))*sizeof(double));
-
-			for(int i=0; i<(1<<k)-1; i++)
-				for(int j=(1<<(k-1)); j<(1<<k)-1; j++)
+			for(int i=0; (i<(1<<k)-1 && runLoop); i++)
+			{
+				for(int j=(1<<(k-1)); (j<(1<<k)-1 && runLoop); j++)
 				{
 					Point *P1, *P2, *P3, *P4;
 					Plane *plane;
@@ -108,7 +67,7 @@ namespace flopoco {
 					double distance, distanceMin;
 					double valI, valJ, increment;
 
-					//create the actual values for the atan2
+					//create the actual values for the points in which we compute the atan2
 					valI = 1.0*i/(1<<k);
 					valJ = 1.0*j/(1<<k);
 					increment = 1.0/(1<<k);
@@ -124,7 +83,8 @@ namespace flopoco {
 					// to the remaining point
 					//the plane given by P1, P2 and P3
 					plane = new Plane(P1, P2, P3);
-					distance = plane->distanceToPlane(P4);
+					//distance = plane->distanceToPlane(P4);
+					distance = P4->getZ() - ((-P4->getX()*plane->getA() - P4->getY()*plane->getB() - plane->getD())/plane->getC());
 					if(distance<0)
 						distance *= -1;
 					distanceMin = distance;
@@ -132,10 +92,12 @@ namespace flopoco {
 					b = plane->getB();
 					c = plane->getC();
 					d = plane->getD();
+					delete plane;
 
 					//the plane given by P1, P2 and P4
 					plane = new Plane(P1, P2, P4);
-					distance = plane->distanceToPlane(P3);
+					//distance = plane->distanceToPlane(P3);
+					distance = P3->getZ() - ((-P3->getX()*plane->getA() - P3->getY()*plane->getB() - plane->getD())/plane->getC());
 					if(distance<0)
 						distance *= -1;
 					if(distance<distanceMin)
@@ -146,10 +108,28 @@ namespace flopoco {
 						c = plane->getC();
 						d = plane->getD();
 					}
+					delete plane;
+
+					//the plane given by P1, P3 and P4
+					plane = new Plane(P1, P3, P4);
+					//distance = plane->distanceToPlane(P3);
+					distance = P2->getZ() - ((-P2->getX()*plane->getA() - P2->getY()*plane->getB() - plane->getD())/plane->getC());
+					if(distance<0)
+						distance *= -1;
+					if(distance<distanceMin)
+					{
+						distanceMin = distance;
+						a = plane->getA();
+						b = plane->getB();
+						c = plane->getC();
+						d = plane->getD();
+					}
+					delete plane;
 
 					//the plane given by P2, P3 and P4
 					plane = new Plane(P2, P3, P4);
-					distance = plane->distanceToPlane(P1);
+					//distance = plane->distanceToPlane(P1);
+					distance = P4->getZ() - ((-P1->getX()*plane->getA() - P1->getY()*plane->getB() - plane->getD())/plane->getC());
 					if(distance<0)
 						distance *= -1;
 					if(distance<distanceMin)
@@ -160,82 +140,78 @@ namespace flopoco {
 						c = plane->getC();
 						d = plane->getD();
 					}
+					delete plane;
 
-					aTable[i][j-(1<<(k-1))] = -(a/c);
-					bTable[i][j-(1<<(k-1))] = -(b/c);
-					dTable[i][j-(1<<(k-1))] = -(d/c);
+					//update the variables for use in the error measurement
+					a = -(a/c);
+					b = -(b/c);
+					d = -(d/c);
 
-					cout << "\r                                  \r";
-					cout << tab << tab << tab << std::setprecision(4)
-						<< (((i<<(k-1))+j-(1<<(k-1)))/(1.0*((1<<(2*k-1)) + (1<<(k-1)) - 2))*100) << "% done";
-				}
+					delete P1;
+					delete P2;
+					delete P3;
+					delete P4;
 
-			cout << endl << tab << tab << "computed the tables" << endl;
+					if(distanceMin > errorLimit)
+					{
+						cout << tab << tab << tab << "not worth continuing: distance=" << distanceMin << " error limit=" << errorLimit << endl;
 
-			cout << tab << tab << "measuring the error" << endl;
+						runLoop = false;
+						errorMax = distanceMin;
+						break;
+					}
 
-			//measure the error
-			errorMax = 0;
-			for(int i=0; i<(1<<k)-1; i++)
-			{
-				for(int j=(1<<(k-1)); j<(1<<k)-1; j++)
-				{
-					for(int n=0; n<(1<<(wIn-k)); n++)
-						for(int m=0; m<(1<<(wIn-k)); m++)
+					double computedValue  = a*valI + b*valJ + d;
+
+					//now check the error against all the points in the plane, at the given resolution
+					for(int n=0; (n<(1<<(wIn-k)) && runLoop); n++)
+						for(int m=0; (m<(1<<(wIn-k)) && runLoop); m++)
 						{
-							double valI, valJ, valIPrime, valJPrime;
+							double valIPrime, valJPrime;
 
 							//create the actual values for the atan2
-							valI = 1.0*((i<<(wIn-k))+n)/(1<<wIn);
-							valJ = 1.0*((j<<(wIn-k))+m)/(1<<wIn);
-							valIPrime = 1.0*i/(1<<k);
-							valJPrime = 1.0*j/(1<<k);
+							valIPrime = 1.0*((i<<(wIn-k))+n)/(1<<wIn);
+							valJPrime = 1.0*((j<<(wIn-k))+m)/(1<<wIn);
 
-							double referenceValue = atan2(valJ, valI);
-							double computedValue  = aTable[i][j-(1<<(k-1))]*valIPrime + bTable[i][j-(1<<(k-1))]*valJPrime + dTable[i][j-(1<<(k-1))];
+							double referenceValue = atan2(valJPrime, valIPrime);
 
-							error = fabs(referenceValue-computedValue);
+							error = referenceValue-computedValue;
+							if(error < 0)
+								error *= -1;
 
 							if(error > errorMax)
 								errorMax = error;
-						}
+							if((error < errorMin) && !((n==0)&&(m==0)))
+								errorMin = error;
 
-					/*
-					cout << "\r                                  \r";
-					cout << tab << tab << tab << std::setprecision(4)
-					<< (((i<<(k-1))+j-(1<<(k-1)))/(1.0*((1<<(2*k-1)) + (1<<(k-1)) - 2))*100) << "% done";
-					*/
+							if(errorMax > errorLimit)
+							{
+								runLoop = false;
+								break;
+							}
+						}
 				}
 
-				cout << "\r                                  \r";
-				cout << tab << tab << tab << std::setprecision(4) << ((1.0*i/((1<<k)-1))*100) << "% done";
+				cout << "\r                                                                                                                   \r";
+				cout <<  tab << tab << tab << std::setprecision(4) << ((1.0*i/((1<<k)-1))*100) << "% done"
+						<< tab << "current maximum error=" << errorMax << " current minimum error=" << errorMin << " error limit=" << errorLimit;
+				cout.flush();
 			}
 
-			cout << endl << tab << tab << "computed the maximum error" << endl;
+			cout << endl << tab << tab << tab << "computed the maximum error" << endl;
 
 			//check to see if the current precision k is enough
 			//	if not, increase k and compute the maximum error again
-			double errorLimit = 1.0/(1 << wOut);
 			if(errorMax < errorLimit)
 			{
 				errorSatisfied = true;
 			}else
 			{
-				cout << tab << tab << "error limit of " << errorLimit << " not satisfied at k=" << k
+				cout << tab << tab << tab << "error limit of " << errorLimit << " not satisfied at k=" << k
 						<< ", with wIn=" << wIn << " and wOut=" << wOut << endl;
-				cout << tab << tab << tab << "actual error errorMax=" << errorMax << endl;
-				k++;
+				cout << tab << tab << tab << tab << "actual error errorMax=" << errorMax << endl;
 
-				//deallocate the space used for the tables, as a new try is needed
-				for(int i=0; i<(1<<k); i++)
-					free(aTable[i]);
-				free(aTable);
-				for(int i=0; i<(1<<k); i++)
-					free(bTable[i]);
-				free(bTable);
-				for(int i=0; i<(1<<k); i++)
-					free(dTable[i]);
-				free(dTable);
+				k++;
 			}
 		}
 

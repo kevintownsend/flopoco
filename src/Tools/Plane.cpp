@@ -35,6 +35,10 @@ namespace flopoco {
 			x2(P2_->getX()), y2(P2_->getY()), z2(P2_->getZ()),
 			x3(P3_->getX()), y3(P3_->getY()), z3(P3_->getZ())
 	{
+		P1 = new Point(P1_);
+		P2 = new Point(P2_);
+		P3 = new Point(P3_);
+
 		a = (y2-y1)*(z3-z1) - (z2-z1)*(y3-y1);
 		b = (z2-z1)*(x3-x1) - (x2-x1)*(z3-z1);
 		c = (x2-x1)*(y3-y1) - (y2-y1)*(x3-x1);
@@ -49,6 +53,14 @@ namespace flopoco {
 		b = b_;
 		c = c_;
 		d = d_;
+
+		P1 = NULL;
+		P2 = NULL;
+		P3 = NULL;
+
+		x1 = 0; y1 = 0; z1 = 0;
+		x2 = 0; y2 = 0; z2 = 0;
+		x3 = 0; y3 = 0; z3 = 0;
 	}
 
 	bool Plane::pointsCollinear(Point* P1, Point* P2, Point* P3)
@@ -105,7 +117,12 @@ namespace flopoco {
 
 	Plane::~Plane()
 	{
-
+		if(P1)
+			delete P1;
+		if(P2)
+			delete P2;
+		if(P3)
+			delete P3;
 	}
 
 }
