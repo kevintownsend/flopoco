@@ -283,64 +283,21 @@ namespace flopoco {
 										 rMSB, rLSB,
 										 isSigned);
 		op->addSubComponent(f);
+
 		op->inPortMap(f, "X", xSignalName);
 		op->inPortMap(f, "Y", ySignalName);
 		op->inPortMap(f, "A", aSignalName);
 
-		op->outPortMap(f, "R", rSignalName);
-
+		op->outPortMap(f, "R", join(rSignalName,"_slv"));  // here rSignalName_slv is std_logic_vector
 		op->vhdl << op->instance(f, instanceName);
-		op->getSignalByName(rSignalName) -> promoteToFix(isSigned, rMSB, rLSB);
+		// hence a sign mismatch in next iteration.
+		
+		op->vhdl << tab << op->declareFixPoint(rSignalName, isSigned, rMSB, rLSB)
+				<< " <= " <<  (isSigned ? "signed(" : "unsigned(") << (join(rSignalName, "_slv")) << ");" << endl;
+		//getSignalByName(rSignalName) -> promoteToFix(isSigned, rMSB, rLSB);
 		return f;
 	}
 
-#if 0 // probablty nonsense but I'm not yet sure
-	FixMultAdd* FixMultAdd::newComponentAndInstanceNumericStd(Operator* op,
-																	string instanceName,
-																	string xSignalName,
-																	string ySignalName,
-																	string aSignalName,
-																	string rSignalName,
-																	int rMSB,
-																	int rLSB,
-																	bool isSigned
-																)
-	{
-		Signal *xIn, *yIn, *aIn;
-
-		xIn = op->getSignalByName(xSignalName);
-		yIn = op->getSignalByName(ySignalName);
-		aIn = op->getSignalByName(aSignalName);
-
-		FixMultAdd* f = new FixMultAdd(op->getTarget(),
-										 xIn,
-										 yIn,
-										 aIn,
-										 rMSB, rLSB,
-										 isSigned);
-		op->addSubComponent(f);
-
-		//convert the inputs to std_logic_vector type
-		op->vhdl << tab << op->declare(join(xSignalName, "_slv"), xIn->width())
-				<< " <= " << "STD_LOGIC_VECTOR(" << xSignalName << ");" << endl;
-		op->vhdl << tab << op->declare(join(ySignalName, "_slv"), yIn->width())
-				<< " <= " << "STD_LOGIC_VECTOR(" << ySignalName << ");" << endl;
-		op->vhdl << tab << op->declare(join(aSignalName, "_slv"), aIn->width())
-				<< " <= " << "STD_LOGIC_VECTOR(" << aSignalName << ");" << endl;
-
-		op->inPortMap(f, "X", join(xSignalName, "_slv"));
-		op->inPortMap(f, "Y", join(ySignalName, "_slv"));
-		op->inPortMap(f, "A", join(aSignalName, "_slv"));
-
-		op->outPortMap(f, "R", join(rSignalName, "_slv"));
-
-		op->vhdl << tab << op->instance(f, instanceName);
-		op->vhdl << tab << op->declareFixPoint(rSignalName, f->signedIO, rMSB, rLSB)
-				<< " <= " <<  (isSigned ? "SIGNED(" : "UNSIGNED(") << (join(rSignalName, "_slv")) << ");" << endl;
-
-		return f;
-	}
-#endif
 
 
 
