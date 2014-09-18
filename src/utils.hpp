@@ -12,6 +12,8 @@
 
 #include <inttypes.h>
 
+#include <stdarg.h>
+
 
 using namespace std;
 
@@ -197,12 +199,24 @@ namespace flopoco{
 	 */
 	inline double max(double x, double y) {return (x > y ? x : y);}
 
+	/** Maximum.
+	 * @param[int] count the number of parameters which follows
+	 * @return maximum between the variable number of arguments
+	 */
+	double max(int count, ...);
+
 	/** Minimum.
 	 * @param[double] x first number 
 	 * @param[double] y second number
 	 * @return minimum between x and y
 	 */
 	inline double min(double x, double y) {return (x < y ? x : y);}
+
+	/** Minimum.
+	 * @param[int] count the number of parameters which follows
+	 * @return minimum between the variable number of arguments
+	 */
+	double min(int count, ...);
 
 	/** Maximum.
 	 * @param[int] x first number 
@@ -302,7 +316,10 @@ namespace flopoco{
 	string join( std::string id, std::string id2 , int n2, std::string id3);
 	
 	/** Same for concatenating two ids. Maybe + would do? */
-	string join( std::string id, std::string);
+	string join( std::string id, std::string n);
+
+	/** Same for concatenating three ids. Maybe + would do? */
+	string join( std::string id, std::string id2, std::string id3);
 
 	/** Helper function for VHDL output: returns (left downto right)
 	 */

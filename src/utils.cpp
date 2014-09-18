@@ -378,6 +378,42 @@ namespace flopoco{
 		return res;
 	}
 
+	double max(int count, ...)
+	{
+	    va_list ap;
+	    double currentMax;
+
+	    va_start(ap, count); 						//Requires the last fixed parameter (to get the address)
+	    currentMax = va_arg(ap, double);
+	    for(int i=1; i<count; i++)
+	    {
+	    	double currentVal = va_arg(ap, double);
+	        if(currentVal > currentMax)
+	        	currentMax = currentVal; 	//Requires the type to cast to. Increments ap to the next argument.
+	    }
+	    va_end(ap);
+
+	    return currentMax;
+	}
+
+	double min(int count, ...)
+	{
+		va_list ap;
+		double currentMin;
+
+		va_start(ap, count); 						//Requires the last fixed parameter (to get the address)
+		currentMin = va_arg(ap, double);
+		for(int i=1; i<count; i++)
+		{
+			double currentVal = va_arg(ap, double);
+			if(currentVal < currentMin)
+				currentMin = currentVal; 	//Requires the type to cast to. Increments ap to the next argument.
+		}
+		va_end(ap);
+
+		return currentMin;
+	}
+
 	mpz_class maxExp(int wE){
 		return mpz_class(1)<<(wE-1);
 	}
@@ -595,74 +631,86 @@ namespace flopoco{
 
 	string join( std::string id, int n)
 	{
-		ostringstream o;
-		o << id << n;
-		return o.str();
+		ostringstream stream;
+
+		stream << id << n;
+		return stream.str();
 	}
 
 	string join( std::string id, string sep, int n)
 	{
-		ostringstream o;
-		o << id << sep << n;
-		return o.str();
+		ostringstream stream;
+
+		stream << n;
+		return id + sep + stream.str();
 	}
 
 	string join( std::string id, int n1, int n2)
 	{
-		ostringstream o;
-		o << id << n1 << n2;
-		return o.str();
+		ostringstream stream;
+
+		stream << n1 << n2;
+		return id + stream.str();
 	}
 
 	string join( std::string id, int n1, int n2, int n3)
 	{
-		ostringstream o;
-		o << id << n1 << n2 << n3;
-		return o.str();
+		ostringstream stream;
+
+		stream << n1 << n2 << n3;
+		return id + stream.str();
 	}
 
 
 	string join( std::string id1, int n, std::string id2)
 	{
-		ostringstream o;
-		o << id1 << n << id2;
-		return o.str();
+		ostringstream stream;
+
+		stream << n;
+		return id1 + stream.str() + id2;
 	}
 
 
 	string join( std::string id, int n, std::string id2, int n2)
 	{
-		ostringstream o;
-		o << id << n << id2 << n2;
-		return o.str();
+		ostringstream stream;
+
+		stream << id << n << id2 << n2;
+		return stream.str();
 	}
 	
 	string join( std::string id, int n, std::string id2, int n2, std::string id3)
 	{
-		ostringstream o;
-		o << id << n << id2 << n2 << id3;
-		return o.str();
+		ostringstream stream;
+
+		stream << id << n << id2 << n2 << id3;
+		return stream.str();
 	}
 	
 	string join( std::string id, int n, std::string id2, int n2, std::string id3, int n3)
 	{
-		ostringstream o;
-		o << id << n << id2 << n2 << id3 << n3;
-		return o.str();
+		ostringstream stream;
+
+		stream << id << n << id2 << n2 << id3 << n3;
+		return stream.str();
 	}
 
 	string join( std::string id, std::string id2, int n2, std::string id3)
 	{
-		ostringstream o;
-		o << id << id2 << n2 << id3;
-		return o.str();
+		ostringstream stream;
+
+		stream << id << id2 << n2 << id3;
+		return stream.str();
 	}
 	
 	string join( std::string id, string n)
 	{
-		ostringstream o;
-		o << id << n;
-		return o.str();
+		return id+n;
+	}
+
+	string join( std::string id, string id2, string id3)
+	{
+		return id+id2+id3;
 	}
 
 
