@@ -620,13 +620,14 @@ namespace flopoco {
 			s << "DSP_Res_" <<  getuid();
 
 			vhdl << tab << declare(s.str(), dspXSize+dspYSize+(signedIO ? 0 : 2))
-						 << " <= (" << (zerosX>0 ? join(zerosXString.str(), " & ") : "") << addUID("XX") << ")"
+					 << " <=  std_logic_vector(" << (negate || signedIO ? "signed": "unsigned") <<  "(" << (zerosX>0 ? join(zerosXString.str(), " & ") : "") << addUID("XX") << ")"
 						 << " * ";
+			vhdl	 << (negate || signedIO ? "signed": "unsigned") ;
 			if(negate)
-				vhdl	 <<	"(" << addUID("YY") << "_neg);" << endl;
+				vhdl <<  "(" << addUID("YY") << "_neg)";
 			else
-				vhdl	 << "(" << (zerosY>0 ? zerosYString.str()+" & " : "") << addUID("YY") << ");" << endl;
-			
+				vhdl	 << "(" << (zerosY>0 ? zerosYString.str()+" & " : "") << addUID("YY") << ")";
+			vhdl << ");" << endl;
 			
 			//manage the pipeline: TODO
 			//syncCycleFromSignal(s.str());

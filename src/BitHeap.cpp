@@ -2859,9 +2859,7 @@ namespace flopoco
 					cnt[i]++;
 				}
 			}
-		}
-
-				
+		}		
 	}
 
 
@@ -2927,13 +2925,13 @@ namespace flopoco
 			addy=0-topY;
 			
 		op->vhdl << tab << op->declare(join("DSP_bh", guid, (uid==0 ? "_ch" : "_root"), i, "_", uid), m->getwX()+m->getwY()+zerosX+zerosY)
-			     << " <= (" << zg(zerosX) << " & " << input1 << range(botX,topX+addx) << " & " << zg(addx) <<")" 
+			     << " <= std_logic_vector( unsigned(" << zg(zerosX) << " & " << input1 << range(botX,topX+addx) << " & " << zg(addx) <<")" 
 			     << " * " 
-			     << "(" << zg(zerosY) << " & " << input2 << range(botY,topY+addy) << " & " <<zg(addy) << ");" << endl;
+			     << "unsigned(" << zg(zerosY) << " & " << input2 << range(botY,topY+addy) << " & " <<zg(addy) << "));" << endl;
 
 		s << join("DSP_bh" , guid, (uid==0 ? "_ch" : "_root"), i, "_", uid);
 
-		REPORT(DETAILED,"comuted in this moment= "<< join("DSP_bh", guid, (uid==0 ? "_ch" : "_root"), i, "_", uid)
+		REPORT(DETAILED,"computed in this moment= "<< join("DSP_bh", guid, (uid==0 ? "_ch" : "_root"), i, "_", uid)
 		       << "length= " << m->getwX()+m->getwY() << " <= ("
 		       << input1 << range(botX,topX+addx) << " & " << zg(addx) << ") * ("
 		       << input2 << range(botY,topY+addy) << " & " << zg(addy)<<");");
@@ -3013,8 +3011,6 @@ namespace flopoco
 				op->vhdl << "; -- already compressed" << endl;
 				chunkDoneIndex++;
 			}
-
-
 
 		minWeight=w;
 

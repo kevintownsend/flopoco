@@ -6,7 +6,7 @@ Incrementally move towards option 1 (for new operators, and when needed on legac
 
 Option 1: 
  * Keep only std_logic_vector as IO,
- * Add an option to declare() for signed / unsigned / std_logic_vector
+ * Add an option to declare() for signed / unsigned / std_logic_vector DONE
     The default should still be std_logic_vector because we don't want to edit all the existing operators
  * add conversions to the VHDL.
  * No need to edit the TestBench architecture

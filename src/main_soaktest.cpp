@@ -170,9 +170,9 @@ int main(int argc, char* argv[] )
 	vector<string> opList;
 	opList = readOpList ( listOp );
 
-	while(true) {
+		while(true) {
 		for (int i=0; i<opList.size(); i++)
 				checkOperator (opList[i]);
-	}
+		}
 	return 0;
 }
