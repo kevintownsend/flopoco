@@ -59,11 +59,11 @@ namespace flopoco {
 
 			for(int i=0; (i<(1<<k)-1 && runLoop); i++)
 			{
-				for(int j=(1<<(k-1)); (j<(1<<k)-1 && runLoop); j++)
+				for(int j=(1<<(k-1)); (j<((1<<k)-1) && runLoop); j++)
 				{
 					Point *P1, *P2, *P3, *P4, *P5;
 					Plane *plane;
-					double a, b, c, d;
+					double a, b, c, d, e, f;
 					double distance, distanceMin;
 					double valI, valJ, centerValI, centerValJ, increment, halfIncrement;
 					double distanceFromCenter;
@@ -77,6 +77,10 @@ namespace flopoco {
 					centerValJ = valJ + halfIncrement;
 					distanceFromCenter = 1.0/(1<<(wIn-1));
 
+					/**
+					 * version 1: compute the values stored in the tables using the equation of the plane
+					 */
+					/*
 					//create the points
 					P1 = new Point(centerValI,						centerValJ,						atan2(centerValJ, 						centerValI						));
 					P2 = new Point(centerValI,						centerValJ+distanceFromCenter,	atan2(centerValJ+distanceFromCenter, 	centerValI						));
@@ -218,8 +222,98 @@ namespace flopoco {
 					delete P1;
 					delete P2;
 					delete P3;
+					*/
 
-					double computedValue  = a*centerValI + b*centerValJ + d;
+
+					/**
+					 * version 2: compute the values stored in the tables using a Taylor polynomial (of order 1)
+					 * 	then atan(y/x) = a*x + b*y + c
+					 */
+					/*
+					a = -(1.0*centerValJ)/(centerValI*centerValI+centerValJ*centerValJ);
+					b = (1.0*centerValI)/(centerValI*centerValI+centerValJ*centerValJ);
+					c = atan2(centerValJ, centerValI);
+
+					//test if any of the errors are above the error limit
+					double errorCenter 	= (a*centerValI + b*centerValJ + c) - atan2(centerValJ, centerValI);
+					if(errorCenter<0)
+						errorCenter = -errorCenter;
+					double errorP1 		= (a*valI + b*valJ + c) - atan2(valJ, valI);
+					if(errorP1<0)
+						errorP1 = -errorP1;
+					double errorP2 		= (a*(valI+increment) + b*valJ + c) - atan2(valJ, (valI+increment));
+					if(errorP2<0)
+						errorP2 = -errorP2;
+					double errorP3 		= (a*valI + b*(valJ+increment) + c) - atan2((valJ+increment), valI);
+					if(errorP3<0)
+						errorP3 = -errorP3;
+					double errorP4 		= (a*(valI+increment) + b*(valJ+increment) + c) - atan2((valJ+increment), (valI+increment));
+					if(errorP4<0)
+						errorP4 = -errorP4;
+					if((errorCenter>errorLimit) || (errorP1>errorLimit) || (errorP2>errorLimit)
+							|| (errorP3>errorLimit) || (errorP4>errorLimit))
+					{
+						cout << tab << tab << tab << "not worth continuing: distance from corners is greater than the error limit" << endl;
+						cout << tab << tab << tab << tab << "distance from center=" << errorCenter << " P1=" << errorP1 << " P2=" << errorP2
+								<< " P3=" << errorP3 << " P4=" << errorP4 << " error limit=" << errorLimit << endl;
+
+						runLoop = false;
+						errorMax = max(4, errorP1, errorP2, errorP3, errorP4);
+						errorMin = min(5, errorP1, errorP2, errorP3, errorP4);
+						break;
+					}
+					*/
+
+
+					/**
+					 * version 3: compute the values stored in the tables using a Taylor polynomial (of order 2)
+					 * 	then atan(x/y) = a*x + b*y + c + d*x^2 + e*y^2 + f*x*y
+					 */
+					a = -(2.0*centerValJ)/(centerValI*centerValI+centerValJ*centerValJ);
+					b = (2.0*centerValI)/(centerValI*centerValI+centerValJ*centerValJ);
+					c = atan2(centerValJ, centerValI);
+					d = (1.0*centerValI*centerValJ)
+							/((centerValI*centerValI+centerValJ*centerValJ)*(centerValI*centerValI+centerValJ*centerValJ));
+					e = -(1.0*centerValI*centerValJ)
+							/((centerValI*centerValI+centerValJ*centerValJ)*(centerValI*centerValI+centerValJ*centerValJ));
+					f = (1.0*centerValJ*centerValJ-1.0*centerValI*centerValI)
+							/((centerValI*centerValI+centerValJ*centerValJ)*(centerValI*centerValI+centerValJ*centerValJ));
+
+					//test if any of the errors are above the error limit
+					double errorCenter 	= (a*centerValI + b*centerValJ + c + d*centerValI*centerValI + e*centerValJ*centerValJ + f*centerValI*centerValJ)
+											- atan2(centerValJ, centerValI);
+					if(errorCenter<0)
+						errorCenter = -errorCenter;
+					double errorP1 		= (a*valI + b*valJ + c + d*valI*valI + e*valJ*valJ + f*valI*valJ)
+											- atan2(valJ, valI);
+					if(errorP1<0)
+						errorP1 = -errorP1;
+					double errorP2 		= (a*(valI+increment) + b*valJ + c + d*(valI+increment)*(valI+increment) + e*valJ*valJ + f*(valI+increment)*valJ)
+											- atan2(valJ, (valI+increment));
+					if(errorP2<0)
+						errorP2 = -errorP2;
+					double errorP3 		= (a*valI + b*(valJ+increment) + c + d*valI*valI + e*(valJ+increment)*(valJ+increment) + f*valI*(valJ+increment))
+											- atan2((valJ+increment), valI);
+					if(errorP3<0)
+						errorP3 = -errorP3;
+					double errorP4 		= (a*(valI+increment) + b*(valJ+increment) + c
+											+ d*(valI+increment)*(valI+increment) + e*(valJ+increment)*(valJ+increment) + f*(valI+increment)*(valJ+increment))
+											- atan2((valJ+increment), (valI+increment));
+					if(errorP4<0)
+						errorP4 = -errorP4;
+					if((errorCenter>errorLimit) || (errorP1>errorLimit) || (errorP2>errorLimit)
+							|| (errorP3>errorLimit) || (errorP4>errorLimit))
+					{
+						cout << tab << tab << tab << "not worth continuing: distance from corners is greater than the error limit" << endl;
+						cout << tab << tab << tab << tab << "distance from center=" << errorCenter << " P1=" << errorP1 << " P2=" << errorP2
+								<< " P3=" << errorP3 << " P4=" << errorP4 << " error limit=" << errorLimit << endl;
+
+						runLoop = false;
+						errorMax = max(4, errorP1, errorP2, errorP3, errorP4);
+						errorMin = min(4, errorP1, errorP2, errorP3, errorP4);
+						break;
+					}
+
 
 					//now check the error against all the points in the plane, at the given resolution
 					for(int n=0; (n<(1<<(wIn-k)) && runLoop); n++)
@@ -232,6 +326,12 @@ namespace flopoco {
 							valJPrime = 1.0*((j<<(wIn-k))+m)/(1<<wIn);
 
 							double referenceValue = atan2(valJPrime, valIPrime);
+							// v1
+							//double computedValue  = a*valIPrime + b*valJPrime + d;
+							// v2
+							//double computedValue  = a*valIPrime + b*valJPrime + c;
+							// v3
+							double computedValue  = a*valIPrime + b*valJPrime + c + d*valIPrime*valIPrime + e*valJPrime*valJPrime + f*valIPrime*valJPrime;
 
 							error = referenceValue-computedValue;
 							if(error < 0)
