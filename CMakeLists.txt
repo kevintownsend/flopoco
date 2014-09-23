@@ -354,7 +354,7 @@ TARGET_LINK_LIBRARIES(
   )
 
 ADD_EXECUTABLE(flopoco_soaktest
- src/main_tests
+ src/main_soaktest
 )
 TARGET_LINK_LIBRARIES(
   flopoco_soaktest  

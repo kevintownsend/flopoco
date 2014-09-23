@@ -2,7 +2,7 @@
 
 namespace flopoco {
 	
-	TestState::TestState ( string param ) : parameterType ( param ) {
+	TestState::TestState ( string param ) : paramTypes ( param ) {
 		counter = 0; /**Initialize the counter of the instance*/
 
 		// integers corresponding to the size of vectors
@@ -43,85 +43,58 @@ namespace flopoco {
 		vectString.resize ( nbString );
 		vectMpz.resize ( nbMpz );
 		vectBool.resize ( nbBool );
-		
 	}
 	
 	/**
 	* Test if the TestState we are working on is equal to the TestState ts
 	* return a boolean
 	**/
-	bool TestState::equality ( const TestState * ts ) const {
-		bool result = false;
+	bool TestState::equality ( TestState * ts ) {
+		string s1 =  toString();
+		string s2 = ts->toString();
+		return (s1.compare(s2) == 0) ;
+	}
 
-		int strSize = this -> parameterType.size ();
+	string TestState::toString() {
+		// list of counter used to know the position inside each vectors
+		int counterInt = 0;
+		int counterFloat = 0;
+		int counterString = 0;
+		int counterMpz = 0;
+		int counterBool = 0;
+		int strSize = paramTypes.size ();
 		int currentStrSize = 0;
-		int pos = 0;
-		
-		// counters to check the right position in each vectors
-		static int counterInt = 0;
-		static int counterFloat = 0;
-		static int counterString = 0;
-		static int counterMpz = 0;
-		static int counterBool = 0;
-		
+		int pos=0;
+		ostringstream s;
 		while ( currentStrSize < strSize ){
-			string subParam = this -> parameterType.substr ( pos, 1 );
-
+			string subParam = paramTypes.substr ( pos, 1 );
+		
 			if ( subParam.compare ( "i" ) == 0 ){
-				if ( this -> vectInt [ counterInt ] == ts -> vectInt [ counterInt ] ){
-					result = true;
-				}
-				else{
-					return false;
-				}
+				s << " " << vectInt [ counterInt ];
 				counterInt++;
 			}
 			else if ( subParam.compare ( "f" ) == 0 ){
-				if ( this -> vectFloat [ counterFloat ] == ts -> vectFloat [ counterFloat ] ){
-					result = true;
-				}
-				else{
-					return false;
-				}
+				s << " " << vectFloat [ counterFloat ];
 				counterFloat++;
 			}
 			else if ( subParam.compare ( "s" ) == 0 ){
-				if ( this -> vectString [ counterString ] == ts -> vectString [ counterString ] ){
-					result = true;
-				}
-				else{
-					return false;
-				}
+				s << " " << vectString [ counterString ];
 				counterString++;
 			}
 			else if ( subParam.compare ( "m" ) == 0 ){
-				if ( this -> vectMpz [ counterMpz ] == ts -> vectMpz [ counterMpz ] ){
-					result = true;
-				}
-				else{
-					return false;
-				}
+				s << " " << vectMpz [ counterMpz ];
 				counterMpz++;
 			}
 			else if ( subParam.compare ( "b" ) == 0 ){
-				if ( this -> vectBool [ counterBool ] == ts -> vectBool [ counterBool ] ){
-					result = true;
-				}
-				else{
-					return false;
-				}
+				s << " " << vectBool [ counterBool ];
 				counterBool++;
 			}
-
+		
 			pos += 2;
 			currentStrSize = pos;
 		}
-		//reset all counters after the parsing
-		counterInt = 0;
-		counterFloat = 0;
-		counterString = 0;
-		counterMpz = 0;
-		counterBool = 0;
-		return result;
+		return s.str();
 	}
+
+
 }

@@ -9,7 +9,9 @@
 
 #include "FloPoCo.hpp" 
 
+// for REPORT and THROWERROR
 #define srcFileName "main_test"
+#define uniqueName_ "main_test"
 
 
 using namespace std;
@@ -17,7 +19,7 @@ using namespace flopoco;
 
 
 
-void checkOperators ( string operatorName ){
+void checkOperator ( string operatorName ){
 	// TestState used to get back the TestState modified by nextTest of the selected operator
 	TestState * cpyTestState;
 
@@ -49,62 +51,17 @@ void checkOperators ( string operatorName ){
 		cpyTestState = testState;
 	}
 	else{
-		REPORT ( LIST, "Operator " << operatorName << " doesn't exist or hasn't been treated yet." );
+		REPORT ( LIST, "Operator " << operatorName << " doesn't exist in checkOperator yet." );
 	}
 
 	// creation of the python cmd with correct arguments
 	string cmdPython = operatorName;
 	ostringstream pyOss;
 	
-	string param = cpyTestState -> parameterType;
-	int strSize = param.size ();
-	int currentStrSize = 0;
-	int pos = 0;
+	string params = cpyTestState -> toString();
 
-	// list of counter used to know the position inside each vectors
-	static int counterInt = 0;
-	static int counterFloat = 0;
-	static int counterString = 0;
-	static int counterMpz = 0;
-	static int counterBool = 0;
-
-	while ( currentStrSize < strSize ){
-		string subParam = param.substr ( pos, 1 );
-
-		// inserting parameters generated with nextTest () inside the command line for python script
-		if ( subParam.compare ( "i" ) == 0 ){
-			pyOss << " " << cpyTestState -> vectInt [ counterInt ];
-			counterInt++;
-		}
-		else if ( subParam.compare ( "f" ) == 0 ){
-			pyOss << " " << cpyTestState -> vectFloat [ counterFloat ];
-			counterFloat++;
-		}
-		else if ( subParam.compare ( "s" ) == 0 ){
-			pyOss << " " << cpyTestState -> vectString [ counterString ];
-			counterString++;
-		}
-		else if ( subParam.compare ( "m" ) == 0 ){
-			pyOss << " " << cpyTestState -> vectMpz [ counterMpz ];
-			counterMpz++;
-		}
-		else if ( subParam.compare ( "b" ) == 0 ){
-			pyOss << " " << cpyTestState -> vectBool [ counterBool ];
-			counterBool++;
-		}
-
-		pos += 2;
-		currentStrSize = pos;
-	}
-
-	// reset of each counter after parsing the string containing types of parameters
-	counterInt = 0;
-	counterFloat = 0;
-	counterString = 0;
-	counterMpz = 0;
-	counterBool = 0;
-
-	cmdPython += pyOss.str ();
+	cmdPython += params;
+	REPORT (LIST, "Testing Operator " << operatorName << " with command: " << cmdPython);
 	
 	// <<<<<<<<<< 
 	// Test of the operator with the Python script 
@@ -169,60 +126,53 @@ void checkOperators ( string operatorName ){
 	Py_Finalize ();
 }
 
-void checkList ( string listOperator ){
-	// if listOperator is  not determined, set default value
-	if ( listOperator == "" ){
-		listOperator = "soaktestList.txt";
-	}
-	//open the file containing the list of Operator to treat
+
+
+
+
+vector<string> readOpList ( string opListFileName ){
+	//First read the file
+	vector<string> operators;
+	string opName;
 	ifstream file;
-	file.open ( listOperator.c_str(), fstream::in );
-	int iterator = 0;
+	file.open ( opListFileName.c_str(), fstream::in );
 	if ( file.is_open() ){
 		while ( !file.eof() )
 		{
-			string operatorChosen;
 			//get the operator to treat
-			getline ( file, operatorChosen );
-			if ( operatorChosen.size() != 0 ){
-				//launch the treatment on the selected operator
-				checkOperators ( operatorChosen );
-				iterator++;
-			}
-			// infinite loop : when end of file reached -> re-open the file and restart
-			if ( file.eof()	&& iterator < 12 ){
-				file.close ();
-				file.open ( listOperator.c_str (), fstream::in );
+			getline ( file, opName );
+			if ( opName.size() != 0 ){
+				operators.push_back(opName);
+				REPORT(LIST, "Going to test " << opName);
 			}
 		}
 		file.close ();
+
+		//launch the treatment on the selected operator
+		//		checkOperator ( opName );
 	}
 	else{
-		REPORT ( LIST, "An error happened at the opening of the file " << listOperator );
+		cerr << "Could not open file " << opListFileName << endl;
 	}
+	return operators;
 }
 
 
 int main(int argc, char* argv[] )
 {
 	// default list of operator if not determined
-	string listOp = "";
-	if ( argc >= 1 ){
-		// search for the name of the list of operator if precised
-		for (int i = 1; i < argc; i++){		
-			string option = argv[i];
-			int pos;
-			if ( option.find ( "list=" ) != string::npos ){
-				pos = option.find ( "list=" );
-				listOp = option.substr ( pos + 5, option.size() - 5 );
-			}
-			else{
-				REPORT ( LIST, "Wrong arguments passed, waited : \"list=nameList\"" ) ;
-				return 0;
-			}
-		} 
-	}
-	checkList ( listOp );
+	string listOp = "soaktestList.txt";	//  default value
 
+	if ( argc >= 2 ){
+		listOp = argv[1];
+	} 
+ 
+	vector<string> opList;
+	opList = readOpList ( listOp );
+
+	while(true) {
+		for (int i=0; i<opList.size(); i++)
+				checkOperator (opList[i]);
+	}
 	return 0;
 }
