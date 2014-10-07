@@ -36,6 +36,7 @@ namespace flopoco
 	BitHeap::BitHeap(Operator* op, int maxWeight, bool enableSuperTiles, string name, int compressionType) :
 		op(op), maxWeight(maxWeight), compressionType(compressionType), enableSuperTiles(enableSuperTiles)
 	{
+		signedIO=false; // TODO get rid of it
 		// Set up the vector of lists of weighted bits, and the vector of uids
 		srcFileName=op->getSrcFileName() + ":BitHeap"; // for REPORT to work
 		guid = Operator::getNewUId();

@@ -304,9 +304,6 @@ namespace flopoco {
 		// The bit heap
 		bitHeap = new BitHeap(this, wOut+g, enableSuperTiles);
 
-		// TODO CHECK ??? A bit heap is sign-agnostic. Commented out, these methods should disappear from BitHeap
-		//		side effect: when performing the final rounding we should perform it using either signed/unsigned logic
-		// bitHeap->setSignedIO(signedIO);
 
 		// initialize the critical path
 		setCriticalPath(getMaxInputDelays ( inputDelays_ ));

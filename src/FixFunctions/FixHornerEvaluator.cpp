@@ -25,8 +25,11 @@ using namespace std;
 
 namespace flopoco{
 
-  FixHornerEvaluator::FixHornerEvaluator(Target* target, int wX_, int degree_, vector<int> coeffMSB_, vector<int> coeffLSB_, bool signedCoeffs_, map<string, double> inputDelays)
-    : Operator(target), wX(wX_), degree(degree_), coeffLSB(coeffLSB_), coeffMSB(coeffMSB_), signedCoeffs(signedCoeffs_)
+  FixHornerEvaluator::FixHornerEvaluator(Target* target, 
+																				 int wX_, 
+																				 int degree_, vector<int> coeffMSB_, vector<int> coeffLSB_, bool signedCoeffs_, 
+																				 bool finalRounding_, bool plainStupidVHDL_, map<string, double> inputDelays)
+    : Operator(target), wX(wX_), degree(degree_), coeffLSB(coeffLSB_), coeffMSB(coeffMSB_), signedCoeffs(signedCoeffs_), finalRounding(finalRounding_), plainStupidVHDL(plainStupidVHDL_)
   { 
     
     /* Generate unique name */
@@ -108,36 +111,48 @@ namespace flopoco{
 		else{ 
 			wInX=wX;
 		}
+		// anyway this extension is at the MSB. The LSB is still -wX.
+		int lsbIn = -wX;
 
+		// initialize the recurrence
+		int sigmaMSB=coeffMSB[degree];
+		int sigmaLSB=coeffLSB[degree];
     // Now assemble faithful FixMultAdd operators
 
-    for (int i=1; i<=degree; i++) {
-#if 0
+		for(int i=degree-1; i>=0; i--) {
 
-			coeffSize[degree]
-			// truncate X
-      int wInPii=;
-			// TODO the following is all wrong, even the comments. Fixing FixMultAdd first.
-			FixMultAdd * ma = new  FixMultAdd(target, 
-																				size, // size of first input 
-																				size, // size of second input
-																				wA,   // weight of the LSB of the result
-																				wR ,  // weight of the LSB of addend
-																				msbP, // weight of the MSB of addend
-																				lsbA,
-																				signedCoeffs); // 
-																				// could add a thresholdForDSP);
-			//cout << " Fin du constr" << endl;
-			oplist.push_back(ma);
-			
-			inPortMap ( ma, "X", join("yT",i));
-			inPortMap ( ma, "Y", join("sigmaP",i-1));
-			inPortMap ( ma, "A", join("a",degree_-i));
-			outPortMap( ma, "R", join("sigmaP",i));
-			vhdl << instance (ma, join("MultAdd_",i) );
-			syncCycleFromSignal( join("sigmaP",i) );
-			setCriticalPath( ma->getOutputDelay("R") );
-#endif
+			int xTruncLSB = max(lsbIn, sigmaLSB-sigmaMSB);
+
+			int pMSB=sigmaMSB+0 + 1;
+			sigmaMSB = max(pMSB-1, coeffMSB[i]) +1; // +1 to absorb addition overflow
+			sigmaLSB = coeffLSB[i];
+
+			resizeFixPoint(join("XsTrunc", i), "Xs", 0, xTruncLSB);			
+
+			if(plainStupidVHDL) {
+				vhdl << tab << declareFixPoint(join("P", i), true, pMSB,  sigmaLSB  + xTruncLSB /*LSB*/) 
+						 <<  " <= "<< join("XsTrunc", i) <<" * Sigma" << i+1 << ";" << endl;
+				// However the bit of weight pMSB is a 0. We want to keep the bits from  pMSB-1
+				resizeFixPoint(join("Ptrunc", i), join("P", i), sigmaMSB, sigmaLSB);
+				resizeFixPoint(join("Aext", i), join("A", i), sigmaMSB, sigmaLSB);
+				
+				vhdl << tab << declareFixPoint(join("Sigma", i), true, sigmaMSB, sigmaLSB)   << " <= " << join("Aext", i) << " + " << join("Ptrunc", i) << ";" << endl;
+			}
+
+			else { // using FixMultAdd
+				REPORT(0, " i=" << i);
+				FixMultAdd::newComponentAndInstance(this,
+																						join("Step",i),     // instance name
+																						join("XsTrunc",i),  // x
+																						join("Sigma", i+1), // y
+																						join("A", i),       // a
+																						join("Sigma", i),   // result 
+																						true, sigmaMSB, sigmaLSB  // signed, outMSB, outLSB
+																						);
+			}
+		}
+    for (int i=1; i<=degree; i++) {
+		
 		}
 
   }

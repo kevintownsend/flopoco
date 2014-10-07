@@ -2,7 +2,7 @@
 The attic directory is full of old stuff.
 
 TODO short term: 
-Finish (or rewrite) FixMultAdd. 
+Finish (or rewrite) FixMultAdd. DONE
 Probably need to add signed/unsigned IOs to IntMultiplier (?FixMultiplier?) -- prepare discussion
 Add signed/unsigned support to the test framework (IO conversions from/to std_logic_vector).
 Write FixPolynomialHornerEvaluator
