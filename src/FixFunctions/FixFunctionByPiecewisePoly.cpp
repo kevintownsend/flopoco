@@ -49,6 +49,7 @@ namespace flopoco{
 		// outDelayMap["Y"] = target->RAMDelay(); // is this useful?
 	}
 
+
 	mpz_class FixFunctionByPiecewisePoly::CoeffTable::function(int x){
 		mpz_class z=0;
 		int currentShift=0;
@@ -110,24 +111,20 @@ namespace flopoco{
 
 		int currentShift=0;
 		for(int i=0; i<=polyApprox->degree; i++) {
-			vhdl << tab << declare(join("C",i), polyApprox->MSB[i] - polyApprox->LSB +1)  << " <= Coeffs" << range(currentShift + (polyApprox->MSB[i] - polyApprox->LSB), currentShift) << ";" << endl;
+			vhdl << tab << declare(join("A",i), polyApprox->MSB[i] - polyApprox->LSB +1)  << " <= Coeffs" << range(currentShift + (polyApprox->MSB[i] - polyApprox->LSB), currentShift) << ";" << endl;
 			currentShift +=  polyApprox->MSB[i] - polyApprox->LSB +1;
 		}
 
-		//		FixHornerEvaluator* = new FixHornerEvaluator(target, lsbIn, msbOut, lsbOut, degree, polyApprox->MSB, polyApprox->LSB);		
+		FixHornerEvaluator* horner = new FixHornerEvaluator(target, lsbIn+alpha, msbOut, lsbOut, degree, polyApprox->MSB, polyApprox->LSB, true, true, true);		
+		addSubComponent(horner);
 
-#if 0
-
-				FixMultAdd::newComponentAndInstance(this,
-																						join("Step",i),     // instance name
-																						join("XsTrunc",i),  // x
-																						join("Sigma", i+1), // y
-																						join("A", i),       // a
-																						join("Sigma", i),   // result 
-																						true, sigmaMSB, sigmaLSB  // signed, outMSB, outLSB
-																						);
-#endif
-
+		inPortMap(horner, "X", "Z");
+		outPortMap(horner, "R", "Ys");
+		for(int i=0; i<=polyApprox->degree; i++) {
+			inPortMap(horner,  join("A",i),  join("A",i));
+		}
+		vhdl << instance(horner, "horner") << endl;
+		
 		vhdl << tab << "Y <= " << "std_logic_vector(Ys);" << endl;
 	}
 

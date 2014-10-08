@@ -50,11 +50,12 @@ namespace flopoco{
 											 int lsbOut,
 											 int degree, 
 											 vector<int> coeffMSB, 
-											 vector<int> coeffLSB, 
+											 int coeffLSB, 
 											 bool signedCoeffs=true, 
 											 bool finalRounding=true,
-											 bool oplainStupidVHDL=false,
+											 bool plainStupidVHDL=false,
 											 map<string, double> inputDelays = emptyDelayMap);
+
     ~FixHornerEvaluator();
 		
 
@@ -64,7 +65,7 @@ namespace flopoco{
 		int msbOut;                        /** MSB of output  */
 		int lsbOut;                        /** LSB of output */
     vector<int> coeffMSB;             /**< vector of MSB weights for each coefficient */
-    vector<int> coeffLSB;             /**< vector of LSB weights for each coefficient */
+    int coeffLSB;                     /**< LSB weight shared by each coefficient */
     bool signedCoeffs;                /**< if false, all the coeffs are unsigned and the operator may use unsigned arithmetc. 
 																				 Usually true unless known Taylor etc */
 		bool finalRounding;               /** If true, the operator returns a rounded result (i.e. add the half-ulp then truncate)

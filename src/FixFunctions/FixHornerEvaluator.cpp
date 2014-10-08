@@ -27,7 +27,7 @@ namespace flopoco{
 
   FixHornerEvaluator::FixHornerEvaluator(Target* target, 
 																				 int lsbIn_, int msbOut_, int lsbOut_,
-																				 int degree_, vector<int> coeffMSB_, vector<int> coeffLSB_, bool signedCoeffs_, 
+																				 int degree_, vector<int> coeffMSB_, int coeffLSB_, bool signedCoeffs_, 
 																				 bool finalRounding_, bool plainStupidVHDL_, map<string, double> inputDelays)
     : Operator(target), lsbIn(lsbIn_), msbOut(msbOut_), lsbOut(lsbOut_), 
 			degree(degree_), coeffMSB(coeffMSB_), coeffLSB(coeffLSB_), signedCoeffs(signedCoeffs_), 
@@ -37,10 +37,7 @@ namespace flopoco{
     /* Generate unique name */
     {
       std::ostringstream o;
-      o << "FixHornerEvaluator_" << -lsbIn ;
-      for(int i=0; i<=degree; i++)
-				o << "_" << coeffMSB[i]<< "_" << coeffLSB[i];
-      o << "_" << (signedCoeffs?1:0);
+      o << "FixHornerEvaluator_" << getNewUId() << "_";
       if(target->isPipelined()) 
 				o << target->frequencyMHz() ;
       else
@@ -53,7 +50,7 @@ namespace flopoco{
 
 		// computing the coeff sizes
 		for (int i=0; i<coeffMSB.size(); i++)
-			coeffSize.push_back(coeffMSB[i]-coeffLSB[i]+1); // see FixConstant.hpp for the constant format
+			coeffSize.push_back(coeffMSB[i]-coeffLSB+1); // see FixConstant.hpp for the constant format
 
     // declaring inputs
 		addInput("X"  , -lsbIn);
@@ -102,17 +99,22 @@ namespace flopoco{
 		 * weight of the MSB of a_{d-j}
 		 */
 
-		vhdl << tab << tab << declare("h0", coeffSize[degree]) << " <= " << join("A", degree)  << endl;
+		//		vhdl << tab << tab << declare("h0", coeffSize[degree]) << " <= " << join("A", degree)  << endl;
 
 		if(signedCoeffs)
 			vhdl << tab << declareFixPoint("Xs", true, 0, lsbIn) << " <= signed('0' & X);  -- sign extension of X" << endl; 
 		else 
 			vhdl << tab << declareFixPoint("Xs", true, -1, lsbIn) << " <= unsigned(X);" << endl; 
 
-
+		for(int i=0; i<=degree; i++) {
+			vhdl << tab << declareFixPoint(join("As", i), signedCoeffs, coeffMSB[i], coeffLSB) 
+					 << " <= " << (signedCoeffs?"signed":"unsigned") << "(" << join("A",i) << ");" <<endl;
+		}
 		// initialize the recurrence
 		int sigmaMSB=coeffMSB[degree];
-		int sigmaLSB=coeffLSB[degree];
+		int sigmaLSB=coeffLSB;
+		vhdl << tab << declareFixPoint(join("Sigma", degree), true, sigmaMSB, sigmaLSB) 
+				 << " <= " << join("As", degree)  << ";" << endl;
     // Now assemble faithful FixMultAdd operators
 
 		for(int i=degree-1; i>=0; i--) {
@@ -121,7 +123,6 @@ namespace flopoco{
 
 			int pMSB=sigmaMSB+0 + 1;
 			sigmaMSB = max(pMSB-1, coeffMSB[i]) +1; // +1 to absorb addition overflow
-			sigmaLSB = coeffLSB[i];
 
 			resizeFixPoint(join("XsTrunc", i), "Xs", 0, xTruncLSB);			
 
@@ -130,7 +131,7 @@ namespace flopoco{
 						 <<  " <= "<< join("XsTrunc", i) <<" * Sigma" << i+1 << ";" << endl;
 				// However the bit of weight pMSB is a 0. We want to keep the bits from  pMSB-1
 				resizeFixPoint(join("Ptrunc", i), join("P", i), sigmaMSB, sigmaLSB);
-				resizeFixPoint(join("Aext", i), join("A", i), sigmaMSB, sigmaLSB);
+				resizeFixPoint(join("Aext", i), join("As", i), sigmaMSB, sigmaLSB);
 				
 				vhdl << tab << declareFixPoint(join("Sigma", i), true, sigmaMSB, sigmaLSB)   << " <= " << join("Aext", i) << " + " << join("Ptrunc", i) << ";" << endl;
 			}
@@ -153,5 +154,6 @@ namespace flopoco{
 
   }
 
+	FixHornerEvaluator::~FixHornerEvaluator(){}
 
 }
