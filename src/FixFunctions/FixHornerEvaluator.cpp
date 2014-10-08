@@ -26,16 +26,18 @@ using namespace std;
 namespace flopoco{
 
   FixHornerEvaluator::FixHornerEvaluator(Target* target, 
-																				 int wX_, 
+																				 int lsbIn_, int msbOut_, int lsbOut_,
 																				 int degree_, vector<int> coeffMSB_, vector<int> coeffLSB_, bool signedCoeffs_, 
 																				 bool finalRounding_, bool plainStupidVHDL_, map<string, double> inputDelays)
-    : Operator(target), wX(wX_), degree(degree_), coeffLSB(coeffLSB_), coeffMSB(coeffMSB_), signedCoeffs(signedCoeffs_), finalRounding(finalRounding_), plainStupidVHDL(plainStupidVHDL_)
+    : Operator(target), lsbIn(lsbIn_), msbOut(msbOut_), lsbOut(lsbOut_), 
+			degree(degree_), coeffMSB(coeffMSB_), coeffLSB(coeffLSB_), signedCoeffs(signedCoeffs_), 
+			finalRounding(finalRounding_), plainStupidVHDL(plainStupidVHDL_)
   { 
     
     /* Generate unique name */
     {
       std::ostringstream o;
-      o << "FixHornerEvaluator_" << wX ;
+      o << "FixHornerEvaluator_" << -lsbIn ;
       for(int i=0; i<=degree; i++)
 				o << "_" << coeffMSB[i]<< "_" << coeffLSB[i];
       o << "_" << (signedCoeffs?1:0);
@@ -54,7 +56,7 @@ namespace flopoco{
 			coeffSize.push_back(coeffMSB[i]-coeffLSB[i]+1); // see FixConstant.hpp for the constant format
 
     // declaring inputs
-    addInput("X", wX);
+		addInput("X"  , -lsbIn);
 		for (int i=0; i<coeffMSB.size(); i++)
 			addInput(join("A",i), coeffSize[i]);
 			
@@ -100,19 +102,11 @@ namespace flopoco{
 
 		vhdl << tab << tab << declare("h0", coeffSize[degree]) << " <= " << join("A", degree)  << endl;
 
-		int wInX = wX+(signedCoeffs?1:0);
-		vhdl << tab << tab << declare("Xse", wInX) << " <= " << (signedCoeffs?"\"0\"&":"") << "X;" << (signedCoeffs?"-- sign extension before signed mult":"") << endl;
+		if(signedCoeffs)
+			vhdl << tab << declareFixPoint("Xs", true, 0, lsbIn) << " <= signed('0' & X);  -- sign extension of X" << endl; 
+		else 
+			vhdl << tab << declareFixPoint("Xs", true, -1, lsbIn) << " <= unsigned(X);" << endl; 
 
-
-		if(signedCoeffs) {
-			// extend x in [0,1] with a sign bit
-			int wInX=wX+1; //  
-		}
-		else{ 
-			wInX=wX;
-		}
-		// anyway this extension is at the MSB. The LSB is still -wX.
-		int lsbIn = -wX;
 
 		// initialize the recurrence
 		int sigmaMSB=coeffMSB[degree];
@@ -140,7 +134,7 @@ namespace flopoco{
 			}
 
 			else { // using FixMultAdd
-				REPORT(0, " i=" << i);
+				REPORT(LIST, " i=" << i);
 				FixMultAdd::newComponentAndInstance(this,
 																						join("Step",i),     // instance name
 																						join("XsTrunc",i),  // x
@@ -151,9 +145,9 @@ namespace flopoco{
 																						);
 			}
 		}
-    for (int i=1; i<=degree; i++) {
-		
-		}
+		resizeFixPoint("Ys", "Sigma0",  msbOut, lsbOut);
+
+		vhdl << tab << "R <= " << "std_logic_vector(Ys);" << endl;
 
   }
 

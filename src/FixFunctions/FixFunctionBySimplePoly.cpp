@@ -119,7 +119,7 @@ namespace flopoco{
 			}
 
 			else { // using FixMultAdd
-				REPORT(0, " i=" << i);
+				REPORT(LIST, " i=" << i);
 				FixMultAdd::newComponentAndInstance(this,
 																						join("Step",i),     // instance name
 																						join("XsTrunc",i),  // x
@@ -130,9 +130,6 @@ namespace flopoco{
 																						);
 			}
 		}
-
-		//Building the vector of sizes for FixHornerEvaluator
-		// a0 is a bit special
 
 		resizeFixPoint("Ys", "Sigma0",  msbOut, lsbOut);
 
