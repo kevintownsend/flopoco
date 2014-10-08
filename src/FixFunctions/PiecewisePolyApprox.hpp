@@ -33,9 +33,13 @@ namespace flopoco{
 
 		virtual ~PiecewisePolyApprox();
 
+		/** get the bits of coeff of degree d of polynomial number i */
+		mpz_class getCoeff(int i, int d); 
+
 		void build();
 
 		int degree;                       /**< degree of the polynomial approximations */
+		int alpha;                        /**< the input domain [0,1] will be split in 2^alpha subdomains */
 		vector<BasicPolyApprox*> poly;    /**< The vector of polynomials, eventually should all be on the same format */
 		int LSB;                          /**< common weight of the LSBs of the polynomial approximations */
 		vector<int> MSB;                   /**< vector of MSB weights for each coefficient */
@@ -43,7 +47,6 @@ namespace flopoco{
 
 	private:
 		FixFunction *f;                   /**< The function to be approximated */
-		int alpha;                        /**< the input domain [0,1] is split in 2^alpha subdomains */
 		double targetAccuracy;            /**< please build an approximation at least as accurate as that */
 
 		string srcFileName; /**< useful only to enable same kind of reporting as for FloPoCo operators. */

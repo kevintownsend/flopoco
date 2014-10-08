@@ -113,6 +113,7 @@
 #include "FixFunctions/PiecewisePolyApprox.hpp"
 #include "FixFunctions/FixFunctionByTable.hpp"
 #include "FixFunctions/FixFunctionBySimplePoly.hpp"
+#include "FixFunctions/FixFunctionByPiecewisePoly.hpp"
 
 /*  Various elementary functions in fixed or floating point*/
 #include "Trigs/FixSinCos.hpp"

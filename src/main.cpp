@@ -392,6 +392,11 @@ void usage(char *name, string opName = ""){
 		cerr << "Evaluator of function f on [0,1), using a single polynomial with Horner scheme \n";
 	}
 
+	if ( full || opName == "FixFunctionByPiecewisePoly" || opName == "FixFunction"){					
+		OP( "FixFunctionByPiecewisePoly","f lsbI msbO lsbO d plainVHDL");
+		cerr << "Evaluator of function f on [0,1), using a piecewise polynomial of degree d with Horner scheme \n";
+	}
+
 	if ( full )
 		cerr << center("PSEUDO-RANDOM NUMBER GENERATORS", '_') << "\n";
 	// Delegate to operators from random
@@ -1353,6 +1358,20 @@ bool parseCommandLine(int argc, char* argv[]){
 			int lsbO = atoi(argv[i++]);
 			int plain = atoi(argv[i++]);
 			Operator* tg = new FixFunctionBySimplePoly(target, func, lsbI, msbO, lsbO, 1 /*final rounding*/, plain);
+			addOperator(tg);
+		}
+
+		else if (opname == "FixFunctionByPiecewisePoly") {
+			int nargs = 6;
+			if (i+nargs > argc)
+				usage(argv[0],opname); // and exit
+			string func = argv[i++];
+			int lsbI = atoi(argv[i++]);
+			int msbO = atoi(argv[i++]);
+			int lsbO = atoi(argv[i++]);
+			int degree = atoi(argv[i++]);
+			int plain = atoi(argv[i++]);
+			Operator* tg = new FixFunctionByPiecewisePoly(target, func, lsbI, msbO, lsbO, degree, true /*final rounding*/, plain);
 			addOperator(tg);
 		}
 

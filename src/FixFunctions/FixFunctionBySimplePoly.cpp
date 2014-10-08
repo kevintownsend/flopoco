@@ -1,6 +1,6 @@
 /*
   Polynomial Function Evaluator for FloPoCo
-
+	This version uses a single polynomial for the full domain, so no table. To use typically after a range reduction.
   Authors: Florent de Dinechin
 
   This file is part of the FloPoCo project
@@ -44,6 +44,10 @@ namespace flopoco{
 		
 		srcFileName="FixFunctionBySimplePoly";
 		
+		if(finalRounding==false){
+			THROWERROR("FinalRounding=false not implemented yet" );
+		}
+
 		ostringstream name;
 		name<<"FixFunctionBySimplePoly_"<<getNewUId(); 
 		setName(name.str()); 
@@ -119,7 +123,7 @@ namespace flopoco{
 			}
 
 			else { // using FixMultAdd
-				REPORT(LIST, " i=" << i);
+				REPORT(DETAILED, " i=" << i);
 				FixMultAdd::newComponentAndInstance(this,
 																						join("Step",i),     // instance name
 																						join("XsTrunc",i),  // x

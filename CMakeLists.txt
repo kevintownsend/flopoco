@@ -308,6 +308,7 @@ src/FPComposite/FP2DNorm
  src/FixFunctions/PiecewisePolyApprox
  src/FixFunctions/FixHornerEvaluator
  src/FixFunctions/FixFunctionBySimplePoly
+ src/FixFunctions/FixFunctionByPiecewisePoly
  src/FixConstant
 
 # Trigonometric functions ------------------------------------------

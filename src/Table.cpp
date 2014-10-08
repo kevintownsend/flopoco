@@ -13,6 +13,7 @@
 
  */
 
+
 #include <iostream>
 #include <sstream>
 #include <cstdlib>
@@ -121,7 +122,7 @@ namespace flopoco{
 			o << "library work;" << endl;
 		outputVHDLEntity(o);
 		newArchitecture(o,name);
-		if (logicTable_==1 || wIn <= target_->lutInputs()){
+		if (true || logicTable_==1 || wIn <= target_->lutInputs()){
 			int i,x;
 			mpz_class y;
 			beginArchitecture(o);		
@@ -139,6 +140,10 @@ namespace flopoco{
 			o <<  "\" when others;" << endl;
 //			Operator::outputVHDL(o,  name);
 		}
+
+/* TODO The code below generates VHDL specific to one tool, one architecture, one FPGA... 
+It is therefore currently unplugged, but it was probabaly added because it was improving performance. */
+
 		else { 
 			int x;
 			mpz_class y;

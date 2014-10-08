@@ -15,7 +15,7 @@
 #include <iostream>
 
 #include "FixHornerEvaluator.hpp"
-#include "IntMult//FixMultAdd.hpp"
+#include "IntMult/FixMultAdd.hpp"
 
 using namespace std;
 
@@ -61,10 +61,12 @@ namespace flopoco{
 			addInput(join("A",i), coeffSize[i]);
 			
     // declaring outputs
-    addOutput("R", coeffMSB[0]-coeffLSB[0]+1);
+    addOutput("R", msbOut-lsbOut+1);
 
 
 		/*
+
+			TODO: one LSB, or a vector of LSBs?
      Analysis of the polynomial coefficients to determine the intermediate sizes.
      This class knows the abs max of the coefficients to do a worst-case analysis.
 		 This may be pessimistic, e.g. log has alternate coeffs and doesn't grow as far as worst case suggests.

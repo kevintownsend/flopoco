@@ -68,7 +68,19 @@ namespace flopoco{
 		mpfr_clear(fpValue);
 	} 
 	
-
+	mpz_class FixConstant::getBitVectorAsMPZ() {
+		mpz_class h;
+		mpfr_t x;
+		mpfr_init2(x, mpfr_get_prec(fpValue));
+		mpfr_set(x,fpValue,GMP_RNDN);
+		mpfr_mul_2si(x, x, -LSB, GMP_RNDN); // exact
+		mpfr_get_z(h.get_mpz_t(), x,  GMP_RNDN); // rounding could take place here, but should not      
+		if(h<0){
+			h+= (mpz_class(1)) << width;
+		}
+		mpfr_clear(x);
+		return h;
+	}
 
 	std::string FixConstant::getBitVector(int margins){
 		//		cout <<  "in FixConstant::getBitVector, fpValue=" << printMPFR(fpValue) << endl;

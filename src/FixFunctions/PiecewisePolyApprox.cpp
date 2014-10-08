@@ -169,5 +169,10 @@ namespace flopoco{
 
 	}
 	
+	mpz_class PiecewisePolyApprox::getCoeff(int i, int d){
+		BasicPolyApprox* p = poly[i];
+		FixConstant* c = p->coeff[d];
+		return c->getBitVectorAsMPZ();
+	} 
 
 } //namespace
