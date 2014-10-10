@@ -99,6 +99,7 @@ namespace flopoco {
 		return (wX+wY <=  target->lutInputs()+2); 
 	}
 
+	//TODO: function must add better handling of corner cases
 	int IntMultiplier::neededGuardBits(Target* target, int wX, int wY, int wOut)
 	{
 		int g;
@@ -241,22 +242,6 @@ namespace flopoco {
 			REPORT(DEBUG, "Building " << name.str() );
 		}
 
-		//FIXME: for test purposes only -> testing the case when negate=true
-		/*
-		negate = true;
-		{
-			ostringstream name;
-			name <<"IntMultiplier";
-			if(useDSP)
-				name << "_UsingDSP_";
-			else
-				name << "_LogicOnly_";
-			name << wXdecl << "_" << wYdecl << "_" << wOut << "_" << (signedIO?"signed":"unsigned") << "_negated" << "_uid" << Operator::getNewUId();
-			setName ( name.str() );
-			REPORT(DEBUG, "Building " << name.str() );
-		}
-		*/
-
 		if(wOut<0)
 		{
 			THROWERROR("IntMultiplier: in stand-alone constructor: ERROR: negative wOut");
@@ -303,6 +288,9 @@ namespace flopoco {
 
 		// The bit heap
 		bitHeap = new BitHeap(this, wOut+g, enableSuperTiles);
+
+		//FIXME: a bitheap doesn't have a sign, does it?
+		bitHeap->setSignedIO(signedIO);
 
 
 		// initialize the critical path

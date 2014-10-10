@@ -507,7 +507,7 @@ namespace flopoco
 				op->setCycle(0);
 				op->setCriticalPath(0);
 
-				//the first DSP from the supertile(it has the smallest weight in the supertile)
+				//the first DSP from the supertile (it has the smallest weight in the supertile)
 				if(op->getTarget()->getVendor() == "Xilinx")
 				{
 					generateVHDLforDSP(current, DSPuid, i);
@@ -1229,8 +1229,6 @@ namespace flopoco
 			{
 				//lutCompressionLevel=2 - compression using a mix of compressors and adder tree for the last lines
 				//lutCompressionLevel>0 - adder tree compression involved
-				
-				//continue here -> check if the version that skips stages actually works, or not
 				
 				int startingIndex = minWeight;
 				
@@ -2935,9 +2933,9 @@ namespace flopoco
 			addy=0-topY;
 			
 		op->vhdl << tab << op->declare(join("DSP_bh", guid, (uid==0 ? "_ch" : "_root"), i, "_", uid), m->getwX()+m->getwY()+zerosX+zerosY)
-			     << " <= std_logic_vector( unsigned(" << zg(zerosX) << " & " << input1 << range(botX,topX+addx) << " & " << zg(addx) <<")" 
-			     << " * " 
-			     << "unsigned(" << zg(zerosY) << " & " << input2 << range(botY,topY+addy) << " & " <<zg(addy) << "));" << endl;
+			    << " <= std_logic_vector(" << (signedIO ? "signed" : "unsigned") << "(" << zg(zerosX) << " & " << input1 << range(botX,topX+addx) << " & " << zg(addx) <<")"
+				<< " * "
+				<< (signedIO ? "signed" : "unsigned") << "(" << zg(zerosY) << " & " << input2 << range(botY,topY+addy) << " & " <<zg(addy) << "));" << endl;
 
 		s << join("DSP_bh" , guid, (uid==0 ? "_ch" : "_root"), i, "_", uid);
 
