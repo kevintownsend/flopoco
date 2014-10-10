@@ -36,7 +36,6 @@ namespace flopoco
 	BitHeap::BitHeap(Operator* op, int maxWeight, bool enableSuperTiles, string name, int compressionType) :
 		op(op), maxWeight(maxWeight), compressionType(compressionType), enableSuperTiles(enableSuperTiles)
 	{
-		signedIO=false; // TODO get rid of it
 		// Set up the vector of lists of weighted bits, and the vector of uids
 		srcFileName=op->getSrcFileName() + ":BitHeap"; // for REPORT to work
 		guid = Operator::getNewUId();
@@ -247,14 +246,19 @@ namespace flopoco
 		for(unsigned i=0; i<size; i++)
 		{
 			ostringstream rhs;
-			if(i==size-1) // complement for sign extension
+			// complement for sign extension, if needed
+			//	no point in sign extending for just one bit
+			if((i==size-1) && (size+weight < maxWeight))
 				rhs << "not ";
 			rhs << x << of(i);
 			addBit(weight + i, rhs.str());
 		}
 		// sign extension of the addend
-		for (unsigned i=size+weight-1; i<maxWeight; i++) {
-			addConstantOneBit(i);
+		if(size+weight < maxWeight)
+		{
+			for (unsigned i=size+weight-1; i<maxWeight; i++){
+				addConstantOneBit(i);
+			}
 		}
 	}
 
@@ -275,14 +279,19 @@ namespace flopoco
 		for(unsigned i=lsb; i<size; i++)
 		{
 			ostringstream rhs;
-			if(i==size-1) // complement for sign extension
+			// complement for sign extension, if necessary
+			//	no point in sign extending for just one bit
+			if((i==size-1) && (size+weight < maxWeight))
 				rhs << "not ";
 			rhs << x << of(i);
 			addBit(weight + i, rhs.str());
 		}
-		// sign extension of the addend
-		for (unsigned i=size+weight-1; i<maxWeight; i++) {
-			addConstantOneBit(i);
+		// sign extension of the addend, if needed
+		if(size+weight < maxWeight)
+		{
+			for (unsigned i=size+weight-1; i<maxWeight; i++){
+				addConstantOneBit(i);
+			}
 		}
 	}
 

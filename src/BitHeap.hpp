@@ -203,6 +203,9 @@ namespace flopoco{
 		string getName() {return uniqueName_;};
 
 
+		void setSignedIO(bool s){this->signedIO=s;};
+
+		bool getSignedIO() {return signedIO;};
 	protected:
 
 
