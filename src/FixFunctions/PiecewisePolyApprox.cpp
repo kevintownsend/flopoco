@@ -160,6 +160,17 @@ namespace flopoco{
 			}
 		} // end while(!success)
 
+
+		// Now we need to resize all the coefficients of degree i to the largest one
+		for (int i=0; i<nbIntervals; i++) {
+			for (int j=0; j<=degree; j++) {
+				// REPORT(DEBUG, "Resizing MSB of coeff " << j << " of poly " << i << " : from " << poly[i] -> coeff[j] -> MSB << " to " <<  MSB[j]);  
+				poly[i] -> coeff[j] -> changeMSB(MSB[j]);
+				// REPORT(DEBUG, "   Now  " << poly[i] -> coeff[j] -> MSB);  
+			}
+		}
+		// TODO? In the previous loop we could also check if one of the coeffs is always positive or negative, and optimize generated code accordingly 
+
 		// A bit of reporting
 		REPORT(INFO,"Final report: ");
 		REPORT(INFO,"  Degree=" << degree	<< "      maxApproxErrorBound=" << approxErrorBound);

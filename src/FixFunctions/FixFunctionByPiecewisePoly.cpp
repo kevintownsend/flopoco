@@ -53,11 +53,11 @@ namespace flopoco{
 	mpz_class FixFunctionByPiecewisePoly::CoeffTable::function(int x){
 		mpz_class z=0;
 		int currentShift=0;
-		for(int i=0; i<=polyApprox->degree; i++) {
+		for(int i=polyApprox->degree; i>=0; i--) {
 			z += (polyApprox-> getCoeff(x, i)) << currentShift; // coeff of degree i from poly number x
 			if(i==0 && addFinalRoundBit){ // coeff of degree 0
 				z += mpz_class(1)<<(currentShift + finalRoundBitPos - polyApprox->LSB); // add the round bit
-				REPORT(INFO, "Adding final round bit at position " << finalRoundBitPos-polyApprox->LSB);
+				// REPORT(INFO, "Adding final round bit at position " << finalRoundBitPos-polyApprox->LSB);
 			}
 			currentShift +=  polyApprox->MSB[i] - polyApprox->LSB +1;
 		}
@@ -96,6 +96,13 @@ namespace flopoco{
 		double targetAcc= pow(2, lsbOut-2);
 		polyApprox = new PiecewisePolyApprox(func, targetAcc, degree);
 		int alpha =  polyApprox-> alpha; // coeff table input size 
+
+		// Resize its MSB to the one input by the user. This is useful for functions that "touch" a power of two and may thus overflow by one bit.
+		for (int i=0; i<(1<<alpha); i++) {
+			polyApprox -> poly[i] -> coeff[0] -> changeMSB(msbOut);
+		}
+		polyApprox -> MSB[0] = msbOut;
+
 		// Store it in a table
 		int polyTableOutputSize=0;
 		for (int i=0; i<=degree; i++) {
@@ -117,7 +124,7 @@ namespace flopoco{
 		vhdl << instance(coeffTable, "coeffTable") << endl;
 
 		int currentShift=0;
-		for(int i=0; i<=polyApprox->degree; i++) {
+		for(int i=polyApprox->degree; i>=0; i--) {
 			vhdl << tab << declare(join("A",i), polyApprox->MSB[i] - polyApprox->LSB +1)  << " <= Coeffs" << range(currentShift + (polyApprox->MSB[i] - polyApprox->LSB), currentShift) << ";" << endl;
 			currentShift +=  polyApprox->MSB[i] - polyApprox->LSB +1;
 		}

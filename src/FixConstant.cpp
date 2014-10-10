@@ -6,12 +6,14 @@
 using namespace std;
 
 namespace flopoco{
-
+#define THROWERROR(stream) {{ostringstream o; o << " ERROR in FixConstant: " << stream << endl; throw o.str();}} 
 
 	FixConstant::FixConstant(const int MSB_, const int LSB_, const bool isSigned_, const mpfr_t val_) : 
 		MSB(MSB_), LSB(LSB_), width(MSB_-LSB_+1), isSigned(isSigned_) {
 		mpfr_init2(fpValue, width);
 		mpfr_set(fpValue, val_, GMP_RNDN); // TODO check no error?
+		if( (! isSigned) && (mpfr_sgn(fpValue)<0) )
+			THROWERROR("In FixConstant constructor: Negative constant " << printMPFR(fpValue) << " cannot be represented as a signed constant");
 	}
 
 
@@ -76,7 +78,12 @@ namespace flopoco{
 		mpfr_mul_2si(x, x, -LSB, GMP_RNDN); // exact
 		mpfr_get_z(h.get_mpz_t(), x,  GMP_RNDN); // rounding could take place here, but should not      
 		if(h<0){
-			h+= (mpz_class(1)) << width;
+			if(isSigned) {
+				h += (mpz_class(1)) << (width+1);
+			}
+			else {
+				THROWERROR("In getBitVectorAsMPZ, negative constant " << printMPFR(fpValue) << " cannot be represented as a signed constant");
+			}
 		}
 		mpfr_clear(x);
 		return h;
@@ -97,6 +104,7 @@ namespace flopoco{
 
 	void FixConstant::changeMSB(int newMSB){
 		MSB=newMSB;
+		width = (MSB-LSB+1); 
 		if(newMSB>=MSB){
 			// Nothing to do! the new size includes the old one
 		}

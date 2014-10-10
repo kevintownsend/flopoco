@@ -10,14 +10,16 @@ namespace flopoco{
 
 	/**
 	 * A class representing a fixed-point constant. 
-	 The fixed-point format is represented as two weights: (wMSB, wLSB). 
-	 These two weights are included: the size of the signal is wMSB-wLSB+1.
-	 If the constant is signed, the bit of weight wMSB has a negative weight. 
+	 The fixed-point format is represented as two bit positions: (MSB, LSB). 
+	 These two positions are included: the size of the signal is wMSB-wLSB+1.
+	 If signed, the sign bit, in position wMSB, has weight -2^wMSB. 
+
+	 We can have a positive constant in a signed Fixconstant object, just as we can have leading zeroes.
 
 	 By default the constructor has to provide MSB and LSB. 
 	 TODO convention for zero in terms of LSB and MSB.
 
-	 There will be a method to resize/minimize a constant at some point.
+
 	 */
 	class FixConstant
 	{
