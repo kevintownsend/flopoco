@@ -120,18 +120,20 @@ namespace flopoco{
 			for (int j=0; j<=degree; j++) {
 				MSB.push_back(INT_MIN);
 			}
+
+			// Compute the LSB of each coefficient.
+			// It should be at least floor(log2(targetAccuracy)); 
+			// However we can get a bit extra accuracy/slack because the evaluation will use log2(degree) guard bits.
+			// Adding these to the constants is almost for free: let's do it.  
+			LSB = floor(log2(targetAccuracy/degree));
+			REPORT(DEBUG, "To obtain target accuracy " << targetAccuracy << " with a degree-"<<degree <<" polynomial, we compute coefficients accurate to " << targetAccuracy/degree
+						 << " (LSB="<<LSB<<")"); 
 		
 			for (int i=0; i<nbIntervals; i++) {
 				REPORT(DETAILED, " ----------Interval " << i << "-------------");
 				// Recompute the substitution. No big deal.
 				sollya_obj_t giS = buildSubIntervalFunction(fS, alpha, i);
-				// Now compute the LSB of each coefficient.
-				// It should be at least floor(log2(targetAccuracy)); 
-				// However we can get a bit extra accuracy/slack because the evaluation will use log2(degree) guard bits.
-				// Adding these to the constants is almost for free: let's do it.  
-				LSB = floor(log2(targetAccuracy/degree));
-				REPORT(DEBUG, "To obtain target accuracy " << targetAccuracy << " with a degree-"<<degree <<" polynomial, we compute with an internal accuracy of " << targetAccuracy/degree
-							 << " (LSB="<<LSB<<")"); 
+
 				p = new BasicPolyApprox(giS, degree, LSB);
 				poly.push_back(p);
 				if (approxErrorBound < p->approxErrorBound){ 
@@ -164,7 +166,7 @@ namespace flopoco{
 		// Now we need to resize all the coefficients of degree i to the largest one
 		for (int i=0; i<nbIntervals; i++) {
 			for (int j=0; j<=degree; j++) {
-				// REPORT(DEBUG, "Resizing MSB of coeff " << j << " of poly " << i << " : from " << poly[i] -> coeff[j] -> MSB << " to " <<  MSB[j]);  
+				// REPORT(DEBUG "Resizing MSB of coeff " << j << " of poly " << i << " : from " << poly[i] -> coeff[j] -> MSB << " to " <<  MSB[j]);  
 				poly[i] -> coeff[j] -> changeMSB(MSB[j]);
 				// REPORT(DEBUG, "   Now  " << poly[i] -> coeff[j] -> MSB);  
 			}
