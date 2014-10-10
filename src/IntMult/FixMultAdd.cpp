@@ -47,7 +47,7 @@ namespace flopoco {
 		setCopyrightString ( "Florent de Dinechin, Matei Istoan, 2012-2014" );
 
 		// Set up the VHDL library style
-		useNumericStd();
+		//useNumericStd();
 
 		wX = x->MSB() - x->LSB() +1;
 		wY = y->MSB() - y->LSB() +1;
@@ -179,6 +179,7 @@ namespace flopoco {
 		bitHeap = new BitHeap(this,								//parent operator
 							  wOut+g,							//size of the bit heap
 							  enableSuperTiles);				//whether super-tiles are used
+		bitHeap->setSignedIO(signedIO);
 
 		//FIXME: are the guard bits included in the bits output by the multiplier?
 
@@ -389,7 +390,7 @@ namespace flopoco {
 			}
 			else
 			{
-				svA = svA >> (a->LSB()-pLSB);
+				svA = svA << (a->LSB()-pLSB);
 				outShift = outLSB - pLSB;
 			}
 
