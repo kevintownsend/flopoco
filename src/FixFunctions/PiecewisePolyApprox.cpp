@@ -14,6 +14,10 @@
 
 */
 
+
+/* 
+	 The function is assumed to have inputs in [0,1]
+*/
 #include "PiecewisePolyApprox.hpp"
 #include <sstream>
 #include <limits.h>

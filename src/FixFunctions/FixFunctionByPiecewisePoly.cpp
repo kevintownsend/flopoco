@@ -39,8 +39,8 @@ namespace flopoco{
 
 #define DEBUGVHDL 0
 
-	FixFunctionByPiecewisePoly::CoeffTable::CoeffTable(Target* target, int wIn, int wOut, PiecewisePolyApprox* polyApprox_) :
-	Table(target, wIn, wOut), polyApprox(polyApprox_)
+	FixFunctionByPiecewisePoly::CoeffTable::CoeffTable(Target* target, int wIn, int wOut, PiecewisePolyApprox* polyApprox_, bool addFinalRoundBit_, int finalRoundBitPos_) :
+		Table(target, wIn, wOut), polyApprox(polyApprox_), addFinalRoundBit(addFinalRoundBit_), finalRoundBitPos(finalRoundBitPos_)
 	{
 		srcFileName="FixFunctionByPiecewisePoly::CoeffTable";
 		ostringstream name; 
@@ -55,6 +55,10 @@ namespace flopoco{
 		int currentShift=0;
 		for(int i=0; i<=polyApprox->degree; i++) {
 			z += (polyApprox-> getCoeff(x, i)) << currentShift; // coeff of degree i from poly number x
+			if(i==0 && addFinalRoundBit){ // coeff of degree 0
+				z += mpz_class(1)<<(currentShift + finalRoundBitPos - polyApprox->LSB); // add the round bit
+				REPORT(INFO, "Adding final round bit at position " << finalRoundBitPos-polyApprox->LSB);
+			}
 			currentShift +=  polyApprox->MSB[i] - polyApprox->LSB +1;
 		}
 		return z;
@@ -88,7 +92,8 @@ namespace flopoco{
 		useNumericStd();
 
 		// Build the polynomial approximation
-		double targetAcc= pow(2, lsbOut-1);
+		REPORT(DETAILED, "Computing polynomial approximation for target precision "<< lsbOut-2);
+		double targetAcc= pow(2, lsbOut-2);
 		polyApprox = new PiecewisePolyApprox(func, targetAcc, degree);
 		int alpha =  polyApprox-> alpha; // coeff table input size 
 		// Store it in a table
@@ -99,7 +104,9 @@ namespace flopoco{
 		REPORT(DETAILED, "Poly table input size  = " << alpha);
 		REPORT(DETAILED, "Poly table output size = " << polyTableOutputSize);
 
-		FixFunctionByPiecewisePoly::CoeffTable* coeffTable = new CoeffTable(target, alpha, polyTableOutputSize, polyApprox) ;
+		// This is where we add the final rounding bit
+		FixFunctionByPiecewisePoly::CoeffTable* coeffTable = new CoeffTable(target, alpha, polyTableOutputSize, polyApprox, 
+																																				finalRounding, lsbOut-1 /*position of the round bit*/) ;
 		addSubComponent(coeffTable);
 
 		vhdl << tab << declare("A", alpha)  << " <= X" << range(wX-1, wX-alpha) << ";" << endl;
@@ -115,7 +122,7 @@ namespace flopoco{
 			currentShift +=  polyApprox->MSB[i] - polyApprox->LSB +1;
 		}
 
-		FixHornerEvaluator* horner = new FixHornerEvaluator(target, lsbIn+alpha, msbOut, lsbOut, degree, polyApprox->MSB, polyApprox->LSB, true, true, true);		
+		FixHornerEvaluator* horner = new FixHornerEvaluator(target, lsbIn+alpha, msbOut, lsbOut, degree, polyApprox->MSB, polyApprox->LSB, true, true, plainStupidVHDL);		
 		addSubComponent(horner);
 
 		inPortMap(horner, "X", "Z");

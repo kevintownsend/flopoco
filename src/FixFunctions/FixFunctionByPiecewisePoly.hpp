@@ -22,9 +22,11 @@ namespace flopoco{
 		/** a subclass to generate a table of coefficients */
 		class CoeffTable: public Table {
 		public:
-			CoeffTable(Target* target, int wIn, int wOut, PiecewisePolyApprox* polyApprox);
+			CoeffTable(Target* target, int wIn, int wOut, PiecewisePolyApprox* polyApprox, bool addFinalRoundBit, int finalRoundBitPos);
 			mpz_class function(int x);
 			PiecewisePolyApprox* polyApprox; // don't understand why C++ won't let me use that of FixFunctionByPiecewisePoly
+			bool addFinalRoundBit;
+			int finalRoundBitPos;
 		};
 
 
