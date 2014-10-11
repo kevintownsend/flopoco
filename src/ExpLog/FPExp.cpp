@@ -21,12 +21,13 @@
 #include "TestBenches/FPNumber.hpp"
 #include "ConstMult/IntIntKCM.hpp"
 #include "ConstMult/FixRealKCM.hpp"
-#include "Shifters.hpp"
-#include "IntMultiplier.hpp"
-#include "FixFunctions/FunctionEvaluator.hpp"
-#include "FixFunctions/FunctionTable.hpp"
+#include "ShiftersEtc/Shifters.hpp"
+#include "IntMult/IntMultiplier.hpp"
+#include "FixFunctions/FixFunctionByPiecewisePoly.hpp"
+#include "FixFunctions/FixFunctionBySimplePoly.hpp"
+#include "FixFunctions/FixFunctionByTable.hpp"
 #include "utils.hpp"
-#include "IntAdder.hpp"
+#include "IntAddSubCmp/IntAdder.hpp"
 
 
 using namespace std;
@@ -595,15 +596,24 @@ namespace flopoco{
 				
 				REPORT(LIST, "Generating the polynomial approximation, this may take some time");
 				// We want the LSB value to be  2^(wF+g)
-				FunctionEvaluator *fe;
+				FixFunctionByPiecewisePoly *fe;
 				ostringstream function;
-				function << "1b"<<2*k<<"*(exp(x*1b-" << k << ")-x*1b-" << k << "-1), 0,1,1";
-				fe = new FunctionEvaluator(target, function.str(), sizeZhigh, wF+g-2*k, d, true, inDelayMap("X", target->localWireDelay() + getCriticalPath()) );
+				// TODO Pb is probably here, check the output scaling
+				function << "1b"<<2*k<<"*(exp(x*1b-" << k << ")-x*1b-" << k << "-1)";  // e^z-z-1
+				//function << "exp(x*1b-" << k << ")-x*1b-" << k << "-1";  // e^z-z-1
+				fe = new FixFunctionByPiecewisePoly(target, function.str(), 
+																						-sizeZhigh, // lsbIn,
+																						-2*k, // msbOut
+																						-wF-g, // lsbOut
+																						d, // degree
+																						true, // finalRounding
+																						true, // plainStupidVHDL
+																						inDelayMap("X", target->localWireDelay() + getCriticalPath()) );
 				addSubComponent(fe);
 				inPortMap(fe, "X", "Zhigh");
-				outPortMap(fe, "R", "expZmZm1");
+				outPortMap(fe, "Y", "expZmZm1");
 				vhdl << instance(fe, "poly");
-				syncCycleFromSignal("expZmZm1", fe->getOutputDelay("R") );
+				syncCycleFromSignal("expZmZm1", fe->getOutputDelay("Y") );
 
 			}// end if magic table/generic
 

@@ -120,7 +120,10 @@
 #include "Trigs/CordicSinCos.hpp"
 #include "Trigs/CordicAtan2.hpp"
 // #include "Trigs/FixSinOrCos.hpp"  Replug when poly eval fixed
-#include "Logs/IterativeLog.hpp"
+#include "ExpLog/IterativeLog.hpp"
+#include "ExpLog/FPExp.hpp"
+
+// #include "ExpLog/FPPow.hpp"
 
 
 #include "Conversions/Fix2FP.hpp"
@@ -183,10 +186,6 @@
 #include "ConstMult/CRFPConstMult.hpp"
 #endif
 #endif
-
-//#include "FPExp.hpp" 
-#include "IterativeLog.hpp"
-// #include "FPPow.hpp"
 
 // #include "FP2DNorm.hpp" // The world is not ready yet 
 #include "FPSqrtPoly.hpp"

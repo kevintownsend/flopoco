@@ -339,6 +339,20 @@ void usage(char *name, string opName = ""){
 		cerr << "InTableSize is the table input size: O defaults to something sensible\n";
 	}
 
+	if ( full || opName == "FPExp"){					
+		OP( "FPExp","wE wF");
+		cerr << "      Floating-point exponential function. For expert mode, use FPExpExpert.\n";
+	}
+	if( full  || opName == "FPExpExpert") {
+		OP( "FPExpExpert","wE wF k d g fullInput");
+		cerr << "      Floating-point exponential function, expert mode\n";
+		cerr << "      k: number of bits addressing the table;   d: degree of the polynomial;\n";
+		cerr << "      g: number of guard bits\n";
+		cerr << "      fullInput (boolean): if 1, accepts extended (typically unrounded) input\n";
+		cerr << "      DSP_threshold (float): between 0 and 1, 1 meaning that all small multipliers go to DSPs, 0 meaning that only multipliers filling DSPs go to DSP\n";
+	}
+
+
 	if ( full || opName == "CordicAtan2"){
 		OP( "CordicAtan2","w");
 		cerr << "Computes atan(x/y) as a=(angle in radian)/pi so a in [-1,1[;\n";
@@ -1441,6 +1455,34 @@ bool parseCommandLine(int argc, char* argv[]){
 			int wF = checkStrictlyPositive(argv[i++], argv[0]);
 			int inTableSize=atoi(argv[i++]);
 			op = new IterativeLog(target, wE, wF, inTableSize);
+			addOperator(op);
+		}
+
+		else if (opname == "FPExp")
+		{
+			int nargs = 2;
+			if (i+nargs > argc)
+				usage(argv[0],opname); // and exit
+			int wE = checkStrictlyPositive(argv[i++], argv[0]);
+			int wF = checkStrictlyPositive(argv[i++], argv[0]);
+			op = new FPExp(target, wE, wF, 0, 0);
+			addOperator(op);
+		}
+
+
+		else if (opname == "FPExpExpert")
+		{
+			int nargs = 7;
+			if (i+nargs > argc)
+				usage(argv[0],opname); // and exit
+			int wE = checkStrictlyPositive(argv[i++], argv[0]);
+			int wF = checkStrictlyPositive(argv[i++], argv[0]);
+			int k=atoi(argv[i++]);
+			int d=atoi(argv[i++]);
+			int g=atoi(argv[i++]);
+			int fullInput=checkBoolean(argv[i++],  argv[0]);
+			float DSPThreshold = atof(argv[i++]);
+			op = new FPExp(target, wE, wF, k, d, g, fullInput, DSPThreshold);
 			addOperator(op);
 		}
 

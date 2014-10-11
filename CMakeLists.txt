@@ -320,8 +320,8 @@ src/Trigs/CordicSinCos
 src/Trigs/CordicAtan2
 
 # Exp, Log and Power
-#src/Exp/FPExp
-src/Logs/IterativeLog
+src/ExpLog/FPExp
+src/ExpLog/IterativeLog
 )
 
 IF (SOLLYA_LIB)
