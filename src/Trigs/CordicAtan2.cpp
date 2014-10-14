@@ -7,7 +7,18 @@
 #include "CordicAtan2.hpp"
 
 using namespace std;
+/* TODO Debugging:
+There are still a few last-bit errors with the current setup in
+./flopoco -verbose=3 -pipeline=no CordicAtan2 8 TestBenchFile -2
 
+One is unavoidable, it is atan2 (0,0)
+   TODO add a don't care to the test framework?
+
+For the other ones:
+ - the negate by not versus negate by - is not the culprit.
+ - there are 3 parameters to vary: iterations, gXY, gA. Augmenting them doesn't change much.
+TODO : first investigate the problematic values and add them to the regression test
+*/
 namespace flopoco{
 
 	// TODO Options:
@@ -42,14 +53,11 @@ namespace flopoco{
 		// ulp = weight of the LSB of the result is 2^(-w+1)
 		// half-ulp is 2^-w
 		// atan(2^-w) < 2^-w therefore after w interations,  method error will be bounded by 2^-w 
-		maxIterations = w;
-
-		double eps;  //error in ulp
-
-
+		maxIterations = w-1;
 
 		//error analysis for the (x,y) datapath
-		eps=2; // initial neg-by-not
+		double eps;  //error in ulp
+		eps=1; // initial neg-by-not
 
 		double shift=0.5;
 		for(stage=1; stage<=maxIterations; stage++){
@@ -62,16 +70,16 @@ namespace flopoco{
 		}
 
 		// guard bits depend only on the number of iterations
-		gXY = (int) ceil(log2(eps)); 
+		gXY = (int) ceil(log2(eps));  
+		REPORT(DEBUG, "Error analysis computes eps=" << eps << " ulps on the XY datapath, hence  gXY=" << gXY);
 
 
-		//error analysis for the (x,y) datapath
-		eps=maxIterations*0.5; // only the rounding error in the atan constant
+		//error analysis for the A datapath
+		eps = maxIterations*0.5; // only the rounding error in the atan constant
 
 		gA = 1 + (int) ceil(log2(eps)); // +1 for the final rounding 
 
-		REPORT(DEBUG, "Error analysis computes eps=" << eps << " ulps on the XY datapath, hence  gXY=" << gXY 
-					 <<"    and eps=" << eps << " ulps on the A datapath, hence  gA=" << gA );
+		REPORT(DEBUG, "Error analysis computes eps=" << eps <<  " ulps on the A datapath, hence  gA=" << gA );
 
 
 
@@ -142,9 +150,13 @@ namespace flopoco{
 
 		vhdl << tab << declare("pX", sizeXY) << " <=      X  & " << zg(gXY)<< ";" << endl;
 		vhdl << tab << declare("pY", sizeXY) << " <=      Y  & " << zg(gXY)<< ";" << endl;
+#if 1// negate by not is good enough, it seems
 		vhdl << tab << declare("mX", sizeXY) << " <= (not X) & " << og(gXY)<< ";  -- negation by not, implies one ulp error." << endl;
 		vhdl << tab << declare("mY", sizeXY) << " <= (not Y) & " << og(gXY)<< ";  -- negation by not, implies one ulp error. " << endl;
-
+#else // negate by sub
+		vhdl << tab << declare("mX", sizeXY) << " <= (" << zg(w) << "- X) & " << og(gXY) << ";  -- negation" << endl;
+		vhdl << tab << declare("my", sizeXY) << " <= (" << zg(w) << "- Y) & " << og(gXY) << ";  -- negation" << endl;
+#endif
 		vhdl << tab << declare("X1", sizeXY) << " <= " << endl;
 		vhdl << tab << tab << "pX when quadrant=\"00\"   else " << endl;
 		vhdl << tab << tab << "pY when quadrant=\"01\"   else " << endl;
@@ -161,8 +173,9 @@ namespace flopoco{
 		vhdl << tab << tab << "pX;"    << endl;
 
 
-		vhdl << tab << declare("Z1", sizeZ) << " <= " << zg(sizeZ)<< ";   " << endl;
-
+		//		vhdl << tab << declare("Z1", sizeZ) << " <= " << zg(sizeZ)<< ";   " << endl;
+		//w-2+gA
+		vhdl << tab << declare("Z1", sizeZ) << " <= " << zg(sizeZ-gA)<< "&1&" << zg(gA-1)<< "; -- this is the final round bit" << endl;
 
 
 		//CORDIC iterations
@@ -217,30 +230,11 @@ namespace flopoco{
 			//create the arctangent factor to be added to Zin
 								
 
-			if(stage<maxIterations) {
-				// normal iterations
-				vhdl << tab << declare(join("atan2PowStage", stage), sizeZ) << " <= " << unsignedFixPointNumber(zatan, zMSB, zLSB) << ";" <<endl;
-				vhdl << tab << declare(join("Z", stage+1), sizeZ) << " <= " 
-						 << join("Z", stage) << " + " << join("atan2PowStage", stage) << " when " << join("sgnY", stage) << "=\'0\'      else "
-						 << join("Z", stage) << " - " << join("atan2PowStage", stage) << " ;" << endl;
-			}
-			else {
-				// Merge a rounding bit. It should be all absorbed in a row of LUT  
-				mpfr_t roundBit;
-				mpfr_init2(roundBit, 3*sizeZ);
-				mpfr_set_d(roundBit, 1.0, GMP_RNDN);
-				mpfr_div_2si(roundBit, roundBit, w, GMP_RNDN);
-				mpfr_add(roundBit, zatan, roundBit, GMP_RNDN);
-				vhdl << tab << declare(join("atan2PowStageAdd", stage), sizeZ) << " <= " << unsignedFixPointNumber(roundBit, zMSB, zLSB) << ";" <<endl;
-				mpfr_set_d(roundBit, 1.0, GMP_RNDN);
-				mpfr_div_2si(roundBit, roundBit,  w, GMP_RNDN);
-				mpfr_sub(roundBit, roundBit, zatan, GMP_RNDN); // this is positive
-				vhdl << tab << declare(join("atan2PowStageSub", stage), sizeZ) << " <= " << unsignedFixPointNumber(roundBit, zMSB, zLSB) << ";" <<endl;
-				vhdl << tab << declare(join("Z", stage+1), sizeZ) << " <= " 
-						 << join("Z", stage) << " + " << join("atan2PowStageAdd", stage) << " when " << join("sgnY", stage) << "=\'0\'      else "
-						 << join("Z", stage) << " + " << join("atan2PowStageSub", stage) << " ;" << endl;
-				mpfr_clear(roundBit);
-			}
+			// rounding here in unsignedFixPointNumber()
+			vhdl << tab << declare(join("atan2PowStage", stage), sizeZ) << " <= " << unsignedFixPointNumber(zatan, zMSB, zLSB) << ";" <<endl;
+			vhdl << tab << declare(join("Z", stage+1), sizeZ) << " <= " 
+					 << join("Z", stage) << " + " << join("atan2PowStage", stage) << " when " << join("sgnY", stage) << "=\'0\'      else "
+					 << join("Z", stage) << " - " << join("atan2PowStage", stage) << " ;" << endl;
 
 
 		} //end for loop
@@ -250,7 +244,7 @@ namespace flopoco{
 		//                     - (target->localWireDelay(sizeZ+1) + target->adderDelay(sizeZ+1))); // CP delay that was already added
 
 		// reconstruction
-		// The round bit has been merged in the last addition
+		// The round bit has been merged in the initialization of Z
 		string finalZ=join("Z", maxIterations+1);
 		vhdl << tab << "A <= (quadrant & " << zg(w-2) << ")   + ("
 				 << finalZ << of(sizeZ-1) // sign extension 
