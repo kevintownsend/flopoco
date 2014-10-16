@@ -5,6 +5,7 @@
 #include <sstream>
 #include <gmp.h>
 #include <gmpxx.h>
+#include <mpfr.h>
 #include "utils.hpp"
 #include "../Operator.hpp"
 #include "Point.hpp"
@@ -21,6 +22,8 @@ namespace flopoco {
 		 * @param[in] P1                 the first point
 		 * @param[in] P2                 the second point
 		 * @param[in] P3                 the third point
+		 * @param[in] initMpfr			 whether to compute the values of the plane parameters using MPFR
+		 * 									(defaults to no, to speed thing up)
 		 *
 		 * The equation of the plane is expressed as ax+by+cz+d=0, starting from
 		 * 		|x  y  z  1|
@@ -38,13 +41,18 @@ namespace flopoco {
 		 * 		d = x1[(z2-z1)(y3-y1) - (y2-y1)(z3-z1)] + y1[(x2-x1)(z3-z1) - (z2-z1)(x3-x1)] + z1[(y2-y1)(x3-x1) - (x2-x1)(y3-y1)]
 		 *
 		 **/
-		Plane(Point* P1, Point* P2, Point* P3);
+		Plane(Point* P1, Point* P2, Point* P3, bool initMpfr = false);
 
 		/**
 		 * The Plane constructor: constructs the equation of the plane given by the parameters a, b, c, d
 		 * 	and having the form ax+by+cz+d=0
 		 */
-		Plane(double a, double b, double c, double d);
+		Plane(double a, double b, double c, double d, bool initMpfr = false);
+
+		/**
+		 * compute the parameters of the plane, given the three points
+		 */
+		void computeParameters();
 
 		/**
 		 * Return true if the points P1, P2, P3 are collinear, false otherwise
@@ -84,9 +92,26 @@ namespace flopoco {
 		double distanceToPlane(Point* P);
 
 		/**
+		 * Compute the distance from the point P, given as a parameter, to the plane
+		 * 	using MPFR for doing the computations
+		 * NOTE: the functions makes the assumption that the parameters
+		 * 			a, b, c and d of the plane have already been computed
+		 *
+		 * The distance can be computed using the formula:
+		 *		d(P, plane) = (ax0 + by0 + cz0 + d)/sqrt(a^2+b^2+c^2)
+		 * where x0, y0 and z0 are the coordinates of the point P
+		 */
+		mpfr_t* distanceToPlaneMpfr(Point* P);
+
+		/**
 		 * return the value of a
 		 */
 		double getA();
+
+		/**
+		 * return the value of a, computed using MPFR
+		 */
+		mpfr_t* getAMpfr();
 
 		/**
 		 * return the value of b
@@ -94,14 +119,29 @@ namespace flopoco {
 		double getB();
 
 		/**
+		 * return the value of b, computed using MPFR
+		 */
+		mpfr_t* getBMpfr();
+
+		/**
 		 * return the value of c
 		 */
 		double getC();
 
 		/**
+		 * return the value of c, computed using MPFR
+		 */
+		mpfr_t* getCMpfr();
+
+		/**
 		 * return the value of d
 		 */
 		double getD();
+
+		/**
+		 * return the value of d, computed using MPFR
+		 */
+		mpfr_t* getDMpfr();
 
 
 		/**
@@ -123,6 +163,11 @@ namespace flopoco {
 		double c;
 		double d;
 
+		mpfr_t distance;
+		mpfr_t aMpfr;
+		mpfr_t bMpfr;
+		mpfr_t cMpfr;
+		mpfr_t dMpfr;
 	};
 
 }
