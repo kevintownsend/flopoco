@@ -40,7 +40,7 @@ namespace flopoco {
 		setCopyrightString("Florent de Dinechin, Matei Istoan, 2014");
 
 		//set the VHDL generation style
-		plainVHDL = true;
+		plainVHDL = false;
 
 		// build the name
 		ostringstream name;
@@ -48,7 +48,7 @@ namespace flopoco {
 		setName(name.str());
 
 		//set the libraries to use
-		useNumericStd_Signed();
+		useNumericStd();
 
 		//initialize global variables
 		maxValA = -1;		//this is the absolute value, so should be always non-negative, once used
@@ -59,8 +59,6 @@ namespace flopoco {
 		addInput ("X",  wIn-1);
 		addInput ("Y",  wIn);
 		addOutput("R",  wOut, 2 /*number of possible output values*/);
-
-		vhdl << tab << declare("XPrime", wIn) << " <= '1' & X;" << endl;
 
 		//build the architecture
 		if(architectureType == 0)
@@ -95,15 +93,17 @@ namespace flopoco {
 			if(plainVHDL)
 			{
 				//split the input signals, and create the address signal for tha table
-				vhdl << tab << declareFixPoint("XHigh", false, -1,  -k) << " <= unsigned(XPrime" << range(wIn-1, k) << ");" << endl;
-				vhdl << tab << declareFixPoint("YHigh", false, -1,  -k) << " <= unsigned(Y" << range(wIn-1, k) << ");" << endl;
-				vhdl << tab << declare("atan2TableInput", 2*k) << " <= std_logic_vector(XHigh) & std_logic_vector(YHigh);" << endl;
+				vhdl << tab << declare("XHigh", k-1) << " <= std_logic_vector(X" << range(2*k-2, k) << ");" << endl;
+				vhdl << tab << declare("YHigh", k)   << " <= std_logic_vector(Y" << range(2*k-1, k) << ");" << endl;
+				vhdl << tab << declare("atan2TableInput", 2*k-1) << " <= std_logic_vector(XHigh) & std_logic_vector(YHigh);" << endl;
 
 				//create the table for atan(y/x)
-				Atan2Table *table = new Atan2Table(target, 2*k, msbA+msbB+msbC+3*(wOut+g), 0, msbA, msbB, msbC);
+				Atan2Table *table = new Atan2Table(target, 2*k-1, msbA+msbB+msbC+3*(wOut+g), 0, msbA, msbB, msbC);
 
 				//add the table to the operator
 				addSubComponent(table);
+				useSoftRAM(table);
+				//useHardRAM(table);
 				inPortMap (table , "X", "atan2TableInput");
 				outPortMap(table , "Y", "atan2TableOutput");
 				vhdl << instance(table , "KCMTable");
@@ -116,7 +116,7 @@ namespace flopoco {
 				vhdl << tab << declareFixPoint("A", true, msbA-1,  -wOut-g) << " <= signed(atan2TableOutput"
 						<< range(msbA+wOut+g+msbB+wOut+g+msbC+wOut+g-1, msbB+wOut+g+msbC+wOut+g) << ");" << endl;
 
-				vhdl << tab << declareFixPoint("XLow", true, -k,  -2*k) << " <= signed('0' & XPrime" << range(k-1, 0) << ");" << endl;
+				vhdl << tab << declareFixPoint("XLow", true, -k,  -2*k) << " <= signed('0' & X" << range(k-1, 0) << ");" << endl;
 				vhdl << tab << declareFixPoint("YLow", true, -k,  -2*k) << " <= signed('0' & Y" << range(k-1, 0) << ");" << endl;
 
 				//create A*X_low and B*Y_low
@@ -144,15 +144,17 @@ namespace flopoco {
 			}else
 			{
 				//create the input signals for the table
-				vhdl << tab << declare("XHigh", k) << " <= XPrime" << range(wIn-1, k) << ";" << endl;
-				vhdl << tab << declare("YHigh", k) << " <= Y" << range(wIn-1, k) << ";" << endl;
-				vhdl << tab << declare("atan2TableInput", 2*k) << " <= XHigh & YHigh;" << endl;
+				vhdl << tab << declare("XHigh", k-1) << " <= std_logic_vector(X" << range(2*k-2, k) << ");" << endl;
+				vhdl << tab << declare("YHigh", k)   << " <= std_logic_vector(Y" << range(2*k-1, k) << ");" << endl;
+				vhdl << tab << declare("atan2TableInput", 2*k-1) << " <= std_logic_vector(XHigh) & std_logic_vector(YHigh);" << endl;
 
 				//create the table for atan(y/x)
-				Atan2Table *table = new Atan2Table(target, 2*k, msbA+msbB+msbC+3*(wOut+g), 0, msbA, msbB, msbC);
+				Atan2Table *table = new Atan2Table(target, 2*k-1, msbA+msbB+msbC+3*(wOut+g), 0, msbA, msbB, msbC);
 
 				//add the table to the operator
 				addSubComponent(table);
+				useSoftRAM(table);
+				//useHardRAM(table);
 				inPortMap (table , "X", "atan2TableInput");
 				outPortMap(table , "Y", "atan2TableOutput");
 				vhdl << instance(table , "KCMTable");
@@ -163,7 +165,7 @@ namespace flopoco {
 				vhdl << tab << declare("A", msbA+wOut+g) << " <= atan2TableOutput" << range(msbA+wOut+g+msbB+wOut+g+msbC+wOut+g-1, msbB+wOut+g+msbC+wOut+g) << ";" << endl;
 
 				//create Ax and By
-				vhdl << tab << declare("XLow", k+1) << " <= '0' & XPrime" << range(k-1, 0) << ";" << endl;
+				vhdl << tab << declare("XLow", k+1) << " <= '0' & X" << range(k-1, 0) << ";" << endl;
 				vhdl << tab << declare("YLow", k+1) << " <= '0' & Y" << range(k-1, 0) << ";" << endl;
 
 				IntMultiplier* multAx;
@@ -171,7 +173,7 @@ namespace flopoco {
 											 bitHeap,							//the bit heap that performs the compression
 											 getSignalByName("XLow"),			//first input to the multiplier (a signal)
 											 getSignalByName("A"),				//second input to the multiplier (a signal)
-											 (msbA+wOut+g)-(msbA+wOut+g + k),	//offset of the LSB of the multiplier in the bit heap
+											 -2*k,								//offset of the LSB of the multiplier in the bit heap
 											 false /*negate*/,					//whether to subtract the result of the multiplication from the bit heap
 											 true,								//signed/unsigned operator
 											 ratio);							//DSP ratio
@@ -180,7 +182,7 @@ namespace flopoco {
 											 bitHeap,							//the bit heap that performs the compression
 											 getSignalByName("YLow"),			//first input to the multiplier (a signal)
 											 getSignalByName("B"),				//second input to the multiplier (a signal)
-											 (msbB+wOut+g)-(msbB+wOut+g + k),	//offset of the LSB of the multiplier in the bit heap
+											 -2*k,								//offset of the LSB of the multiplier in the bit heap
 											 false /*negate*/,					//whether to subtract the result of the multiplication from the bit heap
 											 true,								//signed/unsigned operator
 											 ratio);							//DSP ratio
@@ -191,14 +193,14 @@ namespace flopoco {
 											0,									//index of the lsb in the bit vector from which to add the bits of the addend
 											false);								//if we are correcting the index in the bit vector with a negative weight
 
-				//add the rounding bit
-				bitHeap->addConstantOneBit(g-1);
+				//add the rounding bit - take into consideration the final alignment
+				bitHeap->addConstantOneBit(g-1+2);
 
 				//compress the bit heap
 				bitHeap -> generateCompressorVHDL();
 
-				//extract the result
-				vhdl << tab << "R <= " << bitHeap->getSumName() << range(wOut+g-1, g) << ";" << endl;
+				//extract the result - take into consideration the final alignment
+				vhdl << tab << "R <= " << bitHeap->getSumName() << range(wOut+g-1+2, g+2) << ";" << endl;
 			}
 
 		}else if(architectureType == 1)
@@ -274,7 +276,7 @@ namespace flopoco {
 					halfIncrement = increment/2.0;
 					centerValI = valI + halfIncrement;
 					centerValJ = valJ + halfIncrement;
-					distanceFromCenter = 1.0/(1<<(wIn-1));
+					distanceFromCenter = 1.0/(1<<(wIn+1));
 
 					/**
 					 * version 1: compute the values stored in the tables using the equation of the plane

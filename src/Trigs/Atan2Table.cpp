@@ -20,7 +20,7 @@ namespace flopoco{
 	// A table for the atan(y/x)
 	Atan2Table::Atan2Table(Target* target, int wIn_, int wOut_, int archType_,
 			int msbA_, int msbB_, int msbC_, map<string, double> inputDelays) :
-		Table(target, wIn_, wOut_, (1<<(wIn_-1)), ((1<<wIn_)-1), true, inputDelays),
+		Table(target, wIn_, wOut_, 0, ((1<<wIn_)-1), true, inputDelays),
 		wIn(wIn_), wOut(wOut_), archType(archType_),
 		msbA(msbA_), msbB(msbB_), msbC(msbC_)
 	{
@@ -46,8 +46,9 @@ namespace flopoco{
 
 		//recreate the value of x
 		//	(representing the top half of the bits of input)
-		x = input >> (wIn/2);
-		y = input - (x<<(wIn/2));
+		x = input >> ((wIn+1)/2);
+		y = input - (x<<((wIn+1)/2));
+		x = (1 << ((wIn+1)/2 - 1)) + x;
 
 		//init the mpfr variables
 		mpfr_inits2(10000, a, b, c, cAux, tempMpfr, (mpfr_ptr) 0);
@@ -67,10 +68,10 @@ namespace flopoco{
 		//create ax and by, and update c
 		mpfr_set(cAux, c, GMP_RNDN);
 		mpfr_mul_si(tempMpfr, a, x, GMP_RNDN);
-		mpfr_div_2ui(tempMpfr, tempMpfr, (wIn/2), GMP_RNDN);
+		mpfr_div_2ui(tempMpfr, tempMpfr, ((wIn+1)/2), GMP_RNDN);
 		mpfr_add(cAux, cAux, tempMpfr, GMP_RNDN);
 		mpfr_mul_si(tempMpfr, b, y, GMP_RNDN);
-		mpfr_div_2ui(tempMpfr, tempMpfr, (wIn/2), GMP_RNDN);
+		mpfr_div_2ui(tempMpfr, tempMpfr, ((wIn+1)/2), GMP_RNDN);
 		mpfr_add(cAux, cAux, tempMpfr, GMP_RNDN);
 
 		cdupdated = mpfr_get_d(cAux, GMP_RNDN);
@@ -135,7 +136,7 @@ namespace flopoco{
 		double distance, distanceMin;
 		double valI, valJ, centerValI, centerValJ, increment, halfIncrement;
 		double distanceFromCenter;
-		int k = wIn/2;
+		int k = (wIn+1)/2;
 
 		//create the actual values for the points in which we compute the atan2
 		valI = (1.0*x)/(1<<k);
@@ -144,7 +145,7 @@ namespace flopoco{
 		halfIncrement = increment/2.0;
 		centerValI = valI + halfIncrement;
 		centerValJ = valJ + halfIncrement;
-		distanceFromCenter = 1.0/(1<<(wIn-1));
+		distanceFromCenter = 1.0/(1<<(wIn+2));
 
 		//create the points
 		P1 = new Point(centerValI,						centerValJ,						atan2(centerValJ, 						centerValI						));
