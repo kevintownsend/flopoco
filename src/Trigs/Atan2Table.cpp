@@ -58,12 +58,16 @@ namespace flopoco{
 
 		//generate the table
 		//obtain the parameters for the plane equation
-		generatePlaneParameters(x, y, a, b, c);
-
-		double ad, bd, cd, cdupdated;
-		ad = mpfr_get_d(a, GMP_RNDN);
-		bd = mpfr_get_d(b, GMP_RNDN);
-		cd = mpfr_get_d(c, GMP_RNDN);
+		if(archType == 0)
+		{
+			generatePlaneParameters(x, y, a, b, c);
+		}else if(archType == 1)
+		{
+			generateTaylorOrder1Parameters(x, y, a, b, c);
+		}else
+		{
+			//TODO
+		}
 
 		//create ax and by, and update c
 		mpfr_set(cAux, c, GMP_RNDN);
@@ -73,8 +77,6 @@ namespace flopoco{
 		mpfr_mul_si(tempMpfr, b, y, GMP_RNDN);
 		mpfr_div_2ui(tempMpfr, tempMpfr, ((wIn+1)/2), GMP_RNDN);
 		mpfr_add(cAux, cAux, tempMpfr, GMP_RNDN);
-
-		cdupdated = mpfr_get_d(cAux, GMP_RNDN);
 
 		//extract the result
 		//extract A
@@ -289,6 +291,38 @@ namespace flopoco{
 		delete P1;
 		delete P2;
 		delete P3;
+	}
+
+	void Atan2Table::generateTaylorOrder1Parameters(int x, int y, mpfr_t &fa, mpfr_t &fb, mpfr_t &fc)
+	{
+		mpfr_t centerValI, centerValJ, increment, temp, temp2;
+		int k = (wIn+1)/2;
+
+		mpfr_inits2(10000, centerValI, centerValJ, increment, temp, temp2, (mpfr_ptr)0);
+
+		mpfr_set_si(increment, 1, GMP_RNDN);
+		mpfr_div_2si(increment, increment, k+1, GMP_RNDN);
+		mpfr_set_si(centerValI, x, GMP_RNDN);
+		mpfr_div_2si(centerValI, centerValI, k, GMP_RNDN);
+		mpfr_add(centerValI, centerValI, increment, GMP_RNDN);
+		mpfr_set_si(centerValJ, y, GMP_RNDN);
+		mpfr_div_2si(centerValJ, centerValJ, k, GMP_RNDN);
+		mpfr_add(centerValJ, centerValJ, increment, GMP_RNDN);
+
+		mpfr_sqr(temp, centerValI, GMP_RNDN);
+		mpfr_sqr(temp2, centerValJ, GMP_RNDN);
+		mpfr_add(temp, temp, temp2, GMP_RNDN);
+		//create A
+		mpfr_set(fa, centerValJ, GMP_RNDN);
+		mpfr_div(fa, fa, temp, GMP_RNDN);
+		mpfr_neg(fa, fa, GMP_RNDN);
+		//create B
+		mpfr_set(fb, centerValI, GMP_RNDN);
+		mpfr_div(fb, fb, temp, GMP_RNDN);
+		//create C
+		mpfr_atan2(fc, centerValJ, centerValI, GMP_RNDN);
+
+		mpfr_clears(centerValI, centerValJ, increment, temp, temp2, (mpfr_ptr)0);
 	}
 
 }

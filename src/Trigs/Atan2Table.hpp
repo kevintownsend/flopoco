@@ -51,6 +51,19 @@ namespace flopoco{
 		 */
 		void generatePlaneParameters(int x, int y, mpfr_t &fa, mpfr_t &fb, mpfr_t &fc);
 
+		/**
+		 * Computed the values stored in the table, using a Taylor approximating polynomial
+		 * @param x				the upper bits of x, at a given resolution
+		 * 						(k out of a total of n), used to compute the function
+		 * @param y				the upper bits of y, at a given resolution
+		 * 						(k out of a total of n), used to compute the function
+		 * @param[out] fa		-A, where the polynomial is Ax+By+C=0
+		 * @param[out] fb		-B, where the polynomial is Ax+By+C=0
+		 * @param[out] fc		-C, where the polynomial is Ax+By+C=0
+		 * 							named this way as to keep some sort of coherency with the other cases
+		 */
+		void generateTaylorOrder1Parameters(int x, int y, mpfr_t &fa, mpfr_t &fb, mpfr_t &fc);
+
 		int wIn;				/**< the width of the signal addressing the table */
 		int wOut;				/**< the size of the output of the table */
 		int archType;			/**< the constants stored in the table depend on the architecture

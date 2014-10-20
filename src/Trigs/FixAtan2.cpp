@@ -40,7 +40,7 @@ namespace flopoco {
 		setCopyrightString("Florent de Dinechin, Matei Istoan, 2014");
 
 		//set the VHDL generation style
-		plainVHDL = false;
+		plainVHDL = true;
 
 		// build the name
 		ostringstream name;
@@ -61,9 +61,10 @@ namespace flopoco {
 		addOutput("R",  wOut, 2 /*number of possible output values*/);
 
 		//build the architecture
-		if(architectureType == 0)
+		if((architectureType == 0) || (architectureType == 1))
 		{
-			//based on the plane's equation
+			//based on the plane's equation or using a first order polynomial
+			//	(same architecture, but the parameters are generated differently)
 
 			//check if the selected type of architecture can achieve the required accuracy
 			//	also, determine the size of the parts of the input
@@ -78,7 +79,7 @@ namespace flopoco {
 			//set the ratio for the multiplications
 			ratio = 0.95;
 
-			k = checkArchitecture(0);
+			k = checkArchitecture(architectureType);
 
 			//determine the size of the constants to store in the table
 			// maxValA, maxValB and maxValC should have been set by the call to checkArchitecture()
@@ -98,7 +99,7 @@ namespace flopoco {
 				vhdl << tab << declare("atan2TableInput", 2*k-1) << " <= std_logic_vector(XHigh) & std_logic_vector(YHigh);" << endl;
 
 				//create the table for atan(y/x)
-				Atan2Table *table = new Atan2Table(target, 2*k-1, msbA+msbB+msbC+3*(wOut+g), 0, msbA, msbB, msbC);
+				Atan2Table *table = new Atan2Table(target, 2*k-1, msbA+msbB+msbC+3*(wOut+g), architectureType, msbA, msbB, msbC);
 
 				//add the table to the operator
 				addSubComponent(table);
@@ -149,7 +150,7 @@ namespace flopoco {
 				vhdl << tab << declare("atan2TableInput", 2*k-1) << " <= std_logic_vector(XHigh) & std_logic_vector(YHigh);" << endl;
 
 				//create the table for atan(y/x)
-				Atan2Table *table = new Atan2Table(target, 2*k-1, msbA+msbB+msbC+3*(wOut+g), 0, msbA, msbB, msbC);
+				Atan2Table *table = new Atan2Table(target, 2*k-1, msbA+msbB+msbC+3*(wOut+g), architectureType, msbA, msbB, msbC);
 
 				//add the table to the operator
 				addSubComponent(table);
@@ -203,10 +204,6 @@ namespace flopoco {
 				vhdl << tab << "R <= " << bitHeap->getSumName() << range(wOut+g-1+2, g+2) << ";" << endl;
 			}
 
-		}else if(architectureType == 1)
-		{
-			//based on an order 1 Taylor approximating polynomial
-			THROWERROR("in FixAtan2 constructor: architecture not yet implemented");
 		}else if(architectureType == 2)
 		{
 			//based on an order 2 Taylor approximating polynomial
@@ -526,7 +523,7 @@ namespace flopoco {
 					//determine the maximum values of A, B and D (or C, depending on the architecture)
 					if((archType == 0) || (archType == 1))
 					{
-						double auxA, auxB, auxD;
+						double auxA, auxB, auxC, auxD;
 
 						auxA = ((a < 0) ? -a : a);
 						if(auxA > maxValA)
@@ -534,10 +531,19 @@ namespace flopoco {
 						auxB = ((b < 0) ? -b : b);
 						if(auxB > maxValB)
 							maxValB = auxB;
-						auxD = d + a*valI + b*valJ;
-						auxD = ((auxD < 0) ? -auxD : auxD);
-						if(auxD > maxValC)
-							maxValC = auxD;
+						if(archType == 0)
+						{
+							auxD = d + a*valI + b*valJ;
+							auxD = ((auxD < 0) ? -auxD : auxD);
+							if(auxD > maxValC)
+								maxValC = auxD;
+						}else
+						{
+							auxC = c + a*valI + b*valJ;
+							auxC = ((auxC < 0) ? -auxC : auxC);
+							if(auxC > maxValC)
+								maxValC = auxC;
+						}
 					}
 
 
