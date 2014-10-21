@@ -22,8 +22,13 @@ namespace flopoco{
 		/** Constructor: w is the input and output size, all signed fixed-point number. 
 		 Angle is output as a signed number between 00...00 and 11...1111, for 2pi(1-2^-w)
 		      pi is 0100..00, etc.
-		Actual position of the fixed point in the inputs doesn't matter */
-		CordicAtan2(Target* target, int w, map<string, double> inputDelays = emptyDelayMap);
+		Actual position of the fixed point in the inputs doesn't matter as long as it is the same for x and y
+
+		method: 
+		0 is CORDIC
+		1 is inv, mult, atan 
+		*/
+		CordicAtan2(Target* target, int w, int method=0, map<string, double> inputDelays = emptyDelayMap);
 
 		// destructor
 		~CordicAtan2();
@@ -43,6 +48,7 @@ namespace flopoco{
 		int	maxIterations;         /**< index at which iterations stop */
 		int gXY;                   /**< number of guard bits on the (X,Y) datapath */
 		int gA;                    /**< number of guard bits on the Angle datapath */
+		bool negateByComplement;   /**< An architecture parameter: we negate negative values to obtain the first octant */
 		mpfr_t scale;              /**< 1-2^(wOut-1)*/
 		mpfr_t constPi;
 		mpfr_t kfactor;            /**< */

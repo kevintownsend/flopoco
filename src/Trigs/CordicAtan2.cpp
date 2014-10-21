@@ -1,3 +1,4 @@
+
 #include <iostream>
 #include <sstream>
 
@@ -25,14 +26,16 @@ namespace flopoco{
 	// An option to output the angle in the (atan(2^-i)) basis
 	// an an option for outputting the norm of the vector as well (scaled or not)
 
-	CordicAtan2::CordicAtan2(Target* target, int w_, map<string, double> inputDelays) 
+#define CORDIC 0
+
+	CordicAtan2::CordicAtan2(Target* target, int w_, int method, map<string, double> inputDelays) 
 		: Operator(target), w(w_)
 	{
-
+	
 		int stage;
 		srcFileName="CordicAtan2";
 		setCopyrightString ( "Matei Istoan, Florent de Dinechin (2012-...)" );
-
+	
 		ostringstream name;
 		name << "CordicAtan2_"<< w_;
 		if(target->isPipelined())
@@ -41,146 +44,164 @@ namespace flopoco{
 			name << "_comb";
 		name << "_uid" << getNewUId();
 		setName( name.str() );
-		
-
-
-#define ROUNDED_ROTATION 0 // 0:trunc 
-
-#if ROUNDED_ROTATION
-		REPORT(DEBUG, "Using rounded rotation trick");
-#endif
-
-		// ulp = weight of the LSB of the result is 2^(-w+1)
-		// half-ulp is 2^-w
-		// atan(2^-w) < 2^-w therefore after w interations,  method error will be bounded by 2^-w 
-		maxIterations = w-1;
-
-		//error analysis for the (x,y) datapath
-		double eps;  //error in ulp
-		eps=1; // initial neg-by-not
-
-		double shift=0.5;
-		for(stage=1; stage<=maxIterations; stage++){
-#if ROUNDED_ROTATION
-			eps = eps + eps*shift + 0.5; // 0.5 assume rounding in the rotation.
-#else
-			eps = eps + eps*shift + 1.0; // 1.0 assume truncation in the rotation.
-#endif
-			shift *=0.5;
-		}
-
-		// guard bits depend only on the number of iterations
-		gXY = (int) ceil(log2(eps));  
-		REPORT(DEBUG, "Error analysis computes eps=" << eps << " ulps on the XY datapath, hence  gXY=" << gXY);
-
-
-		//error analysis for the A datapath
-		eps = maxIterations*0.5; // only the rounding error in the atan constant
-
-		gA = 1 + (int) ceil(log2(eps)); // +1 for the final rounding 
-
-		REPORT(DEBUG, "Error analysis computes eps=" << eps <<  " ulps on the A datapath, hence  gA=" << gA );
-
-
-
-		
-		// *********    internal precision and fixed-point alignment **************
-
- 		// The input is as follows:
-		// s has weight 2^0
-		// q has weight 2^-1
-		// o has weight 2^-2
-		// Purpose: have the LSB of z, cosine, sine at weight -w
-		// This means that the Cos and Sin datapath will have w+1 bits
-		//   (sign at weight zero)
-		// while the Z datapath starts on w-1 bits (sign bit at weight  -2,
-		//  and decreasing, so the invariant is: sign bit at weight -stage-1)
-
-		// everybody needs many digits of Pi
+	
+		// everybody needs many digits of Pi (used by emulate etc)
 		mpfr_init2(constPi, 10*w);
 		mpfr_const_pi( constPi, GMP_RNDN);
-
-		//compute the scale factor		
-		mpfr_init2(scale, w+2);
-		mpfr_set_d(scale, -1.0, GMP_RNDN);           // exact
-		mpfr_mul_2si(scale, scale, -w+1, GMP_RNDN); // exact
-		mpfr_add_d(scale, scale, 1.0, GMP_RNDN);     // exact
-		REPORT(DEBUG, "scale=" << printMPFR(scale));
-		
-
+	
+		mpfr_t  zatan;	// used only by CORDIC but who cares
+		mpfr_init2(zatan, 10*w);
+	
+	
 		// declaring inputs. 
 		// man atan2 says "atan2(y,x) is atan(y/x) so we will provide the inputs in the same order...
 		addInput  ( "Y"  , w, true );
 		addInput  ( "X"  , w, true );
-
+	
 		// declaring output
 		addOutput  ( "A"  , w, 2 );
-		
+	
 		setCriticalPath(getMaxInputDelays(inputDelays));
 		//		manageCriticalPath( target->lutDelay());
+	
+
+	
+	
+		//Defining the various parameters according to method
+	
+		if(method==CORDIC) {
+			negateByComplement=true;
+	
+#define ROUNDED_ROTATION 0 // 0:trunc 
+	
+#if ROUNDED_ROTATION
+			REPORT(DEBUG, "Using rounded rotation trick");
+#endif
+
+			// ulp = weight of the LSB of the result is 2^(-w+1)
+			// half-ulp is 2^-w
+			// atan(2^-w) < 2^-w therefore after w interations,  method error will be bounded by 2^-w 
+			maxIterations = w-1;
+	
+			//error analysis for the (x,y) datapath
+			double eps;  //error in ulp
+			eps=1; // initial neg-by-not
+
+			double shift=0.5;
+			for(stage=1; stage<=maxIterations; stage++){
+#if ROUNDED_ROTATION
+				eps = eps + eps*shift + 0.5; // 0.5 assume rounding in the rotation.
+#else
+				eps = eps + eps*shift + 1.0; // 1.0 assume truncation in the rotation.
+#endif
+				shift *=0.5;
+			}
+
+			// guard bits depend only on the number of iterations
+			gXY = (int) ceil(log2(eps));  
+			REPORT(DEBUG, "Error analysis computes eps=" << eps << " ulps on the XY datapath, hence  gXY=" << gXY);
 
 
-		mpfr_t  zatan;
-		mpfr_init2(zatan, 10*w);
-		int sizeZ=w-2+gA; // w-2 because two bits come from arg red 
-		int zMSB=-1;      // -1 because these two bits have weight 0 and -1, but we must keep the sign
-		int zLSB = zMSB-sizeZ+1;
+			//error analysis for the A datapath
+			eps = maxIterations*0.5; // only the rounding error in the atan constant
+		
+			gA = 1 + (int) ceil(log2(eps)); // +1 for the final rounding 
+		
+			REPORT(DEBUG, "Error analysis computes eps=" << eps <<  " ulps on the A datapath, hence  gA=" << gA );
+		
+		} // end if method==CORDIC
+		else{
+			gXY=0;
+			gA=0;
+		}
 
 		int sizeXY = w+gXY;
 		///////////// VHDL GENERATION
-
+	
 		// manage symmetries: we need to reduce (X,Y) to a quadrant (-pi/4, pi/4)
-
+	
 		vhdl << tab << declare("sgnX") << " <= X" << of(w-1) << ";" << endl;
 		vhdl << tab << declare("sgnY") << " <= Y" << of(w-1) << ";" << endl;
-
+	
 		// TODO: replace the following with LUT-based comparators
 		// and first maybe experiment with synthesis tools
 		vhdl << tab << declare("XmY", w+1) << " <= (sgnX & X)-(sgnY & Y);" << endl;
 		vhdl << tab << declare("XpY", w+1) << " <= (sgnX & X)+(sgnY & Y);" << endl;
- 		vhdl << tab << declare("XltY") << " <= XmY" << of(w) <<";" << endl;
+		vhdl << tab << declare("XltY") << " <= XmY" << of(w) <<";" << endl;
 		vhdl << tab << declare("mYltX") << " <= not XpY" << of(w) <<";" << endl;
-
+		// Range reduction: we define 4 quadrants, each centered on one axis (these are not just the sign quadrants)
+		// Then each quadrant is decomposed in its positive and its negative octant.
 		vhdl << tab << "-- quadrant will also be the angle to add at the end" <<endl;
 		vhdl << tab << declare("quadrant", 2) << " <= " << endl;
 		vhdl << tab << tab << "\"00\"  when (not sgnX and not XltY and     mYltX)='1' else"    << endl;
 		vhdl << tab << tab << "\"01\"  when (not sgnY and     XltY and     mYltX)='1' else"    << endl;
 		vhdl << tab << tab << "\"10\"  when (    sgnX and     XltY and not mYltX)='1' else"    << endl;
 		vhdl << tab << tab << "\"11\";"    << endl;
-
+	
 		vhdl << tab << declare("pX", sizeXY) << " <=      X  & " << zg(gXY)<< ";" << endl;
 		vhdl << tab << declare("pY", sizeXY) << " <=      Y  & " << zg(gXY)<< ";" << endl;
-#if 1// negate by not is good enough, it seems
-		vhdl << tab << declare("mX", sizeXY) << " <= (not X) & " << og(gXY)<< ";  -- negation by not, implies one ulp error." << endl;
-		vhdl << tab << declare("mY", sizeXY) << " <= (not Y) & " << og(gXY)<< ";  -- negation by not, implies one ulp error. " << endl;
-#else // negate by sub
-		vhdl << tab << declare("mX", sizeXY) << " <= (" << zg(w) << "- X) & " << og(gXY) << ";  -- negation" << endl;
-		vhdl << tab << declare("my", sizeXY) << " <= (" << zg(w) << "- Y) & " << og(gXY) << ";  -- negation" << endl;
-#endif
-		vhdl << tab << declare("X1", sizeXY) << " <= " << endl;
+		if (negateByComplement)	{		// good enough for Cordic
+			vhdl << tab << declare("mX", sizeXY) << " <= (not X) & " << og(gXY)<< ";  -- negation by not, implies one ulp error." << endl;
+			vhdl << tab << declare("mY", sizeXY) << " <= (not Y) & " << og(gXY)<< ";  -- negation by not, implies one ulp error. " << endl;
+		}else {
+			vhdl << tab << declare("mX", sizeXY) << " <= (" << zg(w) << "- X) & " << og(gXY) << ";  -- negation" << endl;
+			vhdl << tab << declare("my", sizeXY) << " <= (" << zg(w) << "- Y) & " << og(gXY) << ";  -- negation" << endl;
+		}
+		vhdl << tab << declare("XR", sizeXY) << " <= " << endl;
 		vhdl << tab << tab << "pX when quadrant=\"00\"   else " << endl;
 		vhdl << tab << tab << "pY when quadrant=\"01\"   else " << endl;
 		vhdl << tab << tab << "mX when quadrant=\"10\"   else " << endl;
 		vhdl << tab << tab << "mY;"    << endl;
-		vhdl << tab << "-- This X1 is always positive, we hope the synthesizer will notice it" << endl;
-		
-		//		vhdl << tab << declare("X1", w+g-1) << " <= X1full" << range(w+g-2,0) <<"; -- after range reduction we know X1 is positive" << endl;
+		vhdl << tab << "-- This XR is always positive, we hope the synthesizer will notice it" << endl;
+	
+		vhdl << tab << declare("YR", sizeXY) << " <= " << endl;
+		vhdl << tab << tab << "pY when quadrant=\"00\" and sgnY='0'  else " << endl;
+		vhdl << tab << tab << "mY when quadrant=\"00\" and sgnY='1'  else " << endl;
+		vhdl << tab << tab << "pX when quadrant=\"01\" and sgnX='0'  else " << endl;
+		vhdl << tab << tab << "mX when quadrant=\"01\" and sgnX='1'  else " << endl;
+		vhdl << tab << tab << "pY when quadrant=\"10\" and sgnY='0'  else " << endl;
+		vhdl << tab << tab << "mY when quadrant=\"10\" and sgnY='1'  else " << endl;
+		vhdl << tab << tab << "pX when quadrant=\"11\" and sgnX='0'  else "    << endl;
+		vhdl << tab << tab << "mX ;"    << endl;
+		vhdl << tab << "-- This YR is always positive, we hope the synthesizer will notice it" << endl;
 
-		vhdl << tab << declare("Y1", sizeXY) << " <= " << endl;
-		vhdl << tab << tab << "pY when quadrant=\"00\"   else " << endl;
-		vhdl << tab << tab << "mX when quadrant=\"01\"   else " << endl;
-		vhdl << tab << tab << "mY when quadrant=\"10\"   else " << endl;
-		vhdl << tab << tab << "pX;"    << endl;
-
-
-		//		vhdl << tab << declare("Z1", sizeZ) << " <= " << zg(sizeZ)<< ";   " << endl;
-		//w-2+gA
-		vhdl << tab << declare("Z1", sizeZ) << " <= " << zg(sizeZ-gA)<< "&1&" << zg(gA-1)<< "; -- this is the final round bit" << endl;
-
+		vhdl << tab << declare("finalAdd") << " <= " << endl;
+		vhdl << tab << tab << "'1' when (quadrant=\"00\" and sgnY='0') or(quadrant=\"01\" and sgnX='1') or (quadrant=\"10\" and sgnY='1') or (quadrant=\"11\" and sgnX='0')" << endl;
+		vhdl << tab << tab << " else '0';  -- this information is sent to the end of the pipeline, better compute it here as one bit"    << endl; 
 
 		//CORDIC iterations
 
-		for(stage=1; stage<=maxIterations; stage++){
+		int sizeZ=w-2+gA; // w-2 because two bits come from arg red 
+		int zMSB=-1;      // -1 because these two bits have weight 0 and -1, but we must keep the sign
+		int zLSB = zMSB-sizeZ+1;
+
+		vhdl << tab << declare("X1", sizeXY) << " <= XR;" << endl;
+		vhdl << tab << declare("Y1", sizeXY) << " <= YR;" << endl;
+
+		stage=1;
+		vhdl << tab << declare(join("XShift", stage), sizeXY) << " <= " << zg(stage) << " & X" << stage << range(sizeXY-1, stage) << ";" <<endl;			
+		vhdl << tab << declare(join("YShift", stage), sizeXY) << " <= " << zg(stage) << " & Y" << stage << range(sizeXY-1, stage) << ";" <<endl;			
+		vhdl << tab << declare(join("X", stage+1), sizeXY) << " <= " << join("X", stage) << " + " << join("YShift", stage) << " ;" << endl;
+			
+		vhdl << tab << declare(join("Y", stage+1), sizeXY) << " <= " << join("Y", stage) << " - " << join("XShift", stage) << " ;" << endl;
+		
+
+		//create the constant signal for the arctan
+		mpfr_set_d(zatan, 1.0, GMP_RNDN);
+		mpfr_div_2si(zatan, zatan, stage, GMP_RNDN);
+		mpfr_atan(zatan, zatan, GMP_RNDN);
+		mpfr_div(zatan, zatan, constPi, GMP_RNDN);
+		mpfr_t roundbit;
+		mpfr_init2(roundbit, 30); // should be enough for anybody
+		mpfr_set_d(roundbit, 1.0, GMP_RNDN);
+		mpfr_div_2si(roundbit, roundbit, w, GMP_RNDN); // roundbit is in position 2^-w
+		
+		REPORT(DEBUG, "stage=" << stage << "  atancst=" << printMPFR(zatan));
+
+		mpfr_add(zatan, zatan, roundbit, GMP_RNDN);
+		vhdl << tab << declare("Z2", sizeZ) << " <= " << unsignedFixPointNumber(zatan, zMSB, zLSB) << "; -- initial atan, plus round bit" <<endl;
+
+		for(stage=2; stage<=maxIterations; stage++){
 			vhdl << tab << "--- Iteration " << stage << " ---" << endl;
 			//shift Xin and Yin with 2^n positions to the right
 			// From there on X is always positive, but Y may be negative and thus need sign extend
@@ -211,7 +232,7 @@ namespace flopoco{
 			     << join("Y", stage) << " + " << join("XShiftNeg", stage) << " + (" << join("sgnY", stage) << " xor " << join("XShiftRoundBit", stage) << ") ;" << endl;
 
 #else
-// truncation of the shifted operand
+			// truncation of the shifted operand
 			vhdl << tab << declare(join("X", stage+1), sizeXY) << " <= " 
 			     << join("X", stage) << " - " << join("YShift", stage) << " when " << join("sgnY", stage) << "=\'1\'     else "
 			     << join("X", stage) << " + " << join("YShift", stage) << " ;" << endl;
@@ -227,8 +248,6 @@ namespace flopoco{
 			mpfr_atan(zatan, zatan, GMP_RNDN);
 			mpfr_div(zatan, zatan, constPi, GMP_RNDN);
 			REPORT(DEBUG, "stage=" << stage << "  atancst=" << printMPFR(zatan));		
-			//create the arctangent factor to be added to Zin
-								
 
 			// rounding here in unsignedFixPointNumber()
 			vhdl << tab << declare(join("atan2PowStage", stage), sizeZ) << " <= " << unsignedFixPointNumber(zatan, zMSB, zLSB) << ";" <<endl;
@@ -244,18 +263,19 @@ namespace flopoco{
 		//                     - (target->localWireDelay(sizeZ+1) + target->adderDelay(sizeZ+1))); // CP delay that was already added
 
 		// reconstruction
-		// The round bit has been merged in the initialization of Z
+
 		string finalZ=join("Z", maxIterations+1);
-		vhdl << tab << "A <= (quadrant & " << zg(w-2) << ")   + ("
-				 << finalZ << of(sizeZ-1) // sign extension 
-				 << " & "<< finalZ << range(sizeZ-1, sizeZ-w+1) << ");" << endl;
-		
+		vhdl << tab << declare("qangle", w) << " <= (quadrant & " << zg(w-2) << ");" << endl;
+		vhdl << tab << declare("finalZext", w) << " <= " << finalZ << of(sizeZ-1) << " & "<< finalZ << range(sizeZ-1, sizeZ-w+1) << "; -- sign-extended and rounded" << endl;
+		vhdl << tab << "A <= "
+				 << tab << tab << "     qangle + finalZext  when finalAdd='1'" << endl
+				 << tab << tab << "else qangle - finalZext;" << endl;
 	};
 
 
 	CordicAtan2::~CordicAtan2(){
 		mpfr_clears (kfactor, constPi, NULL);		
-	 };
+	};
 
 
 	void CordicAtan2::emulate(TestCase * tc) 
@@ -312,30 +332,30 @@ namespace flopoco{
 
 	void CordicAtan2::buildStandardTestCases(TestCaseList * tcl) 
 	{
-	mpfr_t z;
-	mpz_class zz;
-	TestCase* tc;
+		mpfr_t z;
+		mpz_class zz;
+		TestCase* tc;
 
-	// 0
-	tc = new TestCase (this);
-	tc -> addInput ("X", mpz_class(1)<< (w-2));
-	tc -> addInput ("Y", mpz_class(0));
-	emulate(tc);
-	tcl->add(tc);
+		// 0
+		tc = new TestCase (this);
+		tc -> addInput ("X", mpz_class(1)<< (w-2));
+		tc -> addInput ("Y", mpz_class(0));
+		emulate(tc);
+		tcl->add(tc);
 
-	// pi/2
-	tc = new TestCase (this);
-	tc -> addInput ("X", mpz_class(0));
-	tc -> addInput ("Y", mpz_class(1)<< (w-2));
-	emulate(tc);
-	tcl->add(tc);
+		// pi/2
+		tc = new TestCase (this);
+		tc -> addInput ("X", mpz_class(0));
+		tc -> addInput ("Y", mpz_class(1)<< (w-2));
+		emulate(tc);
+		tcl->add(tc);
 
-	//Pi/4
-	tc = new TestCase (this);
-	tc -> addInput ("X", mpz_class(1)<< (w-2));
-	tc -> addInput ("Y", mpz_class(1)<< (w-2));
-	emulate(tc);
-	tcl->add(tc);
+		//Pi/4
+		tc = new TestCase (this);
+		tc -> addInput ("X", mpz_class(1)<< (w-2));
+		tc -> addInput ("Y", mpz_class(1)<< (w-2));
+		emulate(tc);
+		tcl->add(tc);
 
 
 	}
