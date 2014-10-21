@@ -8,17 +8,18 @@
 #include "CordicAtan2.hpp"
 
 using namespace std;
+// TODO reduce the CORDIC datapaths (Y with leading 0s and X with leading ones)
+
+
 /* TODO Debugging:
 There are still a few last-bit errors with the current setup in
 ./flopoco -verbose=3 -pipeline=no CordicAtan2 8 TestBenchFile -2
 
+
+They are all for vectors of small norm 
+
 One is unavoidable, it is atan2 (0,0)
    TODO add a don't care to the test framework?
-
-For the other ones:
- - the negate by not versus negate by - is not the culprit.
- - there are 3 parameters to vary: iterations, gXY, gA. Augmenting them doesn't change much.
-TODO : first investigate the problematic values and add them to the regression test
 */
 namespace flopoco{
 
@@ -54,7 +55,7 @@ namespace flopoco{
 	
 	
 		// declaring inputs. 
-		// man atan2 says "atan2(y,x) is atan(y/x) so we will provide the inputs in the same order...
+		// man atan2 says "atan2(y,x) is atan(y/x)" so we will provide the inputs in the same order...
 		addInput  ( "Y"  , w, true );
 		addInput  ( "X"  , w, true );
 	
@@ -71,6 +72,7 @@ namespace flopoco{
 	
 		if(method==CORDIC) {
 			negateByComplement=true;
+			//negateByComplement=false;
 	
 #define ROUNDED_ROTATION 0 // 0:trunc 
 	
@@ -85,7 +87,11 @@ namespace flopoco{
 	
 			//error analysis for the (x,y) datapath
 			double eps;  //error in ulp
-			eps=1; // initial neg-by-not
+
+			if(negateByComplement)
+				eps=1; // initial neg-by-not
+			else
+				eps=0;
 
 			double shift=0.5;
 			for(stage=1; stage<=maxIterations; stage++){
@@ -107,6 +113,9 @@ namespace flopoco{
 		
 			gA = 1 + (int) ceil(log2(eps)); // +1 for the final rounding 
 		
+			// For debugging purpose
+			gA+=0;
+			gXY+=0;
 			REPORT(DEBUG, "Error analysis computes eps=" << eps <<  " ulps on the A datapath, hence  gA=" << gA );
 		
 		} // end if method==CORDIC
@@ -140,12 +149,13 @@ namespace flopoco{
 	
 		vhdl << tab << declare("pX", sizeXY) << " <=      X  & " << zg(gXY)<< ";" << endl;
 		vhdl << tab << declare("pY", sizeXY) << " <=      Y  & " << zg(gXY)<< ";" << endl;
+
 		if (negateByComplement)	{		// good enough for Cordic
 			vhdl << tab << declare("mX", sizeXY) << " <= (not X) & " << og(gXY)<< ";  -- negation by not, implies one ulp error." << endl;
 			vhdl << tab << declare("mY", sizeXY) << " <= (not Y) & " << og(gXY)<< ";  -- negation by not, implies one ulp error. " << endl;
 		}else {
 			vhdl << tab << declare("mX", sizeXY) << " <= (" << zg(w) << "- X) & " << og(gXY) << ";  -- negation" << endl;
-			vhdl << tab << declare("my", sizeXY) << " <= (" << zg(w) << "- Y) & " << og(gXY) << ";  -- negation" << endl;
+			vhdl << tab << declare("mY", sizeXY) << " <= (" << zg(w) << "- Y) & " << og(gXY) << ";  -- negation" << endl;
 		}
 		vhdl << tab << declare("XR", sizeXY) << " <= " << endl;
 		vhdl << tab << tab << "pX when quadrant=\"00\"   else " << endl;
