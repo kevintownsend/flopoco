@@ -6,10 +6,15 @@
 #include "mpfr.h"
 
 #include "CordicAtan2.hpp"
+#include "IntMult/IntMultiplier.hpp"
+#include "IntAddSubCmp/IntAdder.hpp"
+#include "ConstMult/FixRealKCM.hpp"
+#include "ShiftersEtc/LZOC.hpp"
+#include "ShiftersEtc/Shifters.hpp"
 
 using namespace std;
 // TODO reduce the CORDIC datapaths (Y with leading 0s and X with leading ones)
-
+// Or write an exact version of the XY datapath
 
 /* TODO Debugging:
 There are still a few last-bit errors with the current setup in
@@ -28,6 +33,21 @@ namespace flopoco{
 	// an an option for outputting the norm of the vector as well (scaled or not)
 
 #define CORDIC 0
+#define CORDIC_SCALING 1
+#define INVMULTATAN 2
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 	CordicAtan2::CordicAtan2(Target* target, int w_, int method, map<string, double> inputDelays) 
 		: Operator(target), w(w_)
@@ -69,66 +89,38 @@ namespace flopoco{
 	
 	
 		//Defining the various parameters according to method
-	
-		if(method==CORDIC) {
+		int sizeXYInRR;
+		bool doScaling;
+
+		switch(method) {
+		case CORDIC:
 			negateByComplement=true;
-			//negateByComplement=false;
-	
-#define ROUNDED_ROTATION 0 // 0:trunc 
-	
-#if ROUNDED_ROTATION
-			REPORT(DEBUG, "Using rounded rotation trick");
-#endif
-
-			// ulp = weight of the LSB of the result is 2^(-w+1)
-			// half-ulp is 2^-w
-			// atan(2^-w) < 2^-w therefore after w interations,  method error will be bounded by 2^-w 
-			maxIterations = w-1;
-	
-			//error analysis for the (x,y) datapath
-			double eps;  //error in ulp
-
-			if(negateByComplement)
-				eps=1; // initial neg-by-not
-			else
-				eps=0;
-
-			double shift=0.5;
-			for(stage=1; stage<=maxIterations; stage++){
-#if ROUNDED_ROTATION
-				eps = eps + eps*shift + 0.5; // 0.5 assume rounding in the rotation.
-#else
-				eps = eps + eps*shift + 1.0; // 1.0 assume truncation in the rotation.
-#endif
-				shift *=0.5;
-			}
-
-			// guard bits depend only on the number of iterations
-			gXY = (int) ceil(log2(eps));  
-			REPORT(DEBUG, "Error analysis computes eps=" << eps << " ulps on the XY datapath, hence  gXY=" << gXY);
-
-
-			//error analysis for the A datapath
-			eps = maxIterations*0.5; // only the rounding error in the atan constant
-		
-			gA = 1 + (int) ceil(log2(eps)); // +1 for the final rounding 
-		
-			// For debugging purpose
-			gA+=0;
-			gXY+=0;
-			REPORT(DEBUG, "Error analysis computes eps=" << eps <<  " ulps on the A datapath, hence  gA=" << gA );
-		
-		} // end if method==CORDIC
-		else{
+			computeGuardBitsForCORDIC();
+			sizeXYInRR = w+gXY;
+			doScaling=false;
+			break;
+		case CORDIC_SCALING:
+			negateByComplement=false; // it would entail a larger LZC and larger shifter.
+			computeGuardBitsForCORDIC();
+			sizeXYInRR = w;
+			doScaling=true;
+			break;
+		case INVMULTATAN:
+			negateByComplement=false;
 			gXY=0;
 			gA=0;
+			sizeXYInRR = w;
+			doScaling=true;
+			break;
 		}
 
-		int sizeXY = w+gXY;
 		///////////// VHDL GENERATION
 	
-		// manage symmetries: we need to reduce (X,Y) to a quadrant (-pi/4, pi/4)
-	
+		/////////////////////////////////////////////////////////////////////////////
+		// 
+		//    First range reduction
+		//
+		/////////////////////////////////////////////////////////////////////////////
 		vhdl << tab << declare("sgnX") << " <= X" << of(w-1) << ";" << endl;
 		vhdl << tab << declare("sgnY") << " <= Y" << of(w-1) << ";" << endl;
 	
@@ -147,54 +139,111 @@ namespace flopoco{
 		vhdl << tab << tab << "\"10\"  when (    sgnX and     XltY and not mYltX)='1' else"    << endl;
 		vhdl << tab << tab << "\"11\";"    << endl;
 	
-		vhdl << tab << declare("pX", sizeXY) << " <=      X  & " << zg(gXY)<< ";" << endl;
-		vhdl << tab << declare("pY", sizeXY) << " <=      Y  & " << zg(gXY)<< ";" << endl;
 
-		if (negateByComplement)	{		// good enough for Cordic
-			vhdl << tab << declare("mX", sizeXY) << " <= (not X) & " << og(gXY)<< ";  -- negation by not, implies one ulp error." << endl;
-			vhdl << tab << declare("mY", sizeXY) << " <= (not Y) & " << og(gXY)<< ";  -- negation by not, implies one ulp error. " << endl;
+		if (negateByComplement)	{
+			vhdl << tab << declare("pX", sizeXYInRR) << " <=      X  & " << zg(gXY)<< ";" << endl;
+			vhdl << tab << declare("pY", sizeXYInRR) << " <=      Y  & " << zg(gXY)<< ";" << endl;
+			vhdl << tab << declare("mX", sizeXYInRR) << " <= (not X) & " << og(gXY)<< ";  -- negation by not, implies one ulp error." << endl;
+			vhdl << tab << declare("mY", sizeXYInRR) << " <= (not Y) & " << og(gXY)<< ";  -- negation by not, implies one ulp error. " << endl;
 		}else {
-			vhdl << tab << declare("mX", sizeXY) << " <= (" << zg(w) << "- X) & " << og(gXY) << ";  -- negation" << endl;
-			vhdl << tab << declare("mY", sizeXY) << " <= (" << zg(w) << "- Y) & " << og(gXY) << ";  -- negation" << endl;
+			vhdl << tab << declare("pX", sizeXYInRR) << " <= X;" << endl;
+			vhdl << tab << declare("pY", sizeXYInRR) << " <= Y;" << endl;
+			vhdl << tab << declare("mX", sizeXYInRR) << " <= (" << zg(w) << " - X);" << endl;
+			vhdl << tab << declare("mY", sizeXYInRR) << " <= (" << zg(w) << " - Y);" << endl;
 		}
-		vhdl << tab << declare("XR", sizeXY) << " <= " << endl;
-		vhdl << tab << tab << "pX when quadrant=\"00\"   else " << endl;
-		vhdl << tab << tab << "pY when quadrant=\"01\"   else " << endl;
-		vhdl << tab << tab << "mX when quadrant=\"10\"   else " << endl;
-		vhdl << tab << tab << "mY;"    << endl;
-		vhdl << tab << "-- This XR is always positive, we hope the synthesizer will notice it" << endl;
+
+		int sizeXYR = sizeXYInRR-1; // no need for sign bit any longer
+		vhdl << tab << declare("XR", sizeXYR) << " <= " << endl;
+		vhdl << tab << tab << "pX" << range(sizeXYR-1, 0) << " when quadrant=\"00\"   else " << endl;
+		vhdl << tab << tab << "pY" << range(sizeXYR-1, 0) << " when quadrant=\"01\"   else " << endl;
+		vhdl << tab << tab << "mX" << range(sizeXYR-1, 0) << " when quadrant=\"10\"   else " << endl;
+		vhdl << tab << tab << "mY" << range(sizeXYR-1, 0) << ";"    << endl;
 	
-		vhdl << tab << declare("YR", sizeXY) << " <= " << endl;
-		vhdl << tab << tab << "pY when quadrant=\"00\" and sgnY='0'  else " << endl;
-		vhdl << tab << tab << "mY when quadrant=\"00\" and sgnY='1'  else " << endl;
-		vhdl << tab << tab << "pX when quadrant=\"01\" and sgnX='0'  else " << endl;
-		vhdl << tab << tab << "mX when quadrant=\"01\" and sgnX='1'  else " << endl;
-		vhdl << tab << tab << "pY when quadrant=\"10\" and sgnY='0'  else " << endl;
-		vhdl << tab << tab << "mY when quadrant=\"10\" and sgnY='1'  else " << endl;
-		vhdl << tab << tab << "pX when quadrant=\"11\" and sgnX='0'  else "    << endl;
-		vhdl << tab << tab << "mX ;"    << endl;
-		vhdl << tab << "-- This YR is always positive, we hope the synthesizer will notice it" << endl;
+		vhdl << tab << declare("YR", sizeXYR) << " <= " << endl;
+		vhdl << tab << tab << "pY" << range(sizeXYR-1, 0) << " when quadrant=\"00\" and sgnY='0'  else " << endl;
+		vhdl << tab << tab << "mY" << range(sizeXYR-1, 0) << " when quadrant=\"00\" and sgnY='1'  else " << endl;
+		vhdl << tab << tab << "pX" << range(sizeXYR-1, 0) << " when quadrant=\"01\" and sgnX='0'  else " << endl;
+		vhdl << tab << tab << "mX" << range(sizeXYR-1, 0) << " when quadrant=\"01\" and sgnX='1'  else " << endl;
+		vhdl << tab << tab << "pY" << range(sizeXYR-1, 0) << " when quadrant=\"10\" and sgnY='0'  else " << endl;
+		vhdl << tab << tab << "mY" << range(sizeXYR-1, 0) << " when quadrant=\"10\" and sgnY='1'  else " << endl;
+		vhdl << tab << tab << "pX" << range(sizeXYR-1, 0) << " when quadrant=\"11\" and sgnX='0'  else "    << endl;
+		vhdl << tab << tab << "mX" << range(sizeXYR-1, 0) << " ;"    << endl;
 
 		vhdl << tab << declare("finalAdd") << " <= " << endl;
 		vhdl << tab << tab << "'1' when (quadrant=\"00\" and sgnY='0') or(quadrant=\"01\" and sgnX='1') or (quadrant=\"10\" and sgnY='1') or (quadrant=\"11\" and sgnX='0')" << endl;
 		vhdl << tab << tab << " else '0';  -- this information is sent to the end of the pipeline, better compute it here as one bit"    << endl; 
 
-		//CORDIC iterations
+
+		////////////////////////////////////////////////////////////////////////////
+		// 
+		//    Second range reduction, scaling 
+		//
+		////////////////////////////////////////////////////////////////////////////
+
+		if(doScaling) {
+			vhdl << tab << declare("XorY", sizeXYR-1) << " <= XR" << range(sizeXYR-1,1) << " or YR" << range(sizeXYR-1,1) << ";" << endl;
+			// The LZC
+			LZOC* lzc = new	LZOC(target, sizeXYR-1);
+			addSubComponent(lzc);
+			
+			inPortMap(lzc, "I", "XorY");
+			inPortMapCst(lzc, "OZB", "'0'");
+			outPortMap(lzc, "O", "S"); 
+			vhdl << instance(lzc, "lzc");
+			//setCycleFromSignal("lzo");
+			//		setCriticalPath( lzc->getOutputDelay("O") );
+			
+			// The two shifters are two instance of the same component
+			Shifter* lshift = new Shifter(target, sizeXYR, sizeXYR-1, Shifter::Left);   
+			addSubComponent(lshift);
+			
+			inPortMap(lshift, "S", "S");
+			
+			inPortMap(lshift, "X", "XR");
+			outPortMap(lshift, "R", "XRS");
+			vhdl << instance(lshift, "Xshift");
+			
+			inPortMap(lshift, "X", "YR");
+			outPortMap(lshift, "R", "YRS");
+			vhdl << instance(lshift, "Yshift");
+			
+			//syncCycleFromSignal("small_absZ0_normd_full");
+			//setCriticalPath( getOutputDelay("R") );
+			//double cpsmall_absZ0_normd = getCriticalPath();
+			
+			//int  = getSignalByName("small_absZ0_normd_full")->width() - (wF-pfinal+2);
+		}
+		else{ //scalingRR
+			vhdl << tab << declare("XRS", sizeXYR) << " <=  XR;" << endl;
+			vhdl << tab << declare("YRS", sizeXYR) << " <=  YR;" << endl;
+		}
+		////////////////////////////////////////////////////////////////////////////
+		// 
+		//   	 CORDIC iterations	
+		//
+		////////////////////////////////////////////////////////////////////////////
+
+		// Fixed-point considerations:
+		// Y -> 0 and X -> K.sqrt(x1^2+y1^2)
+		// We compute 
 
 		int sizeZ=w-2+gA; // w-2 because two bits come from arg red 
 		int zMSB=-1;      // -1 because these two bits have weight 0 and -1, but we must keep the sign
 		int zLSB = zMSB-sizeZ+1;
+		int sizeXY=w+2+gXY; // if we did the arg red without guard bits, here they come again.
 
-		vhdl << tab << declare("X1", sizeXY) << " <= XR;" << endl;
-		vhdl << tab << declare("Y1", sizeXY) << " <= YR;" << endl;
+		vhdl << tab << declare("X1", sizeXY) << " <= \"000\" & XRS" << range(sizeXYR-1,0) << " & " << zg(sizeXY-sizeXYR-3)<< ";" << endl;
+		vhdl << tab << declare("Y1", sizeXY) << " <= \"00\" & YRS" << range(sizeXYR-1,0) << " & " << zg(sizeXY-sizeXYR-2)<< ";" << endl;
 
-		stage=1;
-		vhdl << tab << declare(join("XShift", stage), sizeXY) << " <= " << zg(stage) << " & X" << stage << range(sizeXY-1, stage) << ";" <<endl;			
-		vhdl << tab << declare(join("YShift", stage), sizeXY) << " <= " << zg(stage) << " & Y" << stage << range(sizeXY-1, stage) << ";" <<endl;			
-		vhdl << tab << declare(join("X", stage+1), sizeXY) << " <= " << join("X", stage) << " + " << join("YShift", stage) << " ;" << endl;
-			
-		vhdl << tab << declare(join("Y", stage+1), sizeXY) << " <= " << join("Y", stage) << " - " << join("XShift", stage) << " ;" << endl;
+		stage=1; // sgn=0, known
 		
+		vhdl << tab << declare(join("YShiftR", stage), sizeXY) << " <= " << rangeAssign(2*stage-1,0, "'0'") << " & Y" << stage << range(sizeXY-1, 2*stage) << ";" <<endl;			
+		vhdl << tab << declare(join("X", stage+1), sizeXY) << " <= "  << join("X", stage) << " + " << join("YShiftR", stage) << " ;" << endl;
+		
+		vhdl << tab << declare(join("YY", stage+1), sizeXY) << " <= " << join("Y", stage) << " - " << join("X", stage) << " ;" << endl;
+		
+		vhdl << tab << declare(join("Y", stage+1), sizeXY) << " <= " << join("YY", stage+1) << range(sizeXY-2, 0)  << " & '0' ;" << endl;
+
 
 		//create the constant signal for the arctan
 		mpfr_set_d(zatan, 1.0, GMP_RNDN);
@@ -214,12 +263,7 @@ namespace flopoco{
 		for(stage=2; stage<=maxIterations; stage++){
 			vhdl << tab << "--- Iteration " << stage << " ---" << endl;
 			//shift Xin and Yin with 2^n positions to the right
-			// From there on X is always positive, but Y may be negative and thus need sign extend
-			vhdl << tab << declare(join("sgnY", stage))  << " <= " <<  join("Y", stage)  <<  of(sizeXY-1) << ";" << endl; 
-			vhdl << tab << declare(join("XShift", stage), sizeXY) << " <= " << zg(stage) << " & X" << stage << range(sizeXY-1, stage) << ";" <<endl;			
-			vhdl << tab << declare(join("YShift", stage), sizeXY) 
-			     << " <= " << rangeAssign(sizeXY-1, sizeXY-stage, join("sgnY", stage))   
-			     << " & Y" << stage << range(sizeXY-1, stage) << ";" << endl;
+			// From there on X is always positive, but Y may be negative 
 			
 			// Critical path delay for one stage:
 			// The data dependency is from one Z to the next 
@@ -227,30 +271,25 @@ namespace flopoco{
 			//manageCriticalPath(target->localWireDelay(w) + target->adderDelay(w) + target->lutDelay()));
 			// 			manageCriticalPath(target->localWireDelay(sizeZ) + target->adderDelay(sizeZ));
 			
-			
-			
-#if ROUNDED_ROTATION  // rounding of the shifted operand, should save 1 bit in each addition
-			vhdl << tab << declare(join("XShiftRoundBit", stage)) << " <= " << join("X", stage)  << of(stage-1) << ";" << endl;
-			vhdl << tab << declare(join("YShiftRoundBit", stage)) << " <= " << join("Y", stage) << of(stage-1) << ";" <<endl;
-			vhdl << tab << declare(join("XShiftNeg", stage), w+1) << " <= " << rangeAssign(w, 0, join("sgnY", stage)) << " xor " << join("XShift", stage)   << " ;" << endl;
-			vhdl << tab << declare(join("YShiftNeg", stage), w+1) << " <= (not " << rangeAssign(w, 0, join("sgnY", stage)) << ") xor " << join("YShift", stage)   << " ;" << endl;
+			vhdl << tab << declare(join("sgnY", stage))  << " <= " <<  join("Y", stage)  <<  of(sizeXY-1) << ";" << endl; 
+			//			vhdl << tab << declare(join("YShiftL", stage), sizeXY) << " <= Y" << stage << range(sizeXY-stage-1, 0) << " & " << zg(stage) << ";" <<endl;			
 
-			vhdl << tab << declare(join("X", stage+1), w+g) << " <= " 
-			     << join("X", stage) << " + " << join("YShiftNeg", stage) << " +  not (" << join("sgnY", stage) << " xor " << join("YShiftRoundBit", stage) << ") ;" << endl;
+	
+			if(2*stage<sizeXY) {
+				vhdl << tab << declare(join("YShiftR", stage), sizeXY) << " <= " << rangeAssign(2*stage-1,0, join("sgnY", stage)) << " & Y" << stage << range(sizeXY-1, 2*stage) << ";" <<endl;			
+				vhdl << tab << declare(join("X", stage+1), sizeXY) << " <= " 
+						 << join("X", stage) << " - " << join("YShiftR", stage) << " when " << join("sgnY", stage) << "=\'1\'     else "
+						 << join("X", stage) << " + " << join("YShiftR", stage) << " ;" << endl;
+			}
+			else {// done computing with x
+				vhdl << tab << declare(join("X", stage+1), sizeXY) << " <= " << join("X", stage) << " ;" << endl;
+			}
 
-			vhdl << tab << declare(join("Y", stage+1), w+g) << " <= " 
-			     << join("Y", stage) << " + " << join("XShiftNeg", stage) << " + (" << join("sgnY", stage) << " xor " << join("XShiftRoundBit", stage) << ") ;" << endl;
-
-#else
-			// truncation of the shifted operand
-			vhdl << tab << declare(join("X", stage+1), sizeXY) << " <= " 
-			     << join("X", stage) << " - " << join("YShift", stage) << " when " << join("sgnY", stage) << "=\'1\'     else "
-			     << join("X", stage) << " + " << join("YShift", stage) << " ;" << endl;
+			vhdl << tab << declare(join("YY", stage+1), sizeXY) << " <= " 
+			     << join("Y", stage) << " + " << join("X", stage) << " when " << join("sgnY", stage) << "=\'1\'     else "
+			     << join("Y", stage) << " - " << join("X", stage) << " ;" << endl;
 			
-			vhdl << tab << declare(join("Y", stage+1), sizeXY) << " <= " 
-			     << join("Y", stage) << " + " << join("XShift", stage) << " when " << join("sgnY", stage) << "=\'1\'     else "
-			     << join("Y", stage) << " - " << join("XShift", stage) << " ;" << endl;
-#endif			
+			vhdl << tab << declare(join("Y", stage+1), sizeXY) << " <= " << join("YY", stage+1) << range(sizeXY-2, 0)  << " & '0' ;" << endl;
 			
 			//create the constant signal for the arctan
 			mpfr_set_d(zatan, 1.0, GMP_RNDN);
@@ -272,7 +311,11 @@ namespace flopoco{
 		// manageCriticalPath( target->localWireDelay(w+1) + target->adderDelay(w+1) // actual CP delay
 		//                     - (target->localWireDelay(sizeZ+1) + target->adderDelay(sizeZ+1))); // CP delay that was already added
 
-		// reconstruction
+		////////////////////////////////////////////////////////////////////////////
+		// 
+		//                            reconstruction
+		//
+		////////////////////////////////////////////////////////////////////////////
 
 		string finalZ=join("Z", maxIterations+1);
 		vhdl << tab << declare("qangle", w) << " <= (quadrant & " << zg(w-2) << ");" << endl;
@@ -286,6 +329,54 @@ namespace flopoco{
 	CordicAtan2::~CordicAtan2(){
 		mpfr_clears (kfactor, constPi, NULL);		
 	};
+
+
+
+
+	void CordicAtan2::computeGuardBitsForCORDIC(){	
+#define ROUNDED_ROTATION 0 // 0:trunc 
+	
+#if ROUNDED_ROTATION
+			REPORT(DEBUG, "Using rounded rotation trick");
+#endif
+
+			// ulp = weight of the LSB of the result is 2^(-w+1)
+			// half-ulp is 2^-w
+			// atan(2^-w) < 2^-w therefore after w interations,  method error will be bounded by 2^-w 
+			maxIterations = w-1;
+	
+			//error analysis for the (x,y) datapath
+			double eps;  //error in ulp
+
+			if(negateByComplement)
+				eps=1; // initial neg-by-not
+			else
+				eps=0;
+
+			double shift=0.5;
+			for(int stage=1; stage<=maxIterations; stage++){
+#if ROUNDED_ROTATION
+				eps = eps + eps*shift + 0.5; // 0.5 assume rounding in the rotation.
+#else
+				eps = eps + eps*shift + 1.0; // 1.0 assume truncation in the rotation.
+#endif
+				shift *=0.5;
+			}
+
+			// guard bits depend only on the number of iterations
+			gXY = (int) ceil(log2(eps));  
+
+			REPORT(DEBUG, "Error analysis computes eps=" << eps << " ulps on the XY datapath, hence  gXY=" << gXY);
+
+			//error analysis for the A datapath
+			eps = maxIterations*0.5; // only the rounding error in the atan constant
+			gA = 1 + (int) ceil(log2(eps)); // +1 for the final rounding 
+		
+			REPORT(DEBUG, "Error analysis computes eps=" << eps <<  " ulps on the A datapath, hence  gA=" << gA );
+	} 
+
+
+
 
 
 	void CordicAtan2::emulate(TestCase * tc) 

@@ -353,9 +353,10 @@ void usage(char *name, string opName = ""){
 	}
 
 
-	if ( full || opName == "CordicAtan2"){
-		OP( "CordicAtan2","w");
+	if ( full || opName == "Atan2"){
+		OP( "Atan2","w method");
 		cerr << "Computes atan(x/y) as a=(angle in radian)/pi so a in [-1,1[;\n";
+		cerr << "method is: 0 plain CORDIC, 1 CORDIC with scaling, 2 InvMultAtan\n";
 		cerr << "w is the size of both inputs and outputs, all being two's complement signals\n";
 	}
 
@@ -1436,12 +1437,13 @@ bool parseCommandLine(int argc, char* argv[]){
 		}
 #endif
 
-		else if (opname == "CordicAtan2") {
-			int nargs = 1;
+		else if (opname == "Atan2") {
+			int nargs = 2;
 			if (i+nargs > argc)
 				usage(argv[0],opname); // and exit
 			int w = checkStrictlyPositive(argv[i++], argv[0]); // must be >=2 actually
-			Operator* tg = new CordicAtan2(target, w);
+			int method = atoi(argv[i++]);
+			Operator* tg = new CordicAtan2(target, w, method);
 			addOperator(tg);
 		}
 

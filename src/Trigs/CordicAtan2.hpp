@@ -3,9 +3,6 @@
 
 #include "Operator.hpp"
 #include "utils.hpp"
-#include "IntMult/IntMultiplier.hpp"
-#include "IntAddSubCmp/IntAdder.hpp"
-#include "ConstMult/FixRealKCM.hpp"
 
 
 #include <vector>
@@ -54,6 +51,8 @@ namespace flopoco{
 		mpfr_t kfactor;            /**< */
 		vector<mpfr_t> atani;      /**< */
 
+		void computeGuardBitsForCORDIC();
+		
 	};
 
 }

@@ -5,6 +5,9 @@
 #include "mpfr.h"
 
 #include "CordicSinCos.hpp"
+#include "IntMult//IntMultiplier.hpp"
+#include "IntAddSubCmp/IntAdder.hpp"
+#include "ConstMult/FixRealKCM.hpp"
 
 using namespace std;
 
