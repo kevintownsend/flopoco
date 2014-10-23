@@ -200,12 +200,14 @@ namespace flopoco{
 			inPortMap(lshift, "S", "S");
 			
 			inPortMap(lshift, "X", "XR");
-			outPortMap(lshift, "R", "XRS");
+			outPortMap(lshift, "R", "XRSfull");
 			vhdl << instance(lshift, "Xshift");
-			
+			vhdl << tab << declare("XRS", sizeXYR) << " <=  XRsfull " << range(sizeXYR-1,0) << ";" << endl;
+
 			inPortMap(lshift, "X", "YR");
-			outPortMap(lshift, "R", "YRS");
+			outPortMap(lshift, "R", "YRSfull");
 			vhdl << instance(lshift, "Yshift");
+			vhdl << tab << declare("YRS", sizeXYR) << " <=  YRsfull " << range(sizeXYR-1,0) << ";" << endl;
 			
 			//syncCycleFromSignal("small_absZ0_normd_full");
 			//setCriticalPath( getOutputDelay("R") );
@@ -225,25 +227,29 @@ namespace flopoco{
 
 		// Fixed-point considerations:
 		// Y -> 0 and X -> K.sqrt(x1^2+y1^2)
-		// We compute 
+		// Max value attained by X is sqrt(2)*K which is smaller than 2
 
 		int sizeZ=w-2+gA; // w-2 because two bits come from arg red 
 		int zMSB=-1;      // -1 because these two bits have weight 0 and -1, but we must keep the sign
 		int zLSB = zMSB-sizeZ+1;
-		int sizeXY=w+2+gXY; // if we did the arg red without guard bits, here they come again.
+		int sizeX = w+gXY;
+		int sizeY = sizeX;
 
-		vhdl << tab << declare("X1", sizeXY) << " <= \"000\" & XRS" << range(sizeXYR-1,0) << " & " << zg(sizeXY-sizeXYR-3)<< ";" << endl;
-		vhdl << tab << declare("Y1", sizeXY) << " <= \"00\" & YRS" << range(sizeXYR-1,0) << " & " << zg(sizeXY-sizeXYR-2)<< ";" << endl;
+		//		REPORT(DEBUG, "sizeXY=" << sizeXY << "   sizeXYR=" << sizeXYR);
 
-		stage=1; // sgn=0, known
+		vhdl << tab << declare("X1", sizeX) << " <= '0' & XRS & " << zg(sizeX-sizeXYR-1) << ";" <<endl;			
+		vhdl << tab << declare("Y1", sizeY) << " <= '0' & YRS & " << zg(sizeY-sizeXYR-1) << ";" <<endl;			
+		stage=1; 
+ 
+		vhdl << tab << "--- Iteration " << stage << " : sign is known positive ---" << endl;
+		vhdl << tab << declare(join("YShift", stage), sizeX) << " <= " << rangeAssign(sizeX-1, sizeX-stage, "'0'") << " & Y" << stage << range(sizeX-1, stage) << ";" << endl;
+		vhdl << tab << declare(join("X", stage+1), sizeX) << " <= " 
+				 << join("X", stage) << " + " << join("YShift", stage) << " ;" << endl;
 		
-		vhdl << tab << declare(join("YShiftR", stage), sizeXY) << " <= " << rangeAssign(2*stage-1,0, "'0'") << " & Y" << stage << range(sizeXY-1, 2*stage) << ";" <<endl;			
-		vhdl << tab << declare(join("X", stage+1), sizeXY) << " <= "  << join("X", stage) << " + " << join("YShiftR", stage) << " ;" << endl;
-		
-		vhdl << tab << declare(join("YY", stage+1), sizeXY) << " <= " << join("Y", stage) << " - " << join("X", stage) << " ;" << endl;
-		
-		vhdl << tab << declare(join("Y", stage+1), sizeXY) << " <= " << join("YY", stage+1) << range(sizeXY-2, 0)  << " & '0' ;" << endl;
-
+		vhdl << tab << declare(join("XShift", stage), sizeY) << " <= " << zg(stage) << " & X" << stage << range(sizeY-1, stage) << ";" <<endl;			
+		vhdl << tab << declare(join("Y", stage+1), sizeY) << " <= " 
+				 << join("Y", stage) << " - " << join("XShift", stage) << " ;" << endl;
+			
 
 		//create the constant signal for the arctan
 		mpfr_set_d(zatan, 1.0, GMP_RNDN);
@@ -260,50 +266,43 @@ namespace flopoco{
 		mpfr_add(zatan, zatan, roundbit, GMP_RNDN);
 		vhdl << tab << declare("Z2", sizeZ) << " <= " << unsignedFixPointNumber(zatan, zMSB, zLSB) << "; -- initial atan, plus round bit" <<endl;
 
-		for(stage=2; stage<=maxIterations; stage++){
+
+		for(stage=2; stage<=maxIterations;    stage++, sizeY--){
+			// Invariant: sizeX-sizeY = stage-2
 			vhdl << tab << "--- Iteration " << stage << " ---" << endl;
-			//shift Xin and Yin with 2^n positions to the right
-			// From there on X is always positive, but Y may be negative 
+			vhdl << tab << declare(join("sgnY", stage))  << " <= " <<  join("Y", stage)  <<  of(sizeY-1) << ";" << endl;
 			
-			// Critical path delay for one stage:
-			// The data dependency is from one Z to the next 
-			// We may assume that the rotations themselves overlap once the DI are known
-			//manageCriticalPath(target->localWireDelay(w) + target->adderDelay(w) + target->lutDelay()));
-			// 			manageCriticalPath(target->localWireDelay(sizeZ) + target->adderDelay(sizeZ));
-			
-			vhdl << tab << declare(join("sgnY", stage))  << " <= " <<  join("Y", stage)  <<  of(sizeXY-1) << ";" << endl; 
-			//			vhdl << tab << declare(join("YShiftL", stage), sizeXY) << " <= Y" << stage << range(sizeXY-stage-1, 0) << " & " << zg(stage) << ";" <<endl;			
-
-	
-			if(2*stage<sizeXY) {
-				vhdl << tab << declare(join("YShiftR", stage), sizeXY) << " <= " << rangeAssign(2*stage-1,0, join("sgnY", stage)) << " & Y" << stage << range(sizeXY-1, 2*stage) << ";" <<endl;			
-				vhdl << tab << declare(join("X", stage+1), sizeXY) << " <= " 
-						 << join("X", stage) << " - " << join("YShiftR", stage) << " when " << join("sgnY", stage) << "=\'1\'     else "
-						 << join("X", stage) << " + " << join("YShiftR", stage) << " ;" << endl;
+			if(-2*stage+1 >= -w+1-gXY) { 
+				vhdl << tab << declare(join("YShift", stage), sizeX) 
+						 << " <= " << rangeAssign(sizeX-1, sizeX -(sizeX-sizeY+stage), join("sgnY", stage))   
+						 << " & Y" << stage << range(sizeY-1, stage) << ";" << endl;
+				
+				vhdl << tab << declare(join("X", stage+1), sizeX) << " <= " 
+						 << join("X", stage) << " - " << join("YShift", stage) << " when " << join("sgnY", stage) << "=\'1\'     else "
+						 << join("X", stage) << " + " << join("YShift", stage) << " ;" << endl;
 			}
-			else {// done computing with x
-				vhdl << tab << declare(join("X", stage+1), sizeXY) << " <= " << join("X", stage) << " ;" << endl;
+			else {	// autant pisser dans un violon
+				vhdl << tab << declare(join("X", stage+1), sizeX) << " <= " << join("X", stage) << " ;" << endl;
 			}
 
-			vhdl << tab << declare(join("YY", stage+1), sizeXY) << " <= " 
-			     << join("Y", stage) << " + " << join("X", stage) << " when " << join("sgnY", stage) << "=\'1\'     else "
-			     << join("Y", stage) << " - " << join("X", stage) << " ;" << endl;
+			vhdl << tab << declare(join("XShift", stage), sizeY) << " <= " << zg(2) << " & X" << stage << range(sizeX-1, sizeX - sizeY + 2) << ";" <<endl;			
+			vhdl << tab << declare(join("YY", stage+1), sizeY) << " <= " 
+			     << join("Y", stage) << " + " << join("XShift", stage) << " when " << join("sgnY", stage) << "=\'1\'     else "
+			     << join("Y", stage) << " - " << join("XShift", stage) << " ;" << endl;
+			vhdl << tab << declare(join("Y", stage+1), sizeY-1) << " <= " << join("YY", stage+1) << range(sizeY-2, 0) << ";" <<endl;
 			
-			vhdl << tab << declare(join("Y", stage+1), sizeXY) << " <= " << join("YY", stage+1) << range(sizeXY-2, 0)  << " & '0' ;" << endl;
-			
+
 			//create the constant signal for the arctan
 			mpfr_set_d(zatan, 1.0, GMP_RNDN);
 			mpfr_div_2si(zatan, zatan, stage, GMP_RNDN);
 			mpfr_atan(zatan, zatan, GMP_RNDN);
 			mpfr_div(zatan, zatan, constPi, GMP_RNDN);
 			REPORT(DEBUG, "stage=" << stage << "  atancst=" << printMPFR(zatan));		
-
 			// rounding here in unsignedFixPointNumber()
 			vhdl << tab << declare(join("atan2PowStage", stage), sizeZ) << " <= " << unsignedFixPointNumber(zatan, zMSB, zLSB) << ";" <<endl;
 			vhdl << tab << declare(join("Z", stage+1), sizeZ) << " <= " 
 					 << join("Z", stage) << " + " << join("atan2PowStage", stage) << " when " << join("sgnY", stage) << "=\'0\'      else "
 					 << join("Z", stage) << " - " << join("atan2PowStage", stage) << " ;" << endl;
-
 
 		} //end for loop
 		
@@ -342,7 +341,7 @@ namespace flopoco{
 
 			// ulp = weight of the LSB of the result is 2^(-w+1)
 			// half-ulp is 2^-w
-			// atan(2^-w) < 2^-w therefore after w interations,  method error will be bounded by 2^-w 
+			// 1/pi atan(2^-w) < 1/2. 2^-w therefore after w-1 interations,  method error will be bounded by 2^-w 
 			maxIterations = w-1;
 	
 			//error analysis for the (x,y) datapath
@@ -374,6 +373,9 @@ namespace flopoco{
 		
 			REPORT(DEBUG, "Error analysis computes eps=" << eps <<  " ulps on the A datapath, hence  gA=" << gA );
 	} 
+
+
+
 
 
 
