@@ -205,6 +205,12 @@ namespace flopoco{
 	 */
 	double max(int count, ...);
 
+	/** Maximum.
+	 * @param[int] count the number of parameters which follows
+	 * @return maximum between the variable number of arguments
+	 */
+	int maxInt(int count, ...);
+
 	/** Minimum.
 	 * @param[double] x first number 
 	 * @param[double] y second number
@@ -217,6 +223,12 @@ namespace flopoco{
 	 * @return minimum between the variable number of arguments
 	 */
 	double min(int count, ...);
+
+	/** Minimum.
+	 * @param[int] count the number of parameters which follows
+	 * @return minimum between the variable number of arguments
+	 */
+	int minInt(int count, ...);
 
 	/** Maximum.
 	 * @param[int] x first number 
