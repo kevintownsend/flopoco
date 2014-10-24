@@ -42,6 +42,7 @@ namespace flopoco{
         };
 
         //gmp_randstate_t* FloPoCoRandomState::getState() { return m_state;};
+
 	/** return a string representation of an mpz_class on a given number of bits */
 	string unsignedBinary(mpz_class x, int size){
 		string s;
@@ -49,7 +50,7 @@ namespace flopoco{
 		char bit;
 
 		if(x<0) {
-			cerr<<"unsigned_binary: Positive number expected, got x="<<x.get_d()<<endl;
+			cerr<<"Error: unsigned_binary: Positive number expected, got x=" << x.get_d() << endl;
 			exit(EXIT_FAILURE);
 		}
 		po2 = ((mpz_class) 1)<<size;
@@ -396,6 +397,24 @@ namespace flopoco{
 	    return currentMax;
 	}
 
+	int maxInt(int count, ...)
+	{
+		va_list ap;
+		int currentMax;
+
+		va_start(ap, count); 						//Requires the last fixed parameter (to get the address)
+		currentMax = va_arg(ap, int);
+		for(int i=1; i<count; i++)
+		{
+			int currentVal = va_arg(ap, int);
+			if(currentVal > currentMax)
+				currentMax = currentVal; 	//Requires the type to cast to. Increments ap to the next argument.
+		}
+		va_end(ap);
+
+		return currentMax;
+	}
+
 	double min(int count, ...)
 	{
 		va_list ap;
@@ -406,6 +425,24 @@ namespace flopoco{
 		for(int i=1; i<count; i++)
 		{
 			double currentVal = va_arg(ap, double);
+			if(currentVal < currentMin)
+				currentMin = currentVal; 	//Requires the type to cast to. Increments ap to the next argument.
+		}
+		va_end(ap);
+
+		return currentMin;
+	}
+
+	int minInt(int count, ...)
+	{
+		va_list ap;
+		int currentMin;
+
+		va_start(ap, count); 						//Requires the last fixed parameter (to get the address)
+		currentMin = va_arg(ap, int);
+		for(int i=1; i<count; i++)
+		{
+			int currentVal = va_arg(ap, int);
 			if(currentVal < currentMin)
 				currentMin = currentVal; 	//Requires the type to cast to. Increments ap to the next argument.
 		}
