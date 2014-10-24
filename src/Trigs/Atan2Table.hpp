@@ -32,7 +32,9 @@ namespace flopoco{
 		 * @param sizeC			the size of the constant C, (same as A, B)
 		 */
 		Atan2Table(Target* target, int wIn, int wOut, int archType,
-						int sizeA = -1, int sizeB = -1, int sizeC = -1, map<string, double> inputDelays = emptyDelayMap);
+						int sizeA = -1, int sizeB = -1, int sizeC = -1,
+						int sizeD = -1, int sizeE = -1, int sizeF = -1,
+						map<string, double> inputDelays = emptyDelayMap);
 
 		~Atan2Table();
 
@@ -52,17 +54,33 @@ namespace flopoco{
 		void generatePlaneParameters(int x, int y, mpfr_t &fa, mpfr_t &fb, mpfr_t &fc);
 
 		/**
-		 * Computed the values stored in the table, using a Taylor approximating polynomial
+		 * Computed the values stored in the table, using an order 1 Taylor approximating polynomial
 		 * @param x				the upper bits of x, at a given resolution
 		 * 						(k out of a total of n), used to compute the function
 		 * @param y				the upper bits of y, at a given resolution
 		 * 						(k out of a total of n), used to compute the function
-		 * @param[out] fa		-A, where the polynomial is Ax+By+C=0
-		 * @param[out] fb		-B, where the polynomial is Ax+By+C=0
-		 * @param[out] fc		-C, where the polynomial is Ax+By+C=0
+		 * @param[out] fa		A, where the polynomial is Ax+By+C=0
+		 * @param[out] fb		B, where the polynomial is Ax+By+C=0
+		 * @param[out] fc		C, where the polynomial is Ax+By+C=0
 		 * 							named this way as to keep some sort of coherency with the other cases
 		 */
 		void generateTaylorOrder1Parameters(int x, int y, mpfr_t &fa, mpfr_t &fb, mpfr_t &fc);
+
+		/**
+		 * Computed the values stored in the table, using an order 2 Taylor approximating polynomial
+		 * @param x				the upper bits of x, at a given resolution
+		 * 						(k out of a total of n), used to compute the function
+		 * @param y				the upper bits of y, at a given resolution
+		 * 						(k out of a total of n), used to compute the function
+		 * @param[out] fa		A, where the polynomial is Ax+By+C+Dx^2+Ey^2+Fxy=0
+		 * @param[out] fb		B, where the polynomial is Ax+By+C+Dx^2+Ey^2+Fxy=0
+		 * @param[out] fc		C, where the polynomial is Ax+By+C+Dx^2+Ey^2+Fxy=0
+		 * @param[out] fd		D, where the polynomial is Ax+By+C+Dx^2+Ey^2+Fxy=0
+		 * @param[out] fe		E, where the polynomial is Ax+By+C+Dx^2+Ey^2+Fxy=0
+		 * @param[out] ff		F, where the polynomial is Ax+By+C+Dx^2+Ey^2+Fxy=0
+		 * 							named this way as to keep some sort of coherency with the other cases
+		 */
+		void generateTaylorOrder2Parameters(int x, int y, mpfr_t &fa, mpfr_t &fb, mpfr_t &fc, mpfr_t &fd, mpfr_t &fe, mpfr_t &ff);
 
 		int wIn;				/**< the width of the signal addressing the table */
 		int wOut;				/**< the size of the output of the table */
@@ -74,6 +92,9 @@ namespace flopoco{
 		int msbA;				/**< the msb of the constant A, stored in the table (if not specified, will be determined internally) */
 		int msbB;				/**< the msb of the constant B, (same as A) */
 		int msbC;				/**< the msb of the constant C, (same as A, B) */
+		int msbD;				/**< the msb of the constant D, (same as A, B etc.) */
+		int msbE;				/**< the msb of the constant E, (same as A, B etc.) */
+		int msbF;				/**< the msb of the constant F, (same as A, B etc.) */
 	};
 
 }

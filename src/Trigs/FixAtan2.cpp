@@ -40,7 +40,7 @@ namespace flopoco {
 		setCopyrightString("Florent de Dinechin, Matei Istoan, 2014");
 
 		//set the VHDL generation style
-		plainVHDL = true;
+		plainVHDL =  true;
 
 		// build the name
 		ostringstream name;
@@ -54,6 +54,9 @@ namespace flopoco {
 		maxValA = -1;		//this is the absolute value, so should be always non-negative, once used
 		maxValB = -1;
 		maxValC = -1;
+		maxValD = -1;
+		maxValE = -1;
+		maxValF = -1;
 
 		//declare the inputs and the outputs
 		addInput ("X",  wIn-1);
@@ -80,13 +83,14 @@ namespace flopoco {
 			ratio = 0.95;
 
 			k = checkArchitecture(architectureType);
+			kSize = k;
 
 			//determine the size of the constants to store in the table
 			// maxValA, maxValB and maxValC should have been set by the call to checkArchitecture()
 			int msbA = intlog2(maxValA)+1;
 			int msbB = intlog2(maxValB)+1;
 			int msbC = intlog2(maxValC)+1;
-			int maxMSB = max(3, msbA, msbB, msbC);
+			int maxMSB = maxInt(3, msbA, msbB, msbC);
 
 			//create the bitheap
 			bitHeap = new BitHeap(this, (maxMSB+2)+wOut+g);
@@ -207,7 +211,119 @@ namespace flopoco {
 		}else if(architectureType == 2)
 		{
 			//based on an order 2 Taylor approximating polynomial
-			THROWERROR("in FixAtan2 constructor: architecture not yet implemented");
+
+			//check if the selected type of architecture can achieve the required accuracy
+			//	also, determine the size of the parts of the input
+			//	signals to use as an address for the table
+			int k;
+			int guardBitsSum, guardBitsApprox;
+
+			guardBitsSum = 2;				// the error when computing Ax+By+C+Dx^2+Ey^2+Fxy is at most 2.5 ulps, so we'll need 2 extra guard bits
+			guardBitsApprox = 2;			// determined when computing the parameters for the tables
+			g = guardBitsApprox + guardBitsSum;
+
+			//set the ratio for the multiplications
+			ratio = 0.95;
+
+			k = checkArchitecture(architectureType);
+			kSize = k;
+
+			//determine the size of the constants to store in the table
+			// maxValA, maxValB and maxValC should have been set by the call to checkArchitecture()
+			int msbA = intlog2(maxValA)+1;
+			int msbB = intlog2(maxValB)+1;
+			int msbC = intlog2(maxValC)+1;
+			int msbD = intlog2(maxValD)+1;
+			int msbE = intlog2(maxValE)+1;
+			int msbF = intlog2(maxValF)+1;
+			int maxMSB = maxInt(6, msbA, msbB, msbC, msbD, msbE, msbF);
+
+			//split the input signals, and create the address signal for the table
+			vhdl << tab << declare("XHigh", k-1) << " <= std_logic_vector(X" << range(wIn-2, wIn-k) << ");" << endl;
+			vhdl << tab << declare("YHigh", k)   << " <= std_logic_vector(Y" << range(wIn-1, wIn-k) << ");" << endl;
+			vhdl << endl;
+			vhdl << tab << declare("atan2TableInput", 2*k-1) << " <= std_logic_vector(XHigh) & std_logic_vector(YHigh);" << endl;
+			vhdl << endl;
+
+			//create the table for atan(y/x)
+			Atan2Table *table = new Atan2Table(target, 2*k-1, msbA+msbB+msbC+msbD+msbE+msbF+6*(wOut+g),
+												architectureType, msbA, msbB, msbC, msbD, msbE, msbF);
+
+			//add the table to the operator
+			addSubComponent(table);
+			useSoftRAM(table);
+			//useHardRAM(table);
+			inPortMap (table , "X", "atan2TableInput");
+			outPortMap(table , "Y", "atan2TableOutput");
+			vhdl << instance(table , "KCMTable");
+			vhdl << endl;
+
+			//split the output of the table to the corresponding parts A, B, C, D, E and F
+			vhdl << tab << declareFixPoint("F", true, msbF-1,  -wOut-g) << " <= signed(atan2TableOutput"
+					<< range(msbF+1*(wOut+g)-1, 0) << ");" << endl;
+			vhdl << tab << declareFixPoint("E", true, msbE-1,  -wOut-g) << " <= signed(atan2TableOutput"
+					<< range(msbE+msbF+2*(wOut+g)-1, msbF+1*(wOut+g)) << ");" << endl;
+			vhdl << tab << declareFixPoint("D", true, msbD-1,  -wOut-g) << " <= signed(atan2TableOutput"
+					<< range(msbD+msbE+msbF+3*(wOut+g)-1, msbE+msbF+2*(wOut+g)) << ");" << endl;
+			vhdl << tab << declareFixPoint("C", true, msbC-1,  -wOut-g) << " <= signed(atan2TableOutput"
+					<< range(msbC+msbD+msbE+msbF+4*(wOut+g)-1, msbD+msbE+msbF+3*(wOut+g)) << ");" << endl;
+			vhdl << tab << declareFixPoint("B", true, msbB-1,  -wOut-g) << " <= signed(atan2TableOutput"
+					<< range(msbB+msbC+msbD+msbE+msbF+5*(wOut+g)-1, msbC+msbD+msbE+msbF+4*(wOut+g)) << ");" << endl;
+			vhdl << tab << declareFixPoint("A", true, msbA-1,  -wOut-g) << " <= signed(atan2TableOutput"
+					<< range(msbA+msbB+msbC+msbD+msbE+msbF+6*(wOut+g)-1, msbB+msbC+msbD+msbE+msbF+5*(wOut+g)) << ");" << endl;
+			vhdl << endl;
+
+			vhdl << tab << declareFixPoint("DeltaX", true, -k-1,  -wIn) << " <= signed(not(X(" << of(wIn-k-1) << ")) & X" << range(wIn-k-2, 0) << ");" << endl;
+			vhdl << tab << declareFixPoint("DeltaY", true, -k-1,  -wIn) << " <= signed(not(Y(" << of(wIn-k-1) << ")) & Y" << range(wIn-k-2, 0) << ");" << endl;
+			vhdl << endl;
+
+			//create A*DeltaX and B*DeltaY
+			vhdl << tab << declareFixPoint("A_DeltaX", true, msbA-k-1,  -wOut-g-wIn) << " <= A * DeltaX;" << endl;
+			vhdl << tab << declareFixPoint("B_DeltaY", true, msbB-k-1,  -wOut-g-wIn) << " <= B * DeltaY;" << endl;
+			vhdl << endl;
+
+			//create DeltaX^2, DeltaY^2 and DeltaX*DeltaY
+			vhdl << tab << declareFixPoint("DeltaX2", true, -2*k-1,  -2*wIn) << " <= DeltaX * DeltaX;" << endl;
+			vhdl << tab << declareFixPoint("DeltaY2", true, -2*k-1,  -2*wIn) << " <= DeltaY * DeltaY;" << endl;
+			vhdl << tab << declareFixPoint("DeltaX_DeltaY", true, -2*k-1,  -2*wIn) << " <= DeltaX * DeltaY;" << endl;
+			vhdl << endl;
+			//create D*DeltaX^2, E*DeltaY^2 and F*DeltaX*DeltaY
+			vhdl << tab << declareFixPoint("D_DeltaX2", true, msbD-2*k-1,  -2*wIn-wOut-g) << " <= D * DeltaX2;" << endl;
+			vhdl << tab << declareFixPoint("E_DeltaY2", true, msbE-2*k-1,  -2*wIn-wOut-g) << " <= E * DeltaY2;" << endl;
+			vhdl << tab << declareFixPoint("F_DeltaX_DeltaY", true, msbF-2*k-1,  -2*wIn-wOut-g) << " <= F * DeltaX_DeltaY;" << endl;
+			vhdl << endl;
+
+			//align the signals to the output format to the output format
+			resizeFixPoint("A_DeltaX_sgnExt", "A_DeltaX", maxMSB-1, -wOut-g);
+			resizeFixPoint("B_DeltaY_sgnExt", "B_DeltaY", maxMSB-1, -wOut-g);
+			resizeFixPoint("C_sgnExt", "C", maxMSB-1, -wOut-g);
+			resizeFixPoint("D_DeltaX2_sgnExt", "D_DeltaX2", maxMSB-1, -wOut-g);
+			resizeFixPoint("E_DeltaY2_sgnExt", "E_DeltaY2", maxMSB-1, -wOut-g);
+			resizeFixPoint("F_DeltaX_DeltaY_sgnExt", "F_DeltaX_DeltaY", maxMSB-1, -wOut-g);
+			vhdl << endl;
+
+			//add everything up
+			vhdl << tab << declareFixPoint("Sum1", true, maxMSB, -wOut-g)
+					<< " <= (A_DeltaX_sgnExt(A_DeltaX_sgnExt'HIGH) & A_DeltaX_sgnExt) + (B_DeltaY_sgnExt(B_DeltaY_sgnExt'HIGH) & B_DeltaY_sgnExt);" << endl;
+			vhdl << tab << declareFixPoint("Sum2", true, maxMSB, -wOut-g)
+					<< " <= (C_sgnExt(C_sgnExt'HIGH) & C_sgnExt) + (D_DeltaX2_sgnExt(D_DeltaX2_sgnExt'HIGH) & D_DeltaX2_sgnExt);" << endl;
+			vhdl << tab << declareFixPoint("Sum3", true, maxMSB, -wOut-g)
+					<< " <= (E_DeltaY2_sgnExt(E_DeltaY2_sgnExt'HIGH) & E_DeltaY2_sgnExt) + (F_DeltaX_DeltaY_sgnExt(F_DeltaX_DeltaY_sgnExt'HIGH) & F_DeltaX_DeltaY_sgnExt);" << endl;
+			vhdl << tab << declareFixPoint("Sum4", true, maxMSB+1, -wOut-g)
+					<< " <= (Sum1(Sum1'HIGH) & Sum1) + (Sum2(Sum2'HIGH) & Sum2);" << endl;
+			vhdl << tab << declareFixPoint("Sum5", true, maxMSB+2, -wOut-g)
+					<< " <= (Sum4(Sum4'HIGH) & Sum4) + (Sum3(Sum3'HIGH) & Sum3(Sum3'HIGH) & Sum3);" << endl;
+			vhdl << endl;
+
+			//extract the final result
+			resizeFixPoint("Rint", "Sum5", 1, -wOut+1);
+			vhdl << tab << declareFixPoint("Rint_rndCst", true, 1, -wOut+1) << " <= signed(std_logic_vector\'(\"" << zg(wOut, -2) << "1\"));" << endl;
+			vhdl << tab << declareFixPoint("Rint_rnd", true, 1, -wOut+1) << " <= Rint + Rint_rndCst;" << endl;
+
+			//return the result
+			resizeFixPoint("Rint_stdlv", "Rint_rnd", 1, -wOut+2);
+			vhdl << tab << "R <= std_logic_vector(Rint_stdlv);" << endl;
+
 		}else if(architectureType == 3)
 		{
 			//based on rotating using a table (for sine and cosine)
@@ -470,15 +586,15 @@ namespace flopoco {
 					 */
 					else if(archType == 2)
 					{
-						a = -(2.0*centerValJ)/(centerValI*centerValI+centerValJ*centerValJ);
-						b = (2.0*centerValI)/(centerValI*centerValI+centerValJ*centerValJ);
+						double denominator = centerValI*centerValI + centerValJ*centerValJ;
+						double denominatorSqr = denominator*denominator;
+
+						a = -(2.0*centerValJ)/(denominator);
+						b = (2.0*centerValI)/(denominator);
 						c = atan2(centerValJ, centerValI);
-						d = (1.0*centerValI*centerValJ)
-												/((centerValI*centerValI+centerValJ*centerValJ)*(centerValI*centerValI+centerValJ*centerValJ));
-						e = -(1.0*centerValI*centerValJ)
-												/((centerValI*centerValI+centerValJ*centerValJ)*(centerValI*centerValI+centerValJ*centerValJ));
-						f = (1.0*centerValJ*centerValJ-1.0*centerValI*centerValI)
-												/((centerValI*centerValI+centerValJ*centerValJ)*(centerValI*centerValI+centerValJ*centerValJ));
+						d = (1.0*centerValI*centerValJ)/(denominatorSqr);
+						e = -(1.0*centerValI*centerValJ)/(denominatorSqr);
+						f = (1.0*centerValJ*centerValJ-1.0*centerValI*centerValI)/(denominatorSqr);
 
 						//test if any of the errors are above the error limit
 						double errorCenter 	= (a*centerValI + b*centerValJ + c + d*centerValI*centerValI + e*centerValJ*centerValJ + f*centerValI*centerValJ)
@@ -521,28 +637,50 @@ namespace flopoco {
 					}
 
 					//determine the maximum values of A, B and D (or C, depending on the architecture)
-					if((archType == 0) || (archType == 1))
+					if((archType == 0) || (archType == 1) || (archType == 2))
 					{
-						double auxA, auxB, auxC, auxD;
+						double auxA, auxB, auxC, auxD, auxE, auxF;
 
+						// maximum value of A
 						auxA = ((a < 0) ? -a : a);
 						if(auxA > maxValA)
 							maxValA = auxA;
+						// maximum value of B
 						auxB = ((b < 0) ? -b : b);
 						if(auxB > maxValB)
 							maxValB = auxB;
 						if(archType == 0)
 						{
+							// maximum value of D
 							auxD = d + a*valI + b*valJ;
 							auxD = ((auxD < 0) ? -auxD : auxD);
 							if(auxD > maxValC)
 								maxValC = auxD;
-						}else
+						}else if(archType == 1)
 						{
+							// maximum value of C
 							auxC = c + a*valI + b*valJ;
 							auxC = ((auxC < 0) ? -auxC : auxC);
 							if(auxC > maxValC)
 								maxValC = auxC;
+						}else if(archType == 2)
+						{
+							// maximum value of C
+							auxC = ((c < 0) ? -c : c);
+							if(auxC > maxValC)
+								maxValC = auxC;
+							// maximum value of D
+							auxD = ((d < 0) ? -d : d);
+							if(auxD > maxValD)
+								maxValD = auxD;
+							// maximum value of E
+							auxE = ((e < 0) ? -e : e);
+							if(auxE > maxValE)
+								maxValE = auxE;
+							// maximum value of F
+							auxF = ((f < 0) ? -f : f);
+							if(auxF > maxValF)
+								maxValF = auxF;
 						}
 					}
 
@@ -616,10 +754,17 @@ namespace flopoco {
 
 		cout << "Error limit of " << (1 >> wOut) << " satisfied at k=" << k
 				<< ", with wIn=" << wIn << " and wOut=" << wOut << endl;
-		if((archType == 0) || (archType == 1))
+		if((archType == 0) || (archType == 1) || (archType == 2))
 		{
 			cout << tab << "Computed the maximum values of the table parameters: maxValA="
-					<< maxValA << " maxValB=" << maxValB << " maxValD=" << maxValC << endl;
+					<< maxValA << " maxValB=" << maxValB;
+			if(archType == 0)
+				cout << " maxValD=" << maxValC << endl;
+			else if(archType == 1)
+				cout << " maxValC=" << maxValC << endl;
+			else
+				cout << " maxValC=" << maxValC << " maxValD=" << maxValD
+					<< " maxValE=" << maxValE << " maxValF=" << maxValF << endl;
 		}
 
 		return k;
@@ -678,8 +823,149 @@ namespace flopoco {
 		}
 		tc->addExpectedOutput("R", svRu);
 
+
+
+		//----------------------------------------------------------------------
+		//-------- Generate the signals of the architecture using software
+
+		mpfr_t x, y, deltax, deltay, deltax2, deltay2, deltaxDeltay,
+				aDeltax, bDeltay, dDeltax2, eDeltay2, fDeltaxDeltay,
+				sum1, sum2, sum3, sum4, sum5, result,
+				tmp;
+		mpfr_t a, b, c, d, e, f;
+		mpz_class tmpMpz;
+
+		mpfr_inits2(10000, x, y, deltax, deltay, deltax2, deltay2, deltaxDeltay, aDeltax, bDeltay, dDeltax2, eDeltay2, fDeltaxDeltay, sum1, sum2, sum3, sum4, sum5, result, tmp, (mpfr_ptr)0);
+		mpfr_inits2(10000, a, b, c, d, e, f, (mpfr_ptr)0);
+
+		//generate the parameters
+		generateTaylorOrder2Parameters(svX.get_si(), svY.get_si(), a, b, c, d, e, f);
+
+		//create x and y
+		mpfr_set(x, mpX, GMP_RNDN);
+		mpfr_set(y, mpY, GMP_RNDN);
+
+		//create deltax and deltay
+		//	create deltax
+		tmpMpz = mpz_class(svX);
+		tmpMpz = tmpMpz >> (wIn-kSize);
+		tmpMpz = tmpMpz << (wIn-kSize);
+		tmpMpz = svX - tmpMpz;
+		mpfr_set_z(deltax, tmpMpz.get_mpz_t(), GMP_RNDN);
+		mpfr_div_2si(deltax, deltax, wIn, GMP_RNDN);
+		mpfr_set_si(tmp, 1, GMP_RNDN);
+		mpfr_div_2si(tmp, tmp, kSize+1, GMP_RNDN);
+		mpfr_sub(deltax, deltax, tmp, GMP_RNDN);
+		//	create deltay
+		tmpMpz = mpz_class(svY);
+		tmpMpz = tmpMpz >> (wIn-kSize);
+		tmpMpz = tmpMpz << (wIn-kSize);
+		tmpMpz = svY - tmpMpz;
+		mpfr_set_z(deltay, tmpMpz.get_mpz_t(), GMP_RNDN);
+		mpfr_div_2si(deltay, deltay, wIn, GMP_RNDN);
+		mpfr_set_si(tmp, 1, GMP_RNDN);
+		mpfr_div_2si(tmp, tmp, kSize+1, GMP_RNDN);
+		mpfr_sub(deltay, deltay, tmp, GMP_RNDN);
+
+		//create deltax2 and deltay2 and deltaxDeltay
+		mpfr_sqr(deltax2, deltax, GMP_RNDN);
+		mpfr_sqr(deltay2, deltay, GMP_RNDN);
+		mpfr_mul(deltaxDeltay, deltax, deltay, GMP_RNDN);
+
+		//create aDeltax, bDeltay
+		mpfr_mul(aDeltax, a, deltax, GMP_RNDN);
+		mpfr_mul(bDeltay, b, deltay, GMP_RNDN);
+
+		//create dDeltax2, eDeltay2, fDeltaxDeltay
+		mpfr_mul(dDeltax2, d, deltax2, GMP_RNDN);
+		mpfr_mul(eDeltay2, e, deltay2, GMP_RNDN);
+		mpfr_mul(fDeltaxDeltay, f, deltaxDeltay, GMP_RNDN);
+
+		//create the sums
+		mpfr_add(sum1, aDeltax, bDeltay, GMP_RNDN);
+		mpfr_add(sum2, c, dDeltax2, GMP_RNDN);
+		mpfr_add(sum3, eDeltay2, fDeltaxDeltay, GMP_RNDN);
+		mpfr_add(sum4, sum1, sum2, GMP_RNDN);
+		mpfr_add(sum5, sum3, sum4, GMP_RNDN);
+
+		//extract the values out of the mpfr variables
+		double x_d, y_d, deltax_d, deltay_d, deltax2_d, deltay2_d, deltaxDeltay_d,
+				aDeltax_d, bDeltay_d, dDeltax2_d, eDeltay2_d, fDeltaxDeltay_d,
+				sum1_d, sum2_d, sum3_d, sum4_d, sum5_d;
+
+		x_d = mpfr_get_d(x, GMP_RNDN);
+		y_d = mpfr_get_d(y, GMP_RNDN);
+		deltax_d = mpfr_get_d(deltax, GMP_RNDN);
+		deltay_d = mpfr_get_d(deltay, GMP_RNDN);
+		deltax2_d = mpfr_get_d(deltax2, GMP_RNDN);
+		deltay2_d = mpfr_get_d(deltay2, GMP_RNDN);
+		deltaxDeltay_d = mpfr_get_d(deltaxDeltay, GMP_RNDN);
+		aDeltax_d = mpfr_get_d(aDeltax, GMP_RNDN);
+		bDeltay_d = mpfr_get_d(bDeltay, GMP_RNDN);
+		dDeltax2_d = mpfr_get_d(dDeltax2, GMP_RNDN);
+		eDeltay2_d = mpfr_get_d(eDeltay2, GMP_RNDN);
+		fDeltaxDeltay_d = mpfr_get_d(fDeltaxDeltay, GMP_RNDN);
+		sum1_d = mpfr_get_d(sum1, GMP_RNDN);
+		sum2_d = mpfr_get_d(sum2, GMP_RNDN);
+		sum3_d = mpfr_get_d(sum3, GMP_RNDN);
+		sum4_d = mpfr_get_d(sum4, GMP_RNDN);
+		sum5_d = mpfr_get_d(sum5, GMP_RNDN);
+
+
+		mpfr_clears(x, y, deltax, deltay, deltax2, deltay2, deltaxDeltay, aDeltax, bDeltay, dDeltax2, eDeltay2, fDeltaxDeltay, sum1, sum2, sum3, sum4, sum5, result, tmp, (mpfr_ptr)0);
+		mpfr_clears(a, b, c, d, e, f, (mpfr_ptr)0);
+
+		//----------------------------------------------------------------------
+
+
 		// clean up
 		mpfr_clears(mpX, mpY, mpR, (mpfr_ptr)0);
+	}
+
+	void FixAtan2::generateTaylorOrder2Parameters(int x, int y, mpfr_t &fa, mpfr_t &fb, mpfr_t &fc, mpfr_t &fd, mpfr_t &fe, mpfr_t &ff)
+	{
+		mpfr_t centerValI, centerValJ, increment, temp, tempSqr, temp2;
+		int k = kSize;
+
+		mpfr_inits2(10000, centerValI, centerValJ, increment, temp, tempSqr, temp2, (mpfr_ptr)0);
+
+		mpfr_set_si(increment, 1, GMP_RNDN);
+		mpfr_div_2si(increment, increment, k+1, GMP_RNDN);
+		mpfr_set_si(centerValI, x, GMP_RNDN);
+		mpfr_div_2si(centerValI, centerValI, k, GMP_RNDN);
+		mpfr_add(centerValI, centerValI, increment, GMP_RNDN);
+		mpfr_set_si(centerValJ, y, GMP_RNDN);
+		mpfr_div_2si(centerValJ, centerValJ, k, GMP_RNDN);
+		mpfr_add(centerValJ, centerValJ, increment, GMP_RNDN);
+
+		mpfr_sqr(temp, centerValI, GMP_RNDN);
+		mpfr_sqr(temp2, centerValJ, GMP_RNDN);
+		mpfr_add(temp, temp, temp2, GMP_RNDN);
+		mpfr_sqr(tempSqr, temp, GMP_RNDN);
+		//create A
+		mpfr_set(fa, centerValJ, GMP_RNDN);
+		mpfr_div(fa, fa, temp, GMP_RNDN);
+		mpfr_neg(fa, fa, GMP_RNDN);
+		//create B
+		mpfr_set(fb, centerValI, GMP_RNDN);
+		mpfr_div(fb, fb, temp, GMP_RNDN);
+		//create C
+		mpfr_atan2(fc, centerValJ, centerValI, GMP_RNDN);
+		//create D
+		mpfr_set(fd, centerValI, GMP_RNDN);
+		mpfr_mul(fd, fd, centerValJ, GMP_RNDN);
+		mpfr_div(fd, fd, tempSqr, GMP_RNDN);
+		//create E
+		mpfr_set(fe, fd, GMP_RNDN);
+		mpfr_neg(fe, fe, GMP_RNDN);
+		//create F
+		mpfr_sqr(ff, centerValJ, GMP_RNDN);
+		mpfr_sqr(temp2, centerValI, GMP_RNDN);
+		mpfr_sub(ff, ff, temp2, GMP_RNDN);
+		mpfr_div(ff, ff, tempSqr, GMP_RNDN);
+
+		//clean-up
+		mpfr_clears(centerValI, centerValJ, increment, temp, tempSqr, temp2, (mpfr_ptr)0);
 	}
 
 

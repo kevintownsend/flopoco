@@ -19,10 +19,13 @@ namespace flopoco{
 
 	// A table for the atan(y/x)
 	Atan2Table::Atan2Table(Target* target, int wIn_, int wOut_, int archType_,
-			int msbA_, int msbB_, int msbC_, map<string, double> inputDelays) :
+			int msbA_, int msbB_, int msbC_,
+			int msbD_, int msbE_, int msbF_,
+			map<string, double> inputDelays) :
 		Table(target, wIn_, wOut_, 0, ((1<<wIn_)-1), true, inputDelays),
 		wIn(wIn_), wOut(wOut_), archType(archType_),
-		msbA(msbA_), msbB(msbB_), msbC(msbC_)
+		msbA(msbA_), msbB(msbB_), msbC(msbC_),
+		msbD(msbD_), msbE(msbE_), msbF(msbF_)
 	{
 		ostringstream name;
 		srcFileName="Atan2Table";
@@ -39,10 +42,19 @@ namespace flopoco{
 	{
 		int x, y;
 		mpz_t result, temp, aux;
-		mpfr_t a, b, c, cAux, tempMpfr;
+		mpfr_t a, b, c, cAux, d, e, f, tempMpfr;
 		int wOutFrac;
 
-		wOutFrac = (wOut-msbA-msbB-msbC)/3;
+		if((archType == 0) || (archType == 1))
+		{
+			wOutFrac = (wOut-msbA-msbB-msbC)/3;
+		}else if(archType == 2)
+		{
+			wOutFrac = (wOut-msbA-msbB-msbC-msbD-msbE-msbF)/6;
+		}else
+		{
+			THROWERROR("Error: in Atan2Table::function: unknown  architecture type");
+		}
 
 		//recreate the value of x
 		//	(representing the top half of the bits of input)
@@ -51,7 +63,7 @@ namespace flopoco{
 		x = (1 << ((wIn+1)/2 - 1)) + x;
 
 		//init the mpfr variables
-		mpfr_inits2(10000, a, b, c, cAux, tempMpfr, (mpfr_ptr) 0);
+		mpfr_inits2(10000, a, b, c, cAux, d, e, f, tempMpfr, (mpfr_ptr) 0);
 
 		//init the mpz variables
 		mpz_inits(result, temp, aux, (mpz_ptr)0);
@@ -64,64 +76,165 @@ namespace flopoco{
 		}else if(archType == 1)
 		{
 			generateTaylorOrder1Parameters(x, y, a, b, c);
+		}else if(archType == 2)
+		{
+			generateTaylorOrder2Parameters(x, y, a, b, c, d, e, f);
 		}else
 		{
-			//TODO
+			THROWERROR("Error: in Atan2Table::function: unknown  architecture type");
 		}
 
-		//create ax and by, and update c
-		mpfr_set(cAux, c, GMP_RNDN);
-		mpfr_mul_si(tempMpfr, a, x, GMP_RNDN);
-		mpfr_div_2ui(tempMpfr, tempMpfr, ((wIn+1)/2), GMP_RNDN);
-		mpfr_add(cAux, cAux, tempMpfr, GMP_RNDN);
-		mpfr_mul_si(tempMpfr, b, y, GMP_RNDN);
-		mpfr_div_2ui(tempMpfr, tempMpfr, ((wIn+1)/2), GMP_RNDN);
-		mpfr_add(cAux, cAux, tempMpfr, GMP_RNDN);
+		double da = mpfr_get_d(a, GMP_RNDN);
+		double db = mpfr_get_d(b, GMP_RNDN);
+		double dc = mpfr_get_d(c, GMP_RNDN);
+		double dd = mpfr_get_d(d, GMP_RNDN);
+		double de = mpfr_get_d(e, GMP_RNDN);
+		double df = mpfr_get_d(f, GMP_RNDN);
 
-		//extract the result
-		//extract A
-		mpfr_mul_2ui(a, a, wOutFrac, GMP_RNDN);
-		mpfr_get_z(temp, a, GMP_RNDN);
-		//	handle the negative constants and transform them to 2's complement
-		if(mpfr_sgn(a) < 0)
+		if((archType == 0) || (archType == 1))
 		{
-			mpz_set_ui(aux, 1);
-			mpz_mul_2exp(aux, aux, msbA+wOutFrac);
-			mpz_add(temp, aux, temp);
-		}
-		//	add A to the final result
-		mpz_set(result, temp);
+			//create ax and by, and update c
+			mpfr_set(cAux, c, GMP_RNDN);
+			mpfr_mul_si(tempMpfr, a, x, GMP_RNDN);
+			mpfr_div_2ui(tempMpfr, tempMpfr, ((wIn+1)/2), GMP_RNDN);
+			mpfr_add(cAux, cAux, tempMpfr, GMP_RNDN);
+			mpfr_mul_si(tempMpfr, b, y, GMP_RNDN);
+			mpfr_div_2ui(tempMpfr, tempMpfr, ((wIn+1)/2), GMP_RNDN);
+			mpfr_add(cAux, cAux, tempMpfr, GMP_RNDN);
 
-		//extract B
-		mpfr_mul_2ui(b, b, wOutFrac, GMP_RNDN);
-		mpfr_get_z(temp, b, GMP_RNDN);
-		//	handle the negative constants and transform them to 2's complement
-		if(mpfr_sgn(b) < 0)
-		{
-			mpz_set_ui(aux, 1);
-			mpz_mul_2exp(aux, aux, msbB+wOutFrac);
-			mpz_add(temp, aux, temp);
-		}
-		//	add B to the final result
-		mpz_mul_2exp(result, result, msbB+wOutFrac);
-		mpz_add(result, result, temp);
+			//extract the result
+			//extract A
+			mpfr_mul_2ui(a, a, wOutFrac, GMP_RNDN);
+			mpfr_get_z(temp, a, GMP_RNDN);
+			//	handle the negative constants and transform them to 2's complement
+			if(mpfr_sgn(a) < 0)
+			{
+				mpz_set_ui(aux, 1);
+				mpz_mul_2exp(aux, aux, msbA+wOutFrac);
+				mpz_add(temp, aux, temp);
+			}
+			//	add A to the final result
+			mpz_set(result, temp);
 
-		//extract updated C
-		mpfr_mul_2ui(cAux, cAux, wOutFrac, GMP_RNDN);
-		mpfr_get_z(temp, cAux, GMP_RNDN);
-		//	handle the negative constants and transform them to 2's complement
-		if(mpfr_sgn(cAux) < 0)
+			//extract B
+			mpfr_mul_2ui(b, b, wOutFrac, GMP_RNDN);
+			mpfr_get_z(temp, b, GMP_RNDN);
+			//	handle the negative constants and transform them to 2's complement
+			if(mpfr_sgn(b) < 0)
+			{
+				mpz_set_ui(aux, 1);
+				mpz_mul_2exp(aux, aux, msbB+wOutFrac);
+				mpz_add(temp, aux, temp);
+			}
+			//	add B to the final result
+			mpz_mul_2exp(result, result, msbB+wOutFrac);
+			mpz_add(result, result, temp);
+
+			//extract updated C
+			mpfr_mul_2ui(cAux, cAux, wOutFrac, GMP_RNDN);
+			mpfr_get_z(temp, cAux, GMP_RNDN);
+			//	handle the negative constants and transform them to 2's complement
+			if(mpfr_sgn(cAux) < 0)
+			{
+				mpz_set_ui(aux, 1);
+				mpz_mul_2exp(aux, aux, msbC+wOutFrac);
+				mpz_add(temp, aux, temp);
+			}
+			//	add updated C to the final result
+			mpz_mul_2exp(result, result, msbC+wOutFrac);
+			mpz_add(result, result, temp);
+		}else if(archType == 2)
 		{
-			mpz_set_ui(aux, 1);
-			mpz_mul_2exp(aux, aux, msbC+wOutFrac);
-			mpz_add(temp, aux, temp);
+			//extract the result
+			//extract A
+			mpfr_mul_2ui(a, a, wOutFrac, GMP_RNDN);
+			mpfr_get_z(temp, a, GMP_RNDN);
+			//	handle the negative constants and transform them to 2's complement
+			if(mpfr_sgn(a) < 0)
+			{
+				mpz_set_ui(aux, 1);
+				mpz_mul_2exp(aux, aux, msbA+wOutFrac);
+				mpz_add(temp, aux, temp);
+			}
+			//	add A to the final result
+			mpz_set(result, temp);
+
+			//extract B
+			mpfr_mul_2ui(b, b, wOutFrac, GMP_RNDN);
+			mpfr_get_z(temp, b, GMP_RNDN);
+			//	handle the negative constants and transform them to 2's complement
+			if(mpfr_sgn(b) < 0)
+			{
+				mpz_set_ui(aux, 1);
+				mpz_mul_2exp(aux, aux, msbB+wOutFrac);
+				mpz_add(temp, aux, temp);
+			}
+			//	add B to the final result
+			mpz_mul_2exp(result, result, msbB+wOutFrac);
+			mpz_add(result, result, temp);
+
+			//extract C
+			mpfr_mul_2ui(c, c, wOutFrac, GMP_RNDN);
+			mpfr_get_z(temp, c, GMP_RNDN);
+			//	handle the negative constants and transform them to 2's complement
+			if(mpfr_sgn(c) < 0)
+			{
+				mpz_set_ui(aux, 1);
+				mpz_mul_2exp(aux, aux, msbC+wOutFrac);
+				mpz_add(temp, aux, temp);
+			}
+			//	add C to the final result
+			mpz_mul_2exp(result, result, msbC+wOutFrac);
+			mpz_add(result, result, temp);
+
+			//extract D
+			mpfr_mul_2ui(d, d, wOutFrac, GMP_RNDN);
+			mpfr_get_z(temp, d, GMP_RNDN);
+			//	handle the negative constants and transform them to 2's complement
+			if(mpfr_sgn(d) < 0)
+			{
+				mpz_set_ui(aux, 1);
+				mpz_mul_2exp(aux, aux, msbD+wOutFrac);
+				mpz_add(temp, aux, temp);
+			}
+			//	add D to the final result
+			mpz_mul_2exp(result, result, msbD+wOutFrac);
+			mpz_add(result, result, temp);
+
+			//extract E
+			mpfr_mul_2ui(e, e, wOutFrac, GMP_RNDN);
+			mpfr_get_z(temp, e, GMP_RNDN);
+			//	handle the negative constants and transform them to 2's complement
+			if(mpfr_sgn(e) < 0)
+			{
+				mpz_set_ui(aux, 1);
+				mpz_mul_2exp(aux, aux, msbE+wOutFrac);
+				mpz_add(temp, aux, temp);
+			}
+			//	add E to the final result
+			mpz_mul_2exp(result, result, msbE+wOutFrac);
+			mpz_add(result, result, temp);
+
+			//extract F
+			mpfr_mul_2ui(f, f, wOutFrac, GMP_RNDN);
+			mpfr_get_z(temp, f, GMP_RNDN);
+			//	handle the negative constants and transform them to 2's complement
+			if(mpfr_sgn(f) < 0)
+			{
+				mpz_set_ui(aux, 1);
+				mpz_mul_2exp(aux, aux, msbF+wOutFrac);
+				mpz_add(temp, aux, temp);
+			}
+			//	add F to the final result
+			mpz_mul_2exp(result, result, msbF+wOutFrac);
+			mpz_add(result, result, temp);
+		}else
+		{
+			THROWERROR("Error: in Atan2Table::function: unknown  architecture type");
 		}
-		//	add updated C to the final result
-		mpz_mul_2exp(result, result, msbC+wOutFrac);
-		mpz_add(result, result, temp);
 
 		//clean up the mpfr variables
-		mpfr_clears(a, b, c, cAux, tempMpfr, (mpfr_ptr)0);
+		mpfr_clears(a, b, c, cAux, d, e, f, tempMpfr, (mpfr_ptr)0);
 
 		//clean up the mpz variables
 		mpz_clears(temp, aux, (mpz_ptr)0);
@@ -323,6 +436,52 @@ namespace flopoco{
 		mpfr_atan2(fc, centerValJ, centerValI, GMP_RNDN);
 
 		mpfr_clears(centerValI, centerValJ, increment, temp, temp2, (mpfr_ptr)0);
+	}
+
+	void Atan2Table::generateTaylorOrder2Parameters(int x, int y, mpfr_t &fa, mpfr_t &fb, mpfr_t &fc, mpfr_t &fd, mpfr_t &fe, mpfr_t &ff)
+	{
+		mpfr_t centerValI, centerValJ, increment, temp, tempSqr, temp2;
+		int k = (wIn+1)/2;
+
+		mpfr_inits2(10000, centerValI, centerValJ, increment, temp, tempSqr, temp2, (mpfr_ptr)0);
+
+		mpfr_set_si(increment, 1, GMP_RNDN);
+		mpfr_div_2si(increment, increment, k+1, GMP_RNDN);
+		mpfr_set_si(centerValI, x, GMP_RNDN);
+		mpfr_div_2si(centerValI, centerValI, k, GMP_RNDN);
+		mpfr_add(centerValI, centerValI, increment, GMP_RNDN);
+		mpfr_set_si(centerValJ, y, GMP_RNDN);
+		mpfr_div_2si(centerValJ, centerValJ, k, GMP_RNDN);
+		mpfr_add(centerValJ, centerValJ, increment, GMP_RNDN);
+
+		mpfr_sqr(temp, centerValI, GMP_RNDN);
+		mpfr_sqr(temp2, centerValJ, GMP_RNDN);
+		mpfr_add(temp, temp, temp2, GMP_RNDN);
+		mpfr_sqr(tempSqr, temp, GMP_RNDN);
+		//create A
+		mpfr_set(fa, centerValJ, GMP_RNDN);
+		mpfr_div(fa, fa, temp, GMP_RNDN);
+		mpfr_neg(fa, fa, GMP_RNDN);
+		//create B
+		mpfr_set(fb, centerValI, GMP_RNDN);
+		mpfr_div(fb, fb, temp, GMP_RNDN);
+		//create C
+		mpfr_atan2(fc, centerValJ, centerValI, GMP_RNDN);
+		//create D
+		mpfr_set(fd, centerValI, GMP_RNDN);
+		mpfr_mul(fd, fd, centerValJ, GMP_RNDN);
+		mpfr_div(fd, fd, tempSqr, GMP_RNDN);
+		//create E
+		mpfr_set(fe, fd, GMP_RNDN);
+		mpfr_neg(fe, fe, GMP_RNDN);
+		//create F
+		mpfr_sqr(ff, centerValJ, GMP_RNDN);
+		mpfr_sqr(temp2, centerValI, GMP_RNDN);
+		mpfr_sub(ff, ff, temp2, GMP_RNDN);
+		mpfr_div(ff, ff, tempSqr, GMP_RNDN);
+
+		//clean-up
+		mpfr_clears(centerValI, centerValJ, increment, temp, tempSqr, temp2, (mpfr_ptr)0);
 	}
 
 }

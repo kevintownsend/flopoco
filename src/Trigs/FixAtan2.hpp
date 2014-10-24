@@ -73,6 +73,8 @@ namespace flopoco {
 		 */
 		void emulate(TestCase* tc);
 
+		void generateTaylorOrder2Parameters(int x, int y, mpfr_t &fa, mpfr_t &fb, mpfr_t &fc, mpfr_t &fd, mpfr_t &fe, mpfr_t &ff);
+
 		void buildStandardTestCases(TestCaseList* tcl);
 
 	private:
@@ -99,6 +101,8 @@ namespace flopoco {
 		int g;											/**< the number of guard bits */
 		double ratio;									/**< ration to use for the multiplications */
 		double maxValA, maxValB, maxValC;				/**< the maximum values of the parameters A, B and C, as determined by checkArchitecture()*/
+		double maxValD, maxValE, maxValF;				/**< the maximum values of the parameters D, E and F, as determined by checkArchitecture()*/
+		int kSize;
 
 		bool plainVHDL;									/**< whether to use the straightforward way of generating the VHDL code (+, *), or using a Bitheap */
 
