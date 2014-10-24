@@ -40,7 +40,7 @@ namespace flopoco {
 		setCopyrightString("Florent de Dinechin, Matei Istoan, 2014");
 
 		//set the VHDL generation style
-		plainVHDL =  true;
+		plainVHDL =  false;
 
 		// build the name
 		ostringstream name;
@@ -91,9 +91,6 @@ namespace flopoco {
 			int msbB = intlog2(maxValB)+1;
 			int msbC = intlog2(maxValC)+1;
 			int maxMSB = maxInt(3, msbA, msbB, msbC);
-
-			//create the bitheap
-			bitHeap = new BitHeap(this, (maxMSB+2)+wOut+g);
 
 			if(plainVHDL)
 			{
@@ -148,6 +145,9 @@ namespace flopoco {
 
 			}else
 			{
+				//create the bitheap
+				bitHeap = new BitHeap(this, (maxMSB+2)+wOut+g);
+
 				//create the input signals for the table
 				vhdl << tab << declare("XHigh", k-1) << " <= std_logic_vector(X" << range(2*k-2, k) << ");" << endl;
 				vhdl << tab << declare("YHigh", k)   << " <= std_logic_vector(Y" << range(2*k-1, k) << ");" << endl;
@@ -238,91 +238,261 @@ namespace flopoco {
 			int msbF = intlog2(maxValF)+1;
 			int maxMSB = maxInt(6, msbA, msbB, msbC, msbD, msbE, msbF);
 
-			//split the input signals, and create the address signal for the table
-			vhdl << tab << declare("XHigh", k-1) << " <= std_logic_vector(X" << range(wIn-2, wIn-k) << ");" << endl;
-			vhdl << tab << declare("YHigh", k)   << " <= std_logic_vector(Y" << range(wIn-1, wIn-k) << ");" << endl;
-			vhdl << endl;
-			vhdl << tab << declare("atan2TableInput", 2*k-1) << " <= std_logic_vector(XHigh) & std_logic_vector(YHigh);" << endl;
-			vhdl << endl;
+			if(plainVHDL)
+			{
+				//split the input signals, and create the address signal for the table
+				vhdl << tab << declare("XHigh", k-1) << " <= std_logic_vector(X" << range(wIn-2, wIn-k) << ");" << endl;
+				vhdl << tab << declare("YHigh", k)   << " <= std_logic_vector(Y" << range(wIn-1, wIn-k) << ");" << endl;
+				vhdl << endl;
+				vhdl << tab << declare("atan2TableInput", 2*k-1) << " <= std_logic_vector(XHigh) & std_logic_vector(YHigh);" << endl;
+				vhdl << endl;
 
-			//create the table for atan(y/x)
-			Atan2Table *table = new Atan2Table(target, 2*k-1, msbA+msbB+msbC+msbD+msbE+msbF+6*(wOut+g),
-												architectureType, msbA, msbB, msbC, msbD, msbE, msbF);
+				//create the table for atan(y/x)
+				Atan2Table *table = new Atan2Table(target, 2*k-1, msbA+msbB+msbC+msbD+msbE+msbF+6*(wOut+g),
+													architectureType, msbA, msbB, msbC, msbD, msbE, msbF);
 
-			//add the table to the operator
-			addSubComponent(table);
-			useSoftRAM(table);
-			//useHardRAM(table);
-			inPortMap (table , "X", "atan2TableInput");
-			outPortMap(table , "Y", "atan2TableOutput");
-			vhdl << instance(table , "KCMTable");
-			vhdl << endl;
+				//add the table to the operator
+				addSubComponent(table);
+				useSoftRAM(table);
+				//useHardRAM(table);
+				inPortMap (table , "X", "atan2TableInput");
+				outPortMap(table , "Y", "atan2TableOutput");
+				vhdl << instance(table , "KCMTable");
+				vhdl << endl;
 
-			//split the output of the table to the corresponding parts A, B, C, D, E and F
-			vhdl << tab << declareFixPoint("F", true, msbF-1,  -wOut-g) << " <= signed(atan2TableOutput"
-					<< range(msbF+1*(wOut+g)-1, 0) << ");" << endl;
-			vhdl << tab << declareFixPoint("E", true, msbE-1,  -wOut-g) << " <= signed(atan2TableOutput"
-					<< range(msbE+msbF+2*(wOut+g)-1, msbF+1*(wOut+g)) << ");" << endl;
-			vhdl << tab << declareFixPoint("D", true, msbD-1,  -wOut-g) << " <= signed(atan2TableOutput"
-					<< range(msbD+msbE+msbF+3*(wOut+g)-1, msbE+msbF+2*(wOut+g)) << ");" << endl;
-			vhdl << tab << declareFixPoint("C", true, msbC-1,  -wOut-g) << " <= signed(atan2TableOutput"
-					<< range(msbC+msbD+msbE+msbF+4*(wOut+g)-1, msbD+msbE+msbF+3*(wOut+g)) << ");" << endl;
-			vhdl << tab << declareFixPoint("B", true, msbB-1,  -wOut-g) << " <= signed(atan2TableOutput"
-					<< range(msbB+msbC+msbD+msbE+msbF+5*(wOut+g)-1, msbC+msbD+msbE+msbF+4*(wOut+g)) << ");" << endl;
-			vhdl << tab << declareFixPoint("A", true, msbA-1,  -wOut-g) << " <= signed(atan2TableOutput"
-					<< range(msbA+msbB+msbC+msbD+msbE+msbF+6*(wOut+g)-1, msbB+msbC+msbD+msbE+msbF+5*(wOut+g)) << ");" << endl;
-			vhdl << endl;
+				//split the output of the table to the corresponding parts A, B, C, D, E and F
+				vhdl << tab << declareFixPoint("F", true, msbF-1,  -wOut-g) << " <= signed(atan2TableOutput"
+						<< range(msbF+1*(wOut+g)-1, 0) << ");" << endl;
+				vhdl << tab << declareFixPoint("E", true, msbE-1,  -wOut-g) << " <= signed(atan2TableOutput"
+						<< range(msbE+msbF+2*(wOut+g)-1, msbF+1*(wOut+g)) << ");" << endl;
+				vhdl << tab << declareFixPoint("D", true, msbD-1,  -wOut-g) << " <= signed(atan2TableOutput"
+						<< range(msbD+msbE+msbF+3*(wOut+g)-1, msbE+msbF+2*(wOut+g)) << ");" << endl;
+				vhdl << tab << declareFixPoint("C", true, msbC-1,  -wOut-g) << " <= signed(atan2TableOutput"
+						<< range(msbC+msbD+msbE+msbF+4*(wOut+g)-1, msbD+msbE+msbF+3*(wOut+g)) << ");" << endl;
+				vhdl << tab << declareFixPoint("B", true, msbB-1,  -wOut-g) << " <= signed(atan2TableOutput"
+						<< range(msbB+msbC+msbD+msbE+msbF+5*(wOut+g)-1, msbC+msbD+msbE+msbF+4*(wOut+g)) << ");" << endl;
+				vhdl << tab << declareFixPoint("A", true, msbA-1,  -wOut-g) << " <= signed(atan2TableOutput"
+						<< range(msbA+msbB+msbC+msbD+msbE+msbF+6*(wOut+g)-1, msbB+msbC+msbD+msbE+msbF+5*(wOut+g)) << ");" << endl;
+				vhdl << endl;
 
-			vhdl << tab << declareFixPoint("DeltaX", true, -k-1,  -wIn) << " <= signed(not(X(" << of(wIn-k-1) << ")) & X" << range(wIn-k-2, 0) << ");" << endl;
-			vhdl << tab << declareFixPoint("DeltaY", true, -k-1,  -wIn) << " <= signed(not(Y(" << of(wIn-k-1) << ")) & Y" << range(wIn-k-2, 0) << ");" << endl;
-			vhdl << endl;
+				vhdl << tab << declareFixPoint("DeltaX", true, -k-1,  -wIn) << " <= signed(not(X(" << of(wIn-k-1) << ")) & X" << range(wIn-k-2, 0) << ");" << endl;
+				vhdl << tab << declareFixPoint("DeltaY", true, -k-1,  -wIn) << " <= signed(not(Y(" << of(wIn-k-1) << ")) & Y" << range(wIn-k-2, 0) << ");" << endl;
+				vhdl << endl;
 
-			//create A*DeltaX and B*DeltaY
-			vhdl << tab << declareFixPoint("A_DeltaX", true, msbA-k-1,  -wOut-g-wIn) << " <= A * DeltaX;" << endl;
-			vhdl << tab << declareFixPoint("B_DeltaY", true, msbB-k-1,  -wOut-g-wIn) << " <= B * DeltaY;" << endl;
-			vhdl << endl;
+				//create A*DeltaX and B*DeltaY
+				vhdl << tab << declareFixPoint("A_DeltaX", true, msbA-k-1,  -wOut-g-wIn) << " <= A * DeltaX;" << endl;
+				vhdl << tab << declareFixPoint("B_DeltaY", true, msbB-k-1,  -wOut-g-wIn) << " <= B * DeltaY;" << endl;
+				vhdl << endl;
 
-			//create DeltaX^2, DeltaY^2 and DeltaX*DeltaY
-			vhdl << tab << declareFixPoint("DeltaX2", true, -2*k-1,  -2*wIn) << " <= DeltaX * DeltaX;" << endl;
-			vhdl << tab << declareFixPoint("DeltaY2", true, -2*k-1,  -2*wIn) << " <= DeltaY * DeltaY;" << endl;
-			vhdl << tab << declareFixPoint("DeltaX_DeltaY", true, -2*k-1,  -2*wIn) << " <= DeltaX * DeltaY;" << endl;
-			vhdl << endl;
-			//create D*DeltaX^2, E*DeltaY^2 and F*DeltaX*DeltaY
-			vhdl << tab << declareFixPoint("D_DeltaX2", true, msbD-2*k-1,  -2*wIn-wOut-g) << " <= D * DeltaX2;" << endl;
-			vhdl << tab << declareFixPoint("E_DeltaY2", true, msbE-2*k-1,  -2*wIn-wOut-g) << " <= E * DeltaY2;" << endl;
-			vhdl << tab << declareFixPoint("F_DeltaX_DeltaY", true, msbF-2*k-1,  -2*wIn-wOut-g) << " <= F * DeltaX_DeltaY;" << endl;
-			vhdl << endl;
+				//create DeltaX^2, DeltaY^2 and DeltaX*DeltaY
+				vhdl << tab << declareFixPoint("DeltaX2", true, -2*k-1,  -2*wIn) << " <= DeltaX * DeltaX;" << endl;
+				vhdl << tab << declareFixPoint("DeltaY2", true, -2*k-1,  -2*wIn) << " <= DeltaY * DeltaY;" << endl;
+				vhdl << tab << declareFixPoint("DeltaX_DeltaY", true, -2*k-1,  -2*wIn) << " <= DeltaX * DeltaY;" << endl;
+				vhdl << endl;
 
-			//align the signals to the output format to the output format
-			resizeFixPoint("A_DeltaX_sgnExt", "A_DeltaX", maxMSB-1, -wOut-g);
-			resizeFixPoint("B_DeltaY_sgnExt", "B_DeltaY", maxMSB-1, -wOut-g);
-			resizeFixPoint("C_sgnExt", "C", maxMSB-1, -wOut-g);
-			resizeFixPoint("D_DeltaX2_sgnExt", "D_DeltaX2", maxMSB-1, -wOut-g);
-			resizeFixPoint("E_DeltaY2_sgnExt", "E_DeltaY2", maxMSB-1, -wOut-g);
-			resizeFixPoint("F_DeltaX_DeltaY_sgnExt", "F_DeltaX_DeltaY", maxMSB-1, -wOut-g);
-			vhdl << endl;
+				//align the products, discard the extra lsb-s
+				resizeFixPoint("DeltaX2_short", "DeltaX2", -2*k-1, -wOut-g);
+				resizeFixPoint("DeltaY2_short", "DeltaY2", -2*k-1, -wOut-g);
+				resizeFixPoint("DeltaX_DeltaY_short", "DeltaX_DeltaY", -2*k-1, -wOut-g);
+				vhdl << endl;
 
-			//add everything up
-			vhdl << tab << declareFixPoint("Sum1", true, maxMSB, -wOut-g)
-					<< " <= (A_DeltaX_sgnExt(A_DeltaX_sgnExt'HIGH) & A_DeltaX_sgnExt) + (B_DeltaY_sgnExt(B_DeltaY_sgnExt'HIGH) & B_DeltaY_sgnExt);" << endl;
-			vhdl << tab << declareFixPoint("Sum2", true, maxMSB, -wOut-g)
-					<< " <= (C_sgnExt(C_sgnExt'HIGH) & C_sgnExt) + (D_DeltaX2_sgnExt(D_DeltaX2_sgnExt'HIGH) & D_DeltaX2_sgnExt);" << endl;
-			vhdl << tab << declareFixPoint("Sum3", true, maxMSB, -wOut-g)
-					<< " <= (E_DeltaY2_sgnExt(E_DeltaY2_sgnExt'HIGH) & E_DeltaY2_sgnExt) + (F_DeltaX_DeltaY_sgnExt(F_DeltaX_DeltaY_sgnExt'HIGH) & F_DeltaX_DeltaY_sgnExt);" << endl;
-			vhdl << tab << declareFixPoint("Sum4", true, maxMSB+1, -wOut-g)
-					<< " <= (Sum1(Sum1'HIGH) & Sum1) + (Sum2(Sum2'HIGH) & Sum2);" << endl;
-			vhdl << tab << declareFixPoint("Sum5", true, maxMSB+2, -wOut-g)
-					<< " <= (Sum4(Sum4'HIGH) & Sum4) + (Sum3(Sum3'HIGH) & Sum3(Sum3'HIGH) & Sum3);" << endl;
-			vhdl << endl;
+				//create D*DeltaX^2, E*DeltaY^2 and F*DeltaX*DeltaY
+				/*
+				vhdl << tab << declareFixPoint("D_DeltaX2", true, msbD-2*k-1,  -2*wIn-wOut-g) << " <= D * DeltaX2;" << endl;
+				vhdl << tab << declareFixPoint("E_DeltaY2", true, msbE-2*k-1,  -2*wIn-wOut-g) << " <= E * DeltaY2;" << endl;
+				vhdl << tab << declareFixPoint("F_DeltaX_DeltaY", true, msbF-2*k-1,  -2*wIn-wOut-g) << " <= F * DeltaX_DeltaY;" << endl;
+				*/
+				vhdl << tab << declareFixPoint("D_DeltaX2", true, msbD-2*k-1,  -2*(wOut+g)) << " <= D * DeltaX2_short;" << endl;
+				vhdl << tab << declareFixPoint("E_DeltaY2", true, msbE-2*k-1,  -2*(wOut+g)) << " <= E * DeltaY2_short;" << endl;
+				vhdl << tab << declareFixPoint("F_DeltaX_DeltaY", true, msbF-2*k-1,  -2*(wOut+g)) << " <= F * DeltaX_DeltaY_short;" << endl;
+				vhdl << endl;
 
-			//extract the final result
-			resizeFixPoint("Rint", "Sum5", 1, -wOut+1);
-			vhdl << tab << declareFixPoint("Rint_rndCst", true, 1, -wOut+1) << " <= signed(std_logic_vector\'(\"" << zg(wOut, -2) << "1\"));" << endl;
-			vhdl << tab << declareFixPoint("Rint_rnd", true, 1, -wOut+1) << " <= Rint + Rint_rndCst;" << endl;
+				//align the signals to the output format to the output format
+				resizeFixPoint("A_DeltaX_sgnExt", "A_DeltaX", maxMSB-1, -wOut-g);
+				resizeFixPoint("B_DeltaY_sgnExt", "B_DeltaY", maxMSB-1, -wOut-g);
+				resizeFixPoint("C_sgnExt", "C", maxMSB-1, -wOut-g);
+				resizeFixPoint("D_DeltaX2_sgnExt", "D_DeltaX2", maxMSB-1, -wOut-g);
+				resizeFixPoint("E_DeltaY2_sgnExt", "E_DeltaY2", maxMSB-1, -wOut-g);
+				resizeFixPoint("F_DeltaX_DeltaY_sgnExt", "F_DeltaX_DeltaY", maxMSB-1, -wOut-g);
+				vhdl << endl;
 
-			//return the result
-			resizeFixPoint("Rint_stdlv", "Rint_rnd", 1, -wOut+2);
-			vhdl << tab << "R <= std_logic_vector(Rint_stdlv);" << endl;
+				//add everything up
+				vhdl << tab << declareFixPoint("Sum1", true, maxMSB, -wOut-g)
+						<< " <= (A_DeltaX_sgnExt(A_DeltaX_sgnExt'HIGH) & A_DeltaX_sgnExt) + (B_DeltaY_sgnExt(B_DeltaY_sgnExt'HIGH) & B_DeltaY_sgnExt);" << endl;
+				vhdl << tab << declareFixPoint("Sum2", true, maxMSB, -wOut-g)
+						<< " <= (C_sgnExt(C_sgnExt'HIGH) & C_sgnExt) + (D_DeltaX2_sgnExt(D_DeltaX2_sgnExt'HIGH) & D_DeltaX2_sgnExt);" << endl;
+				vhdl << tab << declareFixPoint("Sum3", true, maxMSB, -wOut-g)
+						<< " <= (E_DeltaY2_sgnExt(E_DeltaY2_sgnExt'HIGH) & E_DeltaY2_sgnExt) + (F_DeltaX_DeltaY_sgnExt(F_DeltaX_DeltaY_sgnExt'HIGH) & F_DeltaX_DeltaY_sgnExt);" << endl;
+				vhdl << tab << declareFixPoint("Sum4", true, maxMSB+1, -wOut-g)
+						<< " <= (Sum1(Sum1'HIGH) & Sum1) + (Sum2(Sum2'HIGH) & Sum2);" << endl;
+				vhdl << tab << declareFixPoint("Sum5", true, maxMSB+2, -wOut-g)
+						<< " <= (Sum4(Sum4'HIGH) & Sum4) + (Sum3(Sum3'HIGH) & Sum3(Sum3'HIGH) & Sum3);" << endl;
+				vhdl << endl;
+
+				//extract the final result
+				resizeFixPoint("Rint", "Sum5", 1, -wOut+1);
+				vhdl << tab << declareFixPoint("Rint_rndCst", true, 1, -wOut+1) << " <= signed(std_logic_vector\'(\"" << zg(wOut, -2) << "1\"));" << endl;
+				vhdl << tab << declareFixPoint("Rint_rnd", true, 1, -wOut+1) << " <= Rint + Rint_rndCst;" << endl;
+
+				//return the result
+				resizeFixPoint("Rint_stdlv", "Rint_rnd", 1, -wOut+2);
+				vhdl << tab << "R <= std_logic_vector(Rint_stdlv);" << endl;
+			}else
+			{
+				//create the bitheap
+				bitHeap = new BitHeap(this, (maxMSB+2)+wOut+g);
+
+				//create the input signals for the table
+				vhdl << tab << declare("XHigh", k-1) << " <= std_logic_vector(X" << range(wIn-2, wIn-k) << ");" << endl;
+				vhdl << tab << declare("YHigh", k)   << " <= std_logic_vector(Y" << range(wIn-1, wIn-k) << ");" << endl;
+				vhdl << endl;
+				vhdl << tab << declare("atan2TableInput", 2*k-1) << " <= std_logic_vector(XHigh) & std_logic_vector(YHigh);" << endl;
+				vhdl << endl;
+
+				//create the table for atan(y/x)
+				Atan2Table *table = new Atan2Table(target, 2*k-1, msbA+msbB+msbC+msbD+msbE+msbF+6*(wOut+g),
+													architectureType, msbA, msbB, msbC, msbD, msbE, msbF);
+
+				//add the table to the operator
+				addSubComponent(table);
+				useSoftRAM(table);
+				//useHardRAM(table);
+				inPortMap (table , "X", "atan2TableInput");
+				outPortMap(table , "Y", "atan2TableOutput");
+				vhdl << instance(table , "KCMTable");
+				vhdl << endl;
+
+				//split the output of the table to the corresponding parts A, B, C, D, E and F
+				vhdl << tab << declareFixPoint("F", true, msbF-1,  -wOut-g) << " <= signed(atan2TableOutput"
+						<< range(msbF+1*(wOut+g)-1, 0) << ");" << endl;
+				vhdl << tab << declareFixPoint("E", true, msbE-1,  -wOut-g) << " <= signed(atan2TableOutput"
+						<< range(msbE+msbF+2*(wOut+g)-1, msbF+1*(wOut+g)) << ");" << endl;
+				vhdl << tab << declareFixPoint("D", true, msbD-1,  -wOut-g) << " <= signed(atan2TableOutput"
+						<< range(msbD+msbE+msbF+3*(wOut+g)-1, msbE+msbF+2*(wOut+g)) << ");" << endl;
+				vhdl << tab << declareFixPoint("C", true, msbC-1,  -wOut-g) << " <= signed(atan2TableOutput"
+						<< range(msbC+msbD+msbE+msbF+4*(wOut+g)-1, msbD+msbE+msbF+3*(wOut+g)) << ");" << endl;
+				vhdl << tab << declareFixPoint("B", true, msbB-1,  -wOut-g) << " <= signed(atan2TableOutput"
+						<< range(msbB+msbC+msbD+msbE+msbF+5*(wOut+g)-1, msbC+msbD+msbE+msbF+4*(wOut+g)) << ");" << endl;
+				vhdl << tab << declareFixPoint("A", true, msbA-1,  -wOut-g) << " <= signed(atan2TableOutput"
+						<< range(msbA+msbB+msbC+msbD+msbE+msbF+6*(wOut+g)-1, msbB+msbC+msbD+msbE+msbF+5*(wOut+g)) << ");" << endl;
+				vhdl << endl;
+
+				//create DeltaX and DeltaY
+				vhdl << tab << declareFixPoint("DeltaX", true, -k-1,  -wIn) << " <= signed(not(X(" << of(wIn-k-1) << ")) & X" << range(wIn-k-2, 0) << ");" << endl;
+				vhdl << tab << declareFixPoint("DeltaY", true, -k-1,  -wIn) << " <= signed(not(Y(" << of(wIn-k-1) << ")) & Y" << range(wIn-k-2, 0) << ");" << endl;
+				vhdl << endl;
+
+				//create A*DeltaX
+				//	convert the terms to std_logic_vector
+				vhdl << tab << declare("DeltaX_stdlv", wIn-k) << " <= std_logic_vector(DeltaX);" << endl;
+				vhdl << tab << declare("A_stdlv", msbA+wOut+g) << " <= std_logic_vector(A);" << endl;
+				//	multiply
+				IntMultiplier* multADeltaX;
+				multADeltaX = new IntMultiplier(this,								//parent operator
+											 bitHeap,							//the bit heap that performs the compression
+											 getSignalByName("DeltaX_stdlv"),	//first input to the multiplier (a signal)
+											 getSignalByName("A_stdlv"),		//second input to the multiplier (a signal)
+											 -wIn,								//offset of the LSB of the multiplier in the bit heap
+											 false /*negate*/,					//whether to subtract the result of the multiplication from the bit heap
+											 true,								//signed/unsigned operator
+											 ratio);							//DSP ratio
+				vhdl << endl;
+
+				//create B*DeltaY
+				//	convert the terms to std_logic_vector
+				vhdl << tab << declare("DeltaY_stdlv", wIn-k) << " <= std_logic_vector(DeltaY);" << endl;
+				vhdl << tab << declare("B_stdlv", msbB+wOut+g) << " <= std_logic_vector(B);" << endl;
+				//	multiply
+				IntMultiplier* multBDeltaY;
+				multBDeltaY = new IntMultiplier(this,								//parent operator
+												 bitHeap,							//the bit heap that performs the compression
+												 getSignalByName("DeltaY_stdlv"),	//first input to the multiplier (a signal)
+												 getSignalByName("B_stdlv"),		//second input to the multiplier (a signal)
+												 -wIn,								//offset of the LSB of the multiplier in the bit heap
+												 false /*negate*/,					//whether to subtract the result of the multiplication from the bit heap
+												 true,								//signed/unsigned operator
+												 ratio);							//DSP ratio
+				vhdl << endl;
+
+				//Add C
+				bitHeap->addSignedBitVector(0,									//weight of signal in the bit heap
+											"C",								//name of the signal
+											msbC+wOut+g,						//size of the signal added
+											0,									//index of the lsb in the bit vector from which to add the bits of the addend
+											false);								//if we are correcting the index in the bit vector with a negative weight
+				vhdl << endl;
+
+				//create DeltaX^2, DeltaY^2 and DeltaX*DeltaY
+				vhdl << tab << declareFixPoint("DeltaX2", true, -2*k-1,  -2*wIn) << " <= DeltaX * DeltaX;" << endl;
+				vhdl << tab << declareFixPoint("DeltaY2", true, -2*k-1,  -2*wIn) << " <= DeltaY * DeltaY;" << endl;
+				vhdl << tab << declareFixPoint("DeltaX_DeltaY", true, -2*k-1,  -2*wIn) << " <= DeltaX * DeltaY;" << endl;
+				vhdl << endl;
+
+				//align the products, discard the extra lsb-s
+				resizeFixPoint("DeltaX2_short", "DeltaX2", -2*k-1, -wOut-g);
+				resizeFixPoint("DeltaY2_short", "DeltaY2", -2*k-1, -wOut-g);
+				resizeFixPoint("DeltaX_DeltaY_short", "DeltaX_DeltaY", -2*k-1, -wOut-g);
+				vhdl << endl;
+
+				//create D*DeltaX^2, E*DeltaY^2 and F*DeltaX*DeltaY
+
+				//create D*DeltaX^2
+				//	convert the terms to std_logic_vector
+				vhdl << tab << declare("DeltaX2_short_stdlv", wOut+g-2*k) << " <= std_logic_vector(DeltaX2_short);" << endl;
+				vhdl << tab << declare("D_stdlv", msbD+wOut+g) << " <= std_logic_vector(D);" << endl;
+				//	multiply
+				IntMultiplier* multDDeltaX2;
+				multDDeltaX2 = new IntMultiplier(this,								//parent operator
+												 bitHeap,							//the bit heap that performs the compression
+												 getSignalByName("DeltaX2_short_stdlv"),	//first input to the multiplier (a signal)
+												 getSignalByName("D_stdlv"),		//second input to the multiplier (a signal)
+												 -wOut-g,							//offset of the LSB of the multiplier in the bit heap
+												 false /*negate*/,					//whether to subtract the result of the multiplication from the bit heap
+												 true,								//signed/unsigned operator
+												 ratio);							//DSP ratio
+				vhdl << endl;
+
+				//	create E*DeltaY^2
+				//	convert the terms to std_logic_vector
+				vhdl << tab << declare("DeltaY2_short_stdlv", wOut+g-2*k) << " <= std_logic_vector(DeltaY2_short);" << endl;
+				vhdl << tab << declare("E_stdlv", msbE+wOut+g) << " <= std_logic_vector(E);" << endl;
+				//	multiply
+				IntMultiplier* multEDeltaY2;
+				multEDeltaY2 = new IntMultiplier(this,								//parent operator
+												 bitHeap,							//the bit heap that performs the compression
+												 getSignalByName("DeltaY2_short_stdlv"),	//first input to the multiplier (a signal)
+												 getSignalByName("E_stdlv"),		//second input to the multiplier (a signal)
+												 -wOut-g,							//offset of the LSB of the multiplier in the bit heap
+												 false /*negate*/,					//whether to subtract the result of the multiplication from the bit heap
+												 true,								//signed/unsigned operator
+												 ratio);							//DSP ratio
+				vhdl << endl;
+
+				//	create F*DeltaX_DeltaY
+				//	convert the terms to std_logic_vector
+				vhdl << tab << declare("DeltaX_DeltaY_short_stdlv", wOut+g-2*k) << " <= std_logic_vector(DeltaX_DeltaY_short);" << endl;
+				vhdl << tab << declare("F_stdlv", msbF+wOut+g) << " <= std_logic_vector(F);" << endl;
+				//	multiply
+				IntMultiplier* multFDeltaXDeltaY;
+				multFDeltaXDeltaY = new IntMultiplier(this,								//parent operator
+													 bitHeap,							//the bit heap that performs the compression
+													 getSignalByName("DeltaX_DeltaY_short_stdlv"),	//first input to the multiplier (a signal)
+													 getSignalByName("F_stdlv"),		//second input to the multiplier (a signal)
+													 -wOut-g,							//offset of the LSB of the multiplier in the bit heap
+													 false /*negate*/,					//whether to subtract the result of the multiplication from the bit heap
+													 true,								//signed/unsigned operator
+													 ratio);							//DSP ratio
+				vhdl << endl;
+
+				//add the rounding bit - take into consideration the final alignment
+				bitHeap->addConstantOneBit(g-1+2);
+
+				//compress the bit heap
+				bitHeap -> generateCompressorVHDL();
+
+				//extract the result - take into consideration the final alignment
+				vhdl << tab << "R <= " << bitHeap->getSumName() << range(wOut+g-1+2, g+2) << ";" << endl;
+			}
 
 		}else if(architectureType == 3)
 		{
