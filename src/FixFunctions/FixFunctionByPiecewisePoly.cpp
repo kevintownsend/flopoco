@@ -29,6 +29,7 @@
 
 
 #include "FixFunctionByPiecewisePoly.hpp"
+#include "FixFunctionByTable.hpp"
 #include "FixHornerEvaluator.hpp"
 
 #ifdef HAVE_SOLLYA
@@ -85,61 +86,73 @@ namespace flopoco{
 
 		setCopyrightString("Florent de Dinechin (2014)");
 		addHeaderComment("-- Evaluator for " +  f-> getDescription() + "\n"); 
-		int wX=-lsbIn;
+ 		int wX=-lsbIn;
 		addInput("X", wX);
 		int outputSize = msbOut-lsbOut+1; // TODO finalRounding would impact this line
 		addOutput("Y" ,outputSize , 2);
 		useNumericStd();
 
-		// Build the polynomial approximation
-		REPORT(DETAILED, "Computing polynomial approximation for target precision "<< lsbOut-2);
-		double targetAcc= pow(2, lsbOut-2);
-		polyApprox = new PiecewisePolyApprox(func, targetAcc, degree);
-		int alpha =  polyApprox-> alpha; // coeff table input size 
+		if(degree==0){ // This is a simple table
+			FixFunctionByTable* table=new FixFunctionByTable(target, func, lsbIn, msbOut, lsbOut);
+			addSubComponent(table);
 
-		// Resize its MSB to the one input by the user. This is useful for functions that "touch" a power of two and may thus overflow by one bit.
-		for (int i=0; i<(1<<alpha); i++) {
-			polyApprox -> poly[i] -> coeff[0] -> changeMSB(msbOut);
+			inPortMap(table, "X", "X");
+			outPortMap(table, "Y", "YR");
+			vhdl << instance(table, "simpleTable") << endl;
+			vhdl << tab << "Y <= YR;" << endl; 
 		}
-		polyApprox -> MSB[0] = msbOut;
+		else{
 
-		// Store it in a table
-		int polyTableOutputSize=0;
-		for (int i=0; i<=degree; i++) {
-			polyTableOutputSize += polyApprox->MSB[i] - polyApprox->LSB +1;
-		} 
-		REPORT(DETAILED, "Poly table input size  = " << alpha);
-		REPORT(DETAILED, "Poly table output size = " << polyTableOutputSize);
+			// Build the polynomial approximation
+			REPORT(DETAILED, "Computing polynomial approximation for target precision "<< lsbOut-2);
+			double targetAcc= pow(2, lsbOut-2);
+			polyApprox = new PiecewisePolyApprox(func, targetAcc, degree);
+			int alpha =  polyApprox-> alpha; // coeff table input size 
 
-		// This is where we add the final rounding bit
-		FixFunctionByPiecewisePoly::CoeffTable* coeffTable = new CoeffTable(target, alpha, polyTableOutputSize, polyApprox, 
-																																				finalRounding, lsbOut-1 /*position of the round bit*/) ;
-		addSubComponent(coeffTable);
+			// Resize its MSB to the one input by the user. This is useful for functions that "touch" a power of two and may thus overflow by one bit.
+			for (int i=0; i<(1<<alpha); i++) {
+				polyApprox -> poly[i] -> coeff[0] -> changeMSB(msbOut);
+			}
+			polyApprox -> MSB[0] = msbOut;
 
-		vhdl << tab << declare("A", alpha)  << " <= X" << range(wX-1, wX-alpha) << ";" << endl;
-		vhdl << tab << declare("Z", wX-alpha)  << " <= X" << range(wX-alpha-1, 0) << ";" << endl;
+			// Store it in a table
+			int polyTableOutputSize=0;
+			for (int i=0; i<=degree; i++) {
+				polyTableOutputSize += polyApprox->MSB[i] - polyApprox->LSB +1;
+			} 
+			REPORT(DETAILED, "Poly table input size  = " << alpha);
+			REPORT(DETAILED, "Poly table output size = " << polyTableOutputSize);
 
-		inPortMap(coeffTable, "X", "A");
-		outPortMap(coeffTable, "Y", "Coeffs");
-		vhdl << instance(coeffTable, "coeffTable") << endl;
+			// This is where we add the final rounding bit
+			FixFunctionByPiecewisePoly::CoeffTable* coeffTable = new CoeffTable(target, alpha, polyTableOutputSize, polyApprox, 
+																																					finalRounding, lsbOut-1 /*position of the round bit*/) ;
+			addSubComponent(coeffTable);
 
-		int currentShift=0;
-		for(int i=polyApprox->degree; i>=0; i--) {
-			vhdl << tab << declare(join("A",i), polyApprox->MSB[i] - polyApprox->LSB +1)  << " <= Coeffs" << range(currentShift + (polyApprox->MSB[i] - polyApprox->LSB), currentShift) << ";" << endl;
-			currentShift +=  polyApprox->MSB[i] - polyApprox->LSB +1;
-		}
+			vhdl << tab << declare("A", alpha)  << " <= X" << range(wX-1, wX-alpha) << ";" << endl;
+			vhdl << tab << declare("Z", wX-alpha)  << " <= X" << range(wX-alpha-1, 0) << ";" << endl;
 
-		FixHornerEvaluator* horner = new FixHornerEvaluator(target, lsbIn+alpha, msbOut, lsbOut, degree, polyApprox->MSB, polyApprox->LSB, true, true, plainStupidVHDL);		
-		addSubComponent(horner);
+			inPortMap(coeffTable, "X", "A");
+			outPortMap(coeffTable, "Y", "Coeffs");
+			vhdl << instance(coeffTable, "coeffTable") << endl;
 
-		inPortMap(horner, "X", "Z");
-		outPortMap(horner, "R", "Ys");
-		for(int i=0; i<=polyApprox->degree; i++) {
-			inPortMap(horner,  join("A",i),  join("A",i));
-		}
-		vhdl << instance(horner, "horner") << endl;
+			int currentShift=0;
+			for(int i=polyApprox->degree; i>=0; i--) {
+				vhdl << tab << declare(join("A",i), polyApprox->MSB[i] - polyApprox->LSB +1)  << " <= Coeffs" << range(currentShift + (polyApprox->MSB[i] - polyApprox->LSB), currentShift) << ";" << endl;
+				currentShift +=  polyApprox->MSB[i] - polyApprox->LSB +1;
+			}
+
+			FixHornerEvaluator* horner = new FixHornerEvaluator(target, lsbIn+alpha, msbOut, lsbOut, degree, polyApprox->MSB, polyApprox->LSB, true, true, plainStupidVHDL);		
+			addSubComponent(horner);
+
+			inPortMap(horner, "X", "Z");
+			outPortMap(horner, "R", "Ys");
+			for(int i=0; i<=polyApprox->degree; i++) {
+				inPortMap(horner,  join("A",i),  join("A",i));
+			}
+			vhdl << instance(horner, "horner") << endl;
 		
-		vhdl << tab << "Y <= " << "std_logic_vector(Ys);" << endl;
+			vhdl << tab << "Y <= " << "std_logic_vector(Ys);" << endl;
+		}
 	}
 
 
