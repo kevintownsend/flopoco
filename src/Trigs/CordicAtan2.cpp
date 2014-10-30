@@ -11,6 +11,8 @@
 #include "ConstMult/FixRealKCM.hpp"
 #include "ShiftersEtc/LZOC.hpp"
 #include "ShiftersEtc/Shifters.hpp"
+#include "FixFunctions/FixFunctionByPiecewisePoly.hpp"
+
 
 using namespace std;
 // TODO reduce the CORDIC datapaths (Y with leading 0s and X with leading ones)
@@ -32,9 +34,10 @@ namespace flopoco{
 	// An option to output the angle in the (atan(2^-i)) basis
 	// an an option for outputting the norm of the vector as well (scaled or not)
 
-#define CORDIC 0
-#define CORDIC_SCALING 1
-#define INVMULTATAN 2
+#define CORDIC 8
+#define CORDIC_SCALING 9
+#define INVMULTATAN 0
+
 
 
 
@@ -56,15 +59,11 @@ namespace flopoco{
 		int stage;
 		srcFileName="CordicAtan2";
 		setCopyrightString ( "Matei Istoan, Florent de Dinechin (2012-...)" );
+		useNumericStd_Unsigned();
 	
 		ostringstream name;
-		name << "CordicAtan2_"<< w_;
-		if(target->isPipelined())
-			name  <<"_f" << target->frequencyMHz();
-		else 
-			name << "_comb";
-		name << "_uid" << getNewUId();
-		setName( name.str() );
+		name << "CordicAtan2_"<< w_ << "_uid" << getNewUId();
+		setNameWithFreq( name.str() );
 	
 		// everybody needs many digits of Pi (used by emulate etc)
 		mpfr_init2(constPi, 10*w);
@@ -92,7 +91,7 @@ namespace flopoco{
 		int sizeXYInRR;
 		bool doScaling;
 
-		switch(method) {
+		switch(method & 0xF7) {
 		case CORDIC:
 			negateByComplement=true;
 			computeGuardBitsForCORDIC();
@@ -219,77 +218,49 @@ namespace flopoco{
 			vhdl << tab << declare("XRS", sizeXYR) << " <=  XR;" << endl;
 			vhdl << tab << declare("YRS", sizeXYR) << " <=  YR;" << endl;
 		}
-		////////////////////////////////////////////////////////////////////////////
-		// 
-		//   	 CORDIC iterations	
-		//
-		////////////////////////////////////////////////////////////////////////////
 
-		// Fixed-point considerations:
-		// Y -> 0 and X -> K.sqrt(x1^2+y1^2)
-		// Max value attained by X is sqrt(2)*K which is smaller than 2
+
+
+
+
+
 
 		int sizeZ=w-2+gA; // w-2 because two bits come from arg red 
-		int zMSB=-1;      // -1 because these two bits have weight 0 and -1, but we must keep the sign
-		int zLSB = zMSB-sizeZ+1;
-		int sizeX = w+gXY;
-		int sizeY = sizeX;
 
-		//		REPORT(DEBUG, "sizeXY=" << sizeXY << "   sizeXYR=" << sizeXYR);
+		string finalZ; // to hold the atan before reconstruction
 
-		vhdl << tab << declare("X1", sizeX) << " <= '0' & XRS & " << zg(sizeX-sizeXYR-1) << ";" <<endl;			
-		vhdl << tab << declare("Y1", sizeY) << " <= '0' & YRS & " << zg(sizeY-sizeXYR-1) << ";" <<endl;			
-		stage=1; 
+
+		if(method==CORDIC || method==CORDIC_SCALING) {
+
+			////////////////////////////////////////////////////////////////////////////
+			// 
+			//   	 CORDIC iterations	
+			//
+			////////////////////////////////////////////////////////////////////////////
+
+			// Fixed-point considerations:
+			// Y -> 0 and X -> K.sqrt(x1^2+y1^2)
+			// Max value attained by X is sqrt(2)*K which is smaller than 2
+
+			int zMSB=-1;      // -1 because these two bits have weight 0 and -1, but we must keep the sign
+			int zLSB = zMSB-sizeZ+1;
+			int sizeX = w+gXY;
+			int sizeY = sizeX;
+
+			//		REPORT(DEBUG, "sizeXY=" << sizeXY << "   sizeXYR=" << sizeXYR);
+
+			vhdl << tab << declare("X1", sizeX) << " <= '0' & XRS & " << zg(sizeX-sizeXYR-1) << ";" <<endl;			
+			vhdl << tab << declare("Y1", sizeY) << " <= '0' & YRS & " << zg(sizeY-sizeXYR-1) << ";" <<endl;			
+			stage=1; 
  
-		vhdl << tab << "--- Iteration " << stage << " : sign is known positive ---" << endl;
-		vhdl << tab << declare(join("YShift", stage), sizeX) << " <= " << rangeAssign(sizeX-1, sizeX-stage, "'0'") << " & Y" << stage << range(sizeX-1, stage) << ";" << endl;
-		vhdl << tab << declare(join("X", stage+1), sizeX) << " <= " 
-				 << join("X", stage) << " + " << join("YShift", stage) << " ;" << endl;
+			vhdl << tab << "--- Iteration " << stage << " : sign is known positive ---" << endl;
+			vhdl << tab << declare(join("YShift", stage), sizeX) << " <= " << rangeAssign(sizeX-1, sizeX-stage, "'0'") << " & Y" << stage << range(sizeX-1, stage) << ";" << endl;
+			vhdl << tab << declare(join("X", stage+1), sizeX) << " <= " 
+					 << join("X", stage) << " + " << join("YShift", stage) << " ;" << endl;
 		
-		vhdl << tab << declare(join("XShift", stage), sizeY) << " <= " << zg(stage) << " & X" << stage << range(sizeY-1, stage) << ";" <<endl;			
-		vhdl << tab << declare(join("Y", stage+1), sizeY) << " <= " 
-				 << join("Y", stage) << " - " << join("XShift", stage) << " ;" << endl;
-			
-
-		//create the constant signal for the arctan
-		mpfr_set_d(zatan, 1.0, GMP_RNDN);
-		mpfr_div_2si(zatan, zatan, stage, GMP_RNDN);
-		mpfr_atan(zatan, zatan, GMP_RNDN);
-		mpfr_div(zatan, zatan, constPi, GMP_RNDN);
-		mpfr_t roundbit;
-		mpfr_init2(roundbit, 30); // should be enough for anybody
-		mpfr_set_d(roundbit, 1.0, GMP_RNDN);
-		mpfr_div_2si(roundbit, roundbit, w, GMP_RNDN); // roundbit is in position 2^-w
-		
-		REPORT(DEBUG, "stage=" << stage << "  atancst=" << printMPFR(zatan));
-
-		mpfr_add(zatan, zatan, roundbit, GMP_RNDN);
-		vhdl << tab << declare("Z2", sizeZ) << " <= " << unsignedFixPointNumber(zatan, zMSB, zLSB) << "; -- initial atan, plus round bit" <<endl;
-
-
-		for(stage=2; stage<=maxIterations;    stage++, sizeY--){
-			// Invariant: sizeX-sizeY = stage-2
-			vhdl << tab << "--- Iteration " << stage << " ---" << endl;
-			vhdl << tab << declare(join("sgnY", stage))  << " <= " <<  join("Y", stage)  <<  of(sizeY-1) << ";" << endl;
-			
-			if(-2*stage+1 >= -w+1-gXY) { 
-				vhdl << tab << declare(join("YShift", stage), sizeX) 
-						 << " <= " << rangeAssign(sizeX-1, sizeX -(sizeX-sizeY+stage), join("sgnY", stage))   
-						 << " & Y" << stage << range(sizeY-1, stage) << ";" << endl;
-				
-				vhdl << tab << declare(join("X", stage+1), sizeX) << " <= " 
-						 << join("X", stage) << " - " << join("YShift", stage) << " when " << join("sgnY", stage) << "=\'1\'     else "
-						 << join("X", stage) << " + " << join("YShift", stage) << " ;" << endl;
-			}
-			else {	// autant pisser dans un violon
-				vhdl << tab << declare(join("X", stage+1), sizeX) << " <= " << join("X", stage) << " ;" << endl;
-			}
-
-			vhdl << tab << declare(join("XShift", stage), sizeY) << " <= " << zg(2) << " & X" << stage << range(sizeX-1, sizeX - sizeY + 2) << ";" <<endl;			
-			vhdl << tab << declare(join("YY", stage+1), sizeY) << " <= " 
-			     << join("Y", stage) << " + " << join("XShift", stage) << " when " << join("sgnY", stage) << "=\'1\'     else "
-			     << join("Y", stage) << " - " << join("XShift", stage) << " ;" << endl;
-			vhdl << tab << declare(join("Y", stage+1), sizeY-1) << " <= " << join("YY", stage+1) << range(sizeY-2, 0) << ";" <<endl;
+			vhdl << tab << declare(join("XShift", stage), sizeY) << " <= " << zg(stage) << " & X" << stage << range(sizeY-1, stage) << ";" <<endl;			
+			vhdl << tab << declare(join("Y", stage+1), sizeY) << " <= " 
+					 << join("Y", stage) << " - " << join("XShift", stage) << " ;" << endl;
 			
 
 			//create the constant signal for the arctan
@@ -297,18 +268,129 @@ namespace flopoco{
 			mpfr_div_2si(zatan, zatan, stage, GMP_RNDN);
 			mpfr_atan(zatan, zatan, GMP_RNDN);
 			mpfr_div(zatan, zatan, constPi, GMP_RNDN);
-			REPORT(DEBUG, "stage=" << stage << "  atancst=" << printMPFR(zatan));		
-			// rounding here in unsignedFixPointNumber()
-			vhdl << tab << declare(join("atan2PowStage", stage), sizeZ) << " <= " << unsignedFixPointNumber(zatan, zMSB, zLSB) << ";" <<endl;
-			vhdl << tab << declare(join("Z", stage+1), sizeZ) << " <= " 
-					 << join("Z", stage) << " + " << join("atan2PowStage", stage) << " when " << join("sgnY", stage) << "=\'0\'      else "
-					 << join("Z", stage) << " - " << join("atan2PowStage", stage) << " ;" << endl;
-
-		} //end for loop
+			mpfr_t roundbit;
+			mpfr_init2(roundbit, 30); // should be enough for anybody
+			mpfr_set_d(roundbit, 1.0, GMP_RNDN);
+			mpfr_div_2si(roundbit, roundbit, w, GMP_RNDN); // roundbit is in position 2^-w
 		
-		// Give the time to finish the last rotation
-		// manageCriticalPath( target->localWireDelay(w+1) + target->adderDelay(w+1) // actual CP delay
-		//                     - (target->localWireDelay(sizeZ+1) + target->adderDelay(sizeZ+1))); // CP delay that was already added
+			REPORT(DEBUG, "stage=" << stage << "  atancst=" << printMPFR(zatan));
+
+			mpfr_add(zatan, zatan, roundbit, GMP_RNDN);
+			vhdl << tab << declare("Z2", sizeZ) << " <= " << unsignedFixPointNumber(zatan, zMSB, zLSB) << "; -- initial atan, plus round bit" <<endl;
+
+
+			for(stage=2; stage<=maxIterations;    stage++, sizeY--){
+				// Invariant: sizeX-sizeY = stage-2
+				vhdl << tab << "--- Iteration " << stage << " ---" << endl;
+				vhdl << tab << declare(join("sgnY", stage))  << " <= " <<  join("Y", stage)  <<  of(sizeY-1) << ";" << endl;
+			
+				if(-2*stage+1 >= -w+1-gXY) { 
+					vhdl << tab << declare(join("YShift", stage), sizeX) 
+							 << " <= " << rangeAssign(sizeX-1, sizeX -(sizeX-sizeY+stage), join("sgnY", stage))   
+							 << " & Y" << stage << range(sizeY-1, stage) << ";" << endl;
+				
+					vhdl << tab << declare(join("X", stage+1), sizeX) << " <= " 
+							 << join("X", stage) << " - " << join("YShift", stage) << " when " << join("sgnY", stage) << "=\'1\'     else "
+							 << join("X", stage) << " + " << join("YShift", stage) << " ;" << endl;
+				}
+				else {	// autant pisser dans un violon
+					vhdl << tab << declare(join("X", stage+1), sizeX) << " <= " << join("X", stage) << " ;" << endl;
+				}
+
+				vhdl << tab << declare(join("XShift", stage), sizeY) << " <= " << zg(2) << " & X" << stage << range(sizeX-1, sizeX - sizeY + 2) << ";" <<endl;			
+				vhdl << tab << declare(join("YY", stage+1), sizeY) << " <= " 
+						 << join("Y", stage) << " + " << join("XShift", stage) << " when " << join("sgnY", stage) << "=\'1\'     else "
+						 << join("Y", stage) << " - " << join("XShift", stage) << " ;" << endl;
+				vhdl << tab << declare(join("Y", stage+1), sizeY-1) << " <= " << join("YY", stage+1) << range(sizeY-2, 0) << ";" <<endl;
+			
+
+				//create the constant signal for the arctan
+				mpfr_set_d(zatan, 1.0, GMP_RNDN);
+				mpfr_div_2si(zatan, zatan, stage, GMP_RNDN);
+				mpfr_atan(zatan, zatan, GMP_RNDN);
+				mpfr_div(zatan, zatan, constPi, GMP_RNDN);
+				REPORT(DEBUG, "stage=" << stage << "  atancst=" << printMPFR(zatan));		
+				// rounding here in unsignedFixPointNumber()
+				vhdl << tab << declare(join("atan2PowStage", stage), sizeZ) << " <= " << unsignedFixPointNumber(zatan, zMSB, zLSB) << ";" <<endl;
+				vhdl << tab << declare(join("Z", stage+1), sizeZ) << " <= " 
+						 << join("Z", stage) << " + " << join("atan2PowStage", stage) << " when " << join("sgnY", stage) << "=\'0\'      else "
+						 << join("Z", stage) << " - " << join("atan2PowStage", stage) << " ;" << endl;
+
+			} //end for loop
+		
+			// Give the time to finish the last rotation
+			// manageCriticalPath( target->localWireDelay(w+1) + target->adderDelay(w+1) // actual CP delay
+			//                     - (target->localWireDelay(sizeZ+1) + target->adderDelay(sizeZ+1))); // CP delay that was already added
+
+			finalZ=join("Z", maxIterations+1);
+		}
+
+
+
+
+
+		else if (method==INVMULTATAN) {
+			bool plainStupidVHDL=true; // TODO remove. This should be a Target or a global option
+			FixFunctionByPiecewisePoly* recipTable;
+			FixFunctionByPiecewisePoly* atanTable;
+			int degree = method & 7;
+			int msbRecip, lsbRecip, msbProduct, lsbProduct, msbAtan, lsbAtan;
+			msbAtan = -2; // bits -1 and 0 come from the range reduction
+			lsbAtan = -w+1;
+			msbRecip = 1; // 1/x < 2, so 0 should suffice, but the faithful result may overflow a bit
+			msbProduct = 0;  // idem
+			if(degree==0){ // both tables are correctly rounded
+				lsbRecip = -w+1; // see error analysis in the paper
+				lsbProduct = -w+1;
+			}
+			else{ // both tables are faithful
+				lsbRecip = -w; // see error analysis in the paper
+				lsbProduct = -w;				
+			}
+			recipTable = new FixFunctionByPiecewisePoly(target, "2/(1+x)", 
+																									-w+1 /*? lsbIn not sure*/,  
+																									msbRecip + 1, // +1 because internally uses signed arithmetic and we want an unsigned result 
+																									lsbRecip, 
+																									degree,  
+																									true, /*finalRounding*/
+																									plainStupidVHDL
+																									);
+			recipTable->changeName(join("reciprocal_uid", getNewUId()));
+			addSubComponent(recipTable);			
+			inPortMap(recipTable, "X", "XRS");
+			outPortMap(recipTable, "Y", "R0"); 
+			vhdl << instance(recipTable, "recipTable");
+			vhdl << tab << declareFixPoint("R", false, msbRecip, lsbRecip) << " <= unsigned(R0" << range(msbRecip-lsbRecip-2, 0) << ");" << endl;
+			vhdl << tab << declareFixPoint("YRU", false, -2, -w+1) << " <= unsigned(YRS);" << endl;
+			if(plainStupidVHDL) {
+				vhdl << tab << declareFixPoint("P", false, msbRecip + (-2), lsbRecip + (-w+1)) << " <= R*YRU;" << endl;
+				resizeFixPoint("Ptrunc", "P", msbProduct, lsbProduct);
+
+			}
+			else{
+				THROWERROR(" non plain stupid VHDL not implemented yet");
+			}
+
+
+			atanTable  = new FixFunctionByPiecewisePoly(target, "atan(x)/pi", 
+																									lsbProduct,  
+																									msbAtan, 
+																									lsbAtan, 
+																									degree,  
+																									true, /*finalRounding*/
+																									plainStupidVHDL
+																									);
+			atanTable->changeName(join("atan_uid", getNewUId()));
+			addSubComponent(atanTable);			
+			inPortMap(atanTable, "X", "XRS");
+			outPortMap(atanTable, "Y", "finalZ"); 
+			vhdl << instance(atanTable, "atanTable");
+			finalZ="finalZ";
+			 
+		}
+
+
+
 
 		////////////////////////////////////////////////////////////////////////////
 		// 
@@ -316,7 +398,6 @@ namespace flopoco{
 		//
 		////////////////////////////////////////////////////////////////////////////
 
-		string finalZ=join("Z", maxIterations+1);
 		vhdl << tab << declare("qangle", w) << " <= (quadrant & " << zg(w-2) << ");" << endl;
 		vhdl << tab << declare("finalZext", w) << " <= " << finalZ << of(sizeZ-1) << " & "<< finalZ << range(sizeZ-1, sizeZ-w+1) << "; -- sign-extended and rounded" << endl;
 		vhdl << tab << "A <= "
@@ -343,7 +424,6 @@ namespace flopoco{
 			// half-ulp is 2^-w
 			// 1/pi atan(2^-w) < 1/2. 2^-w therefore after w-1 interations,  method error will be bounded by 2^-w 
 			maxIterations = w-1;
-	
 			//error analysis for the (x,y) datapath
 			double eps;  //error in ulp
 
@@ -361,16 +441,12 @@ namespace flopoco{
 #endif
 				shift *=0.5;
 			}
-
 			// guard bits depend only on the number of iterations
 			gXY = (int) ceil(log2(eps));  
-
-			REPORT(DEBUG, "Error analysis computes eps=" << eps << " ulps on the XY datapath, hence  gXY=" << gXY);
-
 			//error analysis for the A datapath
 			eps = maxIterations*0.5; // only the rounding error in the atan constant
 			gA = 1 + (int) ceil(log2(eps)); // +1 for the final rounding 
-		
+			REPORT(DEBUG, "Error analysis computes eps=" << eps << " ulps on the XY datapath, hence  gXY=" << gXY);
 			REPORT(DEBUG, "Error analysis computes eps=" << eps <<  " ulps on the A datapath, hence  gA=" << gA );
 	} 
 

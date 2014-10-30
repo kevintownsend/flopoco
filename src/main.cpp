@@ -356,7 +356,7 @@ void usage(char *name, string opName = ""){
 	if ( full || opName == "Atan2"){
 		OP( "Atan2","w method");
 		cerr << "Computes atan(x/y) as a=(angle in radian)/pi so a in [-1,1[;\n";
-		cerr << "method is: 0 plain CORDIC, 1 CORDIC with scaling, 2 InvMultAtan\n";
+		cerr << "method is: 0..7 InvMultAtan with approximations of the corresponding degree; 8 plain CORDIC, 9 CORDIC with scaling\n";
 		cerr << "w is the size of both inputs and outputs, all being two's complement signals\n";
 	}
 

@@ -93,6 +93,7 @@ namespace flopoco{
 		useNumericStd();
 
 		if(degree==0){ // This is a simple table
+			REPORT(DETAILED, "Degree 0: building a simple table");
 			FixFunctionByTable* table=new FixFunctionByTable(target, func, lsbIn, msbOut, lsbOut);
 			addSubComponent(table);
 

@@ -13,7 +13,7 @@ namespace flopoco{
 	class CordicAtan2 : public Operator {
 	  
 	  public:
-	  
+
 		// Possible TODO: add an option to obtain angles in radians or whatever
 
 		/** Constructor: w is the input and output size, all signed fixed-point number. 
