@@ -335,10 +335,10 @@ namespace flopoco{
 			FixFunctionByPiecewisePoly* atanTable;
 			int degree = method & 7;
 			int msbRecip, lsbRecip, msbProduct, lsbProduct, msbAtan, lsbAtan;
-			msbAtan = -2; // bits -1 and 0 come from the range reduction
+			msbAtan = -2; // bits 0 and -1 come from the range reduction
 			lsbAtan = -w+1;
-			msbRecip = 1; // 1/x < 2, so 0 should suffice, but the faithful result may overflow a bit
-			msbProduct = 0;  // idem
+			msbRecip = 1; // 1/x <= 2
+			msbProduct = -1; // y/x between 0 and 1 but the faithful product may overflow a bit. 
 			if(degree==0){ // both tables are correctly rounded
 				lsbRecip = -w+1; // see error analysis in the paper
 				lsbProduct = -w+1;
@@ -347,8 +347,11 @@ namespace flopoco{
 				lsbRecip = -w; // see error analysis in the paper
 				lsbProduct = -w;				
 			}
-			recipTable = new FixFunctionByPiecewisePoly(target, "2/(1+x)", 
-																									-w+1 /*? lsbIn not sure*/,  
+			// recip table computes 2/(1+x) once we have killed the MSB of XRS, which is always 1.
+			vhdl << tab << declare("XRm1", w-2) << " <= XRS" << range(w-3,0)  << "; -- removing the MSB which is constantly 1" << endl;
+			recipTable = new FixFunctionByPiecewisePoly(target, 
+																									"2/(1+x)", 
+																									-w+2,  // XRS was between 1/2 and 1. XRm1 is between 0 and 1/2
 																									msbRecip + 1, // +1 because internally uses signed arithmetic and we want an unsigned result 
 																									lsbRecip, 
 																									degree,  
@@ -357,15 +360,15 @@ namespace flopoco{
 																									);
 			recipTable->changeName(join("reciprocal_uid", getNewUId()));
 			addSubComponent(recipTable);			
-			inPortMap(recipTable, "X", "XRS");
+			inPortMap(recipTable, "X", "XRm1");
 			outPortMap(recipTable, "Y", "R0"); 
 			vhdl << instance(recipTable, "recipTable");
-			vhdl << tab << declareFixPoint("R", false, msbRecip, lsbRecip) << " <= unsigned(R0" << range(msbRecip-lsbRecip-2, 0) << ");" << endl;
-			vhdl << tab << declareFixPoint("YRU", false, -2, -w+1) << " <= unsigned(YRS);" << endl;
+			vhdl << tab << declareFixPoint("R", false, msbRecip, lsbRecip) << " <= unsigned(R0" << range(msbRecip-lsbRecip  , 0) << "); -- removing the sign  bit" << endl;
+			vhdl << tab << declareFixPoint("YRU", false, -1, -w+1) << " <= unsigned(YRS);" << endl;
 			if(plainStupidVHDL) {
-				vhdl << tab << declareFixPoint("P", false, msbRecip + (-2), lsbRecip + (-w+1)) << " <= R*YRU;" << endl;
-				resizeFixPoint("Ptrunc", "P", msbProduct, lsbProduct);
-
+				vhdl << tab << declareFixPoint("P", false, msbRecip + (-1) +1, lsbRecip + (-w+1)) << " <= R*YRU;" << endl;
+				resizeFixPoint("PtruncU", "P", msbProduct, lsbProduct);
+				vhdl << tab << declare("PTrunc", msbProduct-lsbProduct+1)  << " <=  std_logic_vector(PTruncU);" << endl;
 			}
 			else{
 				THROWERROR(" non plain stupid VHDL not implemented yet");
@@ -382,10 +385,12 @@ namespace flopoco{
 																									);
 			atanTable->changeName(join("atan_uid", getNewUId()));
 			addSubComponent(atanTable);			
-			inPortMap(atanTable, "X", "XRS");
+			inPortMap(atanTable, "X", "PTrunc");
 			outPortMap(atanTable, "Y", "finalZ"); 
 			vhdl << instance(atanTable, "atanTable");
+
 			finalZ="finalZ";
+			//			vhdl << tab << declare(finalZ, sizeZ) << " <= '0' & finalZu; -- adding back a sign  bit for the reconstruction" << endl;
 			 
 		}
 
@@ -399,7 +404,7 @@ namespace flopoco{
 		////////////////////////////////////////////////////////////////////////////
 
 		vhdl << tab << declare("qangle", w) << " <= (quadrant & " << zg(w-2) << ");" << endl;
-		vhdl << tab << declare("finalZext", w) << " <= " << finalZ << of(sizeZ-1) << " & "<< finalZ << range(sizeZ-1, sizeZ-w+1) << "; -- sign-extended and rounded" << endl;
+		vhdl << tab << declare("finalZext", w) << " <= \"00\" & "<< finalZ << range(sizeZ-1, sizeZ-w+1) << "; -- sign-extended and rounded" << endl;
 		vhdl << tab << "A <= "
 				 << tab << tab << "     qangle + finalZext  when finalAdd='1'" << endl
 				 << tab << tab << "else qangle - finalZext;" << endl;
@@ -522,6 +527,14 @@ namespace flopoco{
 		emulate(tc);
 		tcl->add(tc);
 
+
+		//pi/4
+		tc = new TestCase (this);
+		tc -> addInput ("X", mpz_class(1)<< (w-2));
+		tc -> addInput ("Y", mpz_class(1)<< (w-2));
+		emulate(tc);
+		tcl->add(tc);
+
 		// pi/2
 		tc = new TestCase (this);
 		tc -> addInput ("X", mpz_class(0));
@@ -529,9 +542,10 @@ namespace flopoco{
 		emulate(tc);
 		tcl->add(tc);
 
-		//Pi/4
+
+		// 3pi/4
 		tc = new TestCase (this);
-		tc -> addInput ("X", mpz_class(1)<< (w-2));
+		tc -> addInput ("X", (mpz_class(1)<< (w)) -  (mpz_class(1)<< (w-2)) );
 		tc -> addInput ("Y", mpz_class(1)<< (w-2));
 		emulate(tc);
 		tcl->add(tc);
