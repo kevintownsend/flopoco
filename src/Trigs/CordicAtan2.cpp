@@ -338,7 +338,7 @@ namespace flopoco{
 			msbAtan = -2; // bits 0 and -1 come from the range reduction
 			lsbAtan = -w+1;
 			msbRecip = 1; // 1/x <= 2
-			msbProduct = -1; // y/x between 0 and 1 but the faithful product may overflow a bit. 
+			msbProduct = -1 ; // y/x between 0 and 1 but the faithful product may overflow a bit. 
 			if(degree==0){ // both tables are correctly rounded
 				lsbRecip = -w+1; // see error analysis in the paper
 				lsbProduct = -w+1;
@@ -349,8 +349,10 @@ namespace flopoco{
 			}
 			// recip table computes 2/(1+x) once we have killed the MSB of XRS, which is always 1.
 			vhdl << tab << declare("XRm1", w-2) << " <= XRS" << range(w-3,0)  << "; -- removing the MSB which is constantly 1" << endl;
+			ostringstream invfun;
+			invfun << "2/(1+x)-1b"<<lsbRecip;
 			recipTable = new FixFunctionByPiecewisePoly(target, 
-																									"2/(1+x)", 
+																									invfun.str(), 
 																									-w+2,  // XRS was between 1/2 and 1. XRm1 is between 0 and 1/2
 																									msbRecip + 1, // +1 because internally uses signed arithmetic and we want an unsigned result 
 																									lsbRecip, 
@@ -366,7 +368,7 @@ namespace flopoco{
 			vhdl << tab << declareFixPoint("R", false, msbRecip, lsbRecip) << " <= unsigned(R0" << range(msbRecip-lsbRecip  , 0) << "); -- removing the sign  bit" << endl;
 			vhdl << tab << declareFixPoint("YRU", false, -1, -w+1) << " <= unsigned(YRS);" << endl;
 			if(plainStupidVHDL) {
-				vhdl << tab << declareFixPoint("P", false, msbRecip + (-1) +1, lsbRecip + (-w+1)) << " <= R*YRU;" << endl;
+				vhdl << tab << declareFixPoint("P", false, msbRecip -1 +1, lsbRecip-w+1) << " <= R*YRU;" << endl;
 				resizeFixPoint("PtruncU", "P", msbProduct, lsbProduct);
 				vhdl << tab << declare("PTrunc", msbProduct-lsbProduct+1)  << " <=  std_logic_vector(PTruncU);" << endl;
 			}
