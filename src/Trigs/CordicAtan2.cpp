@@ -377,7 +377,10 @@ namespace flopoco{
 			}
 
 
-			atanTable  = new FixFunctionByPiecewisePoly(target, "atan(x)/pi", 
+			ostringstream atanfun;
+			atanfun << "atan(x)/pi";
+			atanTable  = new FixFunctionByPiecewisePoly(target, 
+																									atanfun.str(), 
 																									lsbProduct,  
 																									msbAtan, 
 																									lsbAtan, 
