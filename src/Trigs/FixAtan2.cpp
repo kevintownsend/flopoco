@@ -51,7 +51,8 @@ namespace flopoco {
 		setName(name.str());
 
 		//set the libraries to use
-		useNumericStd();
+		//useNumericStd();
+		useNumericStd_Unsigned();
 
 		//initialize global variables
 		maxValA = -1;		//this is the absolute value, so should be always non-negative, once used
@@ -62,13 +63,13 @@ namespace flopoco {
 		maxValF = -1;
 
 		//declare the inputs and the outputs
-		addInput ("X",  wIn-2);
-		addInput ("Y",  wIn-1);
+		addInput ("X",  wIn);
+		addInput ("Y",  wIn);
 		addOutput("R",  wOut, 2 /*number of possible output values*/);
 
 		//arguments for the range reduction
 		bool negateByComplement = true;
-		/*
+
 		/////////////////////////////////////////////////////////////////////////////
 		//
 		//    First range reduction
@@ -79,7 +80,7 @@ namespace flopoco {
 
 		// TODO: replace the following with LUT-based comparators
 		// and first maybe experiment with synthesis tools
-		vhdl << tab << declare("XmY", wIn+1) << " <= (sgnX & X)-(sgnY & Y);" << endl;
+		vhdl << tab << declare("XmY", wIn+1) << " <= std_logic_vector(sgnX & X) - std_logic_vector(sgnY & Y);" << endl;
 		vhdl << tab << declare("XpY", wIn+1) << " <= (sgnX & X)+(sgnY & Y);" << endl;
 		vhdl << tab << declare("XltY") << " <= XmY" << of(wIn) << ";" << endl;
 		vhdl << tab << declare("mYltX") << " <= not XpY" << of(wIn) <<";" << endl;
@@ -173,7 +174,6 @@ namespace flopoco {
 		//    End of second range reduction, scaling
 		//
 		////////////////////////////////////////////////////////////////////////////
-		*/
 
 
 		//build the architecture
@@ -205,14 +205,16 @@ namespace flopoco {
 			if(plainVHDL)
 			{
 				//split the input signals, and create the address signal for the table
-				/*
+
 				vhdl << tab << declare("XHigh", k-1) << " <= std_logic_vector(XRS_short" << range(wIn-3, wIn-1-k) << ");" << endl;
 				vhdl << tab << declare("YHigh", k)   << " <= std_logic_vector(YRS" << range(wIn-2, wIn-1-k) << ");" << endl;
 				vhdl << tab << declare("atan2TableInput", 2*k-1) << " <= std_logic_vector(XHigh) & std_logic_vector(YHigh);" << endl;
-				*/
+
+				/*
 				vhdl << tab << declare("XHigh", k-1) << " <= std_logic_vector(X" << range(wIn-3, wIn-1-k) << ");" << endl;
 				vhdl << tab << declare("YHigh", k)   << " <= std_logic_vector(Y" << range(wIn-2, wIn-1-k) << ");" << endl;
 				vhdl << tab << declare("atan2TableInput", 2*k-1) << " <= std_logic_vector(XHigh) & std_logic_vector(YHigh);" << endl;
+				*/
 
 				//create the table for atan(y/x)
 				Atan2Table *table = new Atan2Table(target, 2*k-1, msbA+msbB+msbC+3*(wOut-1+g), architectureType, msbA, msbB, msbC);
@@ -255,10 +257,14 @@ namespace flopoco {
 				vhdl << tab << declareFixPoint("Rtmp_rnd", true, 1, -wOut) << " <= Rtmp + Rtmp_rndCst;" << endl;
 
 				//return the result
+				/*
 				resizeFixPoint("Rtmp_stdlv", "Rtmp_rnd", 0, -wOut+1);
-				//vhdl << tab << "R_int <= std_logic_vector(Rtmp_stdlv);" << endl;
+				vhdl << tab << declare("R_int", wOut) << " <= std_logic_vector(Rtmp_stdlv);" << endl;
+				*/
+				resizeFixPoint("Rtmp_stdlv", "Rtmp_rnd", -2, -wOut+1);
+				vhdl << tab << declare("R_int", wOut-2) << " <= std_logic_vector(Rtmp_stdlv);" << endl;
 
-				vhdl << tab << "R <= std_logic_vector(Rtmp_stdlv);" << endl;
+				//vhdl << tab << "R <= std_logic_vector(Rtmp_stdlv);" << endl;
 
 			}else
 			{
@@ -626,13 +632,13 @@ namespace flopoco {
 		//                            reconstruction
 		//
 		////////////////////////////////////////////////////////////////////////////
-		/*
+
 		vhdl << tab << declare("qangle", wOut) << " <= (quadrant & " << zg(wOut-2) << ");" << endl;
-		vhdl << tab << declare("finalZext", wOut) << " <= \"00\" & R_int" << range(wOut-1, 0) << "; -- sign-extended and rounded" << endl;
+		vhdl << tab << declare("Rfinal", wOut) << " <= \"00\" & R_int; -- sign-extended and rounded" << endl;
 		vhdl << tab << "R <= "
-				<< tab << tab << "     qangle + finalZext  when finalAdd='1'" << endl
-				<< tab << tab << "else qangle - finalZext;" << endl;
-		*/
+				<< tab << tab << "     qangle + Rfinal  when finalAdd='1'" << endl
+				<< tab << tab << "else qangle - Rfinal;" << endl;
+
 	}
 
 
@@ -1078,6 +1084,55 @@ namespace flopoco {
 		return k;
 	}
 
+//	void FixAtan2::emulate(TestCase * tc)
+//	{
+//		mpfr_t x,y,a, constPi;
+//		mpfr_init2(x, 10*wIn);
+//		mpfr_init2(y, 10*wIn);
+//		mpfr_init2(a, 10*wIn);
+//		mpfr_init2(constPi, 10*wIn);
+//		mpfr_const_pi( constPi, GMP_RNDN);
+//
+//		mpz_class az;
+//
+//		/* Get I/O values */
+//		mpz_class svX = tc->getInputValue("X");
+//		mpz_class svY = tc->getInputValue("Y");
+//
+//		// interpret as signed two'ss complement
+//		if (1==(svX >> (wIn-1))) // sign bit
+//			svX -= (1<<wIn);
+//		if (1==(svY >> (wIn-1))) // sign bit
+//			svY -= (1<<wIn);
+//		/* Compute correct value */
+//
+//		mpfr_set_z (x, svX.get_mpz_t(), GMP_RNDN); //  exact
+//		mpfr_set_z (y, svY.get_mpz_t(), GMP_RNDN); //  exact
+//
+//		mpfr_atan2(a, y, x, GMP_RNDN); // a between -pi and pi
+//		mpfr_div(a, a, constPi, GMP_RNDN); // a between -1 and 1
+//
+//		// Now convert a to fix point
+//		// Align to fix point by adding 6 -- if we just add 4 there is a 1-bit shift in case a<0
+//		mpfr_add_d(a, a, 6.0, GMP_RNDN);
+//		mpfr_mul_2si (a, a, wOut-1, GMP_RNDN); // exact scaling
+//
+//		mpz_class mask = (mpz_class(1)<<wOut) -1;
+//
+//		mpfr_get_z (az.get_mpz_t(), a, GMP_RNDD); // there can be a real rounding here
+//		az -= mpz_class(6)<<(wOut-1);
+//		az &= mask;
+//		tc->addExpectedOutput ("A", az);
+//
+//		mpfr_get_z (az.get_mpz_t(), a, GMP_RNDU); // there can be a real rounding here
+//		az -= mpz_class(6)<<(wOut-1);
+//		az &= mask;
+//		tc->addExpectedOutput ("A", az);
+//
+//		// clean up
+//		mpfr_clears (x,y,a, constPi, NULL);
+//	}
+
 
 	void FixAtan2::emulate(TestCase* tc)
 	{
@@ -1089,9 +1144,17 @@ namespace flopoco {
 		mpz_class svY = tc->getInputValue("Y");
 
 		//get the true value of X
+		/*
 		temp = mpz_class(1);
 		temp = temp << (wIn-2);
 		svX = svX + temp;
+		*/
+
+		// interpret as signed two's complement
+		if(1 == (svX >> (wIn-1))) // sign bit
+			svX -= (1<<wIn);
+		if(1 == (svY >> (wIn-1))) // sign bit
+			svY -= (1<<wIn);
 
 		mpfr_inits2(10000, mpX, mpY, mpR, pi_mpfr, (mpfr_ptr)0);
 
