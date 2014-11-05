@@ -40,7 +40,10 @@ namespace flopoco {
 		setCopyrightString("Florent de Dinechin, Matei Istoan, 2014");
 
 		//set the VHDL generation style
-		plainVHDL =  false;
+		plainVHDL =  true;
+
+		//set the ratio for the multiplications
+		ratio = 0.95;
 
 		// build the name
 		ostringstream name;
@@ -59,9 +62,119 @@ namespace flopoco {
 		maxValF = -1;
 
 		//declare the inputs and the outputs
-		addInput ("X",  wIn-1);
-		addInput ("Y",  wIn);
+		addInput ("X",  wIn-2);
+		addInput ("Y",  wIn-1);
 		addOutput("R",  wOut, 2 /*number of possible output values*/);
+
+		//arguments for the range reduction
+		bool negateByComplement = true;
+		/*
+		/////////////////////////////////////////////////////////////////////////////
+		//
+		//    First range reduction
+		//
+		/////////////////////////////////////////////////////////////////////////////
+		vhdl << tab << declare("sgnX") << " <= X" << of(wIn-1) << ";" << endl;
+		vhdl << tab << declare("sgnY") << " <= Y" << of(wIn-1) << ";" << endl;
+
+		// TODO: replace the following with LUT-based comparators
+		// and first maybe experiment with synthesis tools
+		vhdl << tab << declare("XmY", wIn+1) << " <= (sgnX & X)-(sgnY & Y);" << endl;
+		vhdl << tab << declare("XpY", wIn+1) << " <= (sgnX & X)+(sgnY & Y);" << endl;
+		vhdl << tab << declare("XltY") << " <= XmY" << of(wIn) << ";" << endl;
+		vhdl << tab << declare("mYltX") << " <= not XpY" << of(wIn) <<";" << endl;
+		// Range reduction: we define 4 quadrants, each centered on one axis (these are not just the sign quadrants)
+		// Then each quadrant is decomposed in its positive and its negative octant.
+		vhdl << tab << "-- quadrant will also be the angle to add at the end" << endl;
+		vhdl << tab << declare("quadrant", 2) << " <= " << endl;
+		vhdl << tab << tab << "\"00\"  when (not sgnX and not XltY and     mYltX)='1' else"    << endl;
+		vhdl << tab << tab << "\"01\"  when (not sgnY and     XltY and     mYltX)='1' else"    << endl;
+		vhdl << tab << tab << "\"10\"  when (    sgnX and     XltY and not mYltX)='1' else"    << endl;
+		vhdl << tab << tab << "\"11\";"    << endl;
+
+		if(negateByComplement)
+		{
+			vhdl << tab << declare("pX", wIn) << " <=      X;" << endl;
+			vhdl << tab << declare("pY", wIn) << " <=      Y;" << endl;
+			vhdl << tab << declare("mX", wIn) << " <= (not X);  -- negation by not, implies one ulp error." << endl;
+			vhdl << tab << declare("mY", wIn) << " <= (not Y);  -- negation by not, implies one ulp error. " << endl;
+		}else
+		{
+			vhdl << tab << declare("pX", wIn) << " <= X;" << endl;
+			vhdl << tab << declare("pY", wIn) << " <= Y;" << endl;
+			vhdl << tab << declare("mX", wIn) << " <= (" << zg(wIn) << " - X);" << endl;
+			vhdl << tab << declare("mY", wIn) << " <= (" << zg(wIn) << " - Y);" << endl;
+		}
+
+		//no need for sign bit any longer
+		vhdl << tab << declare("XR", wIn-1) << " <= " << endl;
+		vhdl << tab << tab << "pX" << range(wIn-2, 0) << " when quadrant=\"00\"   else " << endl;
+		vhdl << tab << tab << "pY" << range(wIn-2, 0) << " when quadrant=\"01\"   else " << endl;
+		vhdl << tab << tab << "mX" << range(wIn-2, 0) << " when quadrant=\"10\"   else " << endl;
+		vhdl << tab << tab << "mY" << range(wIn-2, 0) << ";"    << endl;
+
+		//no need for sign bit any longer
+		vhdl << tab << declare("YR", wIn-1) << " <= " << endl;
+		vhdl << tab << tab << "pY" << range(wIn-2, 0) << " when quadrant=\"00\" and sgnY='0'  else " << endl;
+		vhdl << tab << tab << "mY" << range(wIn-2, 0) << " when quadrant=\"00\" and sgnY='1'  else " << endl;
+		vhdl << tab << tab << "pX" << range(wIn-2, 0) << " when quadrant=\"01\" and sgnX='0'  else " << endl;
+		vhdl << tab << tab << "mX" << range(wIn-2, 0) << " when quadrant=\"01\" and sgnX='1'  else " << endl;
+		vhdl << tab << tab << "pY" << range(wIn-2, 0) << " when quadrant=\"10\" and sgnY='0'  else " << endl;
+		vhdl << tab << tab << "mY" << range(wIn-2, 0) << " when quadrant=\"10\" and sgnY='1'  else " << endl;
+		vhdl << tab << tab << "pX" << range(wIn-2, 0) << " when quadrant=\"11\" and sgnX='0'  else "    << endl;
+		vhdl << tab << tab << "mX" << range(wIn-2, 0) << " ;"    << endl;
+
+		vhdl << tab << declare("finalAdd") << " <= " << endl;
+		vhdl << tab << tab << "'1' when (quadrant=\"00\" and sgnY='0') or(quadrant=\"01\" and sgnX='1') or (quadrant=\"10\" and sgnY='1') or (quadrant=\"11\" and sgnX='0')" << endl;
+		vhdl << tab << tab << " else '0';  -- this information is sent to the end of the pipeline, better compute it here as one bit" << endl;
+		/////////////////////////////////////////////////////////////////////////////
+		//
+		//    End of first range reduction
+		//
+		/////////////////////////////////////////////////////////////////////////////
+
+
+		////////////////////////////////////////////////////////////////////////////
+		//
+		//    Second range reduction, scaling
+		//
+		////////////////////////////////////////////////////////////////////////////
+		vhdl << tab << declare("XorY", wIn-2) << " <= XR" << range(wIn-2,1) << " or YR" << range(wIn-2,1) << ";" << endl;
+		// The LZC
+		LZOC* lzc = new	LZOC(target, wIn-2);
+		addSubComponent(lzc);
+
+		inPortMap(lzc, "I", "XorY");
+		inPortMapCst(lzc, "OZB", "'0'");
+		outPortMap(lzc, "O", "S");
+		vhdl << instance(lzc, "lzc");
+		//setCycleFromSignal("lzo");
+		//		setCriticalPath( lzc->getOutputDelay("O") );
+
+		// The two shifters are two instance of the same component
+		Shifter* lshift = new Shifter(target, wIn-1, wIn-2, Shifter::Left);
+		addSubComponent(lshift);
+
+		inPortMap(lshift, "S", "S");
+
+		inPortMap(lshift, "X", "XR");
+		outPortMap(lshift, "R", "XRSfull");
+		vhdl << instance(lshift, "Xshift");
+		vhdl << tab << declare("XRS", wIn-1) << " <=  XRsfull " << range(wIn-2,0) << ";" << endl;
+		//eliminate the MSB, which is a constant '1'
+		vhdl << tab << declare("XRS_short", wIn-2) << " <=  XRS " << range(wIn-3,0) << ";" << endl;
+
+		inPortMap(lshift, "X", "YR");
+		outPortMap(lshift, "R", "YRSfull");
+		vhdl << instance(lshift, "Yshift");
+		vhdl << tab << declare("YRS", wIn-1) << " <=  YRsfull " << range(wIn-2,0) << ";" << endl;
+		////////////////////////////////////////////////////////////////////////////
+		//
+		//    End of second range reduction, scaling
+		//
+		////////////////////////////////////////////////////////////////////////////
+		*/
+
 
 		//build the architecture
 		if((architectureType == 0) || (architectureType == 1))
@@ -79,9 +192,6 @@ namespace flopoco {
 			guardBitsApprox = 2;			// determined when computing the parameters for the tables
 			g = guardBitsApprox + guardBitsSum;
 
-			//set the ratio for the multiplications
-			ratio = 0.95;
-
 			k = checkArchitecture(architectureType);
 			kSize = k;
 
@@ -94,13 +204,18 @@ namespace flopoco {
 
 			if(plainVHDL)
 			{
-				//split the input signals, and create the address signal for tha table
-				vhdl << tab << declare("XHigh", k-1) << " <= std_logic_vector(X" << range(2*k-2, k) << ");" << endl;
-				vhdl << tab << declare("YHigh", k)   << " <= std_logic_vector(Y" << range(2*k-1, k) << ");" << endl;
+				//split the input signals, and create the address signal for the table
+				/*
+				vhdl << tab << declare("XHigh", k-1) << " <= std_logic_vector(XRS_short" << range(wIn-3, wIn-1-k) << ");" << endl;
+				vhdl << tab << declare("YHigh", k)   << " <= std_logic_vector(YRS" << range(wIn-2, wIn-1-k) << ");" << endl;
+				vhdl << tab << declare("atan2TableInput", 2*k-1) << " <= std_logic_vector(XHigh) & std_logic_vector(YHigh);" << endl;
+				*/
+				vhdl << tab << declare("XHigh", k-1) << " <= std_logic_vector(X" << range(wIn-3, wIn-1-k) << ");" << endl;
+				vhdl << tab << declare("YHigh", k)   << " <= std_logic_vector(Y" << range(wIn-2, wIn-1-k) << ");" << endl;
 				vhdl << tab << declare("atan2TableInput", 2*k-1) << " <= std_logic_vector(XHigh) & std_logic_vector(YHigh);" << endl;
 
 				//create the table for atan(y/x)
-				Atan2Table *table = new Atan2Table(target, 2*k-1, msbA+msbB+msbC+3*(wOut+g), architectureType, msbA, msbB, msbC);
+				Atan2Table *table = new Atan2Table(target, 2*k-1, msbA+msbB+msbC+3*(wOut-1+g), architectureType, msbA, msbB, msbC);
 
 				//add the table to the operator
 				addSubComponent(table);
@@ -111,37 +226,39 @@ namespace flopoco {
 				vhdl << instance(table , "KCMTable");
 
 				//split the output of the table to the corresponding parts A, B and C
-				vhdl << tab << declareFixPoint("C", true, msbC-1,  -wOut-g) << " <= signed(atan2TableOutput"
-						<< range(msbC+wOut+g-1, 0) << ");" << endl;
-				vhdl << tab << declareFixPoint("B", true, msbB-1,  -wOut-g) << " <= signed(atan2TableOutput"
-						<< range(msbB+wOut+g+msbC+wOut+g-1, msbC+wOut+g) << ");" << endl;
-				vhdl << tab << declareFixPoint("A", true, msbA-1,  -wOut-g) << " <= signed(atan2TableOutput"
-						<< range(msbA+wOut+g+msbB+wOut+g+msbC+wOut+g-1, msbB+wOut+g+msbC+wOut+g) << ");" << endl;
+				vhdl << tab << declareFixPoint("C", true, msbC-1,  -wOut+1-g) << " <= signed(atan2TableOutput"
+						<< range(msbC+(wOut-1+g)-1, 0) << ");" << endl;
+				vhdl << tab << declareFixPoint("B", true, msbB-1,  -wOut+1-g) << " <= signed(atan2TableOutput"
+						<< range(msbB+msbC+2*(wOut-1+g)-1, msbC+(wOut-1+g)) << ");" << endl;
+				vhdl << tab << declareFixPoint("A", true, msbA-1,  -wOut+1-g) << " <= signed(atan2TableOutput"
+						<< range(msbA+msbB+msbC+3*(wOut-1+g)-1, msbB+msbC+2*(wOut-1+g)) << ");" << endl;
 
-				vhdl << tab << declareFixPoint("XLow", true, -k,  -2*k) << " <= signed('0' & X" << range(k-1, 0) << ");" << endl;
-				vhdl << tab << declareFixPoint("YLow", true, -k,  -2*k) << " <= signed('0' & Y" << range(k-1, 0) << ");" << endl;
+				vhdl << tab << declareFixPoint("XLow", true, -k, -wIn+1) << " <= signed('0' & X" << range(wIn-1-k-1, 0) << ");" << endl;
+				vhdl << tab << declareFixPoint("YLow", true, -k, -wIn+1) << " <= signed('0' & Y" << range(wIn-1-k-1, 0) << ");" << endl;
 
 				//create A*X_low and B*Y_low
-				vhdl << tab << declareFixPoint("AXLow", true, msbA-k,  -wOut-g-2*k) << " <= A * XLow;" << endl;
-				vhdl << tab << declareFixPoint("BYLow", true, msbB-k,  -wOut-g-2*k) << " <= B * YLow;" << endl;
+				vhdl << tab << declareFixPoint("AXLow", true, msbA-k, -wOut+1-g-wIn+1) << " <= A * XLow;" << endl;
+				vhdl << tab << declareFixPoint("BYLow", true, msbB-k, -wOut+1-g-wIn+1) << " <= B * YLow;" << endl;
 				//align A*X_low and B*Y_low to the output format
-				resizeFixPoint("AXLow_sgnExtended", "AXLow", maxMSB-1, -wOut-g);
-				resizeFixPoint("BYLow_sgnExtended", "BYLow", maxMSB-1, -wOut-g);
+				resizeFixPoint("AXLow_sgnExtended", "AXLow", maxMSB-1, -wOut+1-g);
+				resizeFixPoint("BYLow_sgnExtended", "BYLow", maxMSB-1, -wOut+1-g);
 
 				//add everything up
-				vhdl << tab << declareFixPoint("AXLowAddBYLow", true, maxMSB,  -wOut-g)
+				vhdl << tab << declareFixPoint("AXLowAddBYLow", true, maxMSB, -wOut+1-g)
 						<< " <= (AXLow_sgnExtended(AXLow_sgnExtended'HIGH) & AXLow_sgnExtended) + (BYLow_sgnExtended(BYLow_sgnExtended'HIGH) & BYLow_sgnExtended);" << endl;
-				resizeFixPoint("C_sgnExtended", "C", maxMSB+1, -wOut-g);
-				vhdl << tab << declareFixPoint("AXLowAddBYLowAddC", true, maxMSB+1,  -wOut-g) << " <= (AXLowAddBYLow(AXLowAddBYLow'HIGH) & AXLowAddBYLow) + C_sgnExtended;" << endl;
+				resizeFixPoint("C_sgnExtended", "C", maxMSB+1, -wOut+1-g);
+				vhdl << tab << declareFixPoint("AXLowAddBYLowAddC", true, maxMSB+1, -wOut+1-g) << " <= (AXLowAddBYLow(AXLowAddBYLow'HIGH) & AXLowAddBYLow) + C_sgnExtended;" << endl;
 
 				//extract the final result
-				resizeFixPoint("Rint", "AXLowAddBYLowAddC", 1, -wOut+1);
-				vhdl << tab << declareFixPoint("Rint_rndCst", true, 1, -wOut+1) << " <= signed(std_logic_vector\'(\"" << zg(wOut, -2) << "1\"));" << endl;
-				vhdl << tab << declareFixPoint("Rint_rnd", true, 1, -wOut+1) << " <= Rint + Rint_rndCst;" << endl;
+				resizeFixPoint("Rtmp", "AXLowAddBYLowAddC", 1, -wOut);
+				vhdl << tab << declareFixPoint("Rtmp_rndCst", true, 1, -wOut) << " <= signed(std_logic_vector\'(\"" << zg(wOut+1, -2) << "1\"));" << endl;
+				vhdl << tab << declareFixPoint("Rtmp_rnd", true, 1, -wOut) << " <= Rtmp + Rtmp_rndCst;" << endl;
 
 				//return the result
-				resizeFixPoint("Rint_stdlv", "Rint_rnd", 1, -wOut+2);
-				vhdl << tab << "R <= std_logic_vector(Rint_stdlv);" << endl;
+				resizeFixPoint("Rtmp_stdlv", "Rtmp_rnd", 0, -wOut+1);
+				//vhdl << tab << "R_int <= std_logic_vector(Rtmp_stdlv);" << endl;
+
+				vhdl << tab << "R <= std_logic_vector(Rtmp_stdlv);" << endl;
 
 			}else
 			{
@@ -149,12 +266,12 @@ namespace flopoco {
 				bitHeap = new BitHeap(this, (maxMSB+2)+wOut+g);
 
 				//create the input signals for the table
-				vhdl << tab << declare("XHigh", k-1) << " <= std_logic_vector(X" << range(2*k-2, k) << ");" << endl;
-				vhdl << tab << declare("YHigh", k)   << " <= std_logic_vector(Y" << range(2*k-1, k) << ");" << endl;
+				vhdl << tab << declare("XHigh", k-1) << " <= std_logic_vector(X" << range(wIn-3, wIn-1-k) << ");" << endl;
+				vhdl << tab << declare("YHigh", k)   << " <= std_logic_vector(Y" << range(wIn-2, wIn-1-k) << ");" << endl;
 				vhdl << tab << declare("atan2TableInput", 2*k-1) << " <= std_logic_vector(XHigh) & std_logic_vector(YHigh);" << endl;
 
 				//create the table for atan(y/x)
-				Atan2Table *table = new Atan2Table(target, 2*k-1, msbA+msbB+msbC+3*(wOut+g), architectureType, msbA, msbB, msbC);
+				Atan2Table *table = new Atan2Table(target, 2*k-1, msbA+msbB+msbC+3*(wOut-1+g), architectureType, msbA, msbB, msbC);
 
 				//add the table to the operator
 				addSubComponent(table);
@@ -165,20 +282,23 @@ namespace flopoco {
 				vhdl << instance(table , "KCMTable");
 
 				//extract signals A, B and C
-				vhdl << tab << declare("C", msbC+wOut+g) << " <= atan2TableOutput" << range(msbC+wOut+g-1, 0) << ";" << endl;
-				vhdl << tab << declare("B", msbB+wOut+g) << " <= atan2TableOutput" << range(msbB+wOut+g+msbC+wOut+g-1, msbC+wOut+g) << ";" << endl;
-				vhdl << tab << declare("A", msbA+wOut+g) << " <= atan2TableOutput" << range(msbA+wOut+g+msbB+wOut+g+msbC+wOut+g-1, msbB+wOut+g+msbC+wOut+g) << ";" << endl;
+				vhdl << tab << declare("C", msbC+wOut-1+g) << " <= atan2TableOutput"
+						<< range(msbC+(wOut-1+g)-1, 0) << ";" << endl;
+				vhdl << tab << declare("B", msbB+wOut-1+g) << " <= atan2TableOutput"
+						<< range(msbB+msbC+2*(wOut-1+g)-1, msbC+(wOut-1+g)) << ";" << endl;
+				vhdl << tab << declare("A", msbA+wOut-1+g) << " <= atan2TableOutput"
+						<< range(msbA+msbB+msbC+3*(wOut-1+g)-1, msbB+msbC+2*(wOut-1+g)) << ";" << endl;
 
 				//create Ax and By
-				vhdl << tab << declare("XLow", k+1) << " <= '0' & X" << range(k-1, 0) << ";" << endl;
-				vhdl << tab << declare("YLow", k+1) << " <= '0' & Y" << range(k-1, 0) << ";" << endl;
+				vhdl << tab << declare("XLow", wIn-k) << " <= '0' & X" << range(wIn-1-k-1, 0) << ";" << endl;
+				vhdl << tab << declare("YLow", wIn-k) << " <= '0' & Y" << range(wIn-1-k-1, 0) << ";" << endl;
 
 				IntMultiplier* multAx;
 				multAx = new IntMultiplier(this,								//parent operator
 											 bitHeap,							//the bit heap that performs the compression
 											 getSignalByName("XLow"),			//first input to the multiplier (a signal)
 											 getSignalByName("A"),				//second input to the multiplier (a signal)
-											 -2*k,								//offset of the LSB of the multiplier in the bit heap
+											 -wIn+1,							//offset of the LSB of the multiplier in the bit heap
 											 false /*negate*/,					//whether to subtract the result of the multiplication from the bit heap
 											 true,								//signed/unsigned operator
 											 ratio);							//DSP ratio
@@ -187,25 +307,25 @@ namespace flopoco {
 											 bitHeap,							//the bit heap that performs the compression
 											 getSignalByName("YLow"),			//first input to the multiplier (a signal)
 											 getSignalByName("B"),				//second input to the multiplier (a signal)
-											 -2*k,								//offset of the LSB of the multiplier in the bit heap
+											 -wIn+1,							//offset of the LSB of the multiplier in the bit heap
 											 false /*negate*/,					//whether to subtract the result of the multiplication from the bit heap
 											 true,								//signed/unsigned operator
 											 ratio);							//DSP ratio
 
 				bitHeap->addSignedBitVector(0,									//weight of signal in the bit heap
 											"C",								//name of the signal
-											msbC+wOut+g,						//size of the signal added
+											msbC+wOut-1+g,						//size of the signal added
 											0,									//index of the lsb in the bit vector from which to add the bits of the addend
 											false);								//if we are correcting the index in the bit vector with a negative weight
 
 				//add the rounding bit - take into consideration the final alignment
-				bitHeap->addConstantOneBit(g-1+2);
+				bitHeap->addConstantOneBit(g-1);
 
 				//compress the bit heap
 				bitHeap -> generateCompressorVHDL();
 
 				//extract the result - take into consideration the final alignment
-				vhdl << tab << "R <= " << bitHeap->getSumName() << range(wOut+g-1+2, g+2) << ";" << endl;
+				vhdl << tab << "R <= " << bitHeap->getSumName() << range(wOut+g-1, g) << ";" << endl;
 			}
 
 		}else if(architectureType == 2)
@@ -221,9 +341,6 @@ namespace flopoco {
 			guardBitsSum = 2;				// the error when computing Ax+By+C+Dx^2+Ey^2+Fxy is at most 2.5 ulps, so we'll need 2 extra guard bits
 			guardBitsApprox = 2;			// determined when computing the parameters for the tables
 			g = guardBitsApprox + guardBitsSum;
-
-			//set the ratio for the multiplications
-			ratio = 0.95;
 
 			k = checkArchitecture(architectureType);
 			kSize = k;
@@ -241,14 +358,14 @@ namespace flopoco {
 			if(plainVHDL)
 			{
 				//split the input signals, and create the address signal for the table
-				vhdl << tab << declare("XHigh", k-1) << " <= std_logic_vector(X" << range(wIn-2, wIn-k) << ");" << endl;
-				vhdl << tab << declare("YHigh", k)   << " <= std_logic_vector(Y" << range(wIn-1, wIn-k) << ");" << endl;
+				vhdl << tab << declare("XHigh", k-1) << " <= std_logic_vector(X" << range(wIn-3, wIn-1-k) << ");" << endl;
+				vhdl << tab << declare("YHigh", k)   << " <= std_logic_vector(Y" << range(wIn-2, wIn-1-k) << ");" << endl;
 				vhdl << endl;
 				vhdl << tab << declare("atan2TableInput", 2*k-1) << " <= std_logic_vector(XHigh) & std_logic_vector(YHigh);" << endl;
 				vhdl << endl;
 
 				//create the table for atan(y/x)
-				Atan2Table *table = new Atan2Table(target, 2*k-1, msbA+msbB+msbC+msbD+msbE+msbF+6*(wOut+g),
+				Atan2Table *table = new Atan2Table(target, 2*k-1, msbA+msbB+msbC+msbD+msbE+msbF+6*(wOut-1+g),
 													architectureType, msbA, msbB, msbC, msbD, msbE, msbF);
 
 				//add the table to the operator
@@ -261,39 +378,39 @@ namespace flopoco {
 				vhdl << endl;
 
 				//split the output of the table to the corresponding parts A, B, C, D, E and F
-				vhdl << tab << declareFixPoint("F", true, msbF-1,  -wOut-g) << " <= signed(atan2TableOutput"
-						<< range(msbF+1*(wOut+g)-1, 0) << ");" << endl;
-				vhdl << tab << declareFixPoint("E", true, msbE-1,  -wOut-g) << " <= signed(atan2TableOutput"
-						<< range(msbE+msbF+2*(wOut+g)-1, msbF+1*(wOut+g)) << ");" << endl;
-				vhdl << tab << declareFixPoint("D", true, msbD-1,  -wOut-g) << " <= signed(atan2TableOutput"
-						<< range(msbD+msbE+msbF+3*(wOut+g)-1, msbE+msbF+2*(wOut+g)) << ");" << endl;
-				vhdl << tab << declareFixPoint("C", true, msbC-1,  -wOut-g) << " <= signed(atan2TableOutput"
-						<< range(msbC+msbD+msbE+msbF+4*(wOut+g)-1, msbD+msbE+msbF+3*(wOut+g)) << ");" << endl;
-				vhdl << tab << declareFixPoint("B", true, msbB-1,  -wOut-g) << " <= signed(atan2TableOutput"
-						<< range(msbB+msbC+msbD+msbE+msbF+5*(wOut+g)-1, msbC+msbD+msbE+msbF+4*(wOut+g)) << ");" << endl;
-				vhdl << tab << declareFixPoint("A", true, msbA-1,  -wOut-g) << " <= signed(atan2TableOutput"
-						<< range(msbA+msbB+msbC+msbD+msbE+msbF+6*(wOut+g)-1, msbB+msbC+msbD+msbE+msbF+5*(wOut+g)) << ");" << endl;
+				vhdl << tab << declareFixPoint("F", true, msbF-1,  -wOut+1-g) << " <= signed(atan2TableOutput"
+						<< range(msbF+1*(wOut-1+g)-1, 0) << ");" << endl;
+				vhdl << tab << declareFixPoint("E", true, msbE-1,  -wOut+1-g) << " <= signed(atan2TableOutput"
+						<< range(msbE+msbF+2*(wOut-1+g)-1, msbF+1*(wOut-1+g)) << ");" << endl;
+				vhdl << tab << declareFixPoint("D", true, msbD-1,  -wOut+1-g) << " <= signed(atan2TableOutput"
+						<< range(msbD+msbE+msbF+3*(wOut-1+g)-1, msbE+msbF+2*(wOut-1+g)) << ");" << endl;
+				vhdl << tab << declareFixPoint("C", true, msbC-1,  -wOut+1-g) << " <= signed(atan2TableOutput"
+						<< range(msbC+msbD+msbE+msbF+4*(wOut-1+g)-1, msbD+msbE+msbF+3*(wOut-1+g)) << ");" << endl;
+				vhdl << tab << declareFixPoint("B", true, msbB-1,  -wOut+1-g) << " <= signed(atan2TableOutput"
+						<< range(msbB+msbC+msbD+msbE+msbF+5*(wOut-1+g)-1, msbC+msbD+msbE+msbF+4*(wOut-1+g)) << ");" << endl;
+				vhdl << tab << declareFixPoint("A", true, msbA-1,  -wOut+1-g) << " <= signed(atan2TableOutput"
+						<< range(msbA+msbB+msbC+msbD+msbE+msbF+6*(wOut-1+g)-1, msbB+msbC+msbD+msbE+msbF+5*(wOut-1+g)) << ");" << endl;
 				vhdl << endl;
 
-				vhdl << tab << declareFixPoint("DeltaX", true, -k-1,  -wIn) << " <= signed(not(X(" << of(wIn-k-1) << ")) & X" << range(wIn-k-2, 0) << ");" << endl;
-				vhdl << tab << declareFixPoint("DeltaY", true, -k-1,  -wIn) << " <= signed(not(Y(" << of(wIn-k-1) << ")) & Y" << range(wIn-k-2, 0) << ");" << endl;
+				vhdl << tab << declareFixPoint("DeltaX", true, -k-1,  -wIn+1) << " <= signed(not(X(" << of(wIn-k-2) << ")) & X" << range(wIn-k-3, 0) << ");" << endl;
+				vhdl << tab << declareFixPoint("DeltaY", true, -k-1,  -wIn+1) << " <= signed(not(Y(" << of(wIn-k-2) << ")) & Y" << range(wIn-k-3, 0) << ");" << endl;
 				vhdl << endl;
 
 				//create A*DeltaX and B*DeltaY
-				vhdl << tab << declareFixPoint("A_DeltaX", true, msbA-k-1,  -wOut-g-wIn) << " <= A * DeltaX;" << endl;
-				vhdl << tab << declareFixPoint("B_DeltaY", true, msbB-k-1,  -wOut-g-wIn) << " <= B * DeltaY;" << endl;
+				vhdl << tab << declareFixPoint("A_DeltaX", true, msbA-k-1,  -wOut+1-g-wIn+1) << " <= A * DeltaX;" << endl;
+				vhdl << tab << declareFixPoint("B_DeltaY", true, msbB-k-1,  -wOut+1-g-wIn+1) << " <= B * DeltaY;" << endl;
 				vhdl << endl;
 
 				//create DeltaX^2, DeltaY^2 and DeltaX*DeltaY
-				vhdl << tab << declareFixPoint("DeltaX2", true, -2*k-1,  -2*wIn) << " <= DeltaX * DeltaX;" << endl;
-				vhdl << tab << declareFixPoint("DeltaY2", true, -2*k-1,  -2*wIn) << " <= DeltaY * DeltaY;" << endl;
-				vhdl << tab << declareFixPoint("DeltaX_DeltaY", true, -2*k-1,  -2*wIn) << " <= DeltaX * DeltaY;" << endl;
+				vhdl << tab << declareFixPoint("DeltaX2", true, -2*k-1,  -2*wIn+2) << " <= DeltaX * DeltaX;" << endl;
+				vhdl << tab << declareFixPoint("DeltaY2", true, -2*k-1,  -2*wIn+2) << " <= DeltaY * DeltaY;" << endl;
+				vhdl << tab << declareFixPoint("DeltaX_DeltaY", true, -2*k-1,  -2*wIn+2) << " <= DeltaX * DeltaY;" << endl;
 				vhdl << endl;
 
 				//align the products, discard the extra lsb-s
-				resizeFixPoint("DeltaX2_short", "DeltaX2", -2*k-1, -wOut-g);
-				resizeFixPoint("DeltaY2_short", "DeltaY2", -2*k-1, -wOut-g);
-				resizeFixPoint("DeltaX_DeltaY_short", "DeltaX_DeltaY", -2*k-1, -wOut-g);
+				resizeFixPoint("DeltaX2_short", "DeltaX2", -2*k-1, -wOut+1-g);
+				resizeFixPoint("DeltaY2_short", "DeltaY2", -2*k-1, -wOut+1-g);
+				resizeFixPoint("DeltaX_DeltaY_short", "DeltaX_DeltaY", -2*k-1, -wOut+1-g);
 				vhdl << endl;
 
 				//create D*DeltaX^2, E*DeltaY^2 and F*DeltaX*DeltaY
@@ -302,55 +419,55 @@ namespace flopoco {
 				vhdl << tab << declareFixPoint("E_DeltaY2", true, msbE-2*k-1,  -2*wIn-wOut-g) << " <= E * DeltaY2;" << endl;
 				vhdl << tab << declareFixPoint("F_DeltaX_DeltaY", true, msbF-2*k-1,  -2*wIn-wOut-g) << " <= F * DeltaX_DeltaY;" << endl;
 				*/
-				vhdl << tab << declareFixPoint("D_DeltaX2", true, msbD-2*k-1,  -2*(wOut+g)) << " <= D * DeltaX2_short;" << endl;
-				vhdl << tab << declareFixPoint("E_DeltaY2", true, msbE-2*k-1,  -2*(wOut+g)) << " <= E * DeltaY2_short;" << endl;
-				vhdl << tab << declareFixPoint("F_DeltaX_DeltaY", true, msbF-2*k-1,  -2*(wOut+g)) << " <= F * DeltaX_DeltaY_short;" << endl;
+				vhdl << tab << declareFixPoint("D_DeltaX2", true, msbD-2*k-1,  -2*(wOut-1+g)) << " <= D * DeltaX2_short;" << endl;
+				vhdl << tab << declareFixPoint("E_DeltaY2", true, msbE-2*k-1,  -2*(wOut-1+g)) << " <= E * DeltaY2_short;" << endl;
+				vhdl << tab << declareFixPoint("F_DeltaX_DeltaY", true, msbF-2*k-1,  -2*(wOut-1+g)) << " <= F * DeltaX_DeltaY_short;" << endl;
 				vhdl << endl;
 
 				//align the signals to the output format to the output format
-				resizeFixPoint("A_DeltaX_sgnExt", "A_DeltaX", maxMSB-1, -wOut-g);
-				resizeFixPoint("B_DeltaY_sgnExt", "B_DeltaY", maxMSB-1, -wOut-g);
-				resizeFixPoint("C_sgnExt", "C", maxMSB-1, -wOut-g);
-				resizeFixPoint("D_DeltaX2_sgnExt", "D_DeltaX2", maxMSB-1, -wOut-g);
-				resizeFixPoint("E_DeltaY2_sgnExt", "E_DeltaY2", maxMSB-1, -wOut-g);
-				resizeFixPoint("F_DeltaX_DeltaY_sgnExt", "F_DeltaX_DeltaY", maxMSB-1, -wOut-g);
+				resizeFixPoint("A_DeltaX_sgnExt", "A_DeltaX", maxMSB-1, -wOut+1-g);
+				resizeFixPoint("B_DeltaY_sgnExt", "B_DeltaY", maxMSB-1, -wOut+1-g);
+				resizeFixPoint("C_sgnExt", "C", maxMSB-1, -wOut+1-g);
+				resizeFixPoint("D_DeltaX2_sgnExt", "D_DeltaX2", maxMSB-1, -wOut+1-g);
+				resizeFixPoint("E_DeltaY2_sgnExt", "E_DeltaY2", maxMSB-1, -wOut+1-g);
+				resizeFixPoint("F_DeltaX_DeltaY_sgnExt", "F_DeltaX_DeltaY", maxMSB-1, -wOut+1-g);
 				vhdl << endl;
 
 				//add everything up
-				vhdl << tab << declareFixPoint("Sum1", true, maxMSB, -wOut-g)
+				vhdl << tab << declareFixPoint("Sum1", true, maxMSB, -wOut+1-g)
 						<< " <= (A_DeltaX_sgnExt(A_DeltaX_sgnExt'HIGH) & A_DeltaX_sgnExt) + (B_DeltaY_sgnExt(B_DeltaY_sgnExt'HIGH) & B_DeltaY_sgnExt);" << endl;
-				vhdl << tab << declareFixPoint("Sum2", true, maxMSB, -wOut-g)
+				vhdl << tab << declareFixPoint("Sum2", true, maxMSB, -wOut+1-g)
 						<< " <= (C_sgnExt(C_sgnExt'HIGH) & C_sgnExt) + (D_DeltaX2_sgnExt(D_DeltaX2_sgnExt'HIGH) & D_DeltaX2_sgnExt);" << endl;
-				vhdl << tab << declareFixPoint("Sum3", true, maxMSB, -wOut-g)
+				vhdl << tab << declareFixPoint("Sum3", true, maxMSB, -wOut+1-g)
 						<< " <= (E_DeltaY2_sgnExt(E_DeltaY2_sgnExt'HIGH) & E_DeltaY2_sgnExt) + (F_DeltaX_DeltaY_sgnExt(F_DeltaX_DeltaY_sgnExt'HIGH) & F_DeltaX_DeltaY_sgnExt);" << endl;
-				vhdl << tab << declareFixPoint("Sum4", true, maxMSB+1, -wOut-g)
+				vhdl << tab << declareFixPoint("Sum4", true, maxMSB+1, -wOut+1-g)
 						<< " <= (Sum1(Sum1'HIGH) & Sum1) + (Sum2(Sum2'HIGH) & Sum2);" << endl;
-				vhdl << tab << declareFixPoint("Sum5", true, maxMSB+2, -wOut-g)
+				vhdl << tab << declareFixPoint("Sum5", true, maxMSB+2, -wOut+1-g)
 						<< " <= (Sum4(Sum4'HIGH) & Sum4) + (Sum3(Sum3'HIGH) & Sum3(Sum3'HIGH) & Sum3);" << endl;
 				vhdl << endl;
 
 				//extract the final result
-				resizeFixPoint("Rint", "Sum5", 1, -wOut+1);
-				vhdl << tab << declareFixPoint("Rint_rndCst", true, 1, -wOut+1) << " <= signed(std_logic_vector\'(\"" << zg(wOut, -2) << "1\"));" << endl;
-				vhdl << tab << declareFixPoint("Rint_rnd", true, 1, -wOut+1) << " <= Rint + Rint_rndCst;" << endl;
+				resizeFixPoint("Rtmp", "Sum5", 1, -wOut);
+				vhdl << tab << declareFixPoint("Rtmp_rndCst", true, 1, -wOut) << " <= signed(std_logic_vector\'(\"" << zg(wOut+1, -2) << "1\"));" << endl;
+				vhdl << tab << declareFixPoint("Rtmp_rnd", true, 1, -wOut) << " <= Rtmp + Rtmp_rndCst;" << endl;
 
 				//return the result
-				resizeFixPoint("Rint_stdlv", "Rint_rnd", 1, -wOut+2);
-				vhdl << tab << "R <= std_logic_vector(Rint_stdlv);" << endl;
+				resizeFixPoint("Rtmp_stdlv", "Rtmp_rnd", 0, -wOut+1);
+				vhdl << tab << "R <= std_logic_vector(Rtmp_stdlv);" << endl;
 			}else
 			{
 				//create the bitheap
 				bitHeap = new BitHeap(this, (maxMSB+2)+wOut+g);
 
 				//create the input signals for the table
-				vhdl << tab << declare("XHigh", k-1) << " <= std_logic_vector(X" << range(wIn-2, wIn-k) << ");" << endl;
-				vhdl << tab << declare("YHigh", k)   << " <= std_logic_vector(Y" << range(wIn-1, wIn-k) << ");" << endl;
+				vhdl << tab << declare("XHigh", k-1) << " <= std_logic_vector(X" << range(wIn-3, wIn-1-k) << ");" << endl;
+				vhdl << tab << declare("YHigh", k)   << " <= std_logic_vector(Y" << range(wIn-2, wIn-1-k) << ");" << endl;
 				vhdl << endl;
 				vhdl << tab << declare("atan2TableInput", 2*k-1) << " <= std_logic_vector(XHigh) & std_logic_vector(YHigh);" << endl;
 				vhdl << endl;
 
 				//create the table for atan(y/x)
-				Atan2Table *table = new Atan2Table(target, 2*k-1, msbA+msbB+msbC+msbD+msbE+msbF+6*(wOut+g),
+				Atan2Table *table = new Atan2Table(target, 2*k-1, msbA+msbB+msbC+msbD+msbE+msbF+6*(wOut-1+g),
 													architectureType, msbA, msbB, msbC, msbD, msbE, msbF);
 
 				//add the table to the operator
@@ -363,36 +480,36 @@ namespace flopoco {
 				vhdl << endl;
 
 				//split the output of the table to the corresponding parts A, B, C, D, E and F
-				vhdl << tab << declareFixPoint("F", true, msbF-1,  -wOut-g) << " <= signed(atan2TableOutput"
-						<< range(msbF+1*(wOut+g)-1, 0) << ");" << endl;
-				vhdl << tab << declareFixPoint("E", true, msbE-1,  -wOut-g) << " <= signed(atan2TableOutput"
-						<< range(msbE+msbF+2*(wOut+g)-1, msbF+1*(wOut+g)) << ");" << endl;
-				vhdl << tab << declareFixPoint("D", true, msbD-1,  -wOut-g) << " <= signed(atan2TableOutput"
-						<< range(msbD+msbE+msbF+3*(wOut+g)-1, msbE+msbF+2*(wOut+g)) << ");" << endl;
-				vhdl << tab << declareFixPoint("C", true, msbC-1,  -wOut-g) << " <= signed(atan2TableOutput"
-						<< range(msbC+msbD+msbE+msbF+4*(wOut+g)-1, msbD+msbE+msbF+3*(wOut+g)) << ");" << endl;
-				vhdl << tab << declareFixPoint("B", true, msbB-1,  -wOut-g) << " <= signed(atan2TableOutput"
-						<< range(msbB+msbC+msbD+msbE+msbF+5*(wOut+g)-1, msbC+msbD+msbE+msbF+4*(wOut+g)) << ");" << endl;
-				vhdl << tab << declareFixPoint("A", true, msbA-1,  -wOut-g) << " <= signed(atan2TableOutput"
-						<< range(msbA+msbB+msbC+msbD+msbE+msbF+6*(wOut+g)-1, msbB+msbC+msbD+msbE+msbF+5*(wOut+g)) << ");" << endl;
+				vhdl << tab << declareFixPoint("F", true, msbF-1,  -wOut+1-g) << " <= signed(atan2TableOutput"
+						<< range(msbF+1*(wOut-1+g)-1, 0) << ");" << endl;
+				vhdl << tab << declareFixPoint("E", true, msbE-1,  -wOut+1-g) << " <= signed(atan2TableOutput"
+						<< range(msbE+msbF+2*(wOut-1+g)-1, msbF+1*(wOut-1+g)) << ");" << endl;
+				vhdl << tab << declareFixPoint("D", true, msbD-1,  -wOut+1-g) << " <= signed(atan2TableOutput"
+						<< range(msbD+msbE+msbF+3*(wOut-1+g)-1, msbE+msbF+2*(wOut-1+g)) << ");" << endl;
+				vhdl << tab << declareFixPoint("C", true, msbC-1,  -wOut+1-g) << " <= signed(atan2TableOutput"
+						<< range(msbC+msbD+msbE+msbF+4*(wOut-1+g)-1, msbD+msbE+msbF+3*(wOut-1+g)) << ");" << endl;
+				vhdl << tab << declareFixPoint("B", true, msbB-1,  -wOut+1-g) << " <= signed(atan2TableOutput"
+						<< range(msbB+msbC+msbD+msbE+msbF+5*(wOut-1+g)-1, msbC+msbD+msbE+msbF+4*(wOut-1+g)) << ");" << endl;
+				vhdl << tab << declareFixPoint("A", true, msbA-1,  -wOut+1-g) << " <= signed(atan2TableOutput"
+						<< range(msbA+msbB+msbC+msbD+msbE+msbF+6*(wOut-1+g)-1, msbB+msbC+msbD+msbE+msbF+5*(wOut-1+g)) << ");" << endl;
 				vhdl << endl;
 
 				//create DeltaX and DeltaY
-				vhdl << tab << declareFixPoint("DeltaX", true, -k-1,  -wIn) << " <= signed(not(X(" << of(wIn-k-1) << ")) & X" << range(wIn-k-2, 0) << ");" << endl;
-				vhdl << tab << declareFixPoint("DeltaY", true, -k-1,  -wIn) << " <= signed(not(Y(" << of(wIn-k-1) << ")) & Y" << range(wIn-k-2, 0) << ");" << endl;
+				vhdl << tab << declareFixPoint("DeltaX", true, -k-1,  -wIn+1) << " <= signed(not(X(" << of(wIn-k-2) << ")) & X" << range(wIn-k-3, 0) << ");" << endl;
+				vhdl << tab << declareFixPoint("DeltaY", true, -k-1,  -wIn+1) << " <= signed(not(Y(" << of(wIn-k-2) << ")) & Y" << range(wIn-k-3, 0) << ");" << endl;
 				vhdl << endl;
 
 				//create A*DeltaX
 				//	convert the terms to std_logic_vector
-				vhdl << tab << declare("DeltaX_stdlv", wIn-k) << " <= std_logic_vector(DeltaX);" << endl;
-				vhdl << tab << declare("A_stdlv", msbA+wOut+g) << " <= std_logic_vector(A);" << endl;
+				vhdl << tab << declare("DeltaX_stdlv", wIn-1-k) << " <= std_logic_vector(DeltaX);" << endl;
+				vhdl << tab << declare("A_stdlv", msbA+wOut-1+g) << " <= std_logic_vector(A);" << endl;
 				//	multiply
 				IntMultiplier* multADeltaX;
-				multADeltaX = new IntMultiplier(this,								//parent operator
+				multADeltaX = new IntMultiplier(this,							//parent operator
 											 bitHeap,							//the bit heap that performs the compression
 											 getSignalByName("DeltaX_stdlv"),	//first input to the multiplier (a signal)
 											 getSignalByName("A_stdlv"),		//second input to the multiplier (a signal)
-											 -wIn,								//offset of the LSB of the multiplier in the bit heap
+											 -wIn+1,							//offset of the LSB of the multiplier in the bit heap
 											 false /*negate*/,					//whether to subtract the result of the multiplication from the bit heap
 											 true,								//signed/unsigned operator
 											 ratio);							//DSP ratio
@@ -400,15 +517,15 @@ namespace flopoco {
 
 				//create B*DeltaY
 				//	convert the terms to std_logic_vector
-				vhdl << tab << declare("DeltaY_stdlv", wIn-k) << " <= std_logic_vector(DeltaY);" << endl;
-				vhdl << tab << declare("B_stdlv", msbB+wOut+g) << " <= std_logic_vector(B);" << endl;
+				vhdl << tab << declare("DeltaY_stdlv", wIn-1-k) << " <= std_logic_vector(DeltaY);" << endl;
+				vhdl << tab << declare("B_stdlv", msbB+wOut-1+g) << " <= std_logic_vector(B);" << endl;
 				//	multiply
 				IntMultiplier* multBDeltaY;
 				multBDeltaY = new IntMultiplier(this,								//parent operator
 												 bitHeap,							//the bit heap that performs the compression
 												 getSignalByName("DeltaY_stdlv"),	//first input to the multiplier (a signal)
 												 getSignalByName("B_stdlv"),		//second input to the multiplier (a signal)
-												 -wIn,								//offset of the LSB of the multiplier in the bit heap
+												 -wIn+1,							//offset of the LSB of the multiplier in the bit heap
 												 false /*negate*/,					//whether to subtract the result of the multiplication from the bit heap
 												 true,								//signed/unsigned operator
 												 ratio);							//DSP ratio
@@ -417,36 +534,36 @@ namespace flopoco {
 				//Add C
 				bitHeap->addSignedBitVector(0,									//weight of signal in the bit heap
 											"C",								//name of the signal
-											msbC+wOut+g,						//size of the signal added
+											msbC+wOut-1+g,						//size of the signal added
 											0,									//index of the lsb in the bit vector from which to add the bits of the addend
 											false);								//if we are correcting the index in the bit vector with a negative weight
 				vhdl << endl;
 
 				//create DeltaX^2, DeltaY^2 and DeltaX*DeltaY
-				vhdl << tab << declareFixPoint("DeltaX2", true, -2*k-1,  -2*wIn) << " <= DeltaX * DeltaX;" << endl;
-				vhdl << tab << declareFixPoint("DeltaY2", true, -2*k-1,  -2*wIn) << " <= DeltaY * DeltaY;" << endl;
-				vhdl << tab << declareFixPoint("DeltaX_DeltaY", true, -2*k-1,  -2*wIn) << " <= DeltaX * DeltaY;" << endl;
+				vhdl << tab << declareFixPoint("DeltaX2", true, -2*k-1,  -2*wIn+2) << " <= DeltaX * DeltaX;" << endl;
+				vhdl << tab << declareFixPoint("DeltaY2", true, -2*k-1,  -2*wIn+2) << " <= DeltaY * DeltaY;" << endl;
+				vhdl << tab << declareFixPoint("DeltaX_DeltaY", true, -2*k-1,  -2*wIn+2) << " <= DeltaX * DeltaY;" << endl;
 				vhdl << endl;
 
 				//align the products, discard the extra lsb-s
-				resizeFixPoint("DeltaX2_short", "DeltaX2", -2*k-1, -wOut-g);
-				resizeFixPoint("DeltaY2_short", "DeltaY2", -2*k-1, -wOut-g);
-				resizeFixPoint("DeltaX_DeltaY_short", "DeltaX_DeltaY", -2*k-1, -wOut-g);
+				resizeFixPoint("DeltaX2_short", "DeltaX2", -2*k-1, -wOut+1-g);
+				resizeFixPoint("DeltaY2_short", "DeltaY2", -2*k-1, -wOut+1-g);
+				resizeFixPoint("DeltaX_DeltaY_short", "DeltaX_DeltaY", -2*k-1, -wOut+1-g);
 				vhdl << endl;
 
 				//create D*DeltaX^2, E*DeltaY^2 and F*DeltaX*DeltaY
 
 				//create D*DeltaX^2
 				//	convert the terms to std_logic_vector
-				vhdl << tab << declare("DeltaX2_short_stdlv", wOut+g-2*k) << " <= std_logic_vector(DeltaX2_short);" << endl;
-				vhdl << tab << declare("D_stdlv", msbD+wOut+g) << " <= std_logic_vector(D);" << endl;
+				vhdl << tab << declare("DeltaX2_short_stdlv", wOut-1+g-2*k) << " <= std_logic_vector(DeltaX2_short);" << endl;
+				vhdl << tab << declare("D_stdlv", msbD+wOut-1+g) << " <= std_logic_vector(D);" << endl;
 				//	multiply
 				IntMultiplier* multDDeltaX2;
 				multDDeltaX2 = new IntMultiplier(this,								//parent operator
 												 bitHeap,							//the bit heap that performs the compression
 												 getSignalByName("DeltaX2_short_stdlv"),	//first input to the multiplier (a signal)
 												 getSignalByName("D_stdlv"),		//second input to the multiplier (a signal)
-												 -wOut-g,							//offset of the LSB of the multiplier in the bit heap
+												 -wOut+1-g,							//offset of the LSB of the multiplier in the bit heap
 												 false /*negate*/,					//whether to subtract the result of the multiplication from the bit heap
 												 true,								//signed/unsigned operator
 												 ratio);							//DSP ratio
@@ -454,15 +571,15 @@ namespace flopoco {
 
 				//	create E*DeltaY^2
 				//	convert the terms to std_logic_vector
-				vhdl << tab << declare("DeltaY2_short_stdlv", wOut+g-2*k) << " <= std_logic_vector(DeltaY2_short);" << endl;
-				vhdl << tab << declare("E_stdlv", msbE+wOut+g) << " <= std_logic_vector(E);" << endl;
+				vhdl << tab << declare("DeltaY2_short_stdlv", wOut-1+g-2*k) << " <= std_logic_vector(DeltaY2_short);" << endl;
+				vhdl << tab << declare("E_stdlv", msbE+wOut-1+g) << " <= std_logic_vector(E);" << endl;
 				//	multiply
 				IntMultiplier* multEDeltaY2;
 				multEDeltaY2 = new IntMultiplier(this,								//parent operator
 												 bitHeap,							//the bit heap that performs the compression
 												 getSignalByName("DeltaY2_short_stdlv"),	//first input to the multiplier (a signal)
 												 getSignalByName("E_stdlv"),		//second input to the multiplier (a signal)
-												 -wOut-g,							//offset of the LSB of the multiplier in the bit heap
+												 -wOut+1-g,							//offset of the LSB of the multiplier in the bit heap
 												 false /*negate*/,					//whether to subtract the result of the multiplication from the bit heap
 												 true,								//signed/unsigned operator
 												 ratio);							//DSP ratio
@@ -470,28 +587,28 @@ namespace flopoco {
 
 				//	create F*DeltaX_DeltaY
 				//	convert the terms to std_logic_vector
-				vhdl << tab << declare("DeltaX_DeltaY_short_stdlv", wOut+g-2*k) << " <= std_logic_vector(DeltaX_DeltaY_short);" << endl;
-				vhdl << tab << declare("F_stdlv", msbF+wOut+g) << " <= std_logic_vector(F);" << endl;
+				vhdl << tab << declare("DeltaX_DeltaY_short_stdlv", wOut-1+g-2*k) << " <= std_logic_vector(DeltaX_DeltaY_short);" << endl;
+				vhdl << tab << declare("F_stdlv", msbF+wOut-1+g) << " <= std_logic_vector(F);" << endl;
 				//	multiply
 				IntMultiplier* multFDeltaXDeltaY;
 				multFDeltaXDeltaY = new IntMultiplier(this,								//parent operator
 													 bitHeap,							//the bit heap that performs the compression
 													 getSignalByName("DeltaX_DeltaY_short_stdlv"),	//first input to the multiplier (a signal)
 													 getSignalByName("F_stdlv"),		//second input to the multiplier (a signal)
-													 -wOut-g,							//offset of the LSB of the multiplier in the bit heap
+													 -wOut+1-g,							//offset of the LSB of the multiplier in the bit heap
 													 false /*negate*/,					//whether to subtract the result of the multiplication from the bit heap
 													 true,								//signed/unsigned operator
 													 ratio);							//DSP ratio
 				vhdl << endl;
 
 				//add the rounding bit - take into consideration the final alignment
-				bitHeap->addConstantOneBit(g-1+2);
+				bitHeap->addConstantOneBit(g-1);
 
 				//compress the bit heap
 				bitHeap -> generateCompressorVHDL();
 
 				//extract the result - take into consideration the final alignment
-				vhdl << tab << "R <= " << bitHeap->getSumName() << range(wOut+g-1+2, g+2) << ";" << endl;
+				vhdl << tab << "R <= " << bitHeap->getSumName() << range(wOut+g-1, g) << ";" << endl;
 			}
 
 		}else if(architectureType == 3)
@@ -503,6 +620,19 @@ namespace flopoco {
 		{
 			THROWERROR("in FixAtan2 constructor: invalid value for the requested architecture type");
 		}
+
+		////////////////////////////////////////////////////////////////////////////
+		//
+		//                            reconstruction
+		//
+		////////////////////////////////////////////////////////////////////////////
+		/*
+		vhdl << tab << declare("qangle", wOut) << " <= (quadrant & " << zg(wOut-2) << ");" << endl;
+		vhdl << tab << declare("finalZext", wOut) << " <= \"00\" & R_int" << range(wOut-1, 0) << "; -- sign-extended and rounded" << endl;
+		vhdl << tab << "R <= "
+				<< tab << tab << "     qangle + finalZext  when finalAdd='1'" << endl
+				<< tab << tab << "else qangle - finalZext;" << endl;
+		*/
 	}
 
 
@@ -525,7 +655,7 @@ namespace flopoco {
 
 		double error, errorMax, errorMin;
 		bool errorSatisfied;
-		double errorLimit = 1.0/(1 << wOut);
+		double errorLimit = 1.0/(1 << (wOut-1));
 
 		cout << "Beginning computations for error checking method based on the "
 				<< (archType==0 ? "plane's equation" : (archType==1 ? "Taylor polynomial of order 1" : "Taylor polynomial of order 2"))
@@ -811,12 +941,14 @@ namespace flopoco {
 					{
 						double auxA, auxB, auxC, auxD, auxE, auxF;
 
-						// maximum value of A
+						// maximum value of A/(Pi/2)
 						auxA = ((a < 0) ? -a : a);
+						auxA = auxA / (M_PI/2.0);
 						if(auxA > maxValA)
 							maxValA = auxA;
 						// maximum value of B
 						auxB = ((b < 0) ? -b : b);
+						auxB = auxB / (M_PI/2.0);
 						if(auxB > maxValB)
 							maxValB = auxB;
 						if(archType == 0)
@@ -824,6 +956,7 @@ namespace flopoco {
 							// maximum value of D
 							auxD = d + a*valI + b*valJ;
 							auxD = ((auxD < 0) ? -auxD : auxD);
+							auxD = auxD / (M_PI/2.0);
 							if(auxD > maxValC)
 								maxValC = auxD;
 						}else if(archType == 1)
@@ -831,24 +964,29 @@ namespace flopoco {
 							// maximum value of C
 							auxC = c + a*valI + b*valJ;
 							auxC = ((auxC < 0) ? -auxC : auxC);
+							auxC = auxC / (M_PI/2.0);
 							if(auxC > maxValC)
 								maxValC = auxC;
 						}else if(archType == 2)
 						{
 							// maximum value of C
 							auxC = ((c < 0) ? -c : c);
+							auxC = auxC / (M_PI/2.0);
 							if(auxC > maxValC)
 								maxValC = auxC;
 							// maximum value of D
 							auxD = ((d < 0) ? -d : d);
+							auxD = auxD / (M_PI/2.0);
 							if(auxD > maxValD)
 								maxValD = auxD;
 							// maximum value of E
 							auxE = ((e < 0) ? -e : e);
+							auxE = auxE / (M_PI/2.0);
 							if(auxE > maxValE)
 								maxValE = auxE;
 							// maximum value of F
 							auxF = ((f < 0) ? -f : f);
+							auxF = auxF / (M_PI/2.0);
 							if(auxF > maxValF)
 								maxValF = auxF;
 						}
@@ -922,11 +1060,11 @@ namespace flopoco {
 			}
 		}
 
-		cout << "Error limit of " << (1 >> wOut) << " satisfied at k=" << k
+		cout << "Error limit of " << (1.0/(1 << (wOut-1))) << " satisfied at k=" << k
 				<< ", with wIn=" << wIn << " and wOut=" << wOut << endl;
 		if((archType == 0) || (archType == 1) || (archType == 2))
 		{
-			cout << tab << "Computed the maximum values of the table parameters: maxValA="
+			cout << tab << "Computed the maximum values of the table parameters (divided by Pi/2): maxValA="
 					<< maxValA << " maxValB=" << maxValB;
 			if(archType == 0)
 				cout << " maxValD=" << maxValC << endl;
@@ -943,7 +1081,7 @@ namespace flopoco {
 
 	void FixAtan2::emulate(TestCase* tc)
 	{
-		mpfr_t mpX, mpY, mpR;
+		mpfr_t mpX, mpY, mpR, pi_mpfr;
 		mpz_class svRu, svRd, aux, temp;
 
 		/// Get I/O values
@@ -952,24 +1090,29 @@ namespace flopoco {
 
 		//get the true value of X
 		temp = mpz_class(1);
-		temp = temp << (wIn-1);
+		temp = temp << (wIn-2);
 		svX = svX + temp;
 
-		mpfr_inits2(10000, mpX, mpY, mpR, (mpfr_ptr)0);
+		mpfr_inits2(10000, mpX, mpY, mpR, pi_mpfr, (mpfr_ptr)0);
 
 		// Cast X and Y to mpfr
 		mpfr_set_z(mpX, svX.get_mpz_t(), GMP_RNDN);
 		mpfr_set_z(mpY, svY.get_mpz_t(), GMP_RNDN);
 
-		// scale appropriately, on the input format: multiply by 2^(-wIn)
-		mpfr_div_2si(mpX, mpX, wIn, GMP_RNDN);
-		mpfr_div_2si(mpY, mpY, wIn, GMP_RNDN);
+		// scale appropriately, on the input format: multiply by 2^(-wIn+1)
+		mpfr_div_2si(mpX, mpX, wIn-1, GMP_RNDN);
+		mpfr_div_2si(mpY, mpY, wIn-1, GMP_RNDN);
 
 		// do the computations
 		mpfr_atan2(mpR, mpY, mpX, GMP_RNDN);
 
-		// scale back to an integer, on the output format: multiply by 2^(wOut-2)
-		mpfr_mul_2si(mpR, mpR, wOut-2, GMP_RNDN);
+		//divide by Pi/2
+		mpfr_const_pi(pi_mpfr, GMP_RNDN);
+		mpfr_div_si(pi_mpfr, pi_mpfr, 2, GMP_RNDN);
+		mpfr_div(mpR, mpR, pi_mpfr, GMP_RNDN);
+
+		// scale back to an integer, on the output format: multiply by 2^(wOut-1)
+		mpfr_mul_2si(mpR, mpR, wOut-1, GMP_RNDN);
 
 		// extract the result
 		//	rounded down
@@ -997,7 +1140,7 @@ namespace flopoco {
 
 		//----------------------------------------------------------------------
 		//-------- Generate the signals of the architecture using software
-
+		/*
 		mpfr_t x, y, deltax, deltay, deltax2, deltay2, deltaxDeltay,
 				aDeltax, bDeltay, dDeltax2, eDeltay2, fDeltaxDeltay,
 				sum1, sum2, sum3, sum4, sum5, result,
@@ -1084,12 +1227,12 @@ namespace flopoco {
 
 		mpfr_clears(x, y, deltax, deltay, deltax2, deltay2, deltaxDeltay, aDeltax, bDeltay, dDeltax2, eDeltay2, fDeltaxDeltay, sum1, sum2, sum3, sum4, sum5, result, tmp, (mpfr_ptr)0);
 		mpfr_clears(a, b, c, d, e, f, (mpfr_ptr)0);
-
+		*/
 		//----------------------------------------------------------------------
 
 
 		// clean up
-		mpfr_clears(mpX, mpY, mpR, (mpfr_ptr)0);
+		mpfr_clears(mpX, mpY, mpR, pi_mpfr, (mpfr_ptr)0);
 	}
 
 	void FixAtan2::generateTaylorOrder2Parameters(int x, int y, mpfr_t &fa, mpfr_t &fb, mpfr_t &fc, mpfr_t &fd, mpfr_t &fe, mpfr_t &ff)

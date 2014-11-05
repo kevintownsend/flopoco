@@ -42,7 +42,7 @@ namespace flopoco{
 	{
 		int x, y;
 		mpz_t result, temp, aux;
-		mpfr_t a, b, c, cAux, d, e, f, tempMpfr;
+		mpfr_t a, b, c, cAux, d, e, f, tempMpfr, pi_mpfr;
 		int wOutFrac;
 
 		if((archType == 0) || (archType == 1))
@@ -53,7 +53,7 @@ namespace flopoco{
 			wOutFrac = (wOut-msbA-msbB-msbC-msbD-msbE-msbF)/6;
 		}else
 		{
-			THROWERROR("Error: in Atan2Table::function: unknown  architecture type");
+			THROWERROR("Error: in Atan2Table::function: unknown architecture type");
 		}
 
 		//recreate the value of x
@@ -63,7 +63,7 @@ namespace flopoco{
 		x = (1 << ((wIn+1)/2 - 1)) + x;
 
 		//init the mpfr variables
-		mpfr_inits2(10000, a, b, c, cAux, d, e, f, tempMpfr, (mpfr_ptr) 0);
+		mpfr_inits2(10000, a, b, c, cAux, d, e, f, tempMpfr, pi_mpfr, (mpfr_ptr) 0);
 
 		//init the mpz variables
 		mpz_inits(result, temp, aux, (mpz_ptr)0);
@@ -84,12 +84,14 @@ namespace flopoco{
 			THROWERROR("Error: in Atan2Table::function: unknown  architecture type");
 		}
 
+		/*
 		double da = mpfr_get_d(a, GMP_RNDN);
 		double db = mpfr_get_d(b, GMP_RNDN);
 		double dc = mpfr_get_d(c, GMP_RNDN);
 		double dd = mpfr_get_d(d, GMP_RNDN);
 		double de = mpfr_get_d(e, GMP_RNDN);
 		double df = mpfr_get_d(f, GMP_RNDN);
+		*/
 
 		if((archType == 0) || (archType == 1))
 		{
@@ -102,8 +104,14 @@ namespace flopoco{
 			mpfr_div_2ui(tempMpfr, tempMpfr, ((wIn+1)/2), GMP_RNDN);
 			mpfr_add(cAux, cAux, tempMpfr, GMP_RNDN);
 
+			//create Pi/2
+			mpfr_const_pi(pi_mpfr, GMP_RNDN);
+			mpfr_div_si(pi_mpfr, pi_mpfr, 2, GMP_RNDN);
+
 			//extract the result
 			//extract A
+			//	divide A by Pi/2
+			mpfr_div(a, a, pi_mpfr, GMP_RNDN);
 			mpfr_mul_2ui(a, a, wOutFrac, GMP_RNDN);
 			mpfr_get_z(temp, a, GMP_RNDN);
 			//	handle the negative constants and transform them to 2's complement
@@ -117,6 +125,8 @@ namespace flopoco{
 			mpz_set(result, temp);
 
 			//extract B
+			//	divide B by Pi/2
+			mpfr_div(b, b, pi_mpfr, GMP_RNDN);
 			mpfr_mul_2ui(b, b, wOutFrac, GMP_RNDN);
 			mpfr_get_z(temp, b, GMP_RNDN);
 			//	handle the negative constants and transform them to 2's complement
@@ -131,6 +141,8 @@ namespace flopoco{
 			mpz_add(result, result, temp);
 
 			//extract updated C
+			//	divide updated C by Pi/2
+			mpfr_div(cAux, cAux, pi_mpfr, GMP_RNDN);
 			mpfr_mul_2ui(cAux, cAux, wOutFrac, GMP_RNDN);
 			mpfr_get_z(temp, cAux, GMP_RNDN);
 			//	handle the negative constants and transform them to 2's complement
@@ -145,8 +157,14 @@ namespace flopoco{
 			mpz_add(result, result, temp);
 		}else if(archType == 2)
 		{
+			//create Pi/2
+			mpfr_const_pi(pi_mpfr, GMP_RNDN);
+			mpfr_div_si(pi_mpfr, pi_mpfr, 2, GMP_RNDN);
+
 			//extract the result
 			//extract A
+			//	divide A by Pi/2
+			mpfr_div(a, a, pi_mpfr, GMP_RNDN);
 			mpfr_mul_2ui(a, a, wOutFrac, GMP_RNDN);
 			mpfr_get_z(temp, a, GMP_RNDN);
 			//	handle the negative constants and transform them to 2's complement
@@ -160,6 +178,8 @@ namespace flopoco{
 			mpz_set(result, temp);
 
 			//extract B
+			//	divide A by Pi/2
+			mpfr_div(b, b, pi_mpfr, GMP_RNDN);
 			mpfr_mul_2ui(b, b, wOutFrac, GMP_RNDN);
 			mpfr_get_z(temp, b, GMP_RNDN);
 			//	handle the negative constants and transform them to 2's complement
@@ -174,6 +194,8 @@ namespace flopoco{
 			mpz_add(result, result, temp);
 
 			//extract C
+			//	divide A by Pi/2
+			mpfr_div(c, c, pi_mpfr, GMP_RNDN);
 			mpfr_mul_2ui(c, c, wOutFrac, GMP_RNDN);
 			mpfr_get_z(temp, c, GMP_RNDN);
 			//	handle the negative constants and transform them to 2's complement
@@ -188,6 +210,8 @@ namespace flopoco{
 			mpz_add(result, result, temp);
 
 			//extract D
+			//	divide A by Pi/2
+			mpfr_div(d, d, pi_mpfr, GMP_RNDN);
 			mpfr_mul_2ui(d, d, wOutFrac, GMP_RNDN);
 			mpfr_get_z(temp, d, GMP_RNDN);
 			//	handle the negative constants and transform them to 2's complement
@@ -202,6 +226,8 @@ namespace flopoco{
 			mpz_add(result, result, temp);
 
 			//extract E
+			//	divide A by Pi/2
+			mpfr_div(e, e, pi_mpfr, GMP_RNDN);
 			mpfr_mul_2ui(e, e, wOutFrac, GMP_RNDN);
 			mpfr_get_z(temp, e, GMP_RNDN);
 			//	handle the negative constants and transform them to 2's complement
@@ -216,6 +242,8 @@ namespace flopoco{
 			mpz_add(result, result, temp);
 
 			//extract F
+			//	divide A by Pi/2
+			mpfr_div(f, f, pi_mpfr, GMP_RNDN);
 			mpfr_mul_2ui(f, f, wOutFrac, GMP_RNDN);
 			mpfr_get_z(temp, f, GMP_RNDN);
 			//	handle the negative constants and transform them to 2's complement
@@ -234,7 +262,7 @@ namespace flopoco{
 		}
 
 		//clean up the mpfr variables
-		mpfr_clears(a, b, c, cAux, d, e, f, tempMpfr, (mpfr_ptr)0);
+		mpfr_clears(a, b, c, cAux, d, e, f, tempMpfr, pi_mpfr, (mpfr_ptr)0);
 
 		//clean up the mpz variables
 		mpz_clears(temp, aux, (mpz_ptr)0);

@@ -11,6 +11,8 @@
 #include "../Operator.hpp"
 #include "../BitHeap.hpp"
 #include "../IntMult/IntMultiplier.hpp"
+#include "../ShiftersEtc/LZOC.hpp"
+#include "../ShiftersEtc/Shifters.hpp"
 
 #include "../Tools/Point.hpp"
 #include "../Tools/Plane.hpp"
