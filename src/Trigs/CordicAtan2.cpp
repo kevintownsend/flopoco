@@ -84,14 +84,13 @@ namespace flopoco{
 		setCriticalPath(getMaxInputDelays(inputDelays));
 		//		manageCriticalPath( target->lutDelay());
 	
-
-	
+		int degree=method & 7;
+		method=method & 0xF8;
 	
 		//Defining the various parameters according to method
 		int sizeXYInRR;
 		bool doScaling;
-
-		switch(method & 0xF7) {
+		switch(method) {
 		case CORDIC:
 			negateByComplement=true;
 			computeGuardBitsForCORDIC();
@@ -333,7 +332,6 @@ namespace flopoco{
 			bool plainStupidVHDL=true; // TODO remove. This should be a Target or a global option
 			FixFunctionByPiecewisePoly* recipTable;
 			FixFunctionByPiecewisePoly* atanTable;
-			int degree = method & 7;
 			int msbRecip, lsbRecip, msbProduct, lsbProduct, msbAtan, lsbAtan;
 			msbAtan = -2; // bits 0 and -1 come from the range reduction
 			lsbAtan = -w+1;
@@ -482,9 +480,9 @@ namespace flopoco{
 
 		// interpret as signed two'ss complement
 		if (1==(svX >> (w-1))) // sign bit
-			svX -= (1<<w);
+			svX -= (mpz_class(1)<<w);
 		if (1==(svY >> (w-1))) // sign bit
-			svY -= (1<<w);
+			svY -= (mpz_class(1)<<w);
 		/* Compute correct value */
 		
 		mpfr_set_z (x, svX.get_mpz_t(), GMP_RNDN); //  exact
