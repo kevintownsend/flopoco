@@ -1,6 +1,9 @@
 TODO file for FloPoCo
 
-BUG infinite loop in
+BUGs en cours
+./flopoco -verbose=3 -pipeline=no FixFunctionByPiecewisePoly "atan(x)/pi" -16 -2 -15 2 1 0 TestBenchFile -2
+
+ infinite loop in
 ./flopoco -verbose=2 -pipeline=no FixFunctionByPiecewisePoly "atan(x)" -16 2 -16 2 0 0 TestBenchFile -2
 > FixMultAdd: Using 4 guard bits
 Creating bit heap of size 22, out of which 4 guard bits

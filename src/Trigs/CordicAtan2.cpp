@@ -322,7 +322,7 @@ namespace flopoco{
 			// manageCriticalPath( target->localWireDelay(w+1) + target->adderDelay(w+1) // actual CP delay
 			//                     - (target->localWireDelay(sizeZ+1) + target->adderDelay(sizeZ+1))); // CP delay that was already added
 
-			finalZ=join("Z", maxIterations+1);
+			vhdl << tab << declare("finalZ", w) << " <= Z" << stage << of(sizeZ-1) << " & Z" << stage << range(sizeZ-1, sizeZ-w+1) << "; -- sign-extended and rounded" << endl;
 		}
 
 
@@ -391,10 +391,11 @@ namespace flopoco{
 			atanTable->changeName(join("atan_uid", getNewUId()));
 			addSubComponent(atanTable);			
 			inPortMap(atanTable, "X", "PTrunc");
-			outPortMap(atanTable, "Y", "finalZ"); 
+			outPortMap(atanTable, "Y", "atanTableOut"); 
 			vhdl << instance(atanTable, "atanTable");
 
-			finalZ="finalZ";
+			vhdl << tab << declare("finalZ", w) << " <= \"00\" & atanTableOut;" << endl;
+			
 			//			vhdl << tab << declare(finalZ, sizeZ) << " <= '0' & finalZu; -- adding back a sign  bit for the reconstruction" << endl;
 			 
 		}
@@ -409,10 +410,9 @@ namespace flopoco{
 		////////////////////////////////////////////////////////////////////////////
 
 		vhdl << tab << declare("qangle", w) << " <= (quadrant & " << zg(w-2) << ");" << endl;
-		vhdl << tab << declare("finalZext", w) << " <= "<< finalZ << of(sizeZ-1) << " & "<< finalZ << range(sizeZ-1, sizeZ-w+1) << "; -- sign-extended and rounded" << endl;
 		vhdl << tab << "A <= "
-				 << tab << tab << "     qangle + finalZext  when finalAdd='1'" << endl
-				 << tab << tab << "else qangle - finalZext;" << endl;
+				 << tab << tab << "     qangle + finalZ  when finalAdd='1'" << endl
+				 << tab << tab << "else qangle - finalZ;" << endl;
 	};
 
 
