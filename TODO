@@ -1,5 +1,6 @@
 TODO file for FloPoCo
 
+fplll seems to be a debian package
 compression bug: ./flopoco IntMultiplier 2 16 16 1 0 0 does not produce a simple adder
 
 Get rid of SignedIO in BitHeap: this is a multiplier concern, not a bit heap concern
@@ -15,7 +16,7 @@ Here and there, fix VHDL style issues needed for whimsical simulators or synthes
 Clean up src/ file hierarchy:
 
 
-For Kentaro: avoid generating multiple times the same operators.
+For Kentaro: avoid generating multiple times the same operators. 
 
 Add LUT-based integer comparators
 
