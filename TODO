@@ -1,16 +1,18 @@
 TODO file for FloPoCo
 
  infinite loop in
-./flopoco -verbose=2 -pipeline=no FixFunctionByPiecewisePoly "atan(x)" -16 2 -16 2 0 0 TestBenchFile -2
-> FixMultAdd: Using 4 guard bits
-Creating bit heap of size 22, out of which 4 guard bits
-> IntMultiplier: in fillBitHeap(): logic-only multiplier implementation
-> IntMultiplier: in fillBitHeap(): starting logic only tiling
-> IntMultiplier: buildHeapLogicOnly called for 0 0 11 11
+./flopoco -verbose=4 -pipeline=no FixFunctionByPiecewisePoly "atan(x)" -16 2 -16 2 0 0 TestBenchFile -2
+
+bug is in the size passed to addSignedBitVector:
+...
+> FixMultAdd:BitHeap: Entering addSignedBitVector(weight=23, x=A, size=4294967295, lsb=0, negativeWeight=0
+> FixMultAdd:BitHeap: addBit at weigth 23   for rhs=A(0)
 > FixMultAdd:BitHeap: WARNING in addBit, w=23 greater than mawWeight=22... ignoring it
-> FixMultAdd:BitHeap: WARNING in addBit, w=24 greater than mawWeight=22... ignoring it
-> FixMultAdd:BitHeap: WARNING in addBit, w=25 greater than mawWeight=22... ignoring it
-> FixMultAdd:BitHeap: WARNING in addBit, w=26 greater than mawWeight=22... ignoring it
+...
+
+
+
+
 
 
 compression bug: ./flopoco IntMultiplier 2 16 16 1 0 0 does not produce a simple adder

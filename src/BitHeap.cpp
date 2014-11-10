@@ -150,6 +150,9 @@ namespace flopoco
 
 	void BitHeap::addUnsignedBitVector(int weight, string x, unsigned size, int msb, int lsb, bool negativeWeight)
 	{
+		REPORT(FULL, "Entering addUnsignedBitVector(weight="<<weight<<", x=" << x
+					 << ", size=" << size << ", msb=" << msb<< ", lsb="<< lsb 
+					 << ", negativeWeight=" << negativeWeight);
 		if(weight<0 && !negativeWeight)
 			THROWERROR("Negative weight (" << weight << ") in addUnsignedBitVector");
 		if(negativeWeight)
@@ -264,6 +267,12 @@ namespace flopoco
 
 	void BitHeap::addSignedBitVector(int weight, string x, unsigned size, int lsb, bool negativeWeight)
 	{
+		REPORT(FULL, "Entering addSignedBitVector(weight="<<weight<<", x=" << x
+					 << ", size=" << size 
+					 //  << ", msb=" << msb    Why is there a msb in addUnsignedBitVector and not here?
+					 << ", lsb="<< lsb 
+					 << ", negativeWeight=" << negativeWeight);
+
 		if(weight<0 && !negativeWeight)
 			THROWERROR("Negative weight (" << weight << ") in addUnsignedBitVector");
 		if(negativeWeight)
