@@ -409,7 +409,7 @@ namespace flopoco{
 		////////////////////////////////////////////////////////////////////////////
 
 		vhdl << tab << declare("qangle", w) << " <= (quadrant & " << zg(w-2) << ");" << endl;
-		vhdl << tab << declare("finalZext", w) << " <= \"00\" & "<< finalZ << range(sizeZ-1, sizeZ-w+1) << "; -- sign-extended and rounded" << endl;
+		vhdl << tab << declare("finalZext", w) << " <= "<< finalZ << of(sizeZ-1) << " & "<< finalZ << range(sizeZ-1, sizeZ-w+1) << "; -- sign-extended and rounded" << endl;
 		vhdl << tab << "A <= "
 				 << tab << tab << "     qangle + finalZext  when finalAdd='1'" << endl
 				 << tab << tab << "else qangle - finalZext;" << endl;
