@@ -16,8 +16,6 @@ Creating bit heap of size 22, out of which 4 guard bits
 > FixMultAdd:BitHeap: WARNING in addBit, w=26 greater than mawWeight=22... ignoring it
 
 
-
-fplll seems to be a debian package
 compression bug: ./flopoco IntMultiplier 2 16 16 1 0 0 does not produce a simple adder
 
 Get rid of SignedIO in BitHeap: this is a multiplier concern, not a bit heap concern
