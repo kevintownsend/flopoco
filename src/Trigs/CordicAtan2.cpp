@@ -86,6 +86,7 @@ namespace flopoco{
 	
 		int degree=method & 7;
 		method=method & 0xF8;
+		REPORT(DEBUG, "method=" << method << "  degree=" << degree);
 	
 		//Defining the various parameters according to method
 		int sizeXYInRR;

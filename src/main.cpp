@@ -353,8 +353,8 @@ void usage(char *name, string opName = ""){
 	}
 
 
-	if ( full || opName == "Atan2"){
-		OP( "Atan2","w method");
+	if ( full || opName == "FixAtan2"){
+		OP( "FixAtan2","w method");
 		cerr << "Computes atan(x/y) as a=(angle in radian)/pi so a in [-1,1[;\n";
 		cerr << "method is: 0..7 InvMultAtan with approximations of the corresponding degree; 8 plain CORDIC, 9 CORDIC with scaling\n";
 		cerr << "w is the size of both inputs and outputs, all being two's complement signals\n";
@@ -1437,7 +1437,7 @@ bool parseCommandLine(int argc, char* argv[]){
 		}
 #endif
 
-		else if (opname == "Atan2") {
+		else if (opname == "FixAtan2") {
 			int nargs = 2;
 			if (i+nargs > argc)
 				usage(argv[0],opname); // and exit
