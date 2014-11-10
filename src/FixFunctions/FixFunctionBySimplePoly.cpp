@@ -38,7 +38,7 @@ namespace flopoco{
 #define DEBUGVHDL 0
 
 
-	FixFunctionBySimplePoly::FixFunctionBySimplePoly(Target* target, string func, int lsbIn, int msbOut, int lsbOut, bool finalRounding_, bool plainStupidVHDL, map<string, double> inputDelays):
+	FixFunctionBySimplePoly::FixFunctionBySimplePoly(Target* target, string func, int lsbIn, int msbOut, int lsbOut, bool finalRounding_, bool plainStupidVHDL, float DSPThreshold, map<string, double> inputDelays):
 		Operator(target, inputDelays), finalRounding(finalRounding_){
 		f=new FixFunction(func, lsbIn, msbOut, lsbOut);
 		
@@ -130,7 +130,7 @@ namespace flopoco{
 																						join("Sigma", i+1), // y
 																						join("A", i),       // a
 																						join("Sigma", i),   // result 
-																						true, sigmaMSB, sigmaLSB  // signed, outMSB, outLSB
+																						sigmaMSB, sigmaLSB, DSPThreshold  // outMSB, outLSB
 																						);
 			}
 		}

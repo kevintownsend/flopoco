@@ -28,7 +28,7 @@ namespace flopoco{
   FixHornerEvaluator::FixHornerEvaluator(Target* target, 
 																				 int lsbIn_, int msbOut_, int lsbOut_,
 																				 int degree_, vector<int> coeffMSB_, int coeffLSB_, bool signedCoeffs_, 
-																				 bool finalRounding_, bool plainStupidVHDL_, map<string, double> inputDelays)
+																				 bool finalRounding_, bool plainStupidVHDL_, float DSPThreshold, map<string, double> inputDelays)
     : Operator(target), lsbIn(lsbIn_), msbOut(msbOut_), lsbOut(lsbOut_), 
 			degree(degree_), coeffMSB(coeffMSB_), coeffLSB(coeffLSB_), signedCoeffs(signedCoeffs_), 
 			finalRounding(finalRounding_), plainStupidVHDL(plainStupidVHDL_)
@@ -144,7 +144,7 @@ namespace flopoco{
 																						join("Sigma", i+1), // y
 																						join("A", i),       // a
 																						join("Sigma", i),   // result 
-																						true, sigmaMSB, sigmaLSB  // signed, outMSB, outLSB
+																						sigmaMSB, sigmaLSB, DSPThreshold
 																						);
 			}
 		}

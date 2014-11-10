@@ -52,7 +52,7 @@ namespace flopoco{
 
 
 
-	CordicAtan2::CordicAtan2(Target* target, int w_, int method, bool plainVHDL, float DSPthreshold, map<string, double> inputDelays) 
+	CordicAtan2::CordicAtan2(Target* target, int w_, int method, bool plainStupidVHDL, float DSPThreshold, map<string, double> inputDelays) 
 		: Operator(target), w(w_)
 	{
 	
@@ -60,7 +60,7 @@ namespace flopoco{
 		srcFileName="CordicAtan2";
 		setCopyrightString ( "Matei Istoan, Florent de Dinechin (2012-...)" );
 		useNumericStd_Unsigned();
-	
+
 		ostringstream name;
 		name << "CordicAtan2_"<< w_ << "_uid" << getNewUId();
 		setNameWithFreq( name.str() );
@@ -330,7 +330,6 @@ namespace flopoco{
 
 
 		else if (method==INVMULTATAN) {
-			bool plainStupidVHDL=true; // TODO remove. This should be a Target or a global option
 			FixFunctionByPiecewisePoly* recipTable;
 			FixFunctionByPiecewisePoly* atanTable;
 			int msbRecip, lsbRecip, msbProduct, lsbProduct, msbAtan, lsbAtan;
@@ -357,7 +356,8 @@ namespace flopoco{
 																									lsbRecip, 
 																									degree,  
 																									true, /*finalRounding*/
-																									plainStupidVHDL
+																									plainStupidVHDL,
+																									DSPThreshold
 																									);
 			recipTable->changeName(join("reciprocal_uid", getNewUId()));
 			addSubComponent(recipTable);			
@@ -383,9 +383,10 @@ namespace flopoco{
 																									lsbProduct,  
 																									msbAtan, 
 																									lsbAtan, 
-																									degree,  
+																									degree,
 																									true, /*finalRounding*/
-																									plainStupidVHDL
+																									plainStupidVHDL,  
+																									DSPThreshold
 																									);
 			atanTable->changeName(join("atan_uid", getNewUId()));
 			addSubComponent(atanTable);			

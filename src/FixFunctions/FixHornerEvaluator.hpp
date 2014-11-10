@@ -54,6 +54,7 @@ namespace flopoco{
 											 bool signedCoeffs=true, 
 											 bool finalRounding=true,
 											 bool plainStupidVHDL=false,
+											 float DSPThreshold=0.7,
 											 map<string, double> inputDelays = emptyDelayMap);
 
     ~FixHornerEvaluator();

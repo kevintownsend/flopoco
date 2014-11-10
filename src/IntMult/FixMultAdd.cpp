@@ -33,13 +33,13 @@ namespace flopoco {
 
 	// The constructor for a stand-alone operator
 	FixMultAdd::FixMultAdd(Target* target, Signal* x_, Signal* y_, Signal* a_, int outMSB_, int outLSB_,
-												 float ratio_, bool enableSuperTiles_, map<string, double> inputDelays_):
+												 float DSPThreshold_, bool enableSuperTiles_, map<string, double> inputDelays_):
 		Operator ( target, inputDelays_ ),
 		x(x_), y(y_), a(a_),
 		outMSB(outMSB_),
 		outLSB(outLSB_),
 		wOut(outMSB_- outLSB_ + 1),
-		ratio(ratio_),
+		DSPThreshold(DSPThreshold_),
 		enableSuperTiles(enableSuperTiles_)
 	{
 
@@ -194,7 +194,7 @@ namespace flopoco {
 									 pLSB-(outLSB-g),				//offset of the LSB of the multiplier in the bit heap
 									 false /*negate*/,				//whether to subtract the result of the multiplication from the bit heap
 									 signedIO,						//signed/unsigned operator
-									 ratio);						//DSP ratio
+									 DSPThreshold);						//DSP DSPThreshold
 		}
 
 		//add the addend to the bit heap
@@ -265,23 +265,25 @@ namespace flopoco {
 	}
 
 
-	FixMultAdd* FixMultAdd::newComponentAndInstance(Operator* op,
-														string instanceName,
-														string xSignalName,
-														string ySignalName,
-														string aSignalName,
-														string rSignalName,
-														bool isSigned,
-														int rMSB,
-														int rLSB
-													)
+	FixMultAdd* FixMultAdd::newComponentAndInstance(
+																									Operator* op,
+																									string instanceName,
+																									string xSignalName,
+																									string ySignalName,
+																									string aSignalName,
+																									string rSignalName,
+																									int rMSB,
+																									int rLSB,
+																									float DSPThreshold
+																									)
 	{
-		FixMultAdd* f = new FixMultAdd(op->getTarget(),
-										 op->getSignalByName(xSignalName),
-										 op->getSignalByName(ySignalName),
-										 op->getSignalByName(aSignalName),
-										 rMSB, rLSB,
-										 isSigned);
+		FixMultAdd* f = new FixMultAdd(
+																	 op->getTarget(),
+																	 op->getSignalByName(xSignalName),
+																	 op->getSignalByName(ySignalName),
+																	 op->getSignalByName(aSignalName),
+																	 rMSB, rLSB, DSPThreshold
+																	 );
 		op->addSubComponent(f);
 
 		op->inPortMap(f, "X", xSignalName);
@@ -292,9 +294,9 @@ namespace flopoco {
 		op->vhdl << op->instance(f, instanceName);
 		// hence a sign mismatch in next iteration.
 		
-		op->vhdl << tab << op->declareFixPoint(rSignalName, isSigned, rMSB, rLSB)
-				<< " <= " <<  (isSigned ? "signed(" : "unsigned(") << (join(rSignalName, "_slv")) << ");" << endl;
-		//getSignalByName(rSignalName) -> promoteToFix(isSigned, rMSB, rLSB);
+		op->vhdl << tab << op->declareFixPoint(rSignalName, f->signedIO, rMSB, rLSB)
+				<< " <= " <<  (f->signedIO ? "signed(" : "unsigned(") << (join(rSignalName, "_slv")) << ");" << endl;
+		//getSignalByName(rSignalName) -> promoteToFix(signedIO, rMSB, rLSB);
 		return f;
 	}
 

@@ -21,9 +21,6 @@ namespace flopoco{
 		      pi is 0100..00, etc.
 		Actual position of the fixed point in the inputs doesn't matter as long as it is the same for x and y
 
-		method: 
-		0 is CORDIC
-		1 is inv, mult, atan 
 		*/
 		CordicAtan2(Target* target, int w, int method=0, bool plainVHDL=false, float DSPthreshold=0.7, map<string, double> inputDelays = emptyDelayMap);
 

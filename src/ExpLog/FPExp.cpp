@@ -608,6 +608,7 @@ namespace flopoco{
 																						d, // degree
 																						true, // finalRounding
 																						true, // plainStupidVHDL
+																						0.7, // DSP threshold
 																						inDelayMap("X", target->localWireDelay() + getCriticalPath()) );
 				addSubComponent(fe);
 				inPortMap(fe, "X", "Zhigh");

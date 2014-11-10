@@ -353,7 +353,7 @@ void usage(char *name, string opName = ""){
 		cerr << "      k: number of bits addressing the table;   d: degree of the polynomial;\n";
 		cerr << "      g: number of guard bits\n";
 		cerr << "      fullInput (boolean): if 1, accepts extended (typically unrounded) input\n";
-		cerr << "      DSP_threshold (float): between 0 and 1, 1 meaning that all small multipliers go to DSPs, 0 meaning that only multipliers filling DSPs go to DSP\n";
+		cerr << "      DSP_threshold (float): between 0 and 1, proportion of a DSP block that may be left unused\n";
 	}
 
 
@@ -362,7 +362,6 @@ void usage(char *name, string opName = ""){
 		cerr << "Computes atan(x/y) as a=(angle in radian)/pi so a in [-1,1[;\n";
 		cerr << "method is: 0..7 InvMultAtan with approximations of the corresponding degree; 8 plain CORDIC, 9 CORDIC with scaling\n";
 		cerr << "w is the size of both inputs and outputs, all being two's complement signals\n";
-	 	cerr << "0 <= DSP_threshold <= 1;  proportion of a DSP block that may be left unused\n";
 	}
 
 #if 0
@@ -408,12 +407,12 @@ void usage(char *name, string opName = ""){
 	}
 
 	if ( full || opName == "FixFunctionBySimplePoly" || opName == "FixFunction"){					
-		OP( "FixFunctionBySimplePoly","f lsbI msbO lsbO plainVHDL");
+		OP( "FixFunctionBySimplePoly","f lsbI msbO lsbO plainVHDL DSPThreshold");
 		cerr << "Evaluator of function f on [0,1), using a single polynomial with Horner scheme \n";
 	}
 
 	if ( full || opName == "FixFunctionByPiecewisePoly" || opName == "FixFunction"){					
-		OP( "FixFunctionByPiecewisePoly","f lsbI msbO lsbO d plainVHDL");
+		OP( "FixFunctionByPiecewisePoly","f lsbI msbO lsbO d plainVHDL DSPThreshold");
 		cerr << "Evaluator of function f on [0,1), using a piecewise polynomial of degree d with Horner scheme \n";
 	}
 
@@ -1381,7 +1380,7 @@ bool parseCommandLine(int argc, char* argv[]){
 		}
 
 		else if (opname == "FixFunctionBySimplePoly") {
-			int nargs = 5;
+			int nargs = 6;
 			if (i+nargs > argc)
 				usage(argv[0],opname); // and exit
 			string func = argv[i++];
@@ -1389,12 +1388,13 @@ bool parseCommandLine(int argc, char* argv[]){
 			int msbO = atoi(argv[i++]);
 			int lsbO = atoi(argv[i++]);
 			int plain = atoi(argv[i++]);
-			Operator* tg = new FixFunctionBySimplePoly(target, func, lsbI, msbO, lsbO, 1 /*final rounding*/, plain);
+			float DSPThreshold			= atof(argv[i++]);
+			Operator* tg = new FixFunctionBySimplePoly(target, func, lsbI, msbO, lsbO, true /*final rounding*/, plain, DSPThreshold);
 			addOperator(tg);
 		}
 
 		else if (opname == "FixFunctionByPiecewisePoly") {
-			int nargs = 6;
+			int nargs = 7;
 			if (i+nargs > argc)
 				usage(argv[0],opname); // and exit
 			string func = argv[i++];
@@ -1403,7 +1403,8 @@ bool parseCommandLine(int argc, char* argv[]){
 			int lsbO = atoi(argv[i++]);
 			int degree = atoi(argv[i++]);
 			int plain = atoi(argv[i++]);
-			Operator* tg = new FixFunctionByPiecewisePoly(target, func, lsbI, msbO, lsbO, degree, true /*final rounding*/, plain);
+			float DSPThreshold			= atof(argv[i++]);
+			Operator* tg = new FixFunctionByPiecewisePoly(target, func, lsbI, msbO, lsbO, degree, true /*final rounding*/, plain, DSPThreshold);
 			addOperator(tg);
 		}
 
@@ -1455,7 +1456,7 @@ bool parseCommandLine(int argc, char* argv[]){
 #endif
 
 		else if (opname == "FixAtan2") {
-			int nargs = 3;
+			int nargs = 4;
 			if (i+nargs > argc)
 				usage(argv[0],opname); // and exit
 			int w = checkStrictlyPositive(argv[i++], argv[0]); // must be >=2 actually
@@ -1692,7 +1693,7 @@ int main(int argc, char* argv[] )
 			if(op->reActive)
 				cerr << op->generateStatistics(reLevel);
 			else{
-				cerr << "Resource estimation option active for an operator that has NO estimations in plae." << endl;
+				cerr << "Resource estimation option active for an operator that has NO estimations in place." << endl;
 			}
 		}
 	}

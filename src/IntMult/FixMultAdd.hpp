@@ -72,17 +72,18 @@ namespace flopoco {
 		 * It then declares two new signals: rSignalName as a numeric_std (parameters isSigned, rMSB, rLSB),
 		 * and rSignalName+"_slv" is the equivalent standard_logic_vector 
 		 */
-		static FixMultAdd* newComponentAndInstance(Operator* op,
-														string instanceName,
-														string xSignalName,
-														string ySignalName,
-														string aSignalName,
-														string rSignalName,
-														bool isSigned,
-														int rMSB,
-														int rLSB
-													);
-
+		static FixMultAdd* newComponentAndInstance(
+																							 Operator* op,
+																							 string instanceName,
+																							 string xSignalName,
+																							 string ySignalName,
+																							 string aSignalName,
+																							 string rSignalName,
+																							 int rMSB,
+																							 int rLSB,
+																							 float DSPThreshold=0.7
+																							 );
+		
 		/**
 		 * The emulate function.
 		 * @param[in] tc               a test-case
@@ -106,7 +107,7 @@ namespace flopoco {
 		int lsbA;                  	/**< weight of the LSB of A */
 
 		bool signedIO;              /**< if true, inputs and outputs are signed. */
-		double ratio;               /**< between 0 and 1, the area threshhold for using DSP blocks versus logic*/
+		double DSPThreshold;        /**< between 0 and 1, the area threshhold for using DSP blocks versus logic*/
 		bool enableSuperTiles;     	/**< if true, supertiles are built (fewer resources, longer latency */
 
 		string xname;              	/**< X input VHDL name */
