@@ -49,12 +49,12 @@ namespace flopoco{
     srcFileName="FixHornerEvaluator";
 
 		// computing the coeff sizes
-		for (int i=0; i<coeffMSB.size(); i++)
+		for (int i=0; i<=degree; i++)
 			coeffSize.push_back(coeffMSB[i]-coeffLSB+1); // see FixConstant.hpp for the constant format
 
     // declaring inputs
 		addInput("X"  , -lsbIn);
-		for (int i=0; i<coeffMSB.size(); i++)
+		for (int i=0; i<=degree; i++)
 			addInput(join("A",i), coeffSize[i]);
 			
     // declaring outputs
