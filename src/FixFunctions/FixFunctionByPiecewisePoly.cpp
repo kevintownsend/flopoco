@@ -56,8 +56,13 @@ namespace flopoco{
 		int currentShift=0;
 		for(int i=polyApprox->degree; i>=0; i--) {
 			z += (polyApprox-> getCoeff(x, i)) << currentShift; // coeff of degree i from poly number x
+			// REPORT(DEBUG, "i=" << i << "   z=" << unsignedBinary(z, 64));
 			if(i==0 && addFinalRoundBit){ // coeff of degree 0
 				z += mpz_class(1)<<(currentShift + finalRoundBitPos - polyApprox->LSB); // add the round bit
+				//REPORT(DEBUG, "i=" << i << " + z=" << unsignedBinary(z, 64));
+				// This may entail an overflow of z, in the case -tiny -> +tiny, e.g. first polynomial of atan
+				// This is OK modulo 2^wOut (two's complement), but will break the vhdl output of Table: fix it here.
+				z = z & ((mpz_class(1)<<wOut) -1);
 				// REPORT(INFO, "Adding final round bit at position " << finalRoundBitPos-polyApprox->LSB);
 			}
 			currentShift +=  polyApprox->MSB[i] - polyApprox->LSB +1;
@@ -113,7 +118,9 @@ namespace flopoco{
 
 			// Resize its MSB to the one input by the user. This is useful for functions that "touch" a power of two and may thus overflow by one bit.
 			for (int i=0; i<(1<<alpha); i++) {
+				// REPORT(DEBUG, "i=" << i << "   coeff 0 before resizing: " <<   polyApprox -> poly[i] -> coeff[0] ->getBitVector());
 				polyApprox -> poly[i] -> coeff[0] -> changeMSB(msbOut);
+				// REPORT(DEBUG, "i=" << i << "   coeff 0 after resizing: " <<   polyApprox -> poly[i] -> coeff[0] ->getBitVector());
 			}
 			polyApprox -> MSB[0] = msbOut;
 
