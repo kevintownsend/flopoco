@@ -14,7 +14,7 @@ namespace flopoco {
 		: Operator(target, inputDelays), w(w_), n(n_)
 	{
 		srcFileName="ShiftReg";
-		setCopyrightString ( "Louis Beseme, Florent de Dinechin (2014-...)" );
+		setCopyrightString ( "Louis Beseme, Florent de Dinechin (2014)" );
 		useNumericStd_Unsigned();
 
 		ostringstream name;
