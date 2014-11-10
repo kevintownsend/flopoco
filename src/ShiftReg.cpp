@@ -24,7 +24,7 @@ namespace flopoco {
 		addInput("X", w, true);
 
 		for(int i=0; i<n; i++) {
-			addOutput(join("Y", i), w, true);
+			addOutput(join("Xd", i), w, true);
 		}
 
 		setCriticalPath(getMaxInputDelays(inputDelays));
@@ -33,8 +33,9 @@ namespace flopoco {
 
 		
 		for(int i=0; i<n; i++) {
-			vhdl << join("Y", i) << " <= XX;" << endl;
-			nextCycle();
+			vhdl << join("Xd", i) << " <= XX;" << endl;
+			if (i<n-1)
+				nextCycle();
 		}
 
 	};

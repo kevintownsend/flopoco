@@ -50,10 +50,10 @@ namespace flopoco{
 		for (int i=0; i< n; i++)
 		{
 			// parse the coeffs from the string, with Sollya parsing
-			sollya_node_t node;
+			sollya_obj_t node;
 			mpfr_t mpC;
 			
-			node = parseString(coeff[i].c_str());
+			node = sollya_lib_parse_string(coeff[i].c_str());
 			// If conversion did not succeed (i.e. parse error)
 			if(node == 0)
 			{
@@ -63,8 +63,9 @@ namespace flopoco{
 			}
 
 			mpfr_init2(mpC, 10000);
-			setToolPrecision(10000);
-			evaluateConstantExpression(mpC, node,  getToolPrecision());
+			// setToolPrecision(10000);
+			// evaluateConstantExpression(mpC, node,  getToolPrecision());
+			sollya_lib_get_constant(mpC, node);
 			
 			mpfr_init_set(mpcoeff[i], mpC, GMP_RNDN);
 			if(mpfr_get_d(mpcoeff[i], GMP_RNDN) < 0)

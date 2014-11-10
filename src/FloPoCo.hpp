@@ -51,6 +51,7 @@
 
 /* FixFilters ------------------------------------------------ */
 #include "FixFilters/FixSOPC.hpp"
+#include "FixFilters/FixFIR.hpp"
 
 #include "ShiftReg.hpp"
 

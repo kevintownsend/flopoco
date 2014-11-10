@@ -230,7 +230,11 @@ src/Conversions/Fix2FP
  src/ShiftersEtc/LZOCShifterSticky
  src/ShiftersEtc/Shifters
 
+# FixFilters ----------------------------------------------------------
  src/ShiftReg
+ src/FixFilters/FixSOPC
+ src/FixFilters/FixFIR
+
 
 # pipelined Integer addition -------------------------------------------------
  src/IntAddSubCmp/IntAdder  

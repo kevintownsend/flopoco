@@ -93,12 +93,20 @@ void usage(char *name, string opName = ""){
 		OP("LZCShifterSticky","wIn wOut");
 	if ( full || opName == "LOCShifterSticky") 			
 		OP("LOCShifterSticky","wIn wOut");
+
+
+	if ( full )
+		cerr << center("FixFilters", '_') << "\n";
+
 	if ( full || opName == "ShiftReg") {
 		OP("ShiftReg", "wIn n");
 		cerr << "Shift Register with n taps\n";
 	}
-
-
+	if ( full || opName == "FixFIR") {
+		OP("FixFIR","p useBitheap taps [coeff list]");
+		cerr << "      A faithful FIR on an (1,p) fixed-point format\n";
+		cerr << "      The filter may, or may not use bit heaps\n";
+	}
 
 
 	if ( full )
@@ -772,6 +780,28 @@ bool parseCommandLine(int argc, char* argv[]){
 				int n = checkStrictlyPositive(argv[i++], argv[0]);	
 				op = new ShiftReg(target, wIn, n);
 				addOperator(op);
+			}
+		}
+
+		else if(opname=="FixFIR")
+		{
+			if (i+3 > argc)
+				usage(argv[0],opname);
+			else {
+				int p = checkStrictlyPositive(argv[i++], argv[0]);
+				int useBitheap = checkBoolean(argv[i++], argv[0]);
+				int taps = checkStrictlyPositive(argv[i++], argv[0]);
+				if (i+taps > argc)
+					usage(argv[0],opname);
+				else {
+					std::vector<string> coeff;
+					for (int j = 0; j < taps; j++) 
+						{
+							coeff.push_back(argv[i++]);
+						}
+					op = new FixFIR(target, p, coeff, useBitheap);
+					addOperator(op);
+				}
 			}
 		}
 
