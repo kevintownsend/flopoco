@@ -5,7 +5,7 @@
 
 #include "sollya.h"
 
-#include "FixFIR.hpp"
+#include "FixSOPC.hpp"
 
 #include "ConstMult/FixRealKCM.hpp"
 
@@ -13,13 +13,13 @@ using namespace std;
 namespace flopoco{
 
 
-	FixFIR::FixFIR(Target* target, int p_, vector<string> coeff_, bool useBitheap_, map<string, double> inputDelays) : 
+	FixSOPC::FixSOPC(Target* target, int p_, vector<string> coeff_, bool useBitheap_, map<string, double> inputDelays) : 
 		Operator(target), p(p_), coeff(coeff_), useBitheap(useBitheap_)
 	{
-		srcFileName="FixFIR";
+		srcFileName="FixSOPC";
 					
 		ostringstream name;
-		name<<"FixFIR_"<<p<<"_uid"<<getNewUId(); 
+		name<<"FixSOPC_"<<p<<"_uid"<<getNewUId(); 
 		setName(name.str()); 
 	
 		setCopyrightString("Florent de Dinechin (2013)");
@@ -224,7 +224,7 @@ namespace flopoco{
 	};
 
 	
-	void FixFIR::emulate(TestCase * tc) {
+	void FixSOPC::emulate(TestCase * tc) {
 
 		// Not completely safe: we compute everything on 10 times the required precision, and hope that rounding this result is equivalent to rounding the exact result
 
@@ -278,7 +278,7 @@ namespace flopoco{
 
 
 	// please fill me with regression tests or corner case tests
-	void FixFIR::buildStandardTestCases(TestCaseList * tcl) {
+	void FixSOPC::buildStandardTestCases(TestCaseList * tcl) {
 		TestCase *tc;
 
 		// first few cases to check emulate()
