@@ -358,10 +358,11 @@ void usage(char *name, string opName = ""){
 
 
 	if ( full || opName == "FixAtan2"){
-		OP( "FixAtan2","w method");
+		OP( "FixAtan2","w method plainVHDL DSP_threshold");
 		cerr << "Computes atan(x/y) as a=(angle in radian)/pi so a in [-1,1[;\n";
 		cerr << "method is: 0..7 InvMultAtan with approximations of the corresponding degree; 8 plain CORDIC, 9 CORDIC with scaling\n";
 		cerr << "w is the size of both inputs and outputs, all being two's complement signals\n";
+	 	cerr << "0 <= DSP_threshold <= 1;  proportion of a DSP block that may be left unused\n";
 	}
 
 #if 0
@@ -1454,12 +1455,14 @@ bool parseCommandLine(int argc, char* argv[]){
 #endif
 
 		else if (opname == "FixAtan2") {
-			int nargs = 2;
+			int nargs = 3;
 			if (i+nargs > argc)
 				usage(argv[0],opname); // and exit
 			int w = checkStrictlyPositive(argv[i++], argv[0]); // must be >=2 actually
 			int method = atoi(argv[i++]);
-			Operator* tg = new CordicAtan2(target, w, method);
+			int plainVHDL = atoi(argv[i++]);
+			float DSPThreshold			= atof(argv[i++]);
+			Operator* tg = new CordicAtan2(target, w, method, plainVHDL, DSPThreshold);
 			addOperator(tg);
 		}
 
@@ -1689,7 +1692,7 @@ int main(int argc, char* argv[] )
 			if(op->reActive)
 				cerr << op->generateStatistics(reLevel);
 			else{
-				cerr << "Resource estimation option active for an operator that has NO estimations in place." << endl;
+				cerr << "Resource estimation option active for an operator that has NO estimations in plae." << endl;
 			}
 		}
 	}

@@ -52,7 +52,7 @@ namespace flopoco{
 
 
 
-	CordicAtan2::CordicAtan2(Target* target, int w_, int method, map<string, double> inputDelays) 
+	CordicAtan2::CordicAtan2(Target* target, int w_, int method, bool plainVHDL, float DSPthreshold, map<string, double> inputDelays) 
 		: Operator(target), w(w_)
 	{
 	

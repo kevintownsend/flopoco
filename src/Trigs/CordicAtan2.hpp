@@ -25,7 +25,7 @@ namespace flopoco{
 		0 is CORDIC
 		1 is inv, mult, atan 
 		*/
-		CordicAtan2(Target* target, int w, int method=0, map<string, double> inputDelays = emptyDelayMap);
+		CordicAtan2(Target* target, int w, int method=0, bool plainVHDL=false, float DSPthreshold=0.7, map<string, double> inputDelays = emptyDelayMap);
 
 		// destructor
 		~CordicAtan2();
