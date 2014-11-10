@@ -93,6 +93,10 @@ void usage(char *name, string opName = ""){
 		OP("LZCShifterSticky","wIn wOut");
 	if ( full || opName == "LOCShifterSticky") 			
 		OP("LOCShifterSticky","wIn wOut");
+	if ( full || opName == "ShiftReg") {
+		OP("ShiftReg", "wIn n");
+		cerr << "Shift Register with n taps\n";
+	}
 
 
 
@@ -756,6 +760,18 @@ bool parseCommandLine(int argc, char* argv[]){
 					addOperator(op);
 				}else
 					cerr << "wIn must be > 1"<<endl;
+			}
+		}
+
+		else if(opname=="ShiftReg"){
+			int nargs = 2;
+			if (i+nargs > argc)
+				usage(argv[0],opname);
+			else {
+				int wIn  = checkStrictlyPositive(argv[i++], argv[0]);
+				int n = checkStrictlyPositive(argv[i++], argv[0]);	
+				op = new ShiftReg(target, wIn, n);
+				addOperator(op);
 			}
 		}
 

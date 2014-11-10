@@ -47,6 +47,7 @@
 #include "ShiftersEtc/Shifters.hpp"
 #include "ShiftersEtc/LZOC.hpp"
 #include "ShiftersEtc/LZOCShifterSticky.hpp"
+#include "ShiftersEtc/ShiftReg.hpp"
 
 /* regular pipelined integer adder/ adder+subtracter --------- */
 #include "IntAddSubCmp/IntAdder.hpp" // includes several other .hpp

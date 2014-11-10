@@ -229,6 +229,7 @@ src/Conversions/Fix2FP
  src/ShiftersEtc/LZOC 
  src/ShiftersEtc/LZOCShifterSticky
  src/ShiftersEtc/Shifters
+ src/ShiftersEtc/ShiftReg
 
 # pipelined Integer addition -------------------------------------------------
  src/IntAddSubCmp/IntAdder  
