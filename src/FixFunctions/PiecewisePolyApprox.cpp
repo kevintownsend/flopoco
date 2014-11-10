@@ -157,6 +157,11 @@ namespace flopoco{
 			}
 			else {
 				REPORT(INFO, " guessDegree mislead us, measured approx error:" << approxErrorBound << " is larger than target accuracy: " << targetAccuracy << ". Now increasing alpha and starting over, thank you for your patience");
+				//empty poly
+ 				for (int i=0; i<nbIntervals; i++) {
+					free(poly.back());
+					poly.pop_back();
+				}
 				alpha++;
 				nbIntervals=1<<alpha;
 			}
