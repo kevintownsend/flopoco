@@ -210,7 +210,8 @@ namespace flopoco {
 		{
 			addendWeight += (pMSB==(outLSB-1) ? 1 : 0);
 		}
-		if(a->MSB() >= outLSB-g)
+		//only add A to the bitheap if there is something to add
+		if((a->MSB() >= outLSB-g) && (workAMSB>=workALSB))
 		{
 			if(signedIO)
 			{
@@ -266,24 +267,24 @@ namespace flopoco {
 
 
 	FixMultAdd* FixMultAdd::newComponentAndInstance(
-																									Operator* op,
-																									string instanceName,
-																									string xSignalName,
-																									string ySignalName,
-																									string aSignalName,
-																									string rSignalName,
-																									int rMSB,
-																									int rLSB,
-																									float DSPThreshold
-																									)
+													Operator* op,
+													string instanceName,
+													string xSignalName,
+													string ySignalName,
+													string aSignalName,
+													string rSignalName,
+													int rMSB,
+													int rLSB,
+													float DSPThreshold
+													)
 	{
 		FixMultAdd* f = new FixMultAdd(
-																	 op->getTarget(),
-																	 op->getSignalByName(xSignalName),
-																	 op->getSignalByName(ySignalName),
-																	 op->getSignalByName(aSignalName),
-																	 rMSB, rLSB, DSPThreshold
-																	 );
+										 op->getTarget(),
+										 op->getSignalByName(xSignalName),
+										 op->getSignalByName(ySignalName),
+										 op->getSignalByName(aSignalName),
+										 rMSB, rLSB, DSPThreshold
+										 );
 		op->addSubComponent(f);
 
 		op->inPortMap(f, "X", xSignalName);
