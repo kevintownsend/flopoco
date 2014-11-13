@@ -10,7 +10,7 @@ namespace flopoco{
 	class FixFIR : public Operator {
 	  
 		public:
-			/* Constructor ; p must be greater than 6 and you must use bitheap in case of negative coefficient*/
+			/* Constructor ; p must be greater than 6 (if pipeline=yes) and you must use bitheap in case of negative coefficient*/
 			FixFIR(Target* target, int p_, vector<string> coeff_, bool useBitheap = true, map<string, double> inputDelays = emptyDelayMap); 
 
 			/* Destructor */
