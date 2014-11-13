@@ -133,7 +133,8 @@ namespace flopoco{
 				resizeFixPoint(join("Ptrunc", i), join("P", i), sigmaMSB, sigmaLSB);
 				resizeFixPoint(join("Aext", i), join("As", i), sigmaMSB, sigmaLSB);
 				
-				vhdl << tab << declareFixPoint(join("Sigma", i), true, sigmaMSB, sigmaLSB)   << " <= " << join("Aext", i) << " + " << join("Ptrunc", i) << ";" << endl;
+				vhdl << tab << declareFixPoint(join("Sigma", i), true, sigmaMSB, sigmaLSB)   
+					<< " <= " << join("Aext", i) << " + " << join("Ptrunc", i) << ";" << endl;
 			}
 
 			else { // using FixMultAdd

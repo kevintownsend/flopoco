@@ -210,8 +210,8 @@ It is therefore currently unplugged, but it was probabaly added because it was i
 			outputVHDLSignalDeclarations(o);
 			beginArchitecture(o);
 			if (maxIn-minIn <= 256 && wOut>36){
-				o << "Z0 <= '1' & X;"<<endl;
-				o << "Z1 <= '0' & X;"<<endl;
+				o << "Z0 <= " << zg(8-wIn) << (wIn>7 ? " &" : "") << " '1' & X;"<<endl;
+				o << "Z1 <= " << zg(8-wIn) << (wIn>7 ? " &" : "") << " '0' & X;"<<endl;
 			}
 					
 			if(isSequential()){
