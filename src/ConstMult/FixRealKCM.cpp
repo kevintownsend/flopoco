@@ -600,7 +600,7 @@ namespace flopoco{
 			parentOp->vhdl << parentOp->instance(t , join("KCMTable_kcmMult_", getuid()));
 			
 			//manage pipeline
-			syncCycleFromSignal(join("Y_kcmMult_", getuid()));
+			parentOp->syncCycleFromSignal(join("Y_kcmMult_", getuid()));
 
 			//add the resulting bits to the bit heap
 			int ySize;
