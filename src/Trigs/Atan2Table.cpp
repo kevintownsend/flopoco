@@ -22,7 +22,7 @@ namespace flopoco{
 			int msbA_, int msbB_, int msbC_,
 			int msbD_, int msbE_, int msbF_,
 			map<string, double> inputDelays) :
-		Table(target, wIn_, wOut_, 0, ((1<<wIn_)-1), true, inputDelays),
+		Table(target, wIn_, wOut_, 0, ((1<<wIn_)-1), false, inputDelays),
 		wIn(wIn_), wOut(wOut_), archType(archType_),
 		msbA(msbA_), msbB(msbB_), msbC(msbC_),
 		msbD(msbD_), msbE(msbE_), msbF(msbF_)
@@ -84,15 +84,6 @@ namespace flopoco{
 			THROWERROR("Error: in Atan2Table::function: unknown  architecture type");
 		}
 
-		/*
-		double da = mpfr_get_d(a, GMP_RNDN);
-		double db = mpfr_get_d(b, GMP_RNDN);
-		double dc = mpfr_get_d(c, GMP_RNDN);
-		double dd = mpfr_get_d(d, GMP_RNDN);
-		double de = mpfr_get_d(e, GMP_RNDN);
-		double df = mpfr_get_d(f, GMP_RNDN);
-		*/
-
 		if((archType == 0) || (archType == 1))
 		{
 			//create ax and by, and update c
@@ -106,7 +97,7 @@ namespace flopoco{
 
 			//create Pi/2
 			mpfr_const_pi(pi_mpfr, GMP_RNDN);
-			mpfr_div_si(pi_mpfr, pi_mpfr, 2, GMP_RNDN);
+			//mpfr_div_si(pi_mpfr, pi_mpfr, 2, GMP_RNDN);
 
 			//extract the result
 			//extract A

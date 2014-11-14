@@ -317,6 +317,9 @@ src/FPComposite/FP2DNorm
  src/FixFunctions/FixFunctionByPiecewisePoly
  src/FixConstant
 
+ src/FixFunctions/BipartiteTable
+ src/FixFunctions/GenericTable
+
 # Trigonometric functions ------------------------------------------
 src/Trigs/ConstDiv3ForSinPoly
 src/Trigs/FixSinPoly

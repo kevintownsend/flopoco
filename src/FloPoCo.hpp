@@ -122,6 +122,9 @@
 #include "FixFunctions/FixFunctionBySimplePoly.hpp"
 #include "FixFunctions/FixFunctionByPiecewisePoly.hpp"
 
+#include "FixFunctions/BipartiteTable.hpp"
+#include "FixFunctions/GenericTable.hpp"
+
 /*  Various elementary functions in fixed or floating point*/
 #include "Trigs/FixSinCos.hpp"
 #include "Trigs/CordicSinCos.hpp"
