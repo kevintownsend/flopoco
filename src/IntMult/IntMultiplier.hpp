@@ -108,6 +108,27 @@ namespace flopoco {
 		static int neededGuardBits(Target* target, int wX, int wY, int wOut);
 
 
+
+
+		/** A constructor for fix-point use
+		 * Generates a component, and produces VHDL code for the instance inside an operator.
+		 * The inputs signal names (x|y)SignalName are names of existing signals of the FloPoCo fixed-point types.
+		 * This method reads the fixed-point parameters from them. 
+		 * It then declares two new signals: rSignalName as a numeric_std (parameters isSigned, rMSB, rLSB),
+		 * and rSignalName+"_slv" is the equivalent standard_logic_vector 
+		 */
+		static IntMultiplier* newComponentAndInstance(
+																							 Operator* op,
+																							 string instanceName,
+																							 string xSignalName,
+																							 string ySignalName,
+																							 string rSignalName,
+																							 int rMSB,
+																							 int rLSB,
+																							 float DSPThreshold=0.7
+																							 );
+
+
 		/**
 		 *  Destructor
 		 */

@@ -89,13 +89,17 @@ namespace flopoco{
 		REPORT(DEBUG, "method=" << method << "  degree=" << degree);
 	
 		//Defining the various parameters according to method
+
+		// When pipelining I noticed that we perform a subtraction for the comparison X<Y in parallel to the negation anyway
+		// so negateByComplement should always be false, 
+		//except if some day we do an ASIC target where it will cost less hardware.
 		int sizeXYInRR;
 		bool doScaling;
 		switch(method) {
 		case CORDIC:
-			negateByComplement=true;
+			negateByComplement=false;
+			sizeXYInRR = w;
 			computeGuardBitsForCORDIC();
-			sizeXYInRR = w+gXY;
 			doScaling=false;
 			break;
 		case CORDIC_SCALING:
@@ -120,25 +124,13 @@ namespace flopoco{
 		//    First range reduction
 		//
 		/////////////////////////////////////////////////////////////////////////////
+		setCriticalPath(getMaxInputDelays(inputDelays));
+
 		vhdl << tab << declare("sgnX") << " <= X" << of(w-1) << ";" << endl;
 		vhdl << tab << declare("sgnY") << " <= Y" << of(w-1) << ";" << endl;
 	
-		// TODO: replace the following with LUT-based comparators
-		// and first maybe experiment with synthesis tools
-		vhdl << tab << declare("XmY", w+1) << " <= (sgnX & X)-(sgnY & Y);" << endl;
-		vhdl << tab << declare("XpY", w+1) << " <= (sgnX & X)+(sgnY & Y);" << endl;
-		vhdl << tab << declare("XltY") << " <= XmY" << of(w) <<";" << endl;
-		vhdl << tab << declare("mYltX") << " <= not XpY" << of(w) <<";" << endl;
-		// Range reduction: we define 4 quadrants, each centered on one axis (these are not just the sign quadrants)
-		// Then each quadrant is decomposed in its positive and its negative octant.
-		vhdl << tab << "-- quadrant will also be the angle to add at the end" <<endl;
-		vhdl << tab << declare("quadrant", 2) << " <= " << endl;
-		vhdl << tab << tab << "\"00\"  when (not sgnX and not XltY and     mYltX)='1' else"    << endl;
-		vhdl << tab << tab << "\"01\"  when (not sgnY and     XltY and     mYltX)='1' else"    << endl;
-		vhdl << tab << tab << "\"10\"  when (    sgnX and     XltY and not mYltX)='1' else"    << endl;
-		vhdl << tab << tab << "\"11\";"    << endl;
-	
 
+		manageCriticalPath( target->adderDelay(w));
 		if (negateByComplement)	{
 			vhdl << tab << declare("pX", sizeXYInRR) << " <=      X  & " << zg(gXY)<< ";" << endl;
 			vhdl << tab << declare("pY", sizeXYInRR) << " <=      Y  & " << zg(gXY)<< ";" << endl;
@@ -150,6 +142,26 @@ namespace flopoco{
 			vhdl << tab << declare("mX", sizeXYInRR) << " <= (" << zg(w) << " - X);" << endl;
 			vhdl << tab << declare("mY", sizeXYInRR) << " <= (" << zg(w) << " - Y);" << endl;
 		}
+
+		// TODO: replace the following with LUT-based comparators
+		// and first maybe experiment with synthesis tools
+		vhdl << tab << declare("XmY", w+1) << " <= (sgnX & X)-(sgnY & Y);" << endl;
+		vhdl << tab << declare("XpY", w+1) << " <= (sgnX & X)+(sgnY & Y);" << endl;
+		vhdl << tab << declare("XltY") << " <= XmY" << of(w) <<";" << endl;
+		vhdl << tab << declare("mYltX") << " <= not XpY" << of(w) <<";" << endl;
+		// Range reduction: we define 4 quadrants, each centered on one axis (these are not just the sign quadrants)
+		// Then each quadrant is decomposed in its positive and its negative octant.
+
+		manageCriticalPath( target->lutDelay() + target->localWireDelay());
+
+		vhdl << tab << "-- quadrant will also be the angle to add at the end" <<endl;
+		vhdl << tab << declare("quadrant", 2) << " <= " << endl;
+		vhdl << tab << tab << "\"00\"  when (not sgnX and not XltY and     mYltX)='1' else"    << endl;
+		vhdl << tab << tab << "\"01\"  when (not sgnY and     XltY and     mYltX)='1' else"    << endl;
+		vhdl << tab << tab << "\"10\"  when (    sgnX and     XltY and not mYltX)='1' else"    << endl;
+		vhdl << tab << tab << "\"11\";"    << endl;
+	
+
 
 		int sizeXYR = sizeXYInRR-1; // no need for sign bit any longer
 		vhdl << tab << declare("XR", sizeXYR) << " <= " << endl;
@@ -180,6 +192,7 @@ namespace flopoco{
 		////////////////////////////////////////////////////////////////////////////
 
 		if(doScaling) {
+			manageCriticalPath( target->lutDelay() + target->localWireDelay());
 			vhdl << tab << declare("XorY", sizeXYR-1) << " <= XR" << range(sizeXYR-1,1) << " or YR" << range(sizeXYR-1,1) << ";" << endl;
 			// The LZC
 			LZOC* lzc = new	LZOC(target, sizeXYR-1);
@@ -189,6 +202,9 @@ namespace flopoco{
 			inPortMapCst(lzc, "OZB", "'0'");
 			outPortMap(lzc, "O", "S"); 
 			vhdl << instance(lzc, "lzc");
+			syncCycleFromSignal("S");
+			nextCycle();
+
 			//setCycleFromSignal("lzo");
 			//		setCriticalPath( lzc->getOutputDelay("O") );
 			
@@ -207,6 +223,9 @@ namespace flopoco{
 			outPortMap(lshift, "R", "YRSfull");
 			vhdl << instance(lshift, "Yshift");
 			vhdl << tab << declare("YRS", sizeXYR) << " <=  YRsfull " << range(sizeXYR-1,0) << ";" << endl;
+
+			syncCycleFromSignal("YRSfull");
+			nextCycle();
 			
 			//syncCycleFromSignal("small_absZ0_normd_full");
 			//setCriticalPath( getOutputDelay("R") );
@@ -253,6 +272,7 @@ namespace flopoco{
 			vhdl << tab << declare("Y1", sizeY) << " <= '0' & YRS & " << zg(sizeY-sizeXYR-1) << ";" <<endl;			
 			stage=1; 
  
+			manageCriticalPath( target->adderDelay(sizeX));
 			vhdl << tab << "--- Iteration " << stage << " : sign is known positive ---" << endl;
 			vhdl << tab << declare(join("YShift", stage), sizeX) << " <= " << rangeAssign(sizeX-1, sizeX-stage, "'0'") << " & Y" << stage << range(sizeX-1, stage) << ";" << endl;
 			vhdl << tab << declare(join("X", stage+1), sizeX) << " <= " 
@@ -282,6 +302,8 @@ namespace flopoco{
 			for(stage=2; stage<=maxIterations;    stage++, sizeY--){
 				// Invariant: sizeX-sizeY = stage-2
 				vhdl << tab << "--- Iteration " << stage << " ---" << endl;
+
+				manageCriticalPath( target->localWireDelay(sizeX+1) + target->adderDelay(max(sizeX,sizeZ)) );
 				vhdl << tab << declare(join("sgnY", stage))  << " <= " <<  join("Y", stage)  <<  of(sizeY-1) << ";" << endl;
 			
 				if(-2*stage+1 >= -w+1-gXY) { 
@@ -321,6 +343,8 @@ namespace flopoco{
 			// Give the time to finish the last rotation
 			// manageCriticalPath( target->localWireDelay(w+1) + target->adderDelay(w+1) // actual CP delay
 			//                     - (target->localWireDelay(sizeZ+1) + target->adderDelay(sizeZ+1))); // CP delay that was already added
+
+			manageCriticalPath( target->localWireDelay(w+1) + target->adderDelay(2) );
 
 			vhdl << tab << declare("finalZ", w) << " <= Z" << stage << of(sizeZ-1) << " & Z" << stage << range(sizeZ-1, sizeZ-w+1) << "; -- sign-extended and rounded" << endl;
 		}
@@ -366,13 +390,21 @@ namespace flopoco{
 			vhdl << instance(recipTable, "recipTable");
 			vhdl << tab << declareFixPoint("R", false, msbRecip, lsbRecip) << " <= unsigned(R0" << range(msbRecip-lsbRecip  , 0) << "); -- removing the sign  bit" << endl;
 			vhdl << tab << declareFixPoint("YRU", false, -1, -w+1) << " <= unsigned(YRS);" << endl;
-			if(plainStupidVHDL) {
+
+			if(plainStupidVHDL) { // generate a "*"
 				vhdl << tab << declareFixPoint("P", false, msbRecip -1 +1, lsbRecip-w+1) << " <= R*YRU;" << endl;
 				resizeFixPoint("PtruncU", "P", msbProduct, lsbProduct);
-				vhdl << tab << declare("PTrunc", msbProduct-lsbProduct+1)  << " <=  std_logic_vector(PTruncU);" << endl;
+				vhdl << tab << declare("P_slv", msbProduct-lsbProduct+1)  << " <=  std_logic_vector(PTruncU);" << endl;
 			}
-			else{
-				THROWERROR(" non plain stupid VHDL not implemented yet");
+			else{ // generate an IntMultiplier
+				IntMultiplier::newComponentAndInstance(this,
+																							 "divMult",     // instance name
+																							 "R",  // x
+																							 "YRU", // y
+																							 "P",       // p
+																							 msbProduct, lsbProduct,
+																							 DSPThreshold
+																							 );
 			}
 
 
@@ -390,7 +422,7 @@ namespace flopoco{
 																									);
 			atanTable->changeName(join("atan_uid", getNewUId()));
 			addSubComponent(atanTable);			
-			inPortMap(atanTable, "X", "PTrunc");
+			inPortMap(atanTable, "X", "P_slv");
 			outPortMap(atanTable, "Y", "atanTableOut"); 
 			vhdl << instance(atanTable, "atanTable");
 

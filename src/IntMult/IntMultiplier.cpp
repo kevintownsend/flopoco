@@ -317,6 +317,66 @@ namespace flopoco {
 
 
 
+
+
+
+	IntMultiplier* IntMultiplier::newComponentAndInstance(
+																												Operator* parentOp,
+																												// use this name because of the #defines on top of this file
+																												string instanceName,
+																												string xSignalName,
+																												string ySignalName,
+																												string rSignalName,
+																												int rMSB,
+																												int rLSB,
+																												float DSPThreshold
+																												)
+	{
+		Signal* x = parentOp->getSignalByName(xSignalName);
+		Signal* y = parentOp->getSignalByName(ySignalName);
+		bool signedIO = (x->isFixSigned() && y->isFixSigned());
+		int wX = x->MSB() - x->LSB() +1;
+		int wY = y->MSB() - y->LSB() +1;
+		int wOut = rMSB - rLSB +1;
+		// TODO Following is a ugly hack to work around bad signed/unsigned logic somewhere else
+		// I observe in gtkwave that the result in the unsigned case is two bits to the left of what it should be
+#define UGLYHACK 1
+#if UGLYHACK
+		if(!signedIO)
+			wOut+=2;
+#endif
+
+		IntMultiplier* f = new IntMultiplier(parentOp->getTarget(),
+																				 wX, wY, wOut, signedIO, 
+																				 DSPThreshold
+																				 );
+		parentOp->addSubComponent(f);
+
+		inPortMap(f, "X", xSignalName); // without op-> because of the #defines. This is dirty code
+		inPortMap(f, "Y", ySignalName);
+
+#if UGLYHACK
+		outPortMap(f, "R", join(rSignalName,"i_slv"));  // here rSignalName_slv is std_logic_vector
+		vhdl << instance(f, instanceName);
+		
+		vhdl << tab << declare(join(rSignalName,"_slv"), wOut-2) 
+				 << " <= " << (join(rSignalName, "i_slv")) << range(wOut-3, 0) << ";" << endl;
+		vhdl << tab << parentOp->declareFixPoint(rSignalName, f->signedIO, rMSB, rLSB)
+				 << " <= " <<  (f->signedIO ? "signed(" : "unsigned(") << (join(rSignalName, "_slv")) << range(wOut-3, 0) << ");" << endl;
+#else
+ // this is how it should be
+		outPortMap(f, "R", join(rSignalName,"_slv"));  // here rSignalName_slv is std_logic_vector
+		vhdl << instance(f, instanceName);
+		
+		vhdl << tab << parentOp->declareFixPoint(rSignalName, f->signedIO, rMSB, rLSB)
+				<< " <= " <<  (f->signedIO ? "signed(" : "unsigned(") << (join(rSignalName, "_slv")) << ");" << endl;
+#endif
+		return f;
+	}
+
+
+
+
 	void  IntMultiplier::fillBitHeap()
 	{
 		Plotter* plotter= bitHeap->getPlotter();

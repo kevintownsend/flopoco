@@ -138,12 +138,12 @@ namespace flopoco{
 			}
 
 			else { // using FixMultAdd
-				REPORT(LIST, " i=" << i);
+				//REPORT(INFO, " i=" << i);
 				FixMultAdd::newComponentAndInstance(this,
 																						join("Step",i),     // instance name
 																						join("XsTrunc",i),  // x
 																						join("Sigma", i+1), // y
-																						join("A", i),       // a
+																						join("As", i),       // a
 																						join("Sigma", i),   // result 
 																						sigmaMSB, sigmaLSB, DSPThreshold
 																						);

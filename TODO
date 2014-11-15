@@ -1,18 +1,13 @@
 TODO file for FloPoCo
 
- infinite loop in
-./flopoco -verbose=4 -pipeline=no FixFunctionByPiecewisePoly "atan(x)" -16 2 -16 2 0 0 TestBenchFile -2
+Fuse CordicAtan2 and FixAtan2
+Pipelining: PolyEval, CordicAtan, virtual IntMult
 
-bug is in the size passed to addSignedBitVector:
-...
-> FixMultAdd:BitHeap: Entering addSignedBitVector(weight=23, x=A, size=4294967295, lsb=0, negativeWeight=0
-> FixMultAdd:BitHeap: addBit at weigth 23   for rhs=A(0)
-> FixMultAdd:BitHeap: WARNING in addBit, w=23 greater than mawWeight=22... ignoring it
-...
+See UGLYHACK in IntMultiplier
 
-
-
-
+./flopoco -pipeline=no FixAtan2 16 2 0 0  TestBenchFile 1000
+mostly works but fails trivial cornercase tests, which the following passes 
+./flopoco -pipeline=no FixAtan2 16 2 1 0  TestBenchFile 1000
 
 
 compression bug: ./flopoco IntMultiplier 2 16 16 1 0 0 does not produce a simple adder
