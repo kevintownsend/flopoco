@@ -12,6 +12,7 @@
 #include "ShiftersEtc/LZOC.hpp"
 #include "ShiftersEtc/Shifters.hpp"
 #include "FixFunctions/FixFunctionByPiecewisePoly.hpp"
+#include "FixFunctions/BipartiteTable.hpp"
 
 
 using namespace std;
@@ -373,7 +374,15 @@ namespace flopoco{
 			vhdl << tab << declare("XRm1", w-2) << " <= XRS" << range(w-3,0)  << "; -- removing the MSB which is constantly 1" << endl;
 			ostringstream invfun;
 			invfun << "2/(1+x)-1b"<<lsbRecip;
-			recipTable = new FixFunctionByPiecewisePoly(target, 
+			if(false && degree==1) {
+				BipartiteTable *deltaX2Table = new BipartiteTable(target,
+																													invfun.str(),
+																													-w+2,  // XRS was between 1/2 and 1. XRm1 is between 0 and 1/2
+																													msbRecip + 1, // +1 because internally uses signed arithmetic and we want an unsigned result 
+																													lsbRecip);
+			}
+			else {
+				recipTable = new FixFunctionByPiecewisePoly(target, 
 																									invfun.str(), 
 																									-w+2,  // XRS was between 1/2 and 1. XRm1 is between 0 and 1/2
 																									msbRecip + 1, // +1 because internally uses signed arithmetic and we want an unsigned result 
@@ -383,6 +392,7 @@ namespace flopoco{
 																									plainStupidVHDL,
 																									DSPThreshold
 																									);
+			}
 			recipTable->changeName(join("reciprocal_uid", getNewUId()));
 			addSubComponent(recipTable);			
 			inPortMap(recipTable, "X", "XRm1");
