@@ -455,6 +455,24 @@ void usage(char *name, string opName = ""){
 		cerr << "Conversion from IEEE-754-like to FloPoCo floating-point formats\n";
 	}
 
+	if ( full ) 
+		cerr << center("TEST STUFF", '_') << "\n";
+	if ( full || opName=="TestBench"|| opName=="TestBenchFile" ){
+		OP( "TestBenchFile","n");
+		cerr << "Behavorial test bench for the preceding operator\n";
+		cerr << "This test bench will include standard tests, plus n random tests.\n";
+		cerr << "Inputs and outputs are stored in file test.input to reduce VHDL compilation time.\n";
+		cerr << "if n=-2, an exhaustive test is generated (use only for small operators).\n";
+		OP ("TestBench","n");
+		cerr << "Behavorial test bench for the preceding operator\n";
+		cerr << "This test bench will include standard tests, plus n random tests.\n";
+		cerr << "Inputs and outputs are stored in the VHDL: more readable, but longer sim time.\n";
+	}
+
+	if ( full || opName=="Wrapper"){
+		OP ("Wrapper","");
+		cerr << "Wraps the preceding operator between registers (for frequency testing)\n";
+	}
 
 
 	if ( full || opName=="options"){
@@ -1575,6 +1593,7 @@ bool parseCommandLine(int argc, char* argv[]){
 			// we actually do nothing, the work is already done if it returned true
 		}
 
+
 		else if (opname == "TestBench") {
 			int nargs = 1;
 			if (i+nargs > argc)
@@ -1645,6 +1664,22 @@ bool parseCommandLine(int argc, char* argv[]){
 			cerr <<  "ghdl -e " << simlibs << "-fexplicit " << op->getName() <<endl;
 			cerr <<  "ghdl -r " << simlibs << op->getName() << " --vcd=" << op->getName() << ".vcd --stop-time=" << ((TestBench*)op)->getSimulationTime() << "ns" <<endl;
 			cerr <<  "gtkwave " << op->getName() << ".vcd" << endl;
+		}
+
+
+		else if (opname == "Wrapper") {
+			int nargs = 0;
+			if (i+nargs > argc)
+				usage(argv[0],opname);
+			else {
+				if(target->getGlobalOpListRef()->empty()){
+					cerr<<"ERROR: Wrapper has no operator to wrap (it should come after the operator it wraps)"<<endl;
+					usage(argv[0],opname);
+				}
+				Operator* toWrap = target->getGlobalOpListRef()->back();
+				op =new Wrapper(target, toWrap);
+				addOperator(op);
+			}
 		}
 
 		else  {
