@@ -264,9 +264,10 @@ namespace flopoco {
 				//split the input signals, and create the address signal for the table
 
 				//manage the pipeline
-				syncCycleFromSignal("XRS");
-				syncCycleFromSignal("YRS");
 				manageCriticalPath(target->localWireDelay());
+
+				//save the critical path
+				tempCriticalPath2 = getCriticalPath();
 
 				vhdl << tab << declare("XHigh", k-1) << " <= std_logic_vector(XRS" << range(wIn-3, wIn-1-k) << ");" << endl;
 				vhdl << tab << declare("YHigh", k)   << " <= std_logic_vector(YRS" << range(wIn-2, wIn-1-k) << ");" << endl;
@@ -313,6 +314,7 @@ namespace flopoco {
 				//manage the pipeline
 				setCycleFromSignal("XRS");
 				syncCycleFromSignal("YRS");
+				setCriticalPath(tempCriticalPath2);
 				manageCriticalPath(target->localWireDelay());
 
 				vhdl << tab << declareFixPoint("XLow", true, -k, -wIn+1) << " <= signed('0' & XRS" << range(wIn-1-k-1, 0) << ");" << endl;
@@ -336,8 +338,6 @@ namespace flopoco {
 				resizeFixPoint("BYLow_sgnExtended", "BYLow", maxMSB-1, -wOut+1-g);
 
 				//manage the pipeline
-				syncCycleFromSignal("AXLow_sgnExtended");
-				syncCycleFromSignal("BYLow_sgnExtended");
 				manageCriticalPath(target->adderDelay(maxMSB+wOut+g+1));
 
 				//add everything up
@@ -345,20 +345,20 @@ namespace flopoco {
 						<< " <= (AXLow_sgnExtended(AXLow_sgnExtended'HIGH) & AXLow_sgnExtended) + (BYLow_sgnExtended(BYLow_sgnExtended'HIGH) & BYLow_sgnExtended);" << endl;
 
 				//manage the pipeline
-				syncCycleFromSignal("AXLowAddBYLow");
-				syncCycleFromSignal("C_sgnExtended");
 				manageCriticalPath(target->adderDelay(maxMSB+wOut+g+2));
 
 				vhdl << tab << declareFixPoint("AXLowAddBYLowAddC", true, maxMSB+1, -wOut+1-g) << " <= (AXLowAddBYLow(AXLowAddBYLow'HIGH) & AXLowAddBYLow) + C_sgnExtended;" << endl;
 
 				//manage the pipeline
-				syncCycleFromSignal("AXLowAddBYLowAddC");
 				manageCriticalPath(target->adderDelay(wOut+1));
 
 				//extract the final result
 				resizeFixPoint("Rtmp", "AXLowAddBYLowAddC", 1, -wOut);
 				vhdl << tab << declareFixPoint("Rtmp_rndCst", true, 1, -wOut) << " <= signed(std_logic_vector\'(\"" << zg(wOut+1, -2) << "1\"));" << endl;
 				vhdl << tab << declareFixPoint("Rtmp_rnd", true, 1, -wOut) << " <= Rtmp + Rtmp_rndCst;" << endl;
+
+				//manage the pipeline
+				manageCriticalPath(target->localWireDelay());
 
 				//return the result
 				/*
@@ -367,9 +367,6 @@ namespace flopoco {
 				*/
 				resizeFixPoint("Rtmp_stdlv", "Rtmp_rnd", -2, -wOut+1);
 				vhdl << tab << declare("R_int", wOut-2) << " <= std_logic_vector(Rtmp_stdlv);" << endl;
-
-				//manage the pipeline
-				syncCycleFromSignal("R_int");
 
 				//vhdl << tab << "R <= std_logic_vector(Rtmp_stdlv);" << endl;
 
