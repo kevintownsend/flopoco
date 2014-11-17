@@ -496,8 +496,6 @@ namespace flopoco {
 			if(plainVHDL)
 			{
 				//manage the pipeline
-				setCycleFromSignal("XRS");
-				syncCycleFromSignal("YRS");
 				manageCriticalPath(target->localWireDelay());
 				//save the critical path
 				tempCriticalPath = getCriticalPath();
@@ -549,6 +547,9 @@ namespace flopoco {
 						<< range(msbA+msbB+msbC+msbD+msbE+msbF+6*(wOut-1+g)-1, msbB+msbC+msbD+msbE+msbF+5*(wOut-1+g)) << ");" << endl;
 				vhdl << endl;
 
+				//align the signals to the output format to the output format
+				resizeFixPoint("C_sgnExt", "C", maxMSB-1, -wOut+1-g);
+
 				//save the critical path
 				tempCriticalPath2 = getCriticalPath();
 
@@ -560,6 +561,8 @@ namespace flopoco {
 
 				vhdl << tab << declareFixPoint("DeltaX", true, -k-1,  -wIn+1) << " <= signed(not(XRS(" << of(wIn-k-2) << ")) & XRS" << range(wIn-k-3, 0) << ");" << endl;
 				vhdl << tab << declareFixPoint("DeltaY", true, -k-1,  -wIn+1) << " <= signed(not(YRS(" << of(wIn-k-2) << ")) & YRS" << range(wIn-k-3, 0) << ");" << endl;
+				vhdl << tab << declare("DeltaX_stdlv", wIn-k-1) << " <= std_logic_vector(DeltaX);" << endl;
+				vhdl << tab << declare("DeltaY_stdlv", wIn-k-1) << " <= std_logic_vector(DeltaY);" << endl;
 				/*
 				vhdl << tab << declareFixPoint("DeltaX", true, -k-1,  -wIn+1) << " <= signed(not(X(" << of(wIn-k-2) << ")) & X" << range(wIn-k-3, 0) << ");" << endl;
 				vhdl << tab << declareFixPoint("DeltaY", true, -k-1,  -wIn+1) << " <= signed(not(Y(" << of(wIn-k-2) << ")) & Y" << range(wIn-k-3, 0) << ");" << endl;
@@ -580,8 +583,16 @@ namespace flopoco {
 				vhdl << tab << declareFixPoint("B_DeltaY", true, msbB-k-1,  -wOut+1-g-wIn+1) << " <= B * DeltaY;" << endl;
 				vhdl << endl;
 
+				//align the signals to the output format to the output format
+				resizeFixPoint("A_DeltaX_sgnExt", "A_DeltaX", maxMSB-1, -wOut+1-g);
+				resizeFixPoint("B_DeltaY_sgnExt", "B_DeltaY", maxMSB-1, -wOut+1-g);
+
+				//save the critical path
+				double criticalPathA_DeltaX = getCriticalPath();
+
 				//manage the pipeline
 				setCycleFromSignal("DeltaX");
+				syncCycleFromSignal("DeltaY");
 				setCriticalPath(tempCriticalPath);
 				manageCriticalPath(target->DSPMultiplierDelay());
 
@@ -592,33 +603,49 @@ namespace flopoco {
 				*/
 				vhdl << tab << declareFixPoint("DeltaX_DeltaY", true, -2*k-1,  -2*wIn+2) << " <= DeltaX * DeltaY;" << endl;
 
+				//save the critical path
+				double criticalPathDeltaX_DeltaY = getCriticalPath();
+
+				//manage the pipeline
+				setCycleFromSignal("DeltaX");
+				setCriticalPath(tempCriticalPath);
+				manageCriticalPath(target->DSPMultiplierDelay());
+
 				BipartiteTable *deltaX2Table = new BipartiteTable(target,
 																	join("(2^(-", k, "))*(x^2)"),
 																	//-wIn+k+1, -1, -2*wIn+2*k+2,
-																	-wIn+k+1, -1, -wOut+1-g+2*k,
-																	inDelayMap("DeltaX", getCriticalPath()) );
+																	-wIn+k+1, -1, -wOut+1-g+2*k);
+																	//inDelayMap("DeltaX", getCriticalPath()) );
 				//add the table to the operator
 				addSubComponent(deltaX2Table);
 				//useSoftRAM(deltaX2Table);
 				useHardRAM(deltaX2Table);
-				inPortMap (deltaX2Table , "X", "DeltaX");
+				inPortMap (deltaX2Table , "X", "DeltaX_stdlv");
 				outPortMap(deltaX2Table , "Y", "DeltaX2_stdlv");
 				vhdl << instance(deltaX2Table , "DeltaX2Table");
 				vhdl << endl;
 
+				//manage the pipeline
+				setCycleFromSignal("DeltaY");
+				setCriticalPath(tempCriticalPath);
+				manageCriticalPath(target->DSPMultiplierDelay());
+
 				BipartiteTable *deltaY2Table = new BipartiteTable(target,
 																	join("(2^(-", k, "))*(x^2)"),
 																	//-wIn+k+1, -1, -2*wIn+2*k+2,
-																	-wIn+k+1, -1, -wOut+1-g+2*k,
-																	inDelayMap("DeltaY", getCriticalPath()) );
+																	-wIn+k+1, -1, -wOut+1-g+2*k);
+																	//inDelayMap("DeltaY", getCriticalPath()) );
 				//add the table to the operator
 				addSubComponent(deltaY2Table);
 				//useSoftRAM(deltaY2Table);
 				useHardRAM(deltaY2Table);
-				inPortMap (deltaY2Table , "X", "DeltaY");
+				inPortMap (deltaY2Table , "X", "DeltaY_stdlv");
 				outPortMap(deltaY2Table , "Y", "DeltaY2_stdlv");
 				vhdl << instance(deltaY2Table , "DeltaY2Table");
 				vhdl << endl;
+
+				//manage the pipeline
+				manageCriticalPath(target->localWireDelay());
 
 				//convert to fixed point in VHDL
 				//vhdl << tab << declareFixPoint("DeltaX2", true, -2*k-1,  -2*wIn+2) << " <= signed(DeltaX2_stdlv);" << endl;
@@ -635,12 +662,16 @@ namespace flopoco {
 				resizeFixPoint("DeltaX_DeltaY_short", "DeltaX_DeltaY", -2*k-1, -wOut+1-g);
 				vhdl << endl;
 
+				//save the critical path
+				double criticalPathDeltaX2 = getCriticalPath();
+
 				//manage the pipeline
 				setCycleFromSignal("D");
 				syncCycleFromSignal("E");
 				syncCycleFromSignal("F");
-				syncCycleFromSignal("DeltaX2");
-				syncCycleFromSignal("DeltaY2");
+				syncCycleFromSignal("DeltaX2_short");
+				syncCycleFromSignal("DeltaY2_short");
+				syncCycleFromSignal("DeltaX_DeltaY_short");
 				manageCriticalPath(target->DSPMultiplierDelay());
 
 				//create D*DeltaX^2, E*DeltaY^2 and F*DeltaX*DeltaY
@@ -649,15 +680,51 @@ namespace flopoco {
 				vhdl << tab << declareFixPoint("E_DeltaY2", true, msbE-2*k-1,  -2*wIn-wOut-g) << " <= E * DeltaY2;" << endl;
 				vhdl << tab << declareFixPoint("F_DeltaX_DeltaY", true, msbF-2*k-1,  -2*wIn-wOut-g) << " <= F * DeltaX_DeltaY;" << endl;
 				*/
+
+				//manage the pipeline
+				setCycleFromSignal("D");
+				syncCycleFromSignal("DeltaX2_short");
+				if(getCycleFromSignal("D") > getCycleFromSignal("DeltaX2_short"))
+					setCriticalPath(tempCriticalPath2);
+				else
+					setCriticalPath(criticalPathDeltaX2);
+				manageCriticalPath(target->DSPMultiplierDelay());
+
 				vhdl << tab << declareFixPoint("D_DeltaX2", true, msbD-2*k-1,  -2*(wOut-1+g)) << " <= D * DeltaX2_short;" << endl;
+
+				//save the critical path
+				double criticalPathD_DeltaX2 = getCriticalPath();
+
+				//manage the pipeline
+				setCycleFromSignal("E");
+				syncCycleFromSignal("DeltaY2_short");
+				if(getCycleFromSignal("E") > getCycleFromSignal("DeltaY2_short"))
+					setCriticalPath(tempCriticalPath2);
+				else
+					setCriticalPath(criticalPathDeltaX2);
+				manageCriticalPath(target->DSPMultiplierDelay());
+
 				vhdl << tab << declareFixPoint("E_DeltaY2", true, msbE-2*k-1,  -2*(wOut-1+g)) << " <= E * DeltaY2_short;" << endl;
+
+				//save the critical path
+				double criticalPathE_DeltaY2 = getCriticalPath();
+
+				//manage the pipeline
+				setCycleFromSignal("F");
+				syncCycleFromSignal("DeltaX_DeltaY_short");
+				if(getCycleFromSignal("F") > getCycleFromSignal("DeltaX_DeltaY_short"))
+					setCriticalPath(tempCriticalPath2);
+				else
+					setCriticalPath(criticalPathDeltaX_DeltaY);
+				manageCriticalPath(target->DSPMultiplierDelay());
+
 				vhdl << tab << declareFixPoint("F_DeltaX_DeltaY", true, msbF-2*k-1,  -2*(wOut-1+g)) << " <= F * DeltaX_DeltaY_short;" << endl;
 				vhdl << endl;
 
+				//save the critical path
+				double criticalPathF_DeltaX_DeltaY = getCriticalPath();
+
 				//align the signals to the output format to the output format
-				resizeFixPoint("A_DeltaX_sgnExt", "A_DeltaX", maxMSB-1, -wOut+1-g);
-				resizeFixPoint("B_DeltaY_sgnExt", "B_DeltaY", maxMSB-1, -wOut+1-g);
-				resizeFixPoint("C_sgnExt", "C", maxMSB-1, -wOut+1-g);
 				resizeFixPoint("D_DeltaX2_sgnExt", "D_DeltaX2", maxMSB-1, -wOut+1-g);
 				resizeFixPoint("E_DeltaY2_sgnExt", "E_DeltaY2", maxMSB-1, -wOut+1-g);
 				resizeFixPoint("F_DeltaX_DeltaY_sgnExt", "F_DeltaX_DeltaY", maxMSB-1, -wOut+1-g);
@@ -666,39 +733,64 @@ namespace flopoco {
 				//manage the pipeline
 				setCycleFromSignal("A_DeltaX_sgnExt");
 				syncCycleFromSignal("B_DeltaY_sgnExt");
+				setCriticalPath(criticalPathA_DeltaX);
 				manageCriticalPath(target->adderDelay(wOut+g+1));
 
 				//add everything up
 				vhdl << tab << declareFixPoint("Sum1", true, maxMSB, -wOut+1-g)
 						<< " <= (A_DeltaX_sgnExt(A_DeltaX_sgnExt'HIGH) & A_DeltaX_sgnExt) + (B_DeltaY_sgnExt(B_DeltaY_sgnExt'HIGH) & B_DeltaY_sgnExt);" << endl;
 
+				//save the critical path
+				double criticalPathSum1 = getCriticalPath();
+
 				//manage the pipeline
-				setCycleFromSignal("Sum1");
-				syncCycleFromSignal("C_sgnExt");
+				setCycleFromSignal("D_DeltaX2_sgnExt");
+				setCriticalPath(criticalPathD_DeltaX2);
 				manageCriticalPath(target->adderDelay(wOut+g+1));
 
 				vhdl << tab << declareFixPoint("Sum2", true, maxMSB, -wOut+1-g)
 						<< " <= (C_sgnExt(C_sgnExt'HIGH) & C_sgnExt) + (D_DeltaX2_sgnExt(D_DeltaX2_sgnExt'HIGH) & D_DeltaX2_sgnExt);" << endl;
 
+				//save the critical path
+				double criticalPathSum2 = getCriticalPath();
+
 				//manage the pipeline
 				setCycleFromSignal("E_DeltaY2_sgnExt");
 				syncCycleFromSignal("F_DeltaX_DeltaY_sgnExt");
+				if(getCycleFromSignal("E_DeltaY2_sgnExt") > getCycleFromSignal("F_DeltaX_DeltaY_sgnExt"))
+					setCriticalPath(criticalPathE_DeltaY2);
+				else
+					setCriticalPath(criticalPathF_DeltaX_DeltaY);
 				manageCriticalPath(target->adderDelay(wOut+g+1));
 
 				vhdl << tab << declareFixPoint("Sum3", true, maxMSB, -wOut+1-g)
 						<< " <= (E_DeltaY2_sgnExt(E_DeltaY2_sgnExt'HIGH) & E_DeltaY2_sgnExt) + (F_DeltaX_DeltaY_sgnExt(F_DeltaX_DeltaY_sgnExt'HIGH) & F_DeltaX_DeltaY_sgnExt);" << endl;
 
+				//save the critical path
+				double criticalPathSum3 = getCriticalPath();
+
 				//manage the pipeline
 				setCycleFromSignal("Sum1");
 				syncCycleFromSignal("Sum2");
+				if(getCycleFromSignal("Sum1") > getCycleFromSignal("Sum2"))
+					setCriticalPath(criticalPathSum1);
+				else
+					setCriticalPath(criticalPathSum2);
 				manageCriticalPath(target->adderDelay(wOut+g+1));
 
 				vhdl << tab << declareFixPoint("Sum4", true, maxMSB+1, -wOut+1-g)
 						<< " <= (Sum1(Sum1'HIGH) & Sum1) + (Sum2(Sum2'HIGH) & Sum2);" << endl;
 
+				//save the critical path
+				double criticalPathSum4 = getCriticalPath();
+
 				//manage the pipeline
-				setCycleFromSignal("Sum3");
-				syncCycleFromSignal("Sum4");
+				setCycleFromSignal("Sum4");
+				syncCycleFromSignal("Sum3");
+				if(getCycleFromSignal("Sum3") > getCycleFromSignal("Sum4"))
+					setCriticalPath(criticalPathSum3);
+				else
+					setCriticalPath(criticalPathSum4);
 				manageCriticalPath(target->adderDelay(wOut+g+1));
 
 				vhdl << tab << declareFixPoint("Sum5", true, maxMSB+2, -wOut+1-g)
@@ -706,7 +798,7 @@ namespace flopoco {
 				vhdl << endl;
 
 				//manage the pipeline
-				manageCriticalPath(target->adderDelay(wOut+1));
+				manageCriticalPath(target->adderDelay(wOut+2));
 
 				//extract the final result
 				resizeFixPoint("Rtmp", "Sum5", 1, -wOut);
@@ -850,7 +942,7 @@ namespace flopoco {
 				addSubComponent(deltaX2Table);
 				//useSoftRAM(deltaX2Table);
 				useHardRAM(deltaX2Table);
-				inPortMap (deltaX2Table , "X", "DeltaX");
+				inPortMap (deltaX2Table , "X", "DeltaX_stdlv");
 				outPortMap(deltaX2Table , "Y", "DeltaX2_stdlv");
 				vhdl << instance(deltaX2Table , "DeltaX2Table");
 				vhdl << endl;
@@ -864,7 +956,7 @@ namespace flopoco {
 				addSubComponent(deltaY2Table);
 				//useSoftRAM(deltaY2Table);
 				useHardRAM(deltaY2Table);
-				inPortMap (deltaY2Table , "X", "DeltaY");
+				inPortMap (deltaY2Table , "X", "DeltaY_stdlv");
 				outPortMap(deltaY2Table , "Y", "DeltaY2_stdlv");
 				vhdl << instance(deltaY2Table , "DeltaY2Table");
 				vhdl << endl;
@@ -959,7 +1051,6 @@ namespace flopoco {
 		////////////////////////////////////////////////////////////////////////////
 
 		//manage the pipeline
-		syncCycleFromSignal("R_int");
 		manageCriticalPath(target->lutDelay() + target->adderDelay(wOut));
 
 		vhdl << tab << declare("qangle", wOut) << " <= (quadrant & " << zg(wOut-2) << ");" << endl;
@@ -1330,6 +1421,7 @@ namespace flopoco {
 
 
 					//now check the error against all the points in the plane, at the given resolution
+					/*
 					for(int n=0; (n<(1<<(wIn-k)) && runLoop); n++)
 						for(int m=0; (m<(1<<(wIn-k)) && runLoop); m++)
 						{
@@ -1371,6 +1463,7 @@ namespace flopoco {
 								break;
 							}
 						}
+						*/
 				}
 
 				cout << "\r                                                                                                                   \r";
