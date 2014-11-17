@@ -357,7 +357,8 @@ namespace flopoco{
 		else if (method==INVMULTATAN) {
 			//FixFunctionByPiecewisePoly* recipTable;
 			Operator* recipTable;
-			FixFunctionByPiecewisePoly* atanTable;
+			//FixFunctionByPiecewisePoly* atanTable;
+			Operator* atanTable;
 			int msbRecip, lsbRecip, msbProduct, lsbProduct, msbAtan, lsbAtan;
 			msbAtan = -2; // bits 0 and -1 come from the range reduction
 			lsbAtan = -w+1;
@@ -422,16 +423,25 @@ namespace flopoco{
 
 			ostringstream atanfun;
 			atanfun << "atan(x)/pi";
-			atanTable  = new FixFunctionByPiecewisePoly(target, 
-															atanfun.str(),
-															lsbProduct,
-															msbAtan,
-															lsbAtan,
-															degree,
-															true, /*finalRounding*/
-															plainStupidVHDL,
-															DSPThreshold
-															);
+			if(degree==1) {
+				atanTable = new BipartiteTable(target,
+													atanfun.str(),
+													lsbProduct,
+													msbAtan,
+													lsbAtan);
+			}
+			else {
+				atanTable  = new FixFunctionByPiecewisePoly(target,
+																atanfun.str(),
+																lsbProduct,
+																msbAtan,
+																lsbAtan,
+																degree,
+																true, /*finalRounding*/
+																plainStupidVHDL,
+																DSPThreshold
+																);
+			}
 			atanTable->changeName(join("atan_uid", getNewUId()));
 			addSubComponent(atanTable);			
 			inPortMap(atanTable, "X", "P_slv");
