@@ -53,7 +53,7 @@ FIND_LIBRARY(MPFI_LIB
 	DOC "Directory of the MPFI library")
 
 FIND_LIBRARY(PYTHON_LIB
-	NAMES libpython2.7.so.1
+	NAMES libpython2.7.so
 	HINTS "/usr/lib/x86_64-linux-gnu"
 	DOC "Directory of the Python library"
 )
