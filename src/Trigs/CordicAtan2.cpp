@@ -355,7 +355,8 @@ namespace flopoco{
 
 
 		else if (method==INVMULTATAN) {
-			FixFunctionByPiecewisePoly* recipTable;
+			//FixFunctionByPiecewisePoly* recipTable;
+			Operator* recipTable;
 			FixFunctionByPiecewisePoly* atanTable;
 			int msbRecip, lsbRecip, msbProduct, lsbProduct, msbAtan, lsbAtan;
 			msbAtan = -2; // bits 0 and -1 come from the range reduction
@@ -374,24 +375,25 @@ namespace flopoco{
 			vhdl << tab << declare("XRm1", w-2) << " <= XRS" << range(w-3,0)  << "; -- removing the MSB which is constantly 1" << endl;
 			ostringstream invfun;
 			invfun << "2/(1+x)-1b"<<lsbRecip;
-			if(false && degree==1) {
-				BipartiteTable *deltaX2Table = new BipartiteTable(target,
-																													invfun.str(),
-																													-w+2,  // XRS was between 1/2 and 1. XRm1 is between 0 and 1/2
-																													msbRecip + 1, // +1 because internally uses signed arithmetic and we want an unsigned result 
-																													lsbRecip);
+			if(degree==1) {
+				//BipartiteTable *deltaX2Table
+				recipTable = new BipartiteTable(target,
+													invfun.str(),
+													-w+2,  // XRS was between 1/2 and 1. XRm1 is between 0 and 1/2
+													msbRecip + 1, // +1 because internally uses signed arithmetic and we want an unsigned result
+													lsbRecip);
 			}
 			else {
 				recipTable = new FixFunctionByPiecewisePoly(target, 
-																									invfun.str(), 
-																									-w+2,  // XRS was between 1/2 and 1. XRm1 is between 0 and 1/2
-																									msbRecip + 1, // +1 because internally uses signed arithmetic and we want an unsigned result 
-																									lsbRecip, 
-																									degree,  
-																									true, /*finalRounding*/
-																									plainStupidVHDL,
-																									DSPThreshold
-																									);
+																invfun.str(),
+																-w+2,  // XRS was between 1/2 and 1. XRm1 is between 0 and 1/2
+																msbRecip + 1, // +1 because internally uses signed arithmetic and we want an unsigned result
+																lsbRecip,
+																degree,
+																true, /*finalRounding*/
+																plainStupidVHDL,
+																DSPThreshold
+																);
 			}
 			recipTable->changeName(join("reciprocal_uid", getNewUId()));
 			addSubComponent(recipTable);			
@@ -421,15 +423,15 @@ namespace flopoco{
 			ostringstream atanfun;
 			atanfun << "atan(x)/pi";
 			atanTable  = new FixFunctionByPiecewisePoly(target, 
-																									atanfun.str(), 
-																									lsbProduct,  
-																									msbAtan, 
-																									lsbAtan, 
-																									degree,
-																									true, /*finalRounding*/
-																									plainStupidVHDL,  
-																									DSPThreshold
-																									);
+															atanfun.str(),
+															lsbProduct,
+															msbAtan,
+															lsbAtan,
+															degree,
+															true, /*finalRounding*/
+															plainStupidVHDL,
+															DSPThreshold
+															);
 			atanTable->changeName(join("atan_uid", getNewUId()));
 			addSubComponent(atanTable);			
 			inPortMap(atanTable, "X", "P_slv");
