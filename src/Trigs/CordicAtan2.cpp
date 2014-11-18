@@ -218,12 +218,12 @@ namespace flopoco{
 			inPortMap(lshift, "X", "XR");
 			outPortMap(lshift, "R", "XRSfull");
 			vhdl << instance(lshift, "Xshift");
-			vhdl << tab << declare("XRS", sizeXYR) << " <=  XRsfull " << range(sizeXYR-1,0) << ";" << endl;
+			vhdl << tab << declare("XRS", sizeXYR) << " <=  XRSfull " << range(sizeXYR-1,0) << ";" << endl;
 
 			inPortMap(lshift, "X", "YR");
 			outPortMap(lshift, "R", "YRSfull");
 			vhdl << instance(lshift, "Yshift");
-			vhdl << tab << declare("YRS", sizeXYR) << " <=  YRsfull " << range(sizeXYR-1,0) << ";" << endl;
+			vhdl << tab << declare("YRS", sizeXYR) << " <=  YRSfull " << range(sizeXYR-1,0) << ";" << endl;
 
 			syncCycleFromSignal("YRSfull");
 			nextCycle();
