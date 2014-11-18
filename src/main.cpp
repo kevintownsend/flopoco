@@ -369,6 +369,7 @@ void usage(char *name, string opName = ""){
 		OP( "FixAtan2","w method plainVHDL DSP_threshold");
 		cerr << "Computes atan(x/y) as a=(angle in radian)/pi so a in [-1,1[;\n";
 		cerr << "method is: 0..7 InvMultAtan with approximations of the corresponding degree; 8 plain CORDIC, 9 CORDIC with scaling\n";
+		cerr << tab << tab << tab << tab << "10 based on surface approximation, 11 Taylor order 1, 12 Taylor order 2\n";
 		cerr << "w is the size of both inputs and outputs, all being two's complement signals\n";
 	}
 
@@ -1510,8 +1511,17 @@ bool parseCommandLine(int argc, char* argv[]){
 			int w = checkStrictlyPositive(argv[i++], argv[0]); // must be >=2 actually
 			int method = atoi(argv[i++]);
 			int plainVHDL = atoi(argv[i++]);
-			float DSPThreshold			= atof(argv[i++]);
-			Operator* tg = new CordicAtan2(target, w, method, plainVHDL, DSPThreshold);
+			float DSPThreshold = atof(argv[i++]);
+			//select the method
+			Operator* tg;
+			if(method < 10)
+			{
+				tg = new CordicAtan2(target, w, method, plainVHDL, DSPThreshold);
+			}else
+			{
+				tg = new FixAtan2(target, w, w, method-10, DSPThreshold, (plainVHDL==1));
+			}
+
 			addOperator(tg);
 		}
 
