@@ -327,6 +327,10 @@ src/Trigs/FixSinCos
 src/Trigs/CordicSinCos
 # src/Trigs/CordicSinOrCos
 src/Trigs/CordicAtan2
+src/Trigs/FixAtan2
+src/Trigs/Atan2Table
+src/Tools/Plane
+src/Tools/Point
 
 # Exp, Log and Power
 src/ExpLog/FPExp
