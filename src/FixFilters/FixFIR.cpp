@@ -83,6 +83,7 @@ namespace flopoco {
 
 		listTC[idx] = tc;
 
+		// We are waiting until the first meaningful value comes out of the FIR
 		if (full) {
 			mpfr_t x, t, s, rd, ru;
 			mpfr_init2 (x, 1+p);
@@ -92,7 +93,9 @@ namespace flopoco {
 			mpfr_init2 (ru, 1+p);		
 
 			mpfr_set_d(s, 0.0, GMP_RNDN); // initialize s to 0
-			int k = idx;
+
+
+			int k = idx; // We start to sum from the last input
 
 			for (int i=0; i< n; i++)
 			{
@@ -112,7 +115,7 @@ namespace flopoco {
 				k = (k+1)%n;	
 			}
 
-			k = (k-1+n)%n;
+			k = (k-1+n)%n; //to get the corresponding testCase to the outputed value
 
 			// now we should have in s the (exact in most cases) sum
 			// round it up and down
@@ -135,8 +138,8 @@ namespace flopoco {
 
 
 
-
-		idx = (idx-1+n)%n;
+		
+		idx = (idx-1+n)%n; // We use a circular buffer to store the inputs
 
 
 
