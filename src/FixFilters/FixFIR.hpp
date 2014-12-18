@@ -21,9 +21,6 @@ namespace flopoco{
 			  in order to compare this result with those outputed by the vhdl opertator */
 			void emulate(TestCase * tc);
 
-			/* function used to create Standard testCase defined by the developper */
-			void buildStandardTestCases(TestCaseList* tcl);
-
 	  	private:
 			int p;							/**< The precision of inputs and outputs */ 
 			int n;							/**< number of taps */

@@ -78,7 +78,7 @@ namespace flopoco {
 
 		static int idx = 0;
 		static bool full = false; 							// set to true when the fir start to output valid data (after n input) 
-		static TestCase * listTC [10000];
+		static TestCase * listTC [10000]; // should be enough for everybody
 
 
 		listTC[idx] = tc;
@@ -135,27 +135,16 @@ namespace flopoco {
 
 			mpfr_clears (x, t, s, rd, ru, NULL);
 		}
-
-
-
 		
 		idx = (idx-1+n)%n; // We use a circular buffer to store the inputs
-
-
-
 
 		if (idx ==  1) {
 			full = true;
 		}
-
-
-
-
 	};
 
-	void FixFIR::buildStandardTestCases(TestCaseList* tcl){
 
-	};
+
 
 }
 	
