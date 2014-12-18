@@ -119,13 +119,13 @@ namespace flopoco{
 		
 		//compute the guard bits from the KCM mulipliers
 		int guardBitsKCM = 0;
+		int wInKCM = p + 1;	//p bits + 1 sign bit
+		int lsbOutKCM = -p-g;
 		
 		for(int i=0; i<n; i++)
 		{
-			int wIn = p + 1;	//p bits + 1 sign bit
-			int lsbOut = -p-g;
 			double targetUlpError = 1.0;
-			int temp = FixRealKCM::neededGuardBits(target, wIn, lsbOut, targetUlpError);
+			int temp = FixRealKCM::neededGuardBits(target, wInKCM, lsbOutKCM, targetUlpError);
 			
 			if(temp > guardBitsKCM)
 				guardBitsKCM = temp;
@@ -138,23 +138,17 @@ namespace flopoco{
 		{
 			//create the bitheap that computes the sum
 			bitHeap = new BitHeap(this, size);
-		}
-		
-		if(useBitheap)
-		{
-			//create the bitheap that computes the sum
-			bitHeap = new BitHeap(this, size);
 			
 			for (int i=0; i<n; i++) 
 			{
-				// Multiplication: instantiating a KCM object.
+				// Multiplication: instantiating a KCM object. It will add bits also to the right of lsbOutKCM
 				FixRealKCM* mult = new FixRealKCM(this,				// the envelopping operator
 														target, 	// the target FPGA
 														getSignalByName(join("X",i)),
 														true, 		// signed
 														-1, 		// input MSB, but one sign bit will be added
 														-p, 		// input LSB weight
-														-p-g, 		// output LSB weight -- the output MSB is computed out of the constant
+														lsbOutKCM, 		// output LSB weight -- the output MSB is computed out of the constant
 														coeff[i], 	// pass the string unmodified
 														bitHeap		// pass the reference to the bitheap that will accumulate the intermediary products
 													);
