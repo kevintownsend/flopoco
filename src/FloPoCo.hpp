@@ -12,10 +12,13 @@
 #include "Operator.hpp"
 #include "FlopocoStream.hpp"
 
+/* operator pipeline work* ------------------------------------ */
+#include "OperatorPipeline/OperatorPipeline.hpp"
 
 /* resource estimation ---------------------------------------- */
 #include "Tools/ResourceEstimationHelper.hpp"
 /* resource estimation ---------------------------------------- */
+
 
 
 /* floorplanning ---------------------------------------------- */

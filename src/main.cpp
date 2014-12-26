@@ -70,11 +70,21 @@ void usage(char *name, string opName = ""){
 	}
 
 
+    
+    
+    
 
 
 	if ( full )
 		cerr << center("SHIFTERS/LZOC", '_') << "\n";
 
+    
+    if ( full || opName == "FPPipeline"){	
+        ///TODO add usage for operatorPipeline
+		cerr << "idk what to put here" << endl;
+	}
+    
+    
 	if ( full || opName == "LeftShifter") 
 		OP("LeftShifter","wIn MaxShift");
 	if ( full || opName == "RightShifter") 
@@ -1692,6 +1702,17 @@ bool parseCommandLine(int argc, char* argv[]){
 			}
 		}
 
+        else if (opname == "OperatorPipeline") {
+			int nargs = 3;
+			if (i+nargs > argc)
+				usage(argv[0],opname); // and exit
+			string filename = argv[i++];
+			int wE = checkStrictlyPositive(argv[i++], argv[0]);
+			int wF = checkStrictlyPositive(argv[i++], argv[0]);
+			Operator* tg = new OperatorPipeline(target, filename, wE, wF);
+			addOperator(tg);
+		}
+        
 		else  {
 			cerr << "ERROR: Problem parsing input line, exiting";
 			usage(argv[0]);
