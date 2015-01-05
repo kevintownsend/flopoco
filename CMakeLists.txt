@@ -236,6 +236,7 @@ src/Conversions/Fix2FP
  src/ShiftReg
  src/FixFilters/FixSOPC
  src/FixFilters/FixFIR
+ src/FixFilters/FixIIR
 
 
 # pipelined Integer addition -------------------------------------------------

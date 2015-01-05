@@ -42,7 +42,7 @@ namespace flopoco {
 
 		vhdl << instance(shiftReg, "shiftReg");
 
-		// REPORT(INFO,"pouet");
+
 		// REPORT(INFO,getCycleFromSignal("Y0", false));
 		// REPORT(INFO,getCurrentCycle());
 		syncCycleFromSignal("Y0");
