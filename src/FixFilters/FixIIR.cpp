@@ -25,6 +25,7 @@ namespace flopoco {
 		setCopyrightString ( "Louis Beseme, Florent de Dinechin (2014)" );
 		useNumericStd_Unsigned();
 
+
 		ostringstream name;
 		name << "FixIIR_"<< p << "_uid" << getNewUId();
 		setNameWithFreq( name.str() );
@@ -153,6 +154,7 @@ namespace flopoco {
 		//Shift register for the left part
 		ShiftReg *shiftRegB = new ShiftReg(target, 1+p, n, inputDelays);
 
+
 		addSubComponent(shiftRegB);
 		inPortMap(shiftRegB, "X", "X");
 
@@ -169,7 +171,9 @@ namespace flopoco {
 		ShiftReg *shiftRegA = new ShiftReg(target, wInKCM_A, m, inputDelays);
 
 		addSubComponent(shiftRegA);
-		inPortMap(shiftRegA, "X", declare("Rtmp", wO+g));
+		declare("Rtmp", wO+g, false, Signal::registeredWithAsyncReset);
+		nextCycle();
+		inPortMap(shiftRegA, "X", "Rtmp");
 
 		for(int i = 0; i<m; i++) {
 			outPortMap(shiftRegA, join("Xd", i), join("Ya", i));
@@ -177,6 +181,7 @@ namespace flopoco {
 
 		vhdl << instance(shiftRegA, "shiftRegA");
 
+		target->setNotPipelined(); //the following parts of the circuit will be combinatorial
 		
 		if (useBitheap)
 		{
@@ -228,7 +233,7 @@ namespace flopoco {
 		else
 		{
 			setCycleFromSignal("Yb0");
-			vhdl << tab << declare("S0", size) << " <= " << zg(size) << ";" << endl;
+			vhdl << tab << declare("S0", size, false, Signal::registeredWithAsyncReset) << " <= " << zg(size) << ";" << endl;
 
 			for (int i=0; i<n; i++)
 			{
@@ -255,7 +260,7 @@ namespace flopoco {
 
 				// Addition
 				int pSize = getSignalByName(join("Pb", i))->width();
-				vhdl << tab << declare(join("S", i+1), size) << " <= " <<  join("S",i);
+				vhdl << tab << declare(join("S", i+1), size, false, Signal::registeredWithAsyncReset) << " <= " <<  join("S",i);
 				if(coeffsignb[i] == 1)
 					vhdl << " - (" ;
 				else
@@ -267,8 +272,11 @@ namespace flopoco {
 
 			for (int i=0; i<m; i++)
 			{
-				//manage the critical path
+				//manage the critical path. It's ugly but seems to be working
 				setCycleFromSignal(join("Ya",i));
+				previousCycle();
+				getSignalByName(join("Ya",i))->setCycle(getCurrentCycle());
+
 
 				// Multiplication: instantiating a KCM object. 
 				FixRealKCM* mult = new FixRealKCM(target, 
@@ -284,13 +292,13 @@ namespace flopoco {
 				vhdl << instance(mult, join("mult", n+i));
 
 				//manage the critical path
-				syncCycleFromSignal(join("Pa", i));
-				syncCycleFromSignal(join("S", n+i));
+				// syncCycleFromSignal(join("Pa", i));
+				// syncCycleFromSignal(join("S", n+i));
 				manageCriticalPath(target->adderDelay(size));
 
 				// Addition
 				int pSize = getSignalByName(join("Pa", i))->width();
-				vhdl << tab << declare(join("S", n+i+1), size) << " <= " <<  join("S",n+i);
+				vhdl << tab << declare(join("S", n+i+1), size, false, Signal::registeredWithAsyncReset) << " <= " <<  join("S",n+i);
 				if(coeffsigna[i] == 1)
 					vhdl << " - (" ;
 				else
@@ -311,11 +319,11 @@ namespace flopoco {
 			vhdl << tab << "Rtmp <= " << join("S", n+m) << ";" << endl;
 
 		}
-
+		target->setPipelined();
 		addOutput("R", wO, 2); 
 
 		//Adding one half ulp to obtain correct rounding
-		vhdl << tab << declare("R_int", wO+1) << " <= " <<  "Rtmp" << range(size-1, g - 1) << " + (" << zg(wO) << " & \'1\');" << endl;
+		vhdl << tab << declare("R_int", wO+1) << " <= " <<  "Rtmp_d1" << range(size-1, g - 1) << " + (" << zg(wO) << " & \'1\');" << endl;
 		vhdl << tab << "R <= " <<  "R_int" << range(wO, 1) << ";" << endl;
 		
 
@@ -328,7 +336,77 @@ namespace flopoco {
 	};
 
 
-	void FixIIR::emulate(TestCase * tc){};
+	void FixIIR::emulate(TestCase * tc){
+
+		static int idxB = 0;
+		static bool full = false; 							// set to true when the fir start to output valid data (after n input) 
+		static TestCase * listTC [10000]; // should be enough for everybody
+		static mpz_class ShiftRegA [10000];
+
+
+		listTC[idxB] = tc;
+
+		// We are waiting until the first meaningful value comes out of the FIR
+		if (full) {
+			mpfr_t x, t, s, rd, ru;
+			mpfr_init2 (x, 1+p);
+			mpfr_init2 (t, 10*(1+p));
+			mpfr_init2 (s, 10*(1+p));
+			mpfr_init2 (rd, 1+p);
+			mpfr_init2 (ru, 1+p);		
+
+			mpfr_set_d(s, 0.0, GMP_RNDN); // initialize s to 0
+
+
+			int k = idxB; // We start to sum from the last input
+
+			for (int i=0; i< n; i++)
+			{
+
+				mpz_class sx = listTC[k]->getInputValue("X"); 		// get the input bit vector as an integer
+				sx = bitVectorToSigned(sx, 1+p); 						// convert it to a signed mpz_class
+				mpfr_set_z (x, sx.get_mpz_t(), GMP_RNDD); 				// convert this integer to an MPFR; this rounding is exact
+				mpfr_div_2si (x, x, p, GMP_RNDD); 						// multiply this integer by 2^-p to obtain a fixed-point value; this rounding is again exact
+
+				mpfr_mul(t, x, mpcoeffb[i], GMP_RNDN); 					// Here rounding possible, but precision used is ridiculously high so it won't matter
+
+				if(coeffsignb[i]==1)
+					mpfr_neg(t, t, GMP_RNDN); 
+
+				mpfr_add(s, s, t, GMP_RNDN); 							// same comment as above
+			
+				k = (k+1)%n;	
+			}
+
+			k = (k-1+n)%n; //to get the testCase corresponding to the outputed value
+
+			// now we should have in s the (exact in most cases) sum
+			// round it up and down
+
+			// make s an integer -- no rounding here
+			mpfr_mul_2si (s, s, p, GMP_RNDN);
+
+			mpz_class rdz, ruz;
+
+			mpfr_get_z (rdz.get_mpz_t(), s, GMP_RNDD); 					// there can be a real rounding here
+			rdz=signedToBitVector(rdz, wO);
+			listTC[k]->addExpectedOutput ("R", rdz);
+
+			mpfr_get_z (ruz.get_mpz_t(), s, GMP_RNDU); 					// there can be a real rounding here	
+			ruz=signedToBitVector(ruz, wO);
+			listTC[k]->addExpectedOutput ("R", ruz);
+
+			mpfr_clears (x, t, s, rd, ru, NULL);
+		}
+		
+		idxB = (idxB-1+n)%n; // We use a circular buffer to store the inputs
+
+		if (idxB ==  1) {
+			full = true;
+		}
+
+
+	};
 
 	void FixIIR::buildStandardTestCases(TestCaseList* tcl){};
 

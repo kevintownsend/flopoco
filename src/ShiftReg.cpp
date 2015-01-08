@@ -29,7 +29,7 @@ namespace flopoco {
 
 		setCriticalPath(getMaxInputDelays(inputDelays));
 
-		vhdl << declare("XX", w) << " <= X;" << endl;
+		vhdl << declare("XX", w, false, Signal::registeredWithAsyncReset) << " <= X;" << endl;
 
 		
 		for(int i=0; i<n; i++) {
