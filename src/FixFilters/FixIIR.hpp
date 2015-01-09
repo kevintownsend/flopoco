@@ -34,6 +34,7 @@ namespace flopoco{
 			bool useBitheap;
 			BitHeap* bitHeap;    			/**< The heap of weighted bits that will be used to do the additions */
 
+			int g;							/**< number of guard bits */
 			int wO;							/**< width of the result */
 			int leadingBit;					/**< weight of the MSB in the result */
 			int H;							/**< Worst case peak gain */

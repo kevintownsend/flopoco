@@ -43,7 +43,7 @@ namespace flopoco {
 
 
 		// guard bits for a faithful result
-		int g= intlog2(2*H*(n+m)); 
+		g= intlog2(2*H*(n+m)); 
 		REPORT(INFO, "g=" << g);
 
 
@@ -321,6 +321,9 @@ namespace flopoco {
 		}
 		target->setPipelined();
 		addOutput("R", wO, 2); 
+		
+		syncCycleFromSignal(join("Yb", n-1));
+		nextCycle();
 
 		//Adding one half ulp to obtain correct rounding
 		vhdl << tab << declare("R_int", wO+1) << " <= " <<  "Rtmp_d1" << range(size-1, g - 1) << " + (" << zg(wO) << " & \'1\');" << endl;
@@ -338,54 +341,100 @@ namespace flopoco {
 
 	void FixIIR::emulate(TestCase * tc){
 
+		static int idxA = 0;
 		static int idxB = 0;
 		static bool full = false; 							// set to true when the fir start to output valid data (after n input) 
 		static TestCase * listTC [10000]; // should be enough for everybody
-		static mpz_class ShiftRegA [10000];
+		static mpz_class shiftRegA [10000];
 
 
 		listTC[idxB] = tc;
 
-		// We are waiting until the first meaningful value comes out of the FIR
-		if (full) {
-			mpfr_t x, t, s, rd, ru;
-			mpfr_init2 (x, 1+p);
-			mpfr_init2 (t, 10*(1+p));
-			mpfr_init2 (s, 10*(1+p));
-			mpfr_init2 (rd, 1+p);
-			mpfr_init2 (ru, 1+p);		
+		
+		mpfr_t x, r, t, u, s, rd, ru;
+		mpfr_init2 (x, 1+p);
+		mpfr_init2 (r, 1+leadingBit+p+g);
+		mpfr_init2 (t, 10*(1+p));
+		mpfr_init2 (u, 10*(1+leadingBit+p+g));
+		mpfr_init2 (s, 10*(1+leadingBit+p+g));
+		mpfr_init2 (rd, 1+p+g);
+		mpfr_init2 (ru, 1+p+g);		
 
-			mpfr_set_d(s, 0.0, GMP_RNDN); // initialize s to 0
+		mpfr_set_d(s, 0.0, GMP_RNDN); // initialize s to 0
 
 
-			int k = idxB; // We start to sum from the last input
+		int k = idxB; // We start to sum from the last input
 
-			for (int i=0; i< n; i++)
+		for (int i=0; i< n; i++)
+		{
+			mpz_class sx;
+			if (!full and i>=((n-idxB+1)%n))
 			{
-
-				mpz_class sx = listTC[k]->getInputValue("X"); 		// get the input bit vector as an integer
-				sx = bitVectorToSigned(sx, 1+p); 						// convert it to a signed mpz_class
-				mpfr_set_z (x, sx.get_mpz_t(), GMP_RNDD); 				// convert this integer to an MPFR; this rounding is exact
-				mpfr_div_2si (x, x, p, GMP_RNDD); 						// multiply this integer by 2^-p to obtain a fixed-point value; this rounding is again exact
-
-				mpfr_mul(t, x, mpcoeffb[i], GMP_RNDN); 					// Here rounding possible, but precision used is ridiculously high so it won't matter
-
-				if(coeffsignb[i]==1)
-					mpfr_neg(t, t, GMP_RNDN); 
-
-				mpfr_add(s, s, t, GMP_RNDN); 							// same comment as above
-			
-				k = (k+1)%n;	
+				sx = 0;
 			}
+			else
+			{
+				sx = listTC[k]->getInputValue("X"); 		// get the input bit vector as an integer
+			}
+			sx = bitVectorToSigned(sx, 1+p); 						// convert it to a signed mpz_class
+			mpfr_set_z (x, sx.get_mpz_t(), GMP_RNDD); 				// convert this integer to an MPFR; this rounding is exact
+			mpfr_div_2si (x, x, p, GMP_RNDD); 						// multiply this integer by 2^-p to obtain a fixed-point value; this rounding is again exact
 
-			k = (k-1+n)%n; //to get the testCase corresponding to the outputed value
+			mpfr_mul(t, x, mpcoeffb[i], GMP_RNDN); 					// Here rounding possible, but precision used is ridiculously high so it won't matter
 
-			// now we should have in s the (exact in most cases) sum
-			// round it up and down
+			if(coeffsignb[i]==1)
+				mpfr_neg(t, t, GMP_RNDN); 
 
-			// make s an integer -- no rounding here
-			mpfr_mul_2si (s, s, p, GMP_RNDN);
+			mpfr_add(s, s, t, GMP_RNDN); 							// same comment as above
+		
+			k = (k+1)%n;	
+		}
 
+		int l = idxA;
+		for (int i=0; i<m; i++)
+		{
+			mpz_class sx;
+			if (!full and i>=((m-idxA)%m))
+			{
+				sx = 0;
+			}
+			else
+			{
+				sx = shiftRegA[l];
+			}
+			mpfr_set_z (r, sx.get_mpz_t(), GMP_RNDD); 				// convert this integer to an MPFR; this rounding is exact
+			mpfr_div_2si (r, r, p+g, GMP_RNDD); 						// multiply this integer by 2^-p to obtain a fixed-point value; this rounding is again exact
+
+			mpfr_mul(u, r, mpcoeffa[i], GMP_RNDN); 					// Here rounding possible, but precision used is ridiculously high so it won't matter
+
+			if(coeffsigna[i]==1)
+				mpfr_neg(u, u, GMP_RNDN); 
+
+			mpfr_add(s, s, u, GMP_RNDN); 							// same comment as above
+		
+			l = (l+1)%m;
+
+
+		}
+
+
+		k = (k-1+n)%n; //to get the testCase corresponding to the outputed value
+
+		// now we should have in s the (exact in most cases) sum
+		// round it up and down
+
+		// make s an integer -- no rounding here (precision p+g)
+		mpfr_mul_2si (s, s, p+g, GMP_RNDN);
+
+
+		mpfr_get_z (shiftRegA[idxA].get_mpz_t(), s, GMP_RNDD);
+
+
+		// make s an integer -- no rounding here (precision p)
+		mpfr_div_2si (s, s, g, GMP_RNDD);
+
+		// We are waiting until the first meaningful value comes out of the IIR
+		if (full) {
 			mpz_class rdz, ruz;
 
 			mpfr_get_z (rdz.get_mpz_t(), s, GMP_RNDD); 					// there can be a real rounding here
@@ -400,6 +449,7 @@ namespace flopoco {
 		}
 		
 		idxB = (idxB-1+n)%n; // We use a circular buffer to store the inputs
+		idxA = (idxA -1 + m)%m;
 
 		if (idxB ==  1) {
 			full = true;

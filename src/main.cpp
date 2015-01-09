@@ -118,7 +118,7 @@ void usage(char *name, string opName = ""){
 		cerr << "      The filter may, or may not use bit heaps\n";
 	}
 	if ( full || opName == "FixIIR") {
-		OP("FixIIR","p leadingBit useBitheap tapsB [coeffb list] tapsA [coeffa list]");
+		OP("FixIIR","p leadingBit H useBitheap tapsB [coeffb list] tapsA [coeffa list]");
 		cerr << "      A faithful IIR on an (1,p) fixed-point format\n";
 		cerr << "      The filter may, or may not use bit heaps\n";
 	}
