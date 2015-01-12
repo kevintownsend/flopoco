@@ -10,7 +10,7 @@
 \noindent INPUT & $\rightarrow$ & DECLARATIONS OPERATIONS OUTPUTS\\
 \hline
 DECLARATIONS & $\rightarrow$ & DECLARATION DECLARATIONLIST\\
-DECLARATIONLIST & $\rightarrow$ & , DECLARATIONS | $\epsilon$\\
+DECLARATIONLIST & $\rightarrow$ & DECLARATIONS | $\epsilon$\\
 DECLARATION & $\rightarrow$ & TYPE ( PARAM ) VAR ;\\
 VAR & $\rightarrow$ & var VARLIST\\
 VARLIST & $\rightarrow$ & , VAR | $\epsilon$\\
@@ -19,14 +19,14 @@ PARAM & $\rightarrow$ & param PARAMLIST\\
 PARAMLIST & $\rightarrow$ & , PARAM | $\epsilon$\\
 \hline
 OPERATIONS & $\rightarrow$ & OPERATION OPERATIONLIST\\
-OPERATIONLIST & $\rightarrow$ & , OPERATIONS | $\epsilon$\\
+OPERATIONLIST & $\rightarrow$ & OPERATIONS | $\epsilon$\\
 OPERATION & $\rightarrow$ & var = TYPE ( EXPRPARENTH ) ;\\
 EXPRPARENTH & $\rightarrow$ & ( EXPR )\\
-EXPR & $\rightarrow$ & OPERANDE OPERATEUR OPERANDE | FONCTION (EXPRPARENTH)\\
-OPERANDE & $\rightarrow$ & var | EXPRARENTH | CAST\\
+EXPR & $\rightarrow$ & var | OPERANDE OPERATEUR OPERANDE | FONCTION (EXPRPARENTH)\\
+OPERANDE & $\rightarrow$ & var | EXPRPARENTH | CAST\\
 OPERATEUR & $\rightarrow$ & + | - | * | /\\
 FONCTION & $\rightarrow$ & exp | log\\
-CAST & $\rightarrow$ & TYPE ( var )\\
+CAST & $\rightarrow$ & TYPE ( PARAM ) ( EXPR )\\
 \hline
 OUTPUTS & $\rightarrow$ & return VAR ;\\
 \end{tabular}
