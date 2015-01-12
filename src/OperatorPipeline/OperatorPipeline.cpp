@@ -40,6 +40,23 @@ int FlopocoExpressionerror(char *){
 
 }
 
+/** This functions instanciates and returns a pointer to an the proper
+	operator for a given node.
+  */
+//Operator* instanciateOp(node n){
+//	Operator* op;
+//	if ( !strcmp(n->type, "") )
+//		op=new Operator();
+//	else if ( !strcmp(n->type, "") )
+//		op=new Operator();
+//	else if ( !strcmp(n->type, "") )
+//		op=new Operator();
+//	else
+//		return null;
+//
+//	return op;
+//}
+
 //*/
 
 
@@ -57,6 +74,7 @@ OperatorPipeline::OperatorPipeline(Target* target, string filename, int wE_, int
     Operator(target), wE(wE_), wF(wF_) {
     // Name HAS to be unique!
     // will cause weird bugs otherwise
+	
     ostringstream complete_name;
     complete_name << "OperatorPipeline" << getNewUId();
     setName(complete_name.str());
