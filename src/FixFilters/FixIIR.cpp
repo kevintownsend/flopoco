@@ -343,22 +343,43 @@ namespace flopoco {
 
 		static int idxA = 0;
 		static int idxB = 0;
+		static int first = 1;
 		static bool full = false; 							// set to true when the fir start to output valid data (after n input) 
 		static TestCase * listTC [10000]; // should be enough for everybody
 		static mpz_class shiftRegA [10000];
+
+		static mpfr_t listR[10000];
+
+		if (first)
+		{
+			for (int i = 0; i<10000; i++)
+			{
+				mpfr_init2 (listR[i], 10*(1+leadingBit+p+g));
+				mpfr_set_d(listR[i], 0.0, GMP_RNDN);
+			}
+			first = 0;
+		}
+
+		mpz_class tmp;
+		mpfr_t temp;
+		mpfr_init2 (temp, 10*(1+leadingBit+p+g));	
+
+		// mpfr_set(temp, listR[(idxA+1)%m], GMP_RNDN);
+		// mpfr_mul_2si(temp, temp, p+g, GMP_RNDN);
+		// mpfr_get_z (tmp.get_mpz_t(), temp, GMP_RNDN);
+		// REPORT(INFO,  " nombre "<<tmp);
+
+
 
 
 		listTC[idxB] = tc;
 
 		
-		mpfr_t x, r, t, u, s, rd, ru;
+		mpfr_t x, t, u, s;
 		mpfr_init2 (x, 1+p);
-		mpfr_init2 (r, 1+leadingBit+p+g);
 		mpfr_init2 (t, 10*(1+p));
 		mpfr_init2 (u, 10*(1+leadingBit+p+g));
-		mpfr_init2 (s, 10*(1+leadingBit+p+g));
-		mpfr_init2 (rd, 1+p+g);
-		mpfr_init2 (ru, 1+p+g);		
+		mpfr_init2 (s, 10*(1+leadingBit+p+g));	
 
 		mpfr_set_d(s, 0.0, GMP_RNDN); // initialize s to 0
 
@@ -388,24 +409,29 @@ namespace flopoco {
 			mpfr_add(s, s, t, GMP_RNDN); 							// same comment as above
 		
 			k = (k+1)%n;	
+
+			mpfr_set(temp, s, GMP_RNDN);
+			mpfr_mul_2si(temp, temp, p+g, GMP_RNDN);
+			mpfr_get_z (tmp.get_mpz_t(), temp, GMP_RNDN);
+			// REPORT(INFO,  " s = "<<tmp<<"   quand i = "<<i);
 		}
 
-		int l = idxA;
+		int l = (idxA-1+m)%m;
 		for (int i=0; i<m; i++)
 		{
-			mpz_class sx;
-			if (!full and i>=((m-idxA)%m))
-			{
-				sx = 0;
-			}
-			else
-			{
-				sx = shiftRegA[l];
-			}
-			mpfr_set_z (r, sx.get_mpz_t(), GMP_RNDD); 				// convert this integer to an MPFR; this rounding is exact
-			mpfr_div_2si (r, r, p+g, GMP_RNDD); 						// multiply this integer by 2^-p to obtain a fixed-point value; this rounding is again exact
+			// mpz_class sx;
+			// if (!full and i>=((m-idxA)%m))
+			// {
+			// 	sx = 0;
+			// }
+			// else
+			// {
+			// 	sx = shiftRegA[l];
+			// }
+			// mpfr_set_z (r, sx.get_mpz_t(), GMP_RNDD); 				// convert this integer to an MPFR; this rounding is exact
+			// mpfr_div_2si (r, r, 10*(p+g), GMP_RNDD); 						// multiply this integer by 2^-p to obtain a fixed-point value; this rounding is again exact
 
-			mpfr_mul(u, r, mpcoeffa[i], GMP_RNDN); 					// Here rounding possible, but precision used is ridiculously high so it won't matter
+			mpfr_mul(u, listR[l], mpcoeffa[i], GMP_RNDN); 					// Here rounding possible, but precision used is ridiculously high so it won't matter
 
 			if(coeffsigna[i]==1)
 				mpfr_neg(u, u, GMP_RNDN); 
@@ -413,25 +439,39 @@ namespace flopoco {
 			mpfr_add(s, s, u, GMP_RNDN); 							// same comment as above
 		
 			l = (l+1)%m;
-
+		
+			mpfr_set(temp, s, GMP_RNDN);
+			mpfr_mul_2si(temp, temp, p+g, GMP_RNDN);
+			mpfr_get_z (tmp.get_mpz_t(), temp, GMP_RNDN);
+			// REPORT(INFO,  " s = "<<tmp<<"   quand i = "<<i);
 
 		}
 
 
 		k = (k-1+n)%n; //to get the testCase corresponding to the outputed value
 
+
+
+		// mpz_class tmp;
+		// mpfr_t temp;
+		// mpfr_init2 (temp, 10*(1+leadingBit+p+g));	
+		// mpfr_set(temp, s, GMP_RNDN);
+		// mpfr_mul_2si(temp, temp, p+g, GMP_RNDN);
+		// mpfr_get_z (tmp.get_mpz_t(), temp, GMP_RNDN);
+		// REPORT(INFO,  " nombre "<<tmp);
+
+
+
+		mpfr_set(listR[idxA], s, GMP_RNDN);
+
+
 		// now we should have in s the (exact in most cases) sum
 		// round it up and down
 
-		// make s an integer -- no rounding here (precision p+g)
-		mpfr_mul_2si (s, s, p+g, GMP_RNDN);
+		// make s an integer -- no rounding here 
+		mpfr_mul_2si (s, s, p, GMP_RNDN);
 
 
-		mpfr_get_z (shiftRegA[idxA].get_mpz_t(), s, GMP_RNDD);
-
-
-		// make s an integer -- no rounding here (precision p)
-		mpfr_div_2si (s, s, g, GMP_RNDD);
 
 		// We are waiting until the first meaningful value comes out of the IIR
 		if (full) {
@@ -445,16 +485,17 @@ namespace flopoco {
 			ruz=signedToBitVector(ruz, wO);
 			listTC[k]->addExpectedOutput ("R", ruz);
 
-			mpfr_clears (x, t, s, rd, ru, NULL);
+			
 		}
 		
+		mpfr_clears (x, t, u, s, NULL);
+
 		idxB = (idxB-1+n)%n; // We use a circular buffer to store the inputs
 		idxA = (idxA -1 + m)%m;
 
 		if (idxB ==  1) {
 			full = true;
 		}
-
 
 	};
 
