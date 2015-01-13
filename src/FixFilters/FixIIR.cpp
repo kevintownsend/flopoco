@@ -34,12 +34,10 @@ namespace flopoco {
 		m = coeffa.size();
 
 
-
 		//manage the critical path
 		setCriticalPath(getMaxInputDelays(inputDelays));
 
 		addInput("X", 1+p, true);
-
 
 
 		// guard bits for a faithful result
@@ -104,24 +102,10 @@ namespace flopoco {
 				coeffsigna[i] = 0;
 			
 			mpfr_abs(mpcoeffa[i], mpcoeffa[i], GMP_RNDN);
-				
-			// Accumulate the absolute values
-			// mpfr_add(sumAbsCoeffB, sumAbsCoeffB, mpcoeffb[i], GMP_RNDU);
+
 		}
 		
-		// now sumAbsCoeff is the max value that the filter can take.
-		// double sumAbsB = mpfr_get_d(sumAbsCoeffB, GMP_RNDU); // just to make the following loop easier
-		// int leadingBit=0;
-		// while(sumAbsB>=2.0)
-		// {
-		// 	sumAbsB*=0.5;
-		// 	leadingBit++;
-		// }
-		// while(sumAbsB<1.0)
-		// {
-		// 	sumAbsB*=2.0;
-		// 	leadingBit--;
-		// }
+
 		REPORT(INFO, "Worst-case weight of MSB of the result is " << leadingBit);
 
 		wO = 1+ (leadingBit - (-p)) + 1; //1 + sign  ; 
@@ -182,6 +166,7 @@ namespace flopoco {
 		vhdl << instance(shiftRegA, "shiftRegA");
 
 		target->setNotPipelined(); //the following parts of the circuit will be combinatorial
+		setCombinatorial();
 		
 		if (useBitheap)
 		{
@@ -232,9 +217,10 @@ namespace flopoco {
 		}
 		else
 		{
+
 			setCycleFromSignal("Yb0");
 			vhdl << tab << declare("S0", size, false, Signal::registeredWithAsyncReset) << " <= " << zg(size) << ";" << endl;
-
+			REPORT(INFO, "cycle Yb0 is : "<<getCurrentCycle());
 			for (int i=0; i<n; i++)
 			{
 				//manage the critical path
@@ -315,9 +301,15 @@ namespace flopoco {
 			//Adding one half ulp to obtain correct rounding
 			// vhdl << tab << declare("R_mid", size+1) << " <= " <<  join("S", n+m) << range(size-1, size-wO-1) << " + (" << zg(size) << " & \'1\');" << endl;
 			// vhdl << tab << "Rtmp <= " <<  "R_mid" << range(size, 1) << ";" << endl;
-			setCycleFromSignal("Rtmp");
+			
+			setSequential();
+			
+			setCycleFromSignal(join("S", n+m));
+
 			vhdl << tab << "Rtmp <= " << join("S", n+m) << ";" << endl;
 
+
+			
 		}
 		target->setPipelined();
 		addOutput("R", wO, 2); 
@@ -346,30 +338,18 @@ namespace flopoco {
 		static int first = 1;
 		static bool full = false; 							// set to true when the fir start to output valid data (after n input) 
 		static TestCase * listTC [10000]; // should be enough for everybody
-		static mpz_class shiftRegA [10000];
 
-		static mpfr_t listR[10000];
+		static mpfr_t shiftRegA[10000];
 
 		if (first)
 		{
 			for (int i = 0; i<10000; i++)
 			{
-				mpfr_init2 (listR[i], 10*(1+leadingBit+p+g));
-				mpfr_set_d(listR[i], 0.0, GMP_RNDN);
+				mpfr_init2 (shiftRegA[i], 10*(1+leadingBit+p+g));
+				mpfr_set_d(shiftRegA[i], 0.0, GMP_RNDN);
 			}
 			first = 0;
 		}
-
-		mpz_class tmp;
-		mpfr_t temp;
-		mpfr_init2 (temp, 10*(1+leadingBit+p+g));	
-
-		// mpfr_set(temp, listR[(idxA+1)%m], GMP_RNDN);
-		// mpfr_mul_2si(temp, temp, p+g, GMP_RNDN);
-		// mpfr_get_z (tmp.get_mpz_t(), temp, GMP_RNDN);
-		// REPORT(INFO,  " nombre "<<tmp);
-
-
 
 
 		listTC[idxB] = tc;
@@ -409,29 +389,13 @@ namespace flopoco {
 			mpfr_add(s, s, t, GMP_RNDN); 							// same comment as above
 		
 			k = (k+1)%n;	
-
-			mpfr_set(temp, s, GMP_RNDN);
-			mpfr_mul_2si(temp, temp, p+g, GMP_RNDN);
-			mpfr_get_z (tmp.get_mpz_t(), temp, GMP_RNDN);
-			// REPORT(INFO,  " s = "<<tmp<<"   quand i = "<<i);
 		}
 
-		int l = (idxA-1+m)%m;
+		int l = (idxA+1)%m;
 		for (int i=0; i<m; i++)
 		{
-			// mpz_class sx;
-			// if (!full and i>=((m-idxA)%m))
-			// {
-			// 	sx = 0;
-			// }
-			// else
-			// {
-			// 	sx = shiftRegA[l];
-			// }
-			// mpfr_set_z (r, sx.get_mpz_t(), GMP_RNDD); 				// convert this integer to an MPFR; this rounding is exact
-			// mpfr_div_2si (r, r, 10*(p+g), GMP_RNDD); 						// multiply this integer by 2^-p to obtain a fixed-point value; this rounding is again exact
 
-			mpfr_mul(u, listR[l], mpcoeffa[i], GMP_RNDN); 					// Here rounding possible, but precision used is ridiculously high so it won't matter
+			mpfr_mul(u, shiftRegA[l], mpcoeffa[i], GMP_RNDN); 					// Here rounding possible, but precision used is ridiculously high so it won't matter
 
 			if(coeffsigna[i]==1)
 				mpfr_neg(u, u, GMP_RNDN); 
@@ -439,11 +403,6 @@ namespace flopoco {
 			mpfr_add(s, s, u, GMP_RNDN); 							// same comment as above
 		
 			l = (l+1)%m;
-		
-			mpfr_set(temp, s, GMP_RNDN);
-			mpfr_mul_2si(temp, temp, p+g, GMP_RNDN);
-			mpfr_get_z (tmp.get_mpz_t(), temp, GMP_RNDN);
-			// REPORT(INFO,  " s = "<<tmp<<"   quand i = "<<i);
 
 		}
 
@@ -452,17 +411,7 @@ namespace flopoco {
 
 
 
-		// mpz_class tmp;
-		// mpfr_t temp;
-		// mpfr_init2 (temp, 10*(1+leadingBit+p+g));	
-		// mpfr_set(temp, s, GMP_RNDN);
-		// mpfr_mul_2si(temp, temp, p+g, GMP_RNDN);
-		// mpfr_get_z (tmp.get_mpz_t(), temp, GMP_RNDN);
-		// REPORT(INFO,  " nombre "<<tmp);
-
-
-
-		mpfr_set(listR[idxA], s, GMP_RNDN);
+		mpfr_set(shiftRegA[idxA], s, GMP_RNDN);
 
 
 		// now we should have in s the (exact in most cases) sum
