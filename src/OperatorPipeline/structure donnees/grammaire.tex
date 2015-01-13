@@ -7,7 +7,7 @@
 \begin{document}
 
 \begin{tabular}{rll}
-\noindent INPUT & $\rightarrow$ & DECLARATIONS OPERATIONS OUTPUTS\\
+\noindent INPUT & $\rightarrow$ & DECLARATIONS INSTRUCTIONS OUTPUTS\\
 \hline
 DECLARATIONS & $\rightarrow$ & DECLARATION DECLARATIONLIST\\
 DECLARATIONLIST & $\rightarrow$ & DECLARATIONS | $\epsilon$\\
@@ -18,11 +18,10 @@ TYPE & $\rightarrow$ & uint | sint | float | ufix | sfix\\
 PARAM & $\rightarrow$ & param PARAMLIST\\
 PARAMLIST & $\rightarrow$ & , PARAM | $\epsilon$\\
 \hline
-OPERATIONS & $\rightarrow$ & OPERATION OPERATIONLIST\\
-OPERATIONLIST & $\rightarrow$ & OPERATIONS | $\epsilon$\\
-OPERATION & $\rightarrow$ & var = TYPE ( EXPRPARENTH ) ;\\
-EXPRPARENTH & $\rightarrow$ & ( EXPR )\\
-EXPR & $\rightarrow$ & var | OPERANDE OPERATEUR OPERANDE | FONCTION (EXPRPARENTH)\\
+INSTRUCTIONS & $\rightarrow$ & INSTRUCTION INSTRUCTIONLIST\\
+INSTRUCTIONLIST & $\rightarrow$ & INSTRUCTIONS | $\epsilon$\\
+INSTRUCTION & $\rightarrow$ & var = CAST ;\\
+EXPR & $\rightarrow$ & var | OPERANDE OPERATEUR OPERANDE | FONCTION (EXPR)\\
 OPERANDE & $\rightarrow$ & var | EXPRPARENTH | CAST\\
 OPERATEUR & $\rightarrow$ & + | - | * | /\\
 FONCTION & $\rightarrow$ & exp | log\\
