@@ -32,7 +32,8 @@ namespace flopoco{
 			vector<string> coeffb;			/**< the coefficients as strings */
 
 			bool useBitheap;
-			BitHeap* bitHeap;    			/**< The heap of weighted bits that will be used to do the additions */
+			BitHeap* bitHeapA;    			/**< The heap of weighted bits that will be used to do the additions */
+			BitHeap* bitHeapB;    			/**< The heap of weighted bits that will be used to do the additions */
 
 			int g;							/**< number of guard bits */
 			int wO;							/**< width of the result */

@@ -164,14 +164,18 @@ namespace flopoco {
 		}
 
 		vhdl << instance(shiftRegA, "shiftRegA");
+		setCycle(0);
+
 
 		target->setNotPipelined(); //the following parts of the circuit will be combinatorial
 		setCombinatorial();
+
 		
 		if (useBitheap)
 		{
 			//create the bitheap that computes the sum
-			bitHeap = new BitHeap(this, size+guardBitsKCM);
+			bitHeapB = new BitHeap(this, size+guardBitsKCM_B);
+			bitHeapA = new BitHeap(this, size+guardBitsKCM_A);
 
 			for (int i=0; i<n; i++) 
 			{
@@ -184,7 +188,7 @@ namespace flopoco {
 														-p, 		// input LSB weight
 														lsbOutKCM, 		// output LSB weight -- the output MSB is computed out of the constant
 														coeffb[i], 	// pass the string unmodified
-														bitHeap		// pass the reference to the bitheap that will accumulate the intermediary products
+														bitHeapB		// pass the reference to the bitheap that will accumulate the intermediary products
 													);
 			}
 
@@ -200,24 +204,31 @@ namespace flopoco {
 														-p-g, 		// input LSB weight
 														lsbOutKCM, 		// output LSB weight -- the output MSB is computed out of the constant
 														coeffa[i], 	// pass the string unmodified
-														bitHeap		// pass the reference to the bitheap that will accumulate the intermediary products
+														bitHeapA		// pass the reference to the bitheap that will accumulate the intermediary products
 													);
 			}
 
 
 			//rounding to p+g - add 1/2 ulps
-			if (guardBitsKCM>0)
-				bitHeap->addConstantOneBit(guardBitsKCM-1);
+			if (guardBitsKCM_B>0)
+			{
+				bitHeapB->addConstantOneBit(guardBitsKCM-1);
+			}
+			if (guardBitsKCM_A>0)
+			{
+				bitHeapA->addConstantOneBit(guardBitsKCM-1);
+			}
 
 			//compress the bitheap
-			bitHeap -> generateCompressorVHDL();
+			bitHeapB -> generateCompressorVHDL();
+			bitHeapA -> generateCompressorVHDL();
 
-			setCycleFromSignal("Rtmp");
-			vhdl << tab << "Rtmp" << " <= " << bitHeap-> getSumName() << range(size+guardBitsKCM-1, guardBitsKCM) << ";" << endl;
+			vhdl << tab << "Rtmp" << " <= " << bitHeapB-> getSumName() << range(size+guardBitsKCM_B-1, guardBitsKCM_B) << " + " <<bitHeapA-> getSumName() << range(size+guardBitsKCM_A-1, guardBitsKCM_A) <<";" << endl;
+
+			
 		}
 		else
 		{
-
 			setCycleFromSignal("Yb0");
 			vhdl << tab << declare("S0", size, false, Signal::registeredWithAsyncReset) << " <= " << zg(size) << ";" << endl;
 			REPORT(INFO, "cycle Yb0 is : "<<getCurrentCycle());
@@ -278,8 +289,6 @@ namespace flopoco {
 				vhdl << instance(mult, join("mult", n+i));
 
 				//manage the critical path
-				// syncCycleFromSignal(join("Pa", i));
-				// syncCycleFromSignal(join("S", n+i));
 				manageCriticalPath(target->adderDelay(size));
 
 				// Addition
@@ -298,19 +307,17 @@ namespace flopoco {
 			syncCycleFromSignal(join("S", n+m));
 			manageCriticalPath(target->adderDelay(wO+1));
 
-			//Adding one half ulp to obtain correct rounding
-			// vhdl << tab << declare("R_mid", size+1) << " <= " <<  join("S", n+m) << range(size-1, size-wO-1) << " + (" << zg(size) << " & \'1\');" << endl;
-			// vhdl << tab << "Rtmp <= " <<  "R_mid" << range(size, 1) << ";" << endl;
+
+			// setSequential();
 			
-			setSequential();
-			
-			setCycleFromSignal(join("S", n+m));
+			// setCycleFromSignal(join("S", n+m));
 
 			vhdl << tab << "Rtmp <= " << join("S", n+m) << ";" << endl;
 
 
 			
 		}
+		setSequential();
 		target->setPipelined();
 		addOutput("R", wO, 2); 
 		
@@ -378,6 +385,7 @@ namespace flopoco {
 				sx = listTC[k]->getInputValue("X"); 		// get the input bit vector as an integer
 			}
 			sx = bitVectorToSigned(sx, 1+p); 						// convert it to a signed mpz_class
+			
 			mpfr_set_z (x, sx.get_mpz_t(), GMP_RNDD); 				// convert this integer to an MPFR; this rounding is exact
 			mpfr_div_2si (x, x, p, GMP_RNDD); 						// multiply this integer by 2^-p to obtain a fixed-point value; this rounding is again exact
 
