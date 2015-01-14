@@ -21,8 +21,9 @@ PARAMLIST & $\rightarrow$ & , PARAM | $\epsilon$\\
 INSTRUCTIONS & $\rightarrow$ & INSTRUCTION INSTRUCTIONLIST\\
 INSTRUCTIONLIST & $\rightarrow$ & INSTRUCTIONS | $\epsilon$\\
 INSTRUCTION & $\rightarrow$ & var = CAST ;\\
-EXPR & $\rightarrow$ & var | OPERANDE OPERATEUR OPERANDE | FONCTION (EXPR)\\
-OPERANDE & $\rightarrow$ & var | EXPRPARENTH | CAST\\
+EXPR & $\rightarrow$ & OPERANDE OPERATION | FONCTION (EXPR)\\
+OPERATION & $\rightarrow$ & OPERATEUR OPERANDE | $\epsilon$\\
+OPERANDE & $\rightarrow$ & var | ( EXPR ) | CAST\\
 OPERATEUR & $\rightarrow$ & + | - | * | /\\
 FONCTION & $\rightarrow$ & exp | log\\
 CAST & $\rightarrow$ & TYPE ( PARAM ) ( EXPR )\\
