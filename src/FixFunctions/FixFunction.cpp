@@ -123,6 +123,7 @@ namespace flopoco{
 			mpz_class x = tc->getInputValue("X");
 			mpz_class rNorD,ru;
 			eval(x,rNorD,ru,correctlyRounded);
+			// cerr << "x=" << x << " -> " << rNorD << " " << ru << endl; // for debugging
 			tc->addExpectedOutput("Y", rNorD);
 			if(!correctlyRounded)
 				tc->addExpectedOutput("Y", ru);

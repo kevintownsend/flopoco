@@ -79,11 +79,6 @@ void usage(char *name, string opName = ""){
 		cerr << center("SHIFTERS/LZOC", '_') << "\n";
 
     
-    if ( full || opName == "FPPipeline"){	
-        ///TODO add usage for operatorPipeline
-		cerr << "idk what to put here" << endl;
-	}
-    
     
 	if ( full || opName == "LeftShifter") 
 		OP("LeftShifter","wIn MaxShift");
@@ -115,11 +110,6 @@ void usage(char *name, string opName = ""){
 	if ( full || opName == "FixFIR") {
 		OP("FixFIR","p useBitheap taps [coeff list]");
 		cerr << "      A faithful FIR on an (1,p) fixed-point format\n";
-		cerr << "      The filter may, or may not use bit heaps\n";
-	}
-	if ( full || opName == "FixIIR") {
-		OP("FixIIR","p leadingBit H useBitheap tapsB [coeffb list] tapsA [coeffa list]");
-		cerr << "      A faithful IIR on an (1,p) fixed-point format\n";
 		cerr << "      The filter may, or may not use bit heaps\n";
 	}
 
@@ -840,42 +830,7 @@ bool parseCommandLine(int argc, char* argv[]){
 		}
 
 
-		else if(opname=="FixIIR")
-		{
-			if (i+3 > argc)
-				usage(argv[0],opname);
-			else {
-				int p = checkStrictlyPositive(argv[i++], argv[0]);
-				int leadingBit = atoi(argv[i++]);
-				int H = atoi(argv[i++]);
-				int useBitheap = checkBoolean(argv[i++], argv[0]);
-				int tapsB = checkStrictlyPositive(argv[i++], argv[0]);
-				if (i+tapsB > argc)
-					usage(argv[0],opname);
-				else {
-					std::vector<string> coeffB;
-					for (int j = 0; j < tapsB; j++) 
-						{
-							coeffB.push_back(argv[i++]);
-						}
-					int tapsA = checkStrictlyPositive(argv[i++], argv[0]);
-					if (i+tapsA > argc)
-						usage(argv[0],opname);
-					else {
-						std::vector<string> coeffA;
-						for (int j = 0; j < tapsA; j++) 
-							{
-								coeffA.push_back(argv[i++]);
-							}
-
-						op = new FixIIR(target, p, leadingBit, H, coeffB, coeffA, useBitheap);
-						addOperator(op);
-					}
-				}
-			}
-		}
-
-		else if(opname=="IntAdder"){
+else if(opname=="IntAdder"){
 			int nargs = 1;
 			if (i+nargs > argc)
 				usage(argv[0], opname);
@@ -1741,17 +1696,6 @@ bool parseCommandLine(int argc, char* argv[]){
 				op =new Wrapper(target, toWrap);
 				addOperator(op);
 			}
-		}
-
-        else if (opname == "OperatorPipeline") {
-			int nargs = 3;
-			if (i+nargs > argc)
-				usage(argv[0],opname); // and exit
-			string filename = argv[i++];
-			int wE = checkStrictlyPositive(argv[i++], argv[0]);
-			int wF = checkStrictlyPositive(argv[i++], argv[0]);
-			Operator* tg = new OperatorPipeline(target, filename, wE, wF);
-			addOperator(tg);
 		}
         
 		else  {

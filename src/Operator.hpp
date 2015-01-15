@@ -691,6 +691,11 @@ public:
 	  */
 	Signal* getSignalByName(string s);
 
+	/** Same as getSignalByName() but will strip the _d1 inserted by automatic pipelining.
+			Mostly for internal use. 
+	*/
+	Signal* getDelayedSignalByName(string s);
+
 	vector<Signal*> getSignalList(){
 		return signalList_;
 	};

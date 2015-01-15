@@ -295,9 +295,10 @@ namespace flopoco {
 		op->vhdl << op->instance(f, instanceName);
 		// hence a sign mismatch in next iteration.
 		
+		op-> syncCycleFromSignal(join(rSignalName,"_slv")); //, f->getOutputDelay("R"));
 		op->vhdl << tab << op->declareFixPoint(rSignalName, f->signedIO, rMSB, rLSB)
 				<< " <= " <<  (f->signedIO ? "signed(" : "unsigned(") << (join(rSignalName, "_slv")) << ");" << endl;
-		//getSignalByName(rSignalName) -> promoteToFix(signedIO, rMSB, rLSB);
+
 		return f;
 	}
 

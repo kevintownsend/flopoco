@@ -144,6 +144,8 @@ namespace flopoco{
 			outPortMap(coeffTable, "Y", "Coeffs");
 			vhdl << instance(coeffTable, "coeffTable") << endl;
 
+			syncCycleFromSignal("Coeffs");
+
 			int currentShift=0;
 			for(int i=polyApprox->degree; i>=0; i--) {
 				vhdl << tab << declare(join("A",i), polyApprox->MSB[i] - polyApprox->LSB +1)  << " <= Coeffs" << range(currentShift + (polyApprox->MSB[i] - polyApprox->LSB), currentShift) << ";" << endl;
@@ -159,6 +161,7 @@ namespace flopoco{
 				inPortMap(horner,  join("A",i),  join("A",i));
 			}
 			vhdl << instance(horner, "horner") << endl;
+			syncCycleFromSignal("Ys");
 		
 			vhdl << tab << "Y <= " << "std_logic_vector(Ys);" << endl;
 		}

@@ -130,7 +130,7 @@ namespace flopoco{
 						 << " (LSB="<<LSB<<")"); 
 		
 			for (int i=0; i<nbIntervals; i++) {
-				REPORT(DETAILED, " ---------- Interval " << i << " / "<< nbIntervals <<" -------------");
+				REPORT(DETAILED, " ... computing polynomial approx for interval " << i << " / "<< nbIntervals);
 				// Recompute the substitution. No big deal.
 				sollya_obj_t giS = buildSubIntervalFunction(fS, alpha, i);
 

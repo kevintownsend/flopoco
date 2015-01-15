@@ -239,6 +239,43 @@ namespace flopoco{
 	
 	
 	
+	Signal * Operator::getDelayedSignalByName(string name) {
+		// strip the _dnnn. 
+		string n=name;
+		bool success=false;
+		char c = n.back();
+		if(c>='0' & c <='9') {
+			while (c>='0' & c <='9') {
+				n.pop_back();
+				c = n.back();
+			}
+			// not sure yet there is a _d in front
+			if (c=='d') {
+				n.pop_back();
+				c = n.back();
+				if (c=='_') {
+					n.pop_back();
+					c = n.back();
+					success=true;
+				}
+			}
+
+			if(success) {
+				// cout << "**** Stripped " << name << " into " << n << endl;
+				name=n;
+			}
+		}
+
+		ostringstream e;
+		if(signalMap_.find(name) ==  signalMap_.end()) {
+			e << srcFileName << " (" << uniqueName_ << "): ERROR in getDelayedSignalByName, signal " << name<< " not declared";
+			throw e.str();
+		}
+		return signalMap_[name];
+	}
+	
+
+
 	Signal * Operator::getSignalByName(string name) {
 		ostringstream e;
 		if(signalMap_.find(name) ==  signalMap_.end()) {
@@ -1133,8 +1170,11 @@ namespace flopoco{
 			// If the actual parameter is a signed or unsigned, we want to automatically convert it 
 			Signal* rhs;
 			string rhsString;
+			// The following try was intended to distinguish between variable and constant
+			// but getSignalByName doesn't catch delayed variables
 			try{
-				rhs = getSignalByName((*it).second);
+				//				cout << "its = " << (*it).second << "  " << endl;
+				rhs = getDelayedSignalByName((*it).second);
 				if (rhs->isFix() && !outputSignal){
 						rhsString = std_logic_vector((*it).second);
 					}
@@ -1147,7 +1187,8 @@ namespace flopoco{
 				//constant here
 				rhsString=(*it).second;
 			}
-			
+
+
 			o << (*it).first << " => " << rhsString;
 			
 			if ( outputSignal && parsing ){

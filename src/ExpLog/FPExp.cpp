@@ -603,8 +603,8 @@ namespace flopoco{
 				//function << "exp(x*1b-" << k << ")-x*1b-" << k << "-1";  // e^z-z-1
 				fe = new FixFunctionByPiecewisePoly(target, function.str(), 
 																						-sizeZhigh, // lsbIn,
-																						-2*k, // msbOut
-																						-wF-g, // lsbOut
+																						-1, // msbOut // was -2*k
+																						-wF-g+2*k-1, // lsbOut // was -wF-g 
 																						d, // degree
 																						true, // finalRounding
 																						true, // plainStupidVHDL

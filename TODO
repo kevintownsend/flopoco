@@ -1,28 +1,63 @@
 TODO file for FloPoCo
 
-Fuse CordicAtan2 and FixAtan2
-Pipelining: PolyEval, CordicAtan, virtual IntMult
+Release-critical:
+- Pipelining: PolyEval
+- Interface to FunctionTable has changed deeply, manually convert everything
+	 This is triggered by FunctionTable being renamed to FixFunctionByTable
+   (not that bad, need to replace wIn with lsbIn=-wIn, and exchange lsbOut and msbOut)
+-reverse MSB and LSB in FPLargeAcc etc
+- get rid of use() in Operator
+- Check DualTable and DualTable2
 
-See UGLYHACK in IntMultiplier
+
+- Clean up Table and DualTable
+- Cache file in PiecewisePolyApprox
+
+- Get rid of the useBitHeap arg in KCMs
+- plainStupidVHDL as a field of Target, with a command-line option to set it.
+
+- bug  ./flopoco FixSinCos -16 TestBenchFile 1000
+  (close corresponding bug when fixed)
+- change interface to FixSinCos and CordicSinCos to use lsb and not w
+- IntConstMult: signed or unsigned int? (fix main.cpp)
+- rounding bug:  ./flopoco FixRealKCM 1 3 -10 -10 "Pi" 1 TestBenchFile 1000
+	(close corresponding bug when fixed)
+- Check IntDualSub situation
+- resurrect Guillaume's work (IntPower etc)
+- Fuse CordicAtan2 and FixAtan2
+- compression bug: ./flopoco IntMultiplier 2 16 16 1 0 0 does not produce a simple adder
+- interface: simple and expert versions of IntMultiplier
+
+
+
+** Bit heap and multipliers
+- rewrite BitHeap with fixed-point support and better compression (see Kumm papers and uni_kassel branch)
+- pipeline virtual IntMult
+- See UGLYHACK in IntMultiplier
+- IntSquarer should be made non-xilinx-specific, and bitheapized
+- Same for IntKaratsuba and FPKaratsuba, which have been disabled completely
+- Get rid of SignedIO in BitHeap: this is a multiplier concern, not a bit heap concern
+- get rid of Operator::useNumericStd_Signed etc
+- get rid of bitHeap::setSignedIO(signedIO);
+
 
 ./flopoco -pipeline=no FixAtan2 16 2 0 0  TestBenchFile 1000
 mostly works but fails trivial cornercase tests, which the following passes 
 ./flopoco -pipeline=no FixAtan2 16 2 1 0  TestBenchFile 1000
 
 
-compression bug: ./flopoco IntMultiplier 2 16 16 1 0 0 does not produce a simple adder
 
-Get rid of SignedIO in BitHeap: this is a multiplier concern, not a bit heap concern
-get rid of Operator::useNumericStd_Signed etc
-get rid of bitHeap::setSignedIO(signedIO);
+
+
+- Check all these registered etc nonsense in Signal. Is it really used?
+
+
+
 
 Bug (ds FixRealKCM?) ./flopoco -verbose=3 FPExp 7 12 
 With Matei: see the nextCycles in FPExp and see if we can push them in IntMultiplier somehow
 
 Here and there, fix VHDL style issues needed for whimsical simulators or synthesizers. See doc/VHDLStyle.txt
-
-
-Clean up src/ file hierarchy:
 
 
 For Kentaro: avoid generating multiple times the same operators. 
@@ -31,9 +66,6 @@ Add LUT-based integer comparators
 
 BitHeapization 
 (and provide a bitheap-only constructor for all the following):
-* all the KCMs
-* PolyEval
-* FixSinCos
 * FPExp
 * HOTBM
 * IntAddition/*
@@ -46,7 +78,7 @@ BitHeapization
     IntAddition/NewIntCompressorTree
     IntAddition/PopCount
     after checking the new bit heap compression is at least as good...
-* replace "Virtex4" tests in IntAddition  with Target calls
+* Check all the tests for "Virtex4"  src/IntAddSubCmp and replace them with tests for the corresponding features
 
 
 Testbench
@@ -57,8 +89,9 @@ Testbench
 
 Pipeline framework, Operator and Targets:
 * global switch to ieee standard signed and unsigned libraries
-* add FPU object and remove all global variables, to enable library build
 * add semantic support of fixed-point to Signal
+* systematic constructor interface with Signal variable
+* add FPU object and remove all global variables, to enable library build
 * fix obvious memory leaks
 * fix the default getCycleFromSignal . 
 * define a Timing as a (Cycle, CriticalPath), and associate that cleanly to Signals with getTiming methods that set both cycle and critical path.

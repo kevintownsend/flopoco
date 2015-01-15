@@ -158,11 +158,17 @@ namespace flopoco{
 	
 		//TODO Check if we have already too many values for this output
                   //std::cout << "signal width : " << s->width() << std::endl;
-		if (v >= (mpz_class(1) << s->width())) 
-			throw string("ERROR in TestCase::addExpectedOutput, signal value out of range");
+		if (v >= (mpz_class(1) << s->width())){ 
+			ostringstream e;
+			e << "ERROR in TestCase::addExpectedOutput, signal value " << v << " out of range 0 .. " << (mpz_class(1) << s->width());
+				throw e.str();
+		}
 		if (v<0) {
-			if (v < - (mpz_class(1) << s->width())) 
-				throw string("ERROR in TestCase::addExpectedOutput, negative signal value out of range");
+			if (v < - (mpz_class(1) << s->width())){ 
+				ostringstream e;
+				e << "ERROR in TestCase::addExpectedOutput, negative signal value " << v << " out of range " << - (mpz_class(1) << s->width()) << " .. " << (mpz_class(1) << s->width());
+				throw e.str();
+			} 
 			v += (mpz_class(1) << s->width()); 
 		}
 		outputs[name].push_back(v);
