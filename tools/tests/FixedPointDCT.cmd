@@ -1,4 +1,3 @@
-@
 flopoco FixedPointDCT 4 4 1
 flopoco FixedPointDCT 8 4 1
 flopoco FixedPointDCT 16 4 1

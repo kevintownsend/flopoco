@@ -73,6 +73,9 @@ namespace flopoco
 		plotter = new Plotter(this);
 		halfAdder = NULL;
 		fullAdder = NULL;
+
+		bitheapCompressed = false;
+		//bitheapRounded = false;
 	}
 
 
@@ -129,15 +132,44 @@ namespace flopoco
 		constantBits += (c << weight);
 	};
 
-	void BitHeap::addUnsignedBitVector(int weight, string x, unsigned size)	{
+	void BitHeap::addUnsignedBitVector(int weight, string x, unsigned size)
+	{
 		if (weight<0)
 			THROWERROR("Negative weight (" << weight << ") in addUnsignedBitVector");
 		if(weight+size>maxWeight) {
-			REPORT(INFO, "in subtractUnsignedBitVector: Size of signal " << x << " is " << size <<
+			REPORT(INFO, "in addUnsignedBitVector: Size of signal " << x << " is " << size <<
 			       ", adding it at weight " << weight << " overflows the bit heap (maxWeight=" << maxWeight << ")");
 		}
 		op->setCycleFromSignal(x);
 		for (unsigned i=0; i<size; i++) {
+			ostringstream s;
+			s << x << of(i);
+			addBit(weight+i, s.str());
+		}
+	}
+
+	void BitHeap::addUnsignedBitVector(int weight, string x, unsigned size, int msb, int lsb, bool negativeWeight)
+	{
+		REPORT(FULL, "Entering addUnsignedBitVector(weight="<<weight<<", x=" << x
+					 << ", size=" << size << ", msb=" << msb<< ", lsb="<< lsb 
+					 << ", negativeWeight=" << negativeWeight);
+		if(weight<0 && !negativeWeight)
+			THROWERROR("Negative weight (" << weight << ") in addUnsignedBitVector");
+		if(negativeWeight)
+			REPORT(INFO, "in addUnsignedBitVector: Warning: using negative weight for signal to add to bitheap");
+		if(weight+size>maxWeight) {
+			REPORT(INFO, "in addUnsignedBitVector: Size of signal " << x << " is " << size <<
+					", adding it at weight " << weight << " overflows the bit heap (maxWeight=" << maxWeight << ")");
+		}
+		if(msb<lsb)
+			THROWERROR("MSB (" << msb << ") of sub-signal to add larger than LSB (" << lsb << ") in addUnsignedBitVector");
+		if(msb-lsb+1>size)
+			THROWERROR("MSB (" << msb << ") to LSB (" << lsb << ") range larger than signal size (" << size << ") in addUnsignedBitVector");
+		if(lsb<0)
+			THROWERROR("LSB (" << lsb << ") of sub-signal to add is negative; should be between 0 and " << size-1 << ", including, in addUnsignedBitVector");
+
+		op->setCycleFromSignal(x);
+		for (int i=lsb; i<=msb; i++) {
 			ostringstream s;
 			s << x << of(i);
 			addBit(weight+i, s.str());
@@ -169,6 +201,39 @@ namespace flopoco
 
 	}
 
+	void BitHeap::subtractUnsignedBitVector(int weight, string x, unsigned size, int msb, int lsb, bool negativeWeight)
+	{
+		if(weight<0 && !negativeWeight)
+			THROWERROR("Negative weight (" << weight << ") in addUnsignedBitVector");
+		if(negativeWeight)
+			REPORT(INFO, "in addUnsignedBitVector: Warning: using negative weight for signal to add to bitheap");
+		if(weight+size>maxWeight) {
+			REPORT(INFO, "in subtractUnsignedBitVector: Size of signal " << x << " is " << size <<
+					", adding it at weight " << weight << " overflows the bit heap (maxWeight=" << maxWeight << ")");
+		}
+		if(msb<lsb)
+			THROWERROR("MSB (" << msb << ") of sub-signal to add larger than LSB (" << lsb << ") in subtractUnsignedBitVector");
+		if(msb-lsb+1>size)
+			THROWERROR("MSB (" << msb << ") to LSB (" << lsb << ") range larger than signal size (" << size << ") in addUnsignedBitVector");
+		if(lsb<0)
+			THROWERROR("LSB (" << lsb << ") of sub-signal to add is negative; should be between 0 and " << size-1 << ", including, in subtractUnsignedBitVector");
+
+		for (int i=lsb; i<=msb; i++) {
+			ostringstream s;
+			s << "not " << x << of(i);
+
+			addBit(weight+i, s.str(),"", 1);
+		}
+		addConstantOneBit(weight);
+		if (size+weight < maxWeight) {
+			// complement all the way to maxWeight
+			for (unsigned i=size+weight; i<maxWeight; i++) {
+				addConstantOneBit(i);
+			}
+		}
+
+	}
+
 
 	void BitHeap::addSignedBitVector(int weight, string x, unsigned size)
 	{
@@ -184,14 +249,58 @@ namespace flopoco
 		for(unsigned i=0; i<size; i++)
 		{
 			ostringstream rhs;
-			if(i==size-1) // complement for sign extension
+			// complement for sign extension, if needed
+			//	no point in sign extending for just one bit
+			if((i==size-1) && (size+weight < maxWeight))
 				rhs << "not ";
 			rhs << x << of(i);
 			addBit(weight + i, rhs.str());
 		}
 		// sign extension of the addend
-		for (unsigned i=size+weight-1; i<maxWeight; i++) {
-			addConstantOneBit(i);
+		if(size+weight < maxWeight)
+		{
+			for (unsigned i=size+weight-1; i<maxWeight; i++){
+				addConstantOneBit(i);
+			}
+		}
+	}
+
+	void BitHeap::addSignedBitVector(int weight, string x, unsigned size, int lsb, bool negativeWeight)
+	{
+		REPORT(FULL, "Entering addSignedBitVector(weight="<<weight<<", x=" << x
+					 << ", size=" << size 
+					 //  << ", msb=" << msb    Why is there a msb in addUnsignedBitVector and not here?
+					 << ", lsb="<< lsb 
+					 << ", negativeWeight=" << negativeWeight);
+
+		if(weight<0 && !negativeWeight)
+			THROWERROR("Negative weight (" << weight << ") in addUnsignedBitVector");
+		if(negativeWeight)
+			REPORT(INFO, "in addUnsignedBitVector: Warning: using negative weight for signal to add to bitheap");
+		if(weight+size>maxWeight)
+		{
+			REPORT(INFO, "in addSignedBitVector: Size of signal " << x << " is " << size <<
+					", adding it at weight " << weight << " overflows the bit heap (maxWeight=" << maxWeight << ")");
+		}
+		if(lsb<0)
+			THROWERROR("LSB (" << lsb << ") of sub-signal to add is negative; should be between 0 and " << size-1 << ", including, in addSignedBitVector");
+
+		for(unsigned i=lsb; i<size; i++)
+		{
+			ostringstream rhs;
+			// complement for sign extension, if necessary
+			//	no point in sign extending for just one bit
+			if((i==size-1) && (size+weight < maxWeight))
+				rhs << "not ";
+			rhs << x << of(i);
+			addBit(weight + i, rhs.str());
+		}
+		// sign extension of the addend, if needed
+		if(size+weight < maxWeight)
+		{
+			for (unsigned i=size+weight-1; i<maxWeight; i++){
+				addConstantOneBit(i);
+			}
 		}
 	}
 
@@ -200,8 +309,56 @@ namespace flopoco
 	{
 		if (weight<0)
 			THROWERROR("Negative weight (" << weight << ") in subtractSignedBitVector");
-		// TODO
-		THROWERROR("BitHeap::addSignedBitVector not yet implemented");
+		if(weight+size>maxWeight)
+		{
+			REPORT(INFO, "in subtractSignedBitVector: Size of signal " << x << " is " << size <<
+					", adding it at weight " << weight << " overflows the bit heap (maxWeight=" << maxWeight << ")");
+		}
+
+		for(unsigned i=0; i<size; i++)
+		{
+			ostringstream rhs;
+			if(i!=size-1) // complement the bits except the sign bit (which is complemented twice, thus keeps its value)
+				rhs << "not ";
+			rhs << x << of(i);
+			addBit(weight + i, rhs.str());
+		}
+		addConstantOneBit(weight);
+		// sign extension of the addend
+		for(unsigned i=size+weight-1; i<maxWeight; i++)
+		{
+			addConstantOneBit(i);
+		}
+	}
+
+	void BitHeap::subtractSignedBitVector(int weight, string x, unsigned size, int lsb, bool negativeWeight)
+	{
+		if(weight<0 && !negativeWeight)
+			THROWERROR("Negative weight (" << weight << ") in addUnsignedBitVector");
+		if(negativeWeight)
+			REPORT(INFO, "in addUnsignedBitVector: Warning: using negative weight for signal to add to bitheap");
+		if(weight+size>maxWeight)
+		{
+			REPORT(INFO, "in subtractSignedBitVector: Size of signal " << x << " is " << size <<
+					", adding it at weight " << weight << " overflows the bit heap (maxWeight=" << maxWeight << ")");
+		}
+		if(lsb<0)
+			THROWERROR("LSB (" << lsb << ") of sub-signal to add is negative; should be between 0 and " << size-1 << ", including, in addSignedBitVector");
+
+		for(unsigned i=lsb; i<size; i++)
+		{
+			ostringstream rhs;
+			if(i!=size-1) // complement the bits except the sign bit (which is complemented twice, thus keeps its value)
+				rhs << "not ";
+			rhs << x << of(i);
+			addBit(weight + i, rhs.str());
+		}
+		addConstantOneBit(weight);
+		// sign extension of the addend
+		for(unsigned i=size+weight-1; i<maxWeight; i++)
+		{
+			addConstantOneBit(i);
+		}
 	}
 
 
@@ -359,7 +516,7 @@ namespace flopoco
 				op->setCycle(0);
 				op->setCriticalPath(0);
 
-				//the first DSP from the supertile(it has the smallest weight in the supertile)
+				//the first DSP from the supertile (it has the smallest weight in the supertile)
 				if(op->getTarget()->getVendor() == "Xilinx")
 				{
 					generateVHDLforDSP(current, DSPuid, i);
@@ -594,7 +751,7 @@ namespace flopoco
 		if (w<0)
 			THROWERROR("Negative weight (" << w << ") in addBit");
 			
-		REPORT(DEBUG, "addBit at weigth " <<w <<"   for rhs=" << rhs );
+		REPORT(FULL, "addBit at weigth " <<w <<"   for rhs=" << rhs );
 		
 		// ignore bits beyond the declared maxWeight
 		if((unsigned)w >= maxWeight)
@@ -996,12 +1153,21 @@ namespace flopoco
 
 		REPORT(DEBUG, "Adding the constant bits");
 		op->vhdl << endl << tab << "-- Adding the constant bits" << endl;
+		bool isConstantNonzero = false;
 
 		for (unsigned w=0; w<maxWeight; w++){
-			if (1 == ((constantBits>>w) & 1) )
+			if (1 == ((constantBits>>w) & 1) ){
 				addBit(w, "'1'","",2);
+				isConstantNonzero = true;
+			}
 		}
 		
+		//when the constant bits are all zero, report it
+		if(!isConstantNonzero){
+			REPORT(DEBUG, "All the constant bits are zero, nothing to add");
+			op->vhdl << tab << tab << "-- All the constant bits are zero, nothing to add" << endl;
+		}
+
 		op->vhdl << endl;
 
 		printBitHeapStatus();
@@ -1072,8 +1238,6 @@ namespace flopoco
 			{
 				//lutCompressionLevel=2 - compression using a mix of compressors and adder tree for the last lines
 				//lutCompressionLevel>0 - adder tree compression involved
-				
-				//continue here -> check if the version that skips stages actually works, or not
 				
 				int startingIndex = minWeight;
 				
@@ -1153,7 +1317,7 @@ namespace flopoco
 
 						while(i<maxWeight)
 						{
-							REPORT(DEBUG, "i= "<< i << " cnt= " << cnt[i]);
+							REPORT(FULL, "i= "<< i << " cnt= " << cnt[i]);
 							// Now we are sure cnt[i] is 3
 							if (i==maxWeight-1)
 							{
@@ -1281,7 +1445,36 @@ namespace flopoco
 			fullAdder->addToGlobalOpList();
 
 		op->vhdl << tab << "-- End of code generated by BitHeap::generateCompressorVHDL" << endl;
+
+		bitheapCompressed = true;
 	}
+
+
+#if 0
+	//round the result of the bitheap compression
+	void BitHeap::roundBitheap(int lsb)
+	{
+		if(!bitheapCompressed)
+			THROWERROR("Trying to round an uncompressed bit heap (in roundBitheap)! Must first call generateCompressorVHDL()");
+		if(lsb == 0)
+		{
+			REPORT(DEBUG, "Trying to round to the last bit. Nothing to be done.");
+			op->vhdl << op->declare(join(getSumName(), "_rouded"), maxWeight) << " <= " << getSumName() << ";" << endl;
+		}
+		else
+		{
+			op->vhdl << op->declare(join(getSumName(), "_rouded_int"), maxWeight-lsb+1+1)
+					<< " <= " << getSumName() << range(maxWeight, lsb-1)
+					<< " + " << "(" << zg(maxWeight-lsb+1, 2) << " & \"1\");" << endl;
+			op->vhdl << op->declare(join(getSumName(), "_rouded"), maxWeight-lsb+1)
+					<< " <= " << join(getSumName(), "_rouded_int") << range(maxWeight-lsb+1, 1) << ";" << endl;
+		}
+		bitheapRounded = true;
+	}
+#endif
+
+
+
 
 
 	//returns a pointer to the first bit which has the smallest cycle & CP combination
@@ -1839,7 +2032,7 @@ namespace flopoco
 			i = maxIndex-1;
 			while(i >= minIndex)
 			{
-				REPORT(DEBUG,"i=   " << i);
+				REPORT(FULL,"i=   " << i);
 				if(i >= 0)
 				{
 					list<WeightedBit*>::iterator it = bits[i].begin();
@@ -1936,7 +2129,7 @@ namespace flopoco
 			//forming the input signals for the first, second and third line
 			while((i>=minWeight)&&(i<maxWeight))
 			{
-				REPORT(DEBUG,"i=   "<<i);
+				REPORT(FULL,"i=   "<<i);
 				if(i>=0)
 				{
 					list<WeightedBit*>::iterator it = bits[i].begin();
@@ -2201,8 +2394,20 @@ namespace flopoco
 	}
 
 
-	string BitHeap::getSumName() {
-		return join("CompressionResult", guid);
+	string BitHeap::getSumName()
+	{
+		// if(bitheapRounded)
+		// 	return join("CompressionResult", guid, "_rounded");
+		// else
+			return join("CompressionResult", guid);
+	}
+
+	string BitHeap::getSumName(int msb, int lsb)
+	{
+		// if(bitheapRounded)
+		// 	return join(join("CompressionResult", guid, "_rounded"), range(msb, lsb));
+		// else
+			return join(join("CompressionResult", guid), range(msb, lsb));
 	}
 
 
@@ -2237,7 +2442,7 @@ namespace flopoco
 		REPORT(DEBUG, "Column height before compression");
 		for (w=0; w<bits.size(); w++)
 		{
-			REPORT(DEBUG, "   w=" << w << ":\t height=" << bits[w].size() << "\t cnt[w]=" << cnt[w]);
+			REPORT(FULL, "   w=" << w << ":\t height=" << bits[w].size() << "\t cnt[w]=" << cnt[w]);
 			printColumnInfo(w);
 		}
 		
@@ -2671,8 +2876,7 @@ namespace flopoco
 					cnt[i]++;
 				}
 			}
-		}
-				
+		}		
 	}
 
 
@@ -2738,13 +2942,13 @@ namespace flopoco
 			addy=0-topY;
 			
 		op->vhdl << tab << op->declare(join("DSP_bh", guid, (uid==0 ? "_ch" : "_root"), i, "_", uid), m->getwX()+m->getwY()+zerosX+zerosY)
-			     << " <= (" << zg(zerosX) << " & " << input1 << range(botX,topX+addx) << " & " << zg(addx) <<")" 
-			     << " * " 
-			     << "(" << zg(zerosY) << " & " << input2 << range(botY,topY+addy) << " & " <<zg(addy) << ");" << endl;
+			    << " <= std_logic_vector(" << (signedIO ? "signed" : "unsigned") << "(" << zg(zerosX) << " & " << input1 << range(botX,topX+addx) << " & " << zg(addx) <<")"
+				<< " * "
+				<< (signedIO ? "signed" : "unsigned") << "(" << zg(zerosY) << " & " << input2 << range(botY,topY+addy) << " & " <<zg(addy) << "));" << endl;
 
 		s << join("DSP_bh" , guid, (uid==0 ? "_ch" : "_root"), i, "_", uid);
 
-		REPORT(DETAILED,"comuted in this moment= "<< join("DSP_bh", guid, (uid==0 ? "_ch" : "_root"), i, "_", uid)
+		REPORT(DETAILED,"computed in this moment= "<< join("DSP_bh", guid, (uid==0 ? "_ch" : "_root"), i, "_", uid)
 		       << "length= " << m->getwX()+m->getwY() << " <= ("
 		       << input1 << range(botX,topX+addx) << " & " << zg(addx) << ") * ("
 		       << input2 << range(botY,topY+addy) << " & " << zg(addy)<<");");
@@ -2763,12 +2967,23 @@ namespace flopoco
 		REPORT(DEBUG, "Checking whether rightmost columns need compressing");
 		bool alreadyCompressed=true;
 		w=minWeight;
+
 		while(w<bits.size() && alreadyCompressed) {
 			if(currentHeight(w)>1)
 				alreadyCompressed=false;
 			else	{// currentHeight(w) <= 1
 				if(currentHeight(w) == 0)	{
-					THROWERROR("LSB columns cannot be void!");
+					int wInt = w + 1;
+					bool hasNonVoidColumn = false;
+
+					while(wInt<bits.size() && !hasNonVoidColumn)
+						if(currentHeight(wInt) != 0)
+							hasNonVoidColumn = true;
+						else
+							wInt++;
+					if(!hasNonVoidColumn || (wInt == bits.size()))
+						THROWERROR("All LSB columns cannot be void!");
+
 					w++;
 				}
 				else { // currentHeight(w) == 1
@@ -2813,8 +3028,6 @@ namespace flopoco
 				op->vhdl << "; -- already compressed" << endl;
 				chunkDoneIndex++;
 			}
-
-
 
 		minWeight=w;
 

@@ -27,7 +27,7 @@
 #include <string>
 #include <math.h>
 #include "Targets/DSP.hpp"
-#include "IntMultipliers/MultiplierBlock.hpp"
+#include "IntMult//MultiplierBlock.hpp"
 
 using namespace std;
 
@@ -48,7 +48,7 @@ namespace flopoco{
 			useClockEnable_       = false;
 			lutInputs_         = 4;
 			frequency_         = 400000000.;
-			useHardMultipliers_= true;
+			hasHardMultipliers_= true;
 			hasFastLogicTernaryAdders_ = false;
 			id_                = "generic";
 		}
@@ -322,7 +322,7 @@ namespace flopoco{
 		/** Returns true if the operator for this target is allowed to use hardware multipliers
 		 * @return the status of hardware multipliers usage
 		 */
-		bool useHardMultipliers();
+		bool hasHardMultipliers();
 
 		/** Returns true if the target has fast ternary adders in the logic blocks
 		 * @return the status of the hasFastLogicTernaryAdder_ parameter
@@ -612,7 +612,7 @@ namespace flopoco{
 		bool   pipeline_;           /**< True if the target is pipelined/ false otherwise */
 		bool   useClockEnable_;     /**< True if we want a clock enable signal */
 		double frequency_;          /**< The desired frequency for the operator in Hz */
-		bool   useHardMultipliers_; /**< If true, this target offers hardware multipliers and we want to use them. May be set to false if there are no hard mults, or if there are hard multipliers but the user wants to ignore them. */
+		bool   hasHardMultipliers_; /**< If true, this target offers hardware multipliers */
 		bool   hasFastLogicTernaryAdders_; /**< If true, this target offers support for ternary addition at the cost of binary addition */
 		int    multXInputs_;        /**< The size for the X dimension of the hardware multipliers (the largest, if they are not equal) */
 		int    multYInputs_;        /**< The size for the Y dimension of the hardware multipliers  (the smallest, if they are not equal)*/

@@ -1,4 +1,3 @@
-@
 #IntSquarer
 flopoco IntSquarer 16
 flopoco IntSquarer 23

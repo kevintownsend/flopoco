@@ -50,18 +50,17 @@ namespace flopoco{
 
 		/** minimal input value (default 0) */
 		int minIn; 
+
 		/** maximal input value (default 2^wIn-1) */
 		int maxIn; 
 	
 		/**
 		 * The Table constructor
-		 * @param[in] target      the target device
-		 * @param[in] wIn         the with of the input in bits
-		 * @param[in] wOut        the with of the output in bits  
-		 * @param[in] minIn       the lower used index, default -1 which is immediately rewritten by the constructor into 2^wIn-1  
-		 * @param[in] logicTable  Do you want a logic table? 0 for no, 1 for yes, -1 for automatic
+		 * @param[in] target the target device
+		 * @param[in] wIn    the with of the input in bits
+		 * @param[in] wOut   the with of the output in bits  
 		 **/
-		Table(Target* target, int wIn, int wOut, int minIn=0, int maxIn=-1, int logicTable = -1,  map<string, double> inputDelays = emptyDelayMap );
+		Table(Target* target, int _wIn, int _wOut, int _minIn=0, int _maxIn=-1, int logicTable = 0,  map<string, double> inputDelays = emptyDelayMap );
 
 		Table(Target* target);
      
@@ -122,7 +121,7 @@ namespace flopoco{
 		int size_in_LUTs();
 	private:
 		bool full; /**< true if there is no "don't care" inputs, i.e. minIn=0 and maxIn=2^wIn-1 */
-		bool logicTable;
+		int logicTable_;
 	};
 
 }

@@ -1,4 +1,21 @@
 TODO file for FloPoCo
+
+Fuse CordicAtan2 and FixAtan2
+Pipelining: PolyEval, CordicAtan, virtual IntMult
+
+See UGLYHACK in IntMultiplier
+
+./flopoco -pipeline=no FixAtan2 16 2 0 0  TestBenchFile 1000
+mostly works but fails trivial cornercase tests, which the following passes 
+./flopoco -pipeline=no FixAtan2 16 2 1 0  TestBenchFile 1000
+
+
+compression bug: ./flopoco IntMultiplier 2 16 16 1 0 0 does not produce a simple adder
+
+Get rid of SignedIO in BitHeap: this is a multiplier concern, not a bit heap concern
+get rid of Operator::useNumericStd_Signed etc
+get rid of bitHeap::setSignedIO(signedIO);
+
 Bug (ds FixRealKCM?) ./flopoco -verbose=3 FPExp 7 12 
 With Matei: see the nextCycles in FPExp and see if we can push them in IntMultiplier somehow
 
@@ -7,8 +24,10 @@ Here and there, fix VHDL style issues needed for whimsical simulators or synthes
 
 Clean up src/ file hierarchy:
 
-Add LUT-based integer comparators
 
+For Kentaro: avoid generating multiple times the same operators. 
+
+Add LUT-based integer comparators
 
 BitHeapization 
 (and provide a bitheap-only constructor for all the following):
@@ -76,7 +95,7 @@ ConstMult:
 * compare with Spiral.net and Gustafsson papers
 * Implement the continued fraction stuff for FPCRConstMult
 
-SumOfProducts, LongAcc
+SumOfProducts, FPLargeAcc
 * add test bench generation
 
 Shifters
@@ -92,14 +111,14 @@ Tentative roadmap
 We have left  0.xx for 1.xx when all the basic operators have been backported with working pipeline):
 
 Version 0.1: IntConstMult, FPConstMult, FPCRConstMult
-Version 0.4: LongAccumulator, FPMultiplier
+Version 0.4: FPLargeAccumulator, FPMult
 Version 0.5 : HOTBM integration 
 Version 0.6 : FPLog
 Version 0.7 : FPExp
 Version 0.8 : DotProduct
 Version 0.9 : LNS operators, thanks to Sylvain Collange
 Version 0.11: FPDiv, IntSquarer, new pipeline framework
-Version 1.15: FPSqrt FPSquarer InputIEEE Fix2FP 
+Version 1.15: FPSqrt FPSquare InputIEEE Fix2FP 
 Version 2.0 : FunctionEvaluator
 Version 2.2 : FPExp, FPPowr (experimental)
 Version 2.3 : IntConstDiv, FPConstDiv and FPConstDivExpert, FPConstMultRational, TaMaDi architecture

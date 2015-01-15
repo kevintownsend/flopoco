@@ -10,11 +10,9 @@
 #include <map>
 #include <math.h>
 
-#ifdef _WIN32
-  #include "pstdint.h"
-#else
-  #include <inttypes.h>
-#endif
+#include <inttypes.h>
+
+#include <stdarg.h>
 
 
 using namespace std;
@@ -73,6 +71,15 @@ namespace flopoco{
 */
 	std::string unsignedFixPointNumber(mpfr_t x, int msb, int lsb, int margins=0);
 
+	/** return the binary representation of an MPFR, with bits ranging from msb to lsb
+	 * (total size msb-lsb+1), sign bit at weight msb
+	 * @param x the number to be represented
+	 * @param msb the weight of the MSB. 
+	 * @param lsb the weight of the LSB
+	 * @param[in] margins	integer argument determining the position of the quotes in the output string. The options are: -2= no quotes; -1=left quote; 0=both quotes 1=right quote
+*/
+	std::string signedFixPointNumber(mpfr_t x, int msb, int lsb, int margins=0);
+
 
 	/** Prints the binary representation of a integer on size bits
 	 * @param o the output stream
@@ -88,8 +95,8 @@ namespace flopoco{
 	 */
 	void printBinNumGMP(ostream& o, mpz_class number, int size);
 
-	/** returns a string for a mpfr_t*/
-	string printMPFR(mpfr_t x, int n);
+	/** returns a string for a mpfr_t using the mantissa b exponent notation */
+	string printMPFR(mpfr_t x);
 
 	/** Prints the binary representation of a positive integer on size bits
 	 * @param o the output stream
@@ -192,12 +199,36 @@ namespace flopoco{
 	 */
 	inline double max(double x, double y) {return (x > y ? x : y);}
 
+	/** Maximum.
+	 * @param[int] count the number of parameters which follows
+	 * @return maximum between the variable number of arguments
+	 */
+	double max(int count, ...);
+
+	/** Maximum.
+	 * @param[int] count the number of parameters which follows
+	 * @return maximum between the variable number of arguments
+	 */
+	int maxInt(int count, ...);
+
 	/** Minimum.
 	 * @param[double] x first number 
 	 * @param[double] y second number
 	 * @return minimum between x and y
 	 */
 	inline double min(double x, double y) {return (x < y ? x : y);}
+
+	/** Minimum.
+	 * @param[int] count the number of parameters which follows
+	 * @return minimum between the variable number of arguments
+	 */
+	double min(int count, ...);
+
+	/** Minimum.
+	 * @param[int] count the number of parameters which follows
+	 * @return minimum between the variable number of arguments
+	 */
+	int minInt(int count, ...);
 
 	/** Maximum.
 	 * @param[int] x first number 
@@ -297,19 +328,27 @@ namespace flopoco{
 	string join( std::string id, std::string id2 , int n2, std::string id3);
 	
 	/** Same for concatenating two ids. Maybe + would do? */
-	string join( std::string id, std::string);
+	string join( std::string id, std::string n);
+
+	/** Same for concatenating three ids. Maybe + would do? */
+	string join( std::string id, std::string id2, std::string id3);
 
 	/** Helper function for VHDL output: returns (left downto right)
 	 */
 	string range(int left, int right);
 
-	/** Helper function for VHDL output: returns (left downto right => s)
+	/** Helper function for VHDL output: returns "(left downto right => s)"
 	 */
 	string rangeAssign( int left, int right, std::string s);
 
+	/** Helper function for VHDL output: returns "(x)"
+	 */
 	string of( int x);
 
-
+	
+	/** Helper function for VHDL output: returns s, padded left and right with zeroes. 
+			TODO this function should be removed
+	 */
 	string align( int left, string s, int right );
 
 	/**
@@ -337,6 +376,13 @@ namespace flopoco{
 
 	/** a function that converts a signed mpz_class to the corresponding bit vector represented as two's complement on size bits (sign bit included), to be used in the output of emulate() */
 	mpz_class signedToBitVector(mpz_class x, int size);
+
+	/** A function to help VHDL casts */
+	string std_logic_vector(const string& s );
+
+	/** A helper function when displaying comments: center str to a certain width */
+	string center(const string& str, char padchar=' ', int width=80);
+
 }
 
 

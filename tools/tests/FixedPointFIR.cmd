@@ -1,4 +1,3 @@
-@
 flopoco  FixedPointFIR 4 1 1 "log(2)"
 flopoco  FixedPointFIR 5 1 1 "log(2)"
 flopoco  FixedPointFIR 6 1 1 "log(2)"

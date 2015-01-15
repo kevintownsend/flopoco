@@ -16,8 +16,12 @@ Copyright © ENS-Lyon, INRIA, CNRS, UCBL,
 #include <string>
 #include <sstream>
 #include <cstdlib>
-#include "Operator.hpp"
+#include "Operator.hpp"  // Useful only for reporting. TODO split out the REPORT and THROWERROR #defines from Operator to another include.
 #include "utils.hpp"
+#include <boost/random/mersenne_twister.hpp>
+#include <boost/random/variate_generator.hpp>
+#include <boost/random/normal_distribution.hpp>
+#include <boost/random/uniform_int.hpp>
 
 
 namespace flopoco{
@@ -26,6 +30,7 @@ namespace flopoco{
 	// global variables used through most of FloPoCo,
 	// to be encapsulated in something, someday?
 	int Operator::uid = 0; //init of the uid static member of Operator
+	multimap < string, TestState > Operator::testMemory;		/*init the multimap */
 	int verbose=0;
 	
 	Operator::Operator(Target* target, map<string, double> inputDelays){
@@ -140,6 +145,37 @@ namespace flopoco{
 		//		declareTable[name] = s->getCycle();
 	}
 	
+#if 1
+	void Operator::addFixInput(const std::string name, const bool isSigned, const int msb, const int lsb) {
+		if (signalMap_.find(name) != signalMap_.end()) {
+			std::ostringstream o;
+			o << srcFileName << " (" << uniqueName_ << "): ERROR in addFixInput, signal " << name<< " seems to already exist";
+			throw o.str();
+		}
+		Signal *s = new Signal(name, Signal::in, isSigned, msb, lsb);
+		s->setCycle(0);
+		ioList_.push_back(s);
+		signalMap_[name] = s ;
+		numberOfInputs_ ++;
+		declareTable[name] = s->getCycle();
+	}
+	
+	void Operator::addFixOutput(const std::string name, const bool isSigned, const int msb, const int lsb, const int numberOfPossibleOutputValues) {
+		if (signalMap_.find(name) != signalMap_.end()) {
+			std::ostringstream o;
+			o << srcFileName << " (" << uniqueName_ << "): ERROR in addFixOutput, signal " << name<< " seems to already exist";
+			throw o.str();
+		}
+		Signal *s = new Signal(name, Signal::out, isSigned, msb, lsb) ;
+		s -> setNumberOfPossibleValues(numberOfPossibleOutputValues);
+		ioList_.push_back(s);
+		for(int i=0; i<numberOfPossibleOutputValues; i++) 
+			testCaseSignals_.push_back(s);
+		signalMap_[name] = s ;
+		numberOfOutputs_ ++;
+	}
+#endif
+	
 	void Operator::addFPInput(const std::string name, const int wE, const int wF) {
 		if (signalMap_.find(name) != signalMap_.end()) {
 			std::ostringstream o;
@@ -220,6 +256,11 @@ namespace flopoco{
 		return true;
 	}
 	
+
+	void Operator::addHeaderComment(std::string comment){
+		headerComment_ +=  comment;
+	}
+	
 	void Operator::setName(std::string prefix, std::string postfix){
 		ostringstream pr, po;
 		if (prefix.length()>0)
@@ -251,8 +292,7 @@ namespace flopoco{
 		commentedName_ = uniqueName_;
 		uniqueName_ = operatorName;
 	}
-	
-	
+
 	string Operator::getName() const{
 		return uniqueName_;
 	}
@@ -367,7 +407,7 @@ namespace flopoco{
 			if(commentedName_.size()<74) s = (74-commentedName_.size())/2; else s=0;
 			o<<"--"; for(i=0; i<s; i++) o<<" "; o << "(" << commentedName_ << ")" << endl; 
 		}
-		
+		o<< headerComment_; 
 		o<<"-- This operator is part of the Infinite Virtual Library FloPoCoLib"<<endl;
 		o<<"-- All rights reserved "<<endl;
 		o<<"-- Authors: " << authorsyears <<endl;
@@ -399,6 +439,7 @@ namespace flopoco{
 		if(stdLibType_==1){
 			o << "use ieee.numeric_std.all;"<<endl;			
 		}
+		// ???
 		if(stdLibType_==2){
 			o << "use ieee.numeric_std.all;"<<endl
 			  << "use ieee.std_logic_signed.all;"<<endl; 
@@ -734,6 +775,7 @@ namespace flopoco{
 	
 	double Operator::getOutputDelay(string s) {return outDelayMap[s];}  // TODO add checks
 	
+
 	string Operator::declare(string name, const int width, bool isbus, Signal::SignalType regType) {
 		Signal* s;
 		ostringstream e;
@@ -742,15 +784,18 @@ namespace flopoco{
 			e << srcFileName << " (" << uniqueName_ << "): ERROR in declare(), signal " << name<< " already exists";
 			throw e.str();
 		}
-		// construct the signal (lifeSpan and cycle are reset to 0 by the constructor)
-		s = new Signal(name, regType, width, isbus);
+
 		if((regType==Signal::registeredWithoutReset) || (regType==Signal::registeredWithZeroInitialiser))
 			hasRegistersWithoutReset_ = true;
 		if(regType==Signal::registeredWithSyncReset)
 			hasRegistersWithSyncReset_ = true;
 		if(regType==Signal::registeredWithAsyncReset)
 			hasRegistersWithAsyncReset_ = true;
-		
+
+		// construct the signal (lifeSpan and cycle are reset to 0 by the constructor)
+		s = new Signal(name, regType, width, isbus);
+
+
 		// define its cycle 
 		if(isSequential())
 			s->setCycle(this->currentCycle_);
@@ -763,6 +808,103 @@ namespace flopoco{
 		signalMap_[name] = s ;
 		return name;
 	}
+
+	// TODO: factor code between next and previous methods
+	string Operator::declareFixPoint(string name, const bool isSigned, const int MSB, const int LSB, Signal::SignalType regType){
+		Signal* s;
+		ostringstream e;
+		// check the signals doesn't already exist
+		if(signalMap_.find(name) !=  signalMap_.end()) {
+			e << srcFileName << " (" << uniqueName_ << "): ERROR in declareFixPoint(), signal " << name<< " already exists";
+			throw e.str();
+		}
+
+		// construct the signal (lifeSpan and cycle are reset to 0 by the constructor)
+		s = new Signal(name, regType, isSigned, MSB, LSB);
+
+		// define its cycle 
+		if(isSequential())
+			s->setCycle(this->currentCycle_);
+		
+		// add this signal to the declare table
+		declareTable[name] = s->getCycle();
+		
+		// add the signal to signalMap and signalList
+		signalList_.push_back(s);    
+		signalMap_[name] = s ;
+		return name;
+	}
+
+	/** Resizes a fixed-point signal and assigns it to a new declared signal.
+			May zero-extend, sign-extend, or truncate.
+			Warns at high debug levels when truncating. Warns at all levels when truncating MSBs.  
+	 */
+	void  Operator::resizeFixPoint(string lhsName, string rhsName, const int MSB, const int LSB, const int indentLevel){
+		Signal* rhsSignal=getSignalByName(rhsName); 
+		bool isSigned = rhsSignal->isFixSigned();
+		int oldMSB = rhsSignal->MSB();
+		int oldLSB = rhsSignal->LSB();
+		REPORT(DEBUG, "Resizing signal " << rhsName << " from (" << oldMSB << ", " << oldLSB << ") to (" << MSB << ", " << LSB << ")"); 
+
+		for (int i=0; i<indentLevel; i++)
+			vhdl << tab;
+		vhdl << declareFixPoint(lhsName, isSigned, MSB, LSB) << " <= ";
+
+		// Cases (old is input, new is output)
+    //            1            2W             3W        4         5E         6 E 
+		// Old:      ooooooo   oooooooo      oooooooooo    oooo     ooo               ooo
+		// New:  nnnnnnnn        nnnnnnnn     nnnnnn      nnnnnnn       nnnn      nnn
+
+		bool paddLeft, paddRight; 
+		int m,l, paddLeftSize, paddRightSize, oldSize; 	// eventually we take the slice m downto l of the input bit vector
+		
+		paddLeft      = MSB>oldMSB;
+		paddLeftSize  = MSB-oldMSB; // in case paddLeft is true
+		paddRight     = LSB<oldLSB;
+		paddRightSize = oldLSB-LSB; // in case paddRight is true
+		oldSize       = oldMSB-oldLSB+1;
+
+		// Take input vector downto what ?
+		if (LSB>=oldLSB) { // case 1 or 3
+			l = LSB-oldLSB;
+		}
+		else {             // case 2 or 4 
+			l=0;
+		}		
+
+		// and from what bit?
+		if (MSB>oldMSB) { // cases 1 or 4
+			m = oldSize-1;
+		}
+		else { // oldMSB>=MSB, cases 2 or 3
+			if(MSB<oldMSB)
+				REPORT(DETAILED, "Warning: cutting off some MSBs when resizing signal " << rhsName << " from (" << oldMSB << ", " << oldLSB << ") to (" << MSB << ", " << LSB << ")"); 
+			m = oldSize-(oldMSB-MSB)-1;
+		}
+
+		// Now do the work.
+		// Possible left padding/sign extension
+		if(paddLeft) {
+			if(isSigned) 	{
+				for(int i=0; i<paddLeftSize; i++)
+					vhdl << rhsName << of(oldSize-1) << " & "; // sign extension
+			}
+			else {
+				vhdl << zg(paddLeftSize) << " & ";
+			}
+		}
+
+		// copy the relevant bits
+		vhdl << rhsName << range(m, l);
+
+		// right padding
+		if(paddRight) {
+			vhdl << " & " << zg(paddRightSize);
+		}
+		
+		vhdl << "; -- fix resize from (" << oldMSB << ", " << oldLSB << ") to (" << MSB << ", " << LSB << ")" << endl;
+	}
+
 	
 	
 	#if 1
@@ -845,10 +987,16 @@ namespace flopoco{
 			throw e.str();
 		}
 		if (newSignal) {
+#if 0 // commented out in r2782  because we keep adding fields to Signal
 			int width = formal -> width();
 			bool isbus = formal -> isBus();
 			// construct the signal (lifeSpan and cycle are reset to 0 by the constructor)
 			s = new Signal(actualSignalName, Signal::wire, width, isbus);
+#else
+			s = new Signal(*formal); // a copy using the default copy constructor
+			s->setName(actualSignalName); // except for the name
+			s->setType(Signal::wire); // ... and the fact that we declare a wire
+#endif
 			// define its cycle 
 			if(isSequential())
 				s->setCycle( this->currentCycle_ + op->getPipelineDepth() );
@@ -962,6 +1110,7 @@ namespace flopoco{
 			};
 		}
 		
+
 		for (it=op->portMap_.begin()  ; it != op->portMap_.end(); it++ ) {
 			bool outputSignal = false;
 			for ( int k = 0; k < int(op->ioList_.size()); k++){
@@ -979,8 +1128,27 @@ namespace flopoco{
 			
 			if (it!=op->portMap_.begin() || op->isSequential())				
 				o << "," << endl <<  tab << tab << "           ";
-				
-				o << (*it).first << " => "  << (*it).second;
+
+			// The following code assumes that the IO is declared as standard_logic_vector
+			// If the actual parameter is a signed or unsigned, we want to automatically convert it 
+			Signal* rhs;
+			string rhsString;
+			try{
+				rhs = getSignalByName((*it).second);
+				if (rhs->isFix() && !outputSignal){
+						rhsString = std_logic_vector((*it).second);
+					}
+				else {
+						rhsString = (*it).second;
+				}
+
+			}
+			catch(string e) {
+				//constant here
+				rhsString=(*it).second;
+			}
+			
+			o << (*it).first << " => " << rhsString;
 			
 			if ( outputSignal && parsing ){
 				vhdl << o.str();
@@ -1867,6 +2035,83 @@ namespace flopoco{
 		oplist                      = op->getOpList();
 	}
 	
+	/**
+	* Method returning a random num depending on a fixed limit, the mean and
+	* the standard deviation
+	**/
+
+	float Operator::pickRandomNum ( float limit, int fp, int sp )
+	{
+		static boost::mt19937 rng;
+		float element;
+		const float  limitMax = 112.0;
+		string distribution = "gauss";
+
+		// the rng need to be "re-seed" in order to provide different number otherwise it will always give the same
+		static unsigned int seed = 0;
+		rng.seed ( ( ++seed + time ( NULL ) ) );
+
+		if ( distribution == "gauss" ){
+			if ( limit == 0 ){
+				// fp represent the mean and sp the standard deviation
+				boost::normal_distribution<> nd ( fp, sp );
+				boost::variate_generator < boost::mt19937&, boost::normal_distribution<> > var_nor ( rng, nd );
+				do{
+					element = fabs ( var_nor () );
+				}while( element > limitMax );
+			}
+			else{
+				boost::normal_distribution<> nd ( fp, 3 * sp);
+				boost::variate_generator < boost::mt19937&, boost::normal_distribution<> > var_nor ( rng, nd );
+				do{
+					element = fabs ( var_nor () );
+				}while ( element >= limit || element > limitMax );
+			}
+		}
+		if ( distribution == "uniform" ){
+			if ( fp > sp){
+				int temp = fp;
+				fp = sp;
+				sp = temp;
+			}
+			boost::uniform_int<> ud ( fp, sp );
+			boost::variate_generator < boost::mt19937&, boost::uniform_int<> > var_uni ( rng, ud );
+			element = var_uni ();
+		}
+		return element;
+	}
+	
+	/**
+	* Once the valid TestState parameters is created with pickRandomNum, this method check
+	* if parameters already exist or no for the operator selected opName
+	* Tests are realized with the multimap testMemory 
+	**/
+	bool Operator::checkExistence ( TestState parameters, string opName ){
+		if ( !testMemory.empty () ){
+			multimap < string, TestState >::key_compare memoryComp = testMemory.key_comp ();
+			multimap < string, TestState >::iterator it = testMemory.begin ();
+			while ( it != testMemory.end () && memoryComp ( ( *it ).first, opName ) ){
+				it++;	
+			}
+			
+			// boolean indicating that we are still analysing TestState on the same operator
+			bool firstEqual = true;
+			for (it; it != testMemory.end () && firstEqual ; it++ ){
+				bool exist = false;
+				TestState  memoryVect = ( *it ).second;
+				if ( opName.compare ( ( * ( it ) ).first ) != 0 ){
+					firstEqual = false;
+				}
+				else{
+					exist = parameters.equality ( &memoryVect );
+					if ( exist ){
+						return exist;
+					}
+				}
+			}
+		}
+		return false;
+	}
 	
 }
 

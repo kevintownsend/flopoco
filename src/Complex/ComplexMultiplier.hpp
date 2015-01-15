@@ -5,8 +5,8 @@
 #include <sstream>
 
 #include "../Operator.hpp"
-#include "../FPMultiplier.hpp"
-#include "../FPAdderSinglePath.hpp"
+#include "../FPMult.hpp"
+#include "../FPAddSinglePath.hpp"
 
 namespace flopoco{
 

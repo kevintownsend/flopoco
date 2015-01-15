@@ -4,7 +4,7 @@ This file is for noting VHDL style issues (style that behaves bad in some simula
 From Fabrizio Ferrandi
 
 A problem with modelsim 10.1b: temporary aggregates are not well managed.
-Currently, I've fixed only FPAdder Single and dual path in this part of the generated code:
+Currently, I've fixed only FPAdd Single and dual path in this part of the generated code:
   fracYfarXorOp <= fracYfar xor (55 downto 0 => EffSub); 
 becomes
   EffSubVector <= (55 downto 0 => EffSub);

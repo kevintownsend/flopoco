@@ -88,6 +88,7 @@ namespace flopoco
 	void Plotter::heapSnapshot(bool compress, int cycle, double cp)
 	{
 		if(!(cp==0.0 && cycle==0))
+		{
 			if(compress)
 			{
 				unsigned size=snapshots.size();
@@ -97,8 +98,7 @@ namespace flopoco
 				if (size==0)
 				{
 					snapshots.push_back(s);
-				}
-				else
+				}else
 				{
 					vector<Snapshot*>::iterator it = snapshots.begin();
 
@@ -109,14 +109,14 @@ namespace flopoco
 						{ // test in this order to avoid segfault!
 							snapshots.insert(it, s);
 							proceed=false;
-						}
-						else 
+						}else
 						{
 							it++;
 						}
 					}
 				}
 			}
+		}
 	}
 
 
@@ -295,13 +295,13 @@ namespace flopoco
 		//draw truncation line
 		if(wX+wY-wOut > 0)
 		{
-			drawLine(wX, wY, wOut, offsetX, offsetY, scalingFactor, true);    
+			drawLine(wX, wY, wOut, offsetX, offsetY, scalingFactor, true, "Truncation line");
 		}
 
 		//draw guard line
 		if(g>0)
 		{
-			drawLine(wX, wY, wOut+g, offsetX, offsetY, scalingFactor, true);
+			drawLine(wX, wY, wOut+g, offsetX, offsetY, scalingFactor, true, "Truncation line with guard bits");
 		}
 
 		fig << "<rect class=\"tooltip_bg\" id=\"tooltip_bg\" x=\"0\" y=\"0\" rx=\"4\" ry=\"4\" width=\"55\" height=\"17\" visibility=\"hidden\"/>" << endl;
@@ -365,13 +365,13 @@ namespace flopoco
 		//draw truncation line
 		if(wX+wY-wOut > 0)
 		{
-			drawLine(wX, wY, wOut, offsetX, offsetY, scalingFactor, false);    
+			drawLine(wX, wY, wOut, offsetX, offsetY, scalingFactor, false, "Truncation line");
 		}
 
 		//draw guard line
 		if(g>0)
 		{
-			drawLine(wX, wY, wOut+g, offsetX, offsetY, scalingFactor, false);
+			drawLine(wX, wY, wOut+g, offsetX, offsetY, scalingFactor, false, "Truncation line with guard bits");
 		}
 
 		fig << "<rect class=\"tooltip_bg\" id=\"tooltip_bg\" x=\"0\" y=\"0\" rx=\"4\" ry=\"4\" width=\"55\" height=\"17\" visibility=\"hidden\"/>" << endl;
@@ -384,22 +384,17 @@ namespace flopoco
 
 
 
-	void Plotter::drawLine(int wX, int wY, int wRez, int offsetX, int offsetY, int scalingFactor, bool isRectangle)
+	void Plotter::drawLine(int wX, int wY, int wRez, int offsetX, int offsetY, int scalingFactor, bool isRectangle, std::string toolTip)
 	{
+		fig << "<line x1=\"" << offsetX + scalingFactor * (wRez - wY);
 		if(isRectangle)
-			fig << "<line x1=\"" << offsetX + scalingFactor * (wRez - wY)
-				<< "\" y1=\"" << offsetY << "\" x2=\"" << offsetX + scalingFactor*wRez
-				<< "\" y2=\"" << offsetY + scalingFactor*wY 
-				<< "\" style=\"stroke:rgb(255,0,0);stroke-width:2\"/>" 
-				<< " onmousemove=\"ShowTooltip(evt, \'Truncation line\')\"" 
-				<< " onmouseout=\"HideTooltip(evt)\" />" << endl;
+			fig << "\" y1=\"" << offsetY << "\" x2=\"" << offsetX + scalingFactor*wRez;
 		else
-			fig << "<line x1=\"" << offsetX + scalingFactor*(wRez - wY) 
-				<< "\" y1=\"" << offsetY << "\" x2=\"" << offsetX + scalingFactor*(wRez - wY)
-				<< "\" y2=\"" << offsetY + scalingFactor*wY 
-				<< "\" style=\"stroke:rgb(255,0,0);stroke-width:2\"/>" 
-				<< " onmousemove=\"ShowTooltip(evt, \'Truncation line with guard bits\')\"" 
-				<< " onmouseout=\"HideTooltip(evt)\" />" << endl;
+			fig << "\" y1=\"" << offsetY << "\" x2=\"" << offsetX + scalingFactor*(wRez - wY);
+		fig << "\" y2=\"" << offsetY + scalingFactor*wY
+			<< "\" style=\"stroke:rgb(255,0,0);stroke-width:2\""
+			<< " onmousemove=\"ShowTooltip(evt, \'" << toolTip << "\')\""
+			<< " onmouseout=\"HideTooltip(evt)\" />" << endl;
 	}
 
 

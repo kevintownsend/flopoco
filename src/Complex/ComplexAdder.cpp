@@ -2,7 +2,7 @@
 #include <fstream>
 #include <sstream>
 #include "ComplexAdder.hpp"
-#include "../FPNumber.hpp"
+#include "../TestBenches/FPNumber.hpp"
 
 
 using namespace std;
@@ -28,7 +28,7 @@ namespace flopoco{
 		addFPOutput("Zr", wE, wF); 
 
 
-		FPAdderSinglePath* add =  new FPAdderSinglePath(target, wE, wF, wE, wF, wE, wF);
+		FPAddSinglePath* add =  new FPAddSinglePath(target, wE, wF, wE, wF, wE, wF);
 		oplist.push_back(add);
 	
 		inPortMap (add, "X", "Xi");

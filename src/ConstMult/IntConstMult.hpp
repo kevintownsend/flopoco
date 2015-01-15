@@ -7,10 +7,10 @@
 #include <gmpxx.h>
 #include <cstdlib>
 
-#include "../Operator.hpp"
+#include "Operator.hpp"
 #include "ShiftAddOp.hpp"
 #include "ShiftAddDag.hpp"
-#include "../IntAdder.hpp"
+#include "IntAddSubCmp/IntAdder.hpp"
 
 /**
 	Integer constant multiplication.
@@ -63,18 +63,25 @@ namespace flopoco{
 		int recodeBooth(mpz_class n, int* BoothCode);
 
 		// void buildMultBooth();      /**< Build a rectangular (low area, long latency) implementation */
-		ShiftAddOp* buildMultBoothTree(mpz_class n);  /**< Build a balanced tree implementation as per the ASAP 2008 paper */ 
+		ShiftAddDag* buildMultBoothTreeFromRight(mpz_class n);  /**< Build a balanced tree implementation as per the ASAP 2008 paper, right to left */ 
+		ShiftAddDag* buildMultBoothTreeFromLeft(mpz_class n);  /**<  Build a balanced tree implementation as per the ASAP 2008 paper, left to right */ 
+		ShiftAddDag* buildEuclideanTree(const mpz_class n); /**< Build a tree using the lower cost (in terms of size on the FPGA) recursive euclidean division */
+		ShiftAddDag* buildMultBoothTreeToMiddle(mpz_class n);  /**< Build a the same tree, but starting from the left and the right joining the middle */ 
 
+		/** A wrapper that tests the various build*Tree and picks up the best */ 
+		ShiftAddDag* buildMultBoothTreeSmallestShifts(mpz_class n);
 		/** Build an optimal tree for rational constants
 		 Parameters are such that n = headerSize + (2^i + 2^j)periodSize */ 
 		void buildTreeForRational(mpz_class header, mpz_class period, int headerSize, int periodSize, int i, int j);  
 
 	private:
+		bool findBestDivider(const mpz_class n, mpz_t & divider, mpz_t & quotient, mpz_t & remainder);
 		void build_pipeline(ShiftAddOp* sao, double& delay);
 		string printBoothCode(int* BoothCode, int size);
 		void showShiftAddDag();
 		void optimizeLefevre(const vector<mpz_class>& constants);
-
+		ShiftAddOp* buildEuclideanDag(const mpz_class n, ShiftAddDag* constant);
+		int prepareBoothTree(mpz_class &n, ShiftAddDag* &tree_try, ShiftAddOp** &level, ShiftAddOp* &result, ShiftAddOp* &MX, int* &shifts, int& nonZeroInBoothCode, int& globalshift);
 	};
 }
 #endif

@@ -4,7 +4,6 @@
 #include <sstream>
 #include <gmp.h>
 #include <gmpxx.h>
-#include "../IntMultiAdder.hpp"
 #include "../Operator.hpp"
 
 #include "../BitHeap.hpp"
@@ -23,7 +22,7 @@ class IntIntKCM : public Operator
 		 * @param[in] C      the constant
 		 * @param[in] inputDelays the delays for each input
 		 **/
-		IntIntKCM(Target* target, int wIn, mpz_class C, bool inputTwosComplement=false, bool useBitheap = false, map<string, double> inputDelays = emptyDelayMap);
+		IntIntKCM(Target* target, int wIn, mpz_class C, bool inputTwosComplement=false, map<string, double> inputDelays = emptyDelayMap);
 		
 		IntIntKCM(Operator* parentOp_, Target* target, Signal* multiplicandX, int wIn, mpz_class C, bool inputTwosComplement=false, BitHeap* bitheap_ = NULL, map<string, double> inputDelays = emptyDelayMap);
 
@@ -42,8 +41,6 @@ class IntIntKCM : public Operator
 		int chunkSize_;						/**< the size of the lut> **/
 		mpz_class C_;						/**< the constant to be used for the multiplication*/
 		int wOut_;
-		
-		bool useBitheap;
 		
 		BitHeap*	bitHeap;    			/**< The heap of weighted bits that will be used to do the additions */
 		Operator*	parentOp;				/**< The operator which envelops this constant multiplier */

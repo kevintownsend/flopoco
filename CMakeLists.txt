@@ -1,6 +1,6 @@
 PROJECT(FloPoCo C CXX)
 
-MESSAGE("Trying to build FloPoCo on " ${CMAKE_SYSTEM_NAME} ", compiler is "${CMAKE_C_COMPILER})
+MESSAGE("Trying to build FloPoCo on " ${CMAKE_SYSTEM_NAME} ", compiler is " ${CMAKE_C_COMPILER})
 
 # CMake's way of handling various versions
 cmake_minimum_required(VERSION 2.4)
@@ -21,13 +21,13 @@ SET(CPACK_PACKAGE_VERSION_PATCH "0")
 INCLUDE(CPack)
 # 
 #Compilation flags
-#SET(CMAKE_CXX_FLAGS_DEBUG "-Wall")
+SET(CMAKE_CXX_FLAGS_DEBUG "-Wall")
 # Uncomment for profiling
- SET(CMAKE_CXX_FLAGS_DEBUG "-g -ggdb -pg -Wall")
-# SET(CMAKE_CXX_FLAGS_DEBUG "-pg -Wall")
+# SET(CMAKE_CXX_FLAGS_DEBUG "-g -pg -Wall")
+#SET(CMAKE_CXX_FLAGS_DEBUG "-pg -Wall")
 # Do you want an executable of 30MB ?
- SET(CMAKE_BUILD_TYPE DEBUG)
-#SET(CMAKE_BUILD_TYPE release)
+#SET(CMAKE_BUILD_TYPE DEBUG)
+SET(CMAKE_BUILD_TYPE release)
 
 
 FIND_PATH(MPFR_H
@@ -52,6 +52,11 @@ FIND_LIBRARY(MPFI_LIB
 	HINTS "C:/Program Files/Microsoft Visual Studio 9.0/VC/lib"
 	DOC "Directory of the MPFI library")
 
+FIND_LIBRARY(PYTHON_LIB
+	NAMES libpython2.7.so
+	HINTS "/usr/lib/x86_64-linux-gnu"
+	DOC "Directory of the Python library"
+)
 
 
 # Detect Sollya's presence
@@ -60,11 +65,15 @@ FIND_LIBRARY( SOLLYA_LIB sollya )
 IF (SOLLYA_LIB)
 	ADD_DEFINITIONS(-DHAVE_SOLLYA)
 	MESSAGE(STATUS "Found Sollya: ${SOLLYA_LIB}")
-  ADD_DEFINITIONS(-DHAVE_LNS)
 ELSE (SOLLYA_LIB)
 	MESSAGE(STATUS "Sollya not found, many very nice operators won't be available")
 ENDIF (SOLLYA_LIB)
 
+IF ( PYTHON_LIB )
+	MESSAGE ( STATUS "Found Python : ${PYTHON_LIB}" )
+ELSE ( PYTHON_LIB )
+	MESSAGE ( FATAL_ERROR "Could not find PYTHON_LIB" )
+ENDIF ( PYTHON_LIB )
 
 IF (MPFR_H AND MPFR_LIB)
     SET(MPFR_FOUND TRUE)
@@ -76,6 +85,7 @@ ELSE (MPFR_FOUND)
     MESSAGE(FATAL_ERROR "Could not find MPFR.\nOn Debian-based systems type: 'sudo apt-get install libmpfr-dev'")
 ENDIF (MPFR_FOUND)
 
+ADD_DEFINITIONS(-DHAVE_LNS)
 
 # Create target for the lexer
  ADD_CUSTOM_TARGET(VHDLLexer echo "Creating VHDLLexer.c VHDLLexer.h")
@@ -152,23 +162,26 @@ SET_SOURCE_FILES_PROPERTIES(ExpressionScanner GENERATED)
 
 
 ADD_LIBRARY(FloPoCoLib STATIC
+
+#--------------------------------------------------------------------
+#               FRAMEWORK
+#--------------------------------------------------------------------
+
  src/FloPoCo.hpp
  src/Operator
  src/Signal
  src/utils
  src/FlopocoStream
+ src/TestState
  VHDLLexer
  
  # Resource Estimation related ---------------------------------------
- #--------------------------------------------------------------------
  src/Tools/ResourceEstimationHelper
- #--------------------------------------------------------------------
  
  # Floorplanning related ---------------------------------------------
- #--------------------------------------------------------------------
  src/Tools/FloorplanningHelper
- #--------------------------------------------------------------------
 
+ # Targets -----------------------------------------------------------
  src/Targets/DSP
  src/Target 
  
@@ -187,224 +200,146 @@ ADD_LIBRARY(FloPoCoLib STATIC
  src/Targets/CycloneIV 
  src/Targets/CycloneV 
 
+# TestBench-related -------------------------------------------------
+ src/TestBenches/TestCase
+ src/TestBenches/FPNumber
+ src/TestBenches/IEEENumber
+ src/TestBenches/Wrapper
+ src/TestBenches/TestBench 
 
- src/Table 
- src/DualTable 
- src/DualTable2
- 
- src/FPExpressions/ExpressionParserData
- ExpressionParser 
- ExpressionScanner
- src/FPPipeline
 
- src/Wrapper
- src/TestBench 
- src/UserDefinedOperator
- 
-# Addition related --------------------------------------------------
-#--------------------------------------------------------------------
- src/IntAdder 
- 
- src/IntAddition/IntAdderClassical 
- src/IntAddition/IntAdderAlternative 
- src/IntAddition/IntAdderShortLatency
-
-# ---------- First generation of fast adders ------------------------
- src/IntAddition/LongIntAdderAddAddMuxGen1 
- src/IntAddition/LongIntAdderCmpCmpAddGen1 
- src/IntAddition/LongIntAdderCmpAddIncGen1
-
-# ---------- Second Generation of fast adders -----------------------
- src/IntAddition/IntAdderSpecific 
- src/IntAddition/IntComparatorSpecific 
- src/IntAddition/CarryGenerationCircuit 
- src/IntAddition/LongIntAdderAddAddMuxGen2 
- src/IntAddition/LongIntAdderCmpCmpAddGen2 
- src/IntAddition/LongIntAdderCmpAddIncGen2
-
- src/IntAddition/LongIntAdderMuxNetwork
-
-# ---------- Multioperand -------------------------------------------
- src/IntMultiAdder src/IntAddition/IntNAdder  src/IntAddition/IntCompressorTree
- src/IntAddition/PopCount src/IntAddition/NewCompressorTree
- src/IntAddition/BasicCompressor
+# Bit heap  ------------------------------------------------
  src/BitHeap
-src/WeightedBit
- src/IntComparator
- src/IntDualSub
-
-#---------Plotting-related ---------------------------------------
-src/Plotter
+ src/WeightedBit
+ src/Plotter
 
 
+#--------------------------------------------------------------------
+#               OPERATORS          
+#--------------------------------------------------------------------
+src/OperatorPipeline/OperatorPipeline
+src/FPExpressions/ExpressionParserData
+
+
+# Conversions ----------------------------------------------------
+src/Conversions/InputIEEE
+src/Conversions/OutputIEEE
+src/Conversions/FP2Fix
+src/Conversions/Fix2FP
+
+# Shifters/LZOC ----------------------------------------------------
+ src/ShiftersEtc/LZOC 
+ src/ShiftersEtc/LZOCShifterSticky
+ src/ShiftersEtc/Shifters
+
+# FixFilters ----------------------------------------------------------
+ src/ShiftReg
+ src/FixFilters/FixSOPC
+ src/FixFilters/FixFIR
+ src/FixFilters/FixIIR
+
+
+# pipelined Integer addition -------------------------------------------------
+ src/IntAddSubCmp/IntAdder  
+ src/IntAddSubCmp/IntAdderClassical 
+ src/IntAddSubCmp/IntAdderAlternative 
+ src/IntAddSubCmp/IntAdderShortLatency
+ src/IntAddSubCmp/IntComparator
+ src/IntAddSubCmp/IntDualSub
+ src/IntAddSubCmp/BasicCompressor
  
-# Multiplication related --------------------------------------------
-#--------------------------------------------------------------------
- src/IntMultiplier
- src/IntMultipliers/IntKaratsuba
- src/IntSquarer
- src/FixMultAdd
- src/IntMultipliers/FormalBinaryProduct
- src/IntMultipliers/GenericBinaryPolynomial
- src/IntMultipliers/IntPower
+# ---------- First generation of fast large adders ------------------------
+ src/IntAddSubCmp/LongIntAdderAddAddMuxGen1 
+ src/IntAddSubCmp/LongIntAdderCmpCmpAddGen1 
+ src/IntAddSubCmp/LongIntAdderCmpAddIncGen1
 
-src/IntMultipliers/MultiplierBlock
+# ---------- Second Generation of fast large adders -----------------------
+ src/IntAddSubCmp/IntAdderSpecific 
+ src/IntAddSubCmp/IntComparatorSpecific 
+ src/IntAddSubCmp/CarryGenerationCircuit 
+ src/IntAddSubCmp/LongIntAdderAddAddMuxGen2 
+ src/IntAddSubCmp/LongIntAdderCmpCmpAddGen2 
+ src/IntAddSubCmp/LongIntAdderCmpAddIncGen2
+ src/IntAddSubCmp/LongIntAdderMuxNetwork
 
-src/IntMultipliers/FixSinPoly
-src/IntMultipliers/FixXPow3Div6
-src/ConstMult/IntConstDiv3
-
-# Shifters/LZOC related ---------------------------------------------
-#--------------------------------------------------------------------
- src/LZOC 
- src/LZOCShifterSticky
- src/Shifters
-
-# Fixed-point function evaluation -----------------------------------
-#--------------------------------------------------------------------
- src/FixFunctions/Function
- src/FixFunctions/PiecewiseFunction
-
- src/FixFunctions/FunctionTable
-
-# src/FixFunctions/Multipartite
-
- src/FixFunctions/PolyCoeffTable
- src/FixFunctions/PolynomialEvaluator
- src/FixFunctions/FunctionEvaluator
- src/FixFunctions/GenericEvaluator
-
- src/FixFunctions/HOTBM.cpp
- src/FixFunctions/HOTBM/HOTBMInstance.cc
- src/FixFunctions/HOTBM/Param.cc
- src/FixFunctions/HOTBM/Exhaustive.cc
- src/FixFunctions/HOTBM/Util.cc
- src/FixFunctions/HOTBM/PWPolynomial.cc
- src/FixFunctions/HOTBM/Polynomial.cc
- src/FixFunctions/HOTBM/MPPolynomial.cc
- src/FixFunctions/HOTBM/Power.cc
- src/FixFunctions/HOTBM/PowerAdHoc.cc
- src/FixFunctions/HOTBM/TermROM.cc
- src/FixFunctions/HOTBM/Term.cc
- src/FixFunctions/HOTBM/Minimax.cc
- src/FixFunctions/HOTBM/PowerROM.cc
- src/FixFunctions/HOTBM/TermPowMult.cc 
-
-# Fixed-point operators ---------------------------------------------
-#--------------------------------------------------------------------
- src/FixSinCos/FixSinCos
- src/FixSinCos/FixSinOrCos
- src/FixSinCos/CordicSinCos
- src/FixSinCos/CordicAtan2
-
- src/FixFIR
- src/FixDCT
- src/FixHalfSine
- src/FixRCF
- src/FixRRCF
-
-# Floating-Point ----------------------------------------------------
-#--------------------------------------------------------------------
- src/FPAdderDualPath
- src/FPAdderSinglePath
- src/FPAdder3Input
- src/FPAddSub
-
- src/FPMultiplier
- src/FPMultiplierKaratsuba
- src/FPSquarer
-
- src/FPDiv
- 
- src/FPSqrt
- src/FPSqrtPoly
- src/squareroot/PolynomialTable 
- src/squareroot/PolynomialTableCorrectRounded
-
-# src/FP2DNorm
- 
- src/DotProduct 
- 
- src/ConstMult/IntConstMult src/ConstMult/ShiftAddOp src/ConstMult/ShiftAddDag 
- src/ConstMult/IntIntKCM src/ConstMult/KCMTable
+# Constant multiplications and divisions
+ src/ConstMult/ShiftAddOp 
+ src/ConstMult/ShiftAddDag 
+ src/ConstMult/IntConstMult 
+ src/ConstMult/KCMTable
+ src/ConstMult/IntIntKCM 
  src/ConstMult/FPConstMult 
  src/ConstMult/CRFPConstMult 
  src/ConstMult/FixRealKCM
  src/ConstMult/FPRealKCM
+ src/ConstMult/IntConstDiv 
+ src/ConstMult/FPConstDiv 
 
- src/IntConstDiv 
- src/FPConstDiv 
-
- src/FPLog/FirstInvTable
- src/FPLog/FirstLogTable
- src/FPLog/OtherLogTable
- src/FPLog.cpp
-
- src/FPExp 
- src/FPPow
  
- src/LongAcc
- src/LongAcc2FP
-
- src/FPSumOfSquares
-
-# ---------- Complex arithmetic --------------------------------------------- 
-src/Complex/FixedComplexAdder
-src/Complex/FixedComplexMultiplier
-
-# ---------- Conversion --------------------------------------------- 
-
- src/FP2Fix
- src/Fix2FP
- src/InputIEEE
- src/OutputIEEE
-
-#---------------------LNS arithmetic--------------------------------
- src/LNS/LNSAdd
- src/LNS/Cotran
- src/LNS/CotranHybrid
- src/LNS/CotranTables
- src/LNS/LNSAddSub
- src/LNS/LNSMul
- src/LNS/LNSDiv
- src/LNS/LNSSqrt
- src/LNS/AtanPow
- src/LNS/LogSinCos
+# Multiplication related --------------------------------------------
+ src/IntMult//IntMultiplier
+ src/IntMult//FixMultAdd
+ src/IntMult//MultiplierBlock
+ src/IntMult//IntSquarer
 
 
-# Applications ------------------------------------------------------
-#--------------------------------------------------------------------
+# Floating-point adders and subtracters -----------------------------
+ src/FPAddSub/FPAddDualPath
+ src/FPAddSub/FPAddSinglePath
+ src/FPAddSub/FPAdd3Input
+ src/FPAddSub/FPAddSub
 
-# src/apps/CoilInductance/CoilInductance
-# src/apps/CoilInductance/CoordinatesTableX
-# src/apps/CoilInductance/CoordinatesTableZ
-# src/apps/CoilInductance/CoordinatesTableY
+# Floating-point multipliers and squarers
+ src/FPMultSquare/FPMult
+#  src/FPMultSquare/FPMultKaratsuba # See TODO
+ src/FPMultSquare/FPSquare
 
- src/apps/Collision
+# Floating-point dividers and square roots
+src/FPDivSqrt/FPDiv
+src/FPDivSqrt/FPSqrt
+# src/FPDivSqrt/FPSqrtPoly # Resurrect some day?
+
+
+# Composite operators
+src/FPComposite/FPLargeAcc 
+src/FPComposite/LargeAccToFP 
+src/FPComposite/FPDotProduct 
+src/FPComposite/FP2DNorm
+
+
+# Generic fixed-point function evaluators ---------------------------
+ src/Table 
+ src/DualTable 
  
- src/apps/FPFMAcc
- src/apps/FPJacobi
+ src/FixFunctions/FixFunction
+ src/FixFunctions/FixFunctionByTable
+ src/FixFunctions/BasicPolyApprox
+ src/FixFunctions/PiecewisePolyApprox
+ src/FixFunctions/FixHornerEvaluator
+ src/FixFunctions/FixFunctionBySimplePoly
+ src/FixFunctions/FixFunctionByPiecewisePoly
+ src/FixConstant
 
-# src/apps/TaMaDiCore 
-# src/apps/TaMaDiPriorityEncoder 
-# src/apps/TaMaDiDecoder 
-# src/apps/TaMaDiFIFO 
-# src/apps/TaMaDiShiftRegister 
-# src/apps/TaMaDiModule 
-# src/apps/TaMaDiModuleDummyWrapper
-# src/apps/TaMaDiModuleWrapperInterface
-# src/apps/TaMaDiDispatcherInterface
-# src/apps/TaMaDiDeserializer
-# src/apps/TaMaDiSystem
+ src/FixFunctions/BipartiteTable
+ src/FixFunctions/GenericTable
 
-# TestBench-related -------------------------------------------------
-#--------------------------------------------------------------------
- src/TestCase
- src/FPNumber
- src/IEEENumber
+# Trigonometric functions ------------------------------------------
+src/Trigs/ConstDiv3ForSinPoly
+src/Trigs/FixSinPoly
+src/Trigs/FixSinCos
+src/Trigs/CordicSinCos
+# src/Trigs/CordicSinOrCos
+src/Trigs/CordicAtan2
+src/Trigs/FixAtan2
+src/Trigs/Atan2Table
+src/Tools/Plane
+src/Tools/Point
 
- src/UtilSollya
+# Exp, Log and Power
+src/ExpLog/FPExp
+src/ExpLog/IterativeLog
 )
+
 IF (SOLLYA_LIB)
 TARGET_LINK_LIBRARIES(
   FloPoCoLib
@@ -418,6 +353,14 @@ TARGET_LINK_LIBRARIES(
 ENDIF (SOLLYA_LIB)
 SET(FLOPOCO_LIB FloPoCoLib)
 
+IF (PYTHON_LIB)
+TARGET_LINK_LIBRARIES(
+  FloPoCoLib
+  ${PYTHON_LIB}
+  )
+ENDIF (PYTHON_LIB)
+SET (FLOPOCO_LIB FloPoCoLib)
+
 ADD_EXECUTABLE(flopoco
  src/main 
 )
@@ -427,15 +370,13 @@ TARGET_LINK_LIBRARIES(
 	${FLOPOCO_LIB}
   )
 
-
-ADD_EXECUTABLE(fpadder_example
- src/main_minimal 
+ADD_EXECUTABLE(flopoco_soaktest
+ src/main_soaktest
 )
 TARGET_LINK_LIBRARIES(
-  fpadder_example  
+  flopoco_soaktest  
 	${FLOPOCO_LIB}
-  )
-
+)
 
 
 

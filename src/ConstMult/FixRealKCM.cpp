@@ -23,11 +23,10 @@
 #include <gmp.h>
 #include <mpfr.h>
 #include <gmpxx.h>
-#include "../sollya.h"
+#include <sollya.h>
 #include "../utils.hpp"
 #include "FixRealKCM.hpp"
-#include "../IntAdder.hpp"
-#include "../IntMultiAdder.hpp"
+#include "../IntAddSubCmp/IntAdder.hpp"
 
 using namespace std;
 
@@ -35,7 +34,7 @@ namespace flopoco{
 
 
 	//standalone operator
-	FixRealKCM::FixRealKCM(Target* target, int lsbIn_, int msbIn_, bool signedInput_, int lsbOut_, string constant_, double targetUlpError_, map<string, double> inputDelays, bool useBitheap_) :
+	FixRealKCM::FixRealKCM(Target* target, bool signedInput_, int msbIn_, int lsbIn_, int lsbOut_, string constant_, double targetUlpError_, map<string, double> inputDelays, bool useBitheap_) :
 		Operator(target, inputDelays), lsbIn(lsbIn_), msbIn(msbIn_), signedInput(signedInput_),
 		wIn(msbIn_-lsbIn_+1), lsbOut(lsbOut_), constant(constant_), targetUlpError(targetUlpError_),
 		useBitheap(useBitheap_)
@@ -56,18 +55,18 @@ namespace flopoco{
 		wIn+=signBit;
 
 		// Convert the input string into a sollya evaluation tree
-		sollya_node_t node;
-		node = parseString(constant.c_str());	// If conversion did not succeed (i.e. parse error)
-		if(node == 0)
-		{
-			ostringstream error;
-			error << srcFileName << ": Unable to parse string "<< constant << " as a numeric constant" <<endl;
-			throw error.str();
-		}
+		sollya_obj_t node;
+		node = sollya_lib_parse_string(constant.c_str());	
+		/* If  parse error throw an exception */
+		if (sollya_lib_obj_is_error(node))
+			{
+				ostringstream error;
+				error << srcFileName << ": Unable to parse string "<< constant << " as a numeric constant" <<endl;
+				throw error.str();
+			}
 
 		mpfr_init2(mpC, 10000);
-		setToolPrecision(10000);
-		evaluateConstantExpression(mpC, node,  getToolPrecision());// should be enough for everybody
+		sollya_lib_get_constant(mpC, node);
 
 		//if negative constant, then set negativeConstant and remake the constant positive
 		negativeConstant = false;
@@ -133,6 +132,8 @@ namespace flopoco{
 			diSize[counter] = wIn - (currentSize - diSize[counter]);
 		}
 		
+		REPORT(INFO, "Constant multiplication in "<< nbOfTables << " tables");
+		
 		//manage the critical path
 		setCriticalPath(getMaxInputDelays(inputDelays));
 		
@@ -181,8 +182,6 @@ namespace flopoco{
 		else
 		{
 			///////////////////////////////////   Generic Case  ////////////////////////////////////
-				
-			REPORT(INFO, "Constant multiplication in "<< nbOfTables << " tables");
 
 			// How many guard bits? ulp=2^lsbOut, and we want to ensure targetUlpError
 			// One half-ulp for the final rounding, and nbOfTables tables with an error of 2^(lsbOut-g-1) each 
@@ -474,7 +473,9 @@ namespace flopoco{
 	
 	//operator incorporated into a global compression
 	//	for use as part of a bigger operator
-	FixRealKCM::FixRealKCM(Operator* parentOp, Target* target, Signal* multiplicandX, int lsbIn_, int msbIn_, bool signedInput_, int lsbOut_, string constant_, BitHeap* bitHeap_, double targetUlpError_, map<string, double> inputDelays) :
+	FixRealKCM::FixRealKCM(Operator* parentOp, Target* target, Signal* multiplicandX, 
+												 bool signedInput_, int msbIn_, int lsbIn_, int lsbOut_, 
+												 string constant_, BitHeap* bitHeap_, double targetUlpError_, map<string, double> inputDelays) :
 		Operator(target, inputDelays), lsbIn(lsbIn_), msbIn(msbIn_), signedInput(signedInput_),
 		wIn(msbIn_-lsbIn_+1), lsbOut(lsbOut_), constant(constant_), targetUlpError(targetUlpError_), bitHeap(bitHeap_)
 	{
@@ -494,17 +495,18 @@ namespace flopoco{
 		wIn += signBit;
 
 		/* Convert the input string into a sollya evaluation tree */
-		sollya_node_t node;
-		node = parseString(constant.c_str());	/* If conversion did not succeed (i.e. parse error) */
-		if (node == 0) {
-			ostringstream error;
-			error << srcFileName << ": Unable to parse string "<< constant << " as a numeric constant" <<endl;
-			throw error.str();
-		}
+		sollya_obj_t node;
+		node = sollya_lib_parse_string(constant.c_str());	
+		/* If  parse error throw an exception */
+		if (sollya_lib_obj_is_error(node))
+			{
+				ostringstream error;
+				error << srcFileName << ": Unable to parse string "<< constant << " as a numeric constant" <<endl;
+				throw error.str();
+			}
 
 		mpfr_init2(mpC, 10000);
-		setToolPrecision(10000);
-		evaluateConstantExpression(mpC, node,  getToolPrecision());// should be enough for everybody
+		sollya_lib_get_constant(mpC, node);
 
 		//if the constant is negative, remake it positive and set negativeConstant
 		negativeConstant = false;

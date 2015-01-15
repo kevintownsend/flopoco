@@ -13,6 +13,7 @@
 
  */
 
+
 #include <iostream>
 #include <sstream>
 #include <cstdlib>
@@ -53,9 +54,9 @@ namespace flopoco{
 
 
 
-	Table::Table(Target* target, int _wIn, int _wOut, int _minIn, int _maxIn, int _logicTable, map<string, double> inputDelays) : 
+	Table::Table(Target* target, int _wIn, int _wOut, int _minIn, int _maxIn, int logicTable, map<string, double> inputDelays) : 
 		Operator(target),
-		wIn(_wIn), wOut(_wOut), minIn(_minIn), maxIn(_maxIn)
+		wIn(_wIn), wOut(_wOut), minIn(_minIn), maxIn(_maxIn), logicTable_(logicTable)
 	{
 		srcFileName="Table";
 		setCopyrightString("Florent de Dinechin (2007-2012)");
@@ -80,26 +81,13 @@ namespace flopoco{
 		if (wIn > 10)
 		  REPORT(0, "WARNING : FloPoCo is building a table with " << wIn << " input bits, it will be large.");
 		 
+		// TODO 
 		// I cannot use manageCriticalPath because the table construction is atomic so far
 		// All this should be rethought carefully
 
 		setCriticalPath(getMaxInputDelays(inputDelays));
 
-		if(_logicTable==0)  // test on the constructor input
-			logicTable= false; // setting the attribute
-		else if (_logicTable==1)
-			logicTable= true;
-		else if (_logicTable==-1) {
-			if(wIn <= target->lutInputs()+1) // we allow for tables with two LUTs per bit
-				logicTable= true;
-			else 
-				logicTable=false; // better use a blockRAM then
-		}
-		else 
-			THROWERROR("Invalid value of logicTable argument: " << _logicTable);
-
-
-		if (logicTable)  {
+		if (logicTable_ == 1)  {
 			// Delay is that of broadcasting the input bits to wOut LUTs, plus the LUT delay itself
 			if(wIn <= target->lutInputs()) 
 				addToCriticalPath(target->localWireDelay(wOut) + target->lutDelay());
@@ -113,7 +101,7 @@ namespace flopoco{
 		}
 		else{
 			addToCriticalPath(target->RAMDelay());
-			nextCycle(); // force a cycle to get the RAM inferred.
+			nextCycle();
 		}
 
 		outDelayMap["Y"] =   getCriticalPath();
@@ -121,13 +109,12 @@ namespace flopoco{
 
 	Table::Table(Target* target) : 
 		Operator(target){
-		setCopyrightString("Florent de Dinechin, Bogdan Pasca (2007, 2010, 2013)");
+		setCopyrightString("Florent de Dinechin, Bogdan Pasca (2007, 2010)");
 	}
 
 	// We have to define this method because the constructor of Table cannot use the (pure virtual) function()
 	void Table::outputVHDL(std::ostream& o, std::string name) {
 
-		REPORT(DEBUG, "entering Table::outputVHDL with logicTable=" << logicTable); 
 		licence(o);
 			o << "library ieee; " << endl;
 			o << "use ieee.std_logic_1164.all;" << endl;
@@ -135,7 +122,7 @@ namespace flopoco{
 			o << "library work;" << endl;
 		outputVHDLEntity(o);
 		newArchitecture(o,name);
-		if (logicTable){
+		if (true || logicTable_==1 || wIn <= target_->lutInputs()){
 			int i,x;
 			mpz_class y;
 			beginArchitecture(o);		
@@ -153,10 +140,14 @@ namespace flopoco{
 			o <<  "\" when others;" << endl;
 //			Operator::outputVHDL(o,  name);
 		}
+
+/* TODO The code below generates VHDL specific to one tool, one architecture, one FPGA... 
+It is therefore currently unplugged, but it was probabaly added because it was improving performance. */
+
 		else { 
-			// TODO this is uglily Virtex-5- specific
 			int x;
 			mpz_class y;
+			
 			o << tab << "-- Build a 2-D array type for the RoM" << endl;
 
 			if (maxIn-minIn<=256 && wOut>36){
@@ -219,8 +210,8 @@ namespace flopoco{
 			outputVHDLSignalDeclarations(o);
 			beginArchitecture(o);
 			if (maxIn-minIn <= 256 && wOut>36){
-				o << "Z0 <= '1' & X;"<<endl;
-				o << "Z1 <= '0' & X;"<<endl;
+				o << "Z0 <= " << zg(8-wIn) << (wIn>7 ? " &" : "") << " '1' & X;"<<endl;
+				o << "Z1 <= " << zg(8-wIn) << (wIn>7 ? " &" : "") << " '0' & X;"<<endl;
 			}
 					
 			if(isSequential()){

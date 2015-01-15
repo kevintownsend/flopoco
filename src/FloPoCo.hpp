@@ -1,5 +1,6 @@
 #ifndef FLOPOCO_HPP
 #define FLOPOCO_HPP
+
 // TODO: I guess we should at some point copy here only the public part of each class, 
 // to provide a single self-contained include file.
 
@@ -11,10 +12,13 @@
 #include "Operator.hpp"
 #include "FlopocoStream.hpp"
 
+/* operator pipeline work* ------------------------------------ */
+#include "OperatorPipeline/OperatorPipeline.hpp"
 
 /* resource estimation ---------------------------------------- */
 #include "Tools/ResourceEstimationHelper.hpp"
 /* resource estimation ---------------------------------------- */
+
 
 
 /* floorplanning ---------------------------------------------- */
@@ -40,128 +44,174 @@
 #include "Targets/CycloneIV.hpp"
 #include "Targets/CycloneV.hpp"
 
+#include "TestBenches/TestBench.hpp"
+
 /* shifters + lzoc ------------------------------------------- */
-#include "Shifters.hpp"
-#include "LZOC.hpp"
-#include "LZOCShifterSticky.hpp"
+#include "ShiftersEtc/Shifters.hpp"
+#include "ShiftersEtc/LZOC.hpp"
+#include "ShiftersEtc/LZOCShifterSticky.hpp"
+
+
+/* FixFilters ------------------------------------------------ */
+#include "FixFilters/FixSOPC.hpp"
+#include "FixFilters/FixFIR.hpp"
+#include "FixFilters/FixIIR.hpp"
+
+#include "ShiftReg.hpp"
 
 /* regular pipelined integer adder/ adder+subtracter --------- */
-#include "IntAdder.hpp"
-#include "IntDualSub.hpp"
+#include "IntAddSubCmp/IntAdder.hpp" // includes several other .hpp
+#include "IntAddSubCmp/IntDualSub.hpp"
+#include "IntAddSubCmp/IntComparator.hpp"
 
-/* General purpose heap of weighted bits  -------------------- */
-#include "BitHeap.hpp"
-#include "WeightedBit.hpp"
+/* fast large adders ----------------------------------------- */
+#include "IntAddSubCmp/LongIntAdderAddAddMuxGen1.hpp"
+#include "IntAddSubCmp/LongIntAdderCmpCmpAddGen1.hpp"
+#include "IntAddSubCmp/LongIntAdderCmpAddIncGen1.hpp"
+#include "IntAddSubCmp/IntAdderSpecific.hpp"
+#include "IntAddSubCmp/LongIntAdderAddAddMuxGen2.hpp"
+#include "IntAddSubCmp/LongIntAdderCmpCmpAddGen2.hpp"
+#include "IntAddSubCmp/LongIntAdderCmpAddIncGen2.hpp"
+#include "IntAddSubCmp/IntComparatorSpecific.hpp"
+#include "IntAddSubCmp/LongIntAdderMuxNetwork.hpp"
+
+/* Integer and fixed-point multipliers ------------------------ */
+#include "IntMult//IntMultiplier.hpp"
+#include "IntMult//FixMultAdd.hpp"
+// #include "IntMult//IntKaratsuba.hpp"
+#include "IntMult//IntSquarer.hpp"
+// #include "IntMult//GenericBinaryPolynomial.hpp"
+// #include "IntMult//IntPower.hpp"
+
+
+/* Floating-point adder variants ----------------------------- */
+#include "FPAddSub/FPAddDualPath.hpp"
+#include "FPAddSub/FPAddSinglePath.hpp"
+#include "FPAddSub/FPAdd3Input.hpp"
+#include "FPAddSub/FPAddSub.hpp"
+
+/* Floating-point multiplier variants-------------------------- */ 
+#include "FPMultSquare/FPMult.hpp"
+//#include "FPMultKaratsuba.hpp" // Resurrect some day?
+#include "FPMultSquare/FPSquare.hpp"
+
+#include "FPDivSqrt/FPDiv.hpp"
+#include "FPDivSqrt/FPSqrt.hpp"
+//#include "FPDivSqrt/FPSqrtPoly.hpp" // Resurrect some day?
+
+
+/* Constant multipliers and dividers ------------------------ */
+#include "ConstMult/IntConstMult.hpp"
+#include "ConstMult/IntIntKCM.hpp"
+#include "ConstMult/FixRealKCM.hpp"
+#include "ConstMult/FPConstMult.hpp"
+#include "ConstMult/CRFPConstMult.hpp"
+#include "ConstMult/FPRealKCM.hpp"
+
+#include "ConstMult/IntConstDiv.hpp"
+#include "ConstMult/FPConstDiv.hpp"
+
+/* FP composite operators */ 
+#include "FPComposite/FPLargeAcc.hpp"
+#include "FPComposite/LargeAccToFP.hpp"
+#include "FPComposite/FPDotProduct.hpp"
+
+
+/* Fixed-point function generators ---------------------*/
+
+#include "FixFunctions/FixFunction.hpp"
+#include "FixFunctions/BasicPolyApprox.hpp"
+#include "FixFunctions/PiecewisePolyApprox.hpp"
+#include "FixFunctions/FixFunctionByTable.hpp"
+#include "FixFunctions/FixFunctionBySimplePoly.hpp"
+#include "FixFunctions/FixFunctionByPiecewisePoly.hpp"
+
+#include "FixFunctions/BipartiteTable.hpp"
+#include "FixFunctions/GenericTable.hpp"
+
+/*  Various elementary functions in fixed or floating point*/
+#include "Trigs/FixSinCos.hpp"
+#include "Trigs/CordicSinCos.hpp"
+#include "Trigs/CordicAtan2.hpp"
+#include "Trigs/FixAtan2.hpp"
+// #include "Trigs/FixSinOrCos.hpp"  Replug when poly eval fixed
+#include "ExpLog/IterativeLog.hpp"
+#include "ExpLog/FPExp.hpp"
+
+// #include "ExpLog/FPPow.hpp"
+
+
+#include "Conversions/Fix2FP.hpp"
+#include "Conversions/FP2Fix.hpp"
+#include "Conversions/InputIEEE.hpp"
+#include "Conversions/OutputIEEE.hpp"
+
+
+
+#if 0
+
 
 
 /* multioperand adders --------------------------------------- */
 #include "IntMultiAdder.hpp"
-#include "IntAddition/IntNAdder.hpp"
-#include "IntAddition/IntCompressorTree.hpp"
-#include "IntAddition/PopCount.hpp"
-#include "IntAddition/BasicCompressor.hpp"
-#include "IntAddition/NewCompressorTree.hpp"
-
-/* comparator(s) --------------------------------------------- */
-#include "IntComparator.hpp"
-
-/* fast adders ----------------------------------------------- */
-#include "IntAddition/LongIntAdderAddAddMuxGen1.hpp"
-#include "IntAddition/LongIntAdderCmpCmpAddGen1.hpp"
-#include "IntAddition/LongIntAdderCmpAddIncGen1.hpp"
-
-#include "IntAddition/IntAdderSpecific.hpp"
-#include "IntAddition/CarryGenerationCircuit.hpp"
-#include "IntAddition/LongIntAdderAddAddMuxGen2.hpp"
-#include "IntAddition/LongIntAdderCmpCmpAddGen2.hpp"
-#include "IntAddition/LongIntAdderCmpAddIncGen2.hpp"
-#include "IntAddition/IntComparatorSpecific.hpp"
-
-#include "IntAddition/LongIntAdderMuxNetwork.hpp"
-
+#include "IntAddSubCmp/IntNAdder.hpp"
+#include "IntAddSubCmp/IntCompressorTree.hpp"
+#include "IntAddSubCmp/PopCount.hpp"
+#include "IntAddSubCmp/BasicCompressor.hpp"
+#include "IntAddSubCmp/NewCompressorTree.hpp"
 
 /* multiplication-related ------------------------------------ */
 #include "IntMultiplier.hpp"
 #include "FixMultAdd.hpp"
-#include "IntMultipliers/IntKaratsuba.hpp"
+#include "IntMult//IntKaratsuba.hpp"
 #include "IntSquarer.hpp"
-#include "IntMultipliers/GenericBinaryPolynomial.hpp"
-#include "IntMultipliers/IntPower.hpp"
+#include "IntMult//GenericBinaryPolynomial.hpp"
+#include "IntMult//IntPower.hpp"
 
-#include "IntMultipliers/FixSinPoly.hpp"
-#include "IntMultipliers/FixXPow3Div6.hpp"
-#include "ConstMult/IntConstDiv3.hpp"
-
-#include "ConstMult/IntConstMult.hpp"
-#include "ConstMult/FPConstMult.hpp"
-#include "ConstMult/IntIntKCM.hpp"
-#include "ConstMult/FixRealKCM.hpp"
-
-#include "IntConstDiv.hpp"
-#include "FPConstDiv.hpp"
+#include "IntMult//FixSinPoly.hpp"
+#include "IntMult//FixXPow3Div6.hpp"
+#include "IntMult//MultiplierBlock.hpp"
 
 
-#include "IntMultipliers/MultiplierBlock.hpp"
+
+
 
 /* fixed-point function evaluation---------------------------- */
+#ifndef _WIN32
 
 #ifdef HAVE_SOLLYA
-#include "FixFunctions/HOTBM.hpp"
-#include "FixFunctions/FunctionTable.hpp"
-#include "FixFunctions/PolyCoeffTable.hpp"
-#include "FixFunctions/FunctionEvaluator.hpp"
-#include "FixFunctions/PolynomialEvaluator.hpp"
 #endif
-
+#endif
 /* fixed-point ----------------------------------------------- */
-#include "FixSinCos/CordicSinCos.hpp"
-#include "FixSinCos/CordicAtan2.hpp"
 #ifdef HAVE_SOLLYA
-#include "FixSinCos/FixSinCos.hpp"
-#include "FixSinCos/FixSinOrCos.hpp"
-#include "FixFIR.hpp"
-#include "FixDCT.hpp"
-#include "FixHalfSine.hpp"
-#include "FixRCF.hpp"
-#include "FixRRCF.hpp"
+
+#include "FixedPointFIR.hpp"
+
+#include "FixedPointDCT.hpp"
 
 #endif
 
 /* floating-point -------------------------------------------- */ 
-#include "FPMultiplier.hpp"
-#include "FPMultiplierKaratsuba.hpp"
-#include "FPSquarer.hpp"
+#include "FPMult.hpp"
+#include "FPMultKaratsuba.hpp"
+#include "FPSquare.hpp"
 
+#ifndef _WIN32
 #ifdef HAVE_SOLLYA
 #include "ConstMult/CRFPConstMult.hpp"
 #endif
+#endif
 
-#include "FPAdderDualPath.hpp"
-#include "FPAdderSinglePath.hpp"
-#include "FPAdder3Input.hpp"
-#include "FPAddSub.hpp"
-
-#include "FPDiv.hpp"
-#include "FPExp.hpp" 
-#include "FPLog.hpp"
-#include "FPPow.hpp"
-
-#include "FPSqrt.hpp"
 // #include "FP2DNorm.hpp" // The world is not ready yet 
 #include "FPSqrtPoly.hpp"
 
-#include "LongAcc.hpp"
-#include "LongAcc2FP.hpp"
+#include "FPComposite/FPLargeAcc.hpp"
+#include "LargeAccToFP.hpp"
 
-#include "DotProduct.hpp"
-#include "FPSumOfSquares.hpp"
+#include "FPFPComposite/FPDotProduct.hpp"
+#include "FPSumOf3Squares.hpp"
 
 #include "FPPipeline.hpp"
-
-#include "Fix2FP.hpp"
-#include "FP2Fix.hpp"
-#include "InputIEEE.hpp"
-#include "OutputIEEE.hpp"
 
 
 /* Complex arithmetic */
@@ -169,30 +219,29 @@
 #include "Complex/FixedComplexMultiplier.hpp"
 
 
-/* test-bench related ---------------------------------------- */
-#include "TestBench.hpp"
 
 
 /* applications ---------------------------------------------- */
 
 /* Coil Inductance application */
-//#include "apps/CoilInductance/CoordinatesTableX.hpp"
-//#include "apps/CoilInductance/CoordinatesTableZ.hpp"
-//#include "apps/CoilInductance/CoordinatesTableY.hpp"
-//#include "apps/CoilInductance/CoilInductance.hpp"
+//#include "Apps/CoilInductance/CoordinatesTableX.hpp"
+//#include "Apps/CoilInductance/CoordinatesTableZ.hpp"
+//#include "Apps/CoilInductance/CoordinatesTableY.hpp"
+//#include "Apps/CoilInductance/CoilInductance.hpp"
 
 /* fast evaluation of the possible intrusion of a point within a 
 spheric enclosure -------------------------------------------- */ 
-#include "apps/Collision.hpp"
+#include "Apps/Collision.hpp"
 
 /* a floating-point fused multiply-accumulate operator for the 
 use withing matrix-multiplication scenarios ------------------ */ 
-#include "apps/FPFMAcc.hpp"
+#include "Apps/FPFMAcc.hpp"
 
 /* a 1D Jacobi computation kernel ---------------------------- */ 
-#include "apps/FPJacobi.hpp"
+#include "Apps/FPJacobi.hpp"
 
 /* logarithmic number system  -------------------------------- */ 
+#ifndef _WIN32
 #ifdef HAVE_LNS
 #include "LNS/LNSAddSub.hpp"
 #include "LNS/LNSAdd.hpp"
@@ -205,9 +254,11 @@ use withing matrix-multiplication scenarios ------------------ */
 #include "LNS/AtanPow.hpp"
 #include "LNS/LogSinCos.hpp"
 #endif
+#endif
+#endif /////////////////////////////////////////////////////0
 
 /* misc ------------------------------------------------------ */
-#include "Wrapper.hpp"
+#include "TestBenches/Wrapper.hpp"
 #include "UserDefinedOperator.hpp"
 #include "Plotter.hpp"
 

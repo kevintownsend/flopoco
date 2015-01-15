@@ -334,11 +334,8 @@ namespace flopoco{
 	}
 
 	void FPPipeline::generateVHDL_c(node* n, bool top){
-#if 0
-		REPORT(DETAILED, "Generating VHDL for node " << n->name );
-#else
-		REPORT(DETAILED, "Generating VHDL" );
-#endif				
+		REPORT(DETAILED, "Generating VHDL ... ");
+				
 		if (n->type == 0){
 			//we start at cycle 0, for now
 			setCycle(0);
@@ -409,7 +406,7 @@ namespace flopoco{
 		case 1:{ //adder 
 			REPORT(DETAILED, " instance adder");
 						
-			op1 = new FPAdderSinglePath(target_, wE, wF, wE, wF, wE, wF);
+			op1 = new FPAddSinglePath(target_, wE, wF, wE, wF, wE, wF);
 			oplist.push_back(op1);
 
 			inPortMap( op1, "X", n->nodeArray->n->name);
@@ -425,7 +422,7 @@ namespace flopoco{
 		case 2:{ //subtracter 
 			REPORT(DETAILED, " instance subtracter");
 						
-			op1 = new FPAdderSinglePath(target_, wE, wF, wE, wF, wE, wF);
+			op1 = new FPAddSinglePath(target_, wE, wF, wE, wF, wE, wF);
 			oplist.push_back(op1);
 
 			ostringstream temp;
@@ -482,7 +479,7 @@ namespace flopoco{
 				vhdl << instance(op1, tmp.str())<<endl;
 			}else{
 				//we just plug-in a regular multiplier
-				op1 = new FPMultiplier(target_, wE, wF, wE, wF, wE, wF);
+				op1 = new FPMult(target_, wE, wF, wE, wF, wE, wF);
 				oplist.push_back(op1);
 
 				inPortMap( op1, "X", n->nodeArray->n->name);
@@ -515,7 +512,7 @@ namespace flopoco{
 		case 5:{ //squarer
 			REPORT(DETAILED, " instance squarer");
 						
-			op1 = new FPSquarer(target_, wE, wF, wF);
+			op1 = new FPSquare(target_, wE, wF, wF);
 			oplist.push_back(op1);
 
 			inPortMap( op1, "X", n->nodeArray->n->name);

@@ -69,11 +69,11 @@ namespace flopoco{
 	}
 
 	void Target::setUseHardMultipliers(bool v){
-		useHardMultipliers_ = v;  
+		hasHardMultipliers_ = v;  
 	}
 	
-	bool Target::useHardMultipliers(){
-		return useHardMultipliers_ ;
+	bool Target::hasHardMultipliers(){
+		return hasHardMultipliers_ ;
 	}
 
 	bool Target::hasFastLogicTernaryAdders(){

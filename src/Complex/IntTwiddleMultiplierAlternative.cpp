@@ -88,13 +88,13 @@ namespace flopoco{
 			}
 			
 			if(multiplierMode == 0){
-				multiplyOperatorCp = new FixRealKCM(target, -wF, wI-1, 1, -2*wF, getTwiddleConstantString(TWIDDLECP));
+				multiplyOperatorCp = new FixRealKCM(target, true, wI-1, -wF,1, -2*wF, getTwiddleConstantString(TWIDDLECP));
 				oplist.push_back(multiplyOperatorCp);
 				
-				multiplyOperatorS = new FixRealKCM(target, -2*wF, wI+(wOutGamma-w-wF)-1, 1, -4*wF, getTwiddleConstantString(TWIDDLES));
+				multiplyOperatorS = new FixRealKCM(target, true, wI+(wOutGamma-w-wF)-1, -2*wF,  -4*wF, getTwiddleConstantString(TWIDDLES));
 				oplist.push_back(multiplyOperatorS);
 				
-				multiplyOperatorCp2 = new FixRealKCM(target, -4*wF, wI+(wOutBeta-w-3*wF)-1, 1, -8*wF, getTwiddleConstantString(TWIDDLECP));
+				multiplyOperatorCp2 = new FixRealKCM(target, true, wI+(wOutBeta-w-3*wF)-1, -4*wF, -8*wF, getTwiddleConstantString(TWIDDLECP));
 				oplist.push_back(multiplyOperatorCp2);
 			}else{
 				multiplyOperatorCp = new IntConstMult(target, w, (twCp<0 ? (-1)*twCp : twCp));

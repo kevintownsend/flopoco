@@ -156,34 +156,34 @@ flopoco Fix2FP -30 50 1 8 23
 flopoco Fix2FP -120 120 0 11 52
 
 
-#         FPAdder wE wF
+#         FPAdd wE wF
 
-flopoco FPAdder 8 23
-flopoco FPAdder 11 52
-flopoco FPAdder 15 112
-
-
-#         FPMultiplier wE wF_in wF_out
-
-flopoco FPMultiplier 8 23 23
-flopoco FPMultiplier 8 23 52
-flopoco FPMultiplier 11 52 23
+flopoco FPAdd 8 23
+flopoco FPAdd 11 52
+flopoco FPAdd 15 112
 
 
-#          FPMultiplierKaratsuba
+#         FPMult wE wF_in wF_out
 
-flopoco FPMultiplierKaratsuba 8 23 23
-flopoco FPMultiplierKaratsuba 8 23 52
-flopoco FPMultiplierKaratsuba 11 52 23
-
-
-# FPMultiplierTiling wE wF_in wF_out ratio timeInMinutes
+flopoco FPMult 8 23 23
+flopoco FPMult 8 23 52
+flopoco FPMult 11 52 23
 
 
-# FPSquarer wE wFin wFout
+#          FPMultKaratsuba
 
-flopoco FPSquarer 8 23 23
-flopoco FPSquarer 11 52 52
+flopoco FPMultKaratsuba 8 23 23
+flopoco FPMultKaratsuba 8 23 52
+flopoco FPMultKaratsuba 11 52 23
+
+
+# FPMultTiling wE wF_in wF_out ratio timeInMinutes
+
+
+# FPSquare wE wFin wFout
+
+flopoco FPSquare 8 23 23
+flopoco FPSquare 11 52 52
 
 
 #   FPDiv wE wF
@@ -212,12 +212,12 @@ flopoco FPSqrtPoly 11 52 5
 #    CRFPConstMult wE_in wF_in wE_out wF_out constant_expr
 #TODO
 
-#    LongAcc wE_in wF_in MaxMSB_in LSB_acc MSB_acc
+#    FPLargeAcc wE_in wF_in MaxMSB_in LSB_acc MSB_acc
 #TODO, no EMULATE YET
-#flopoco LongAcc 8 23 30 -30 50
-#flopoco LongAcc 11 52 50 -50 60
+#flopoco FPLargeAcc 8 23 30 -30 50
+#flopoco FPLargeAcc 11 52 50 -50 60
 
-#    LongAcc2FP LSB_acc MSB_acc wE_out wF_out
+#    LargeAccToFP LSB_acc MSB_acc wE_out wF_out
 #TODO
 
 

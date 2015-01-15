@@ -1,4 +1,3 @@
-@
 flopoco FixRealKCM -4 0  0  -10   "log(2)"
 flopoco FixRealKCM -5 0  0  -10   "log(2)"
 flopoco FixRealKCM -6 0  0  -10   "log(2)"

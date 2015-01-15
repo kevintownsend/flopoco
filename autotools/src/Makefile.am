@@ -42,9 +42,9 @@ noinst_HEADERS = \
           IntConstDiv.hpp \
           FPConstDiv.hpp \
           FPPow.hpp \
-          FPLog/FirstInvTable.hpp \
-          FPLog/FirstLogTable.hpp \
-          FPLog/OtherLogTable.hpp \
+          fplogarithm/FirstInvTable.hpp \
+          fplogarithm/FirstLogTable.hpp \
+          fplogarithm/OtherLogTable.hpp \
           LNS/AtanPow.hpp \
           LNS/Cotran.hpp \
           LNS/CotranHybrid.hpp \
@@ -75,18 +75,18 @@ noinst_HEADERS = \
           DualTable2.hpp \
           Fix2FP.hpp \
           FP2Fix.hpp \
-          FPAdderDualPath.hpp \
-          FPAdderSinglePath.hpp \
-          FPAdder3Input.hpp \
+          FPAddDualPath.hpp \
+          FPAddSinglePath.hpp \
+          FPAdd3Input.hpp \
           FPDiv.hpp \
           FPExp.hpp \
           FPLog.hpp \
-          FPMultiplier.hpp \
-          FPMultiplierKaratsuba.hpp \
-          FPNumber.hpp \
+          FPMult.hpp \
+          FPMultKaratsuba.hpp \
+          TestBenchs/FPNumber.hpp \
           FPSqrt.hpp \
           FPSqrtPoly.hpp \
-          FPSquarer.hpp \
+          FPSquare.hpp \
           IEEENumber.hpp \
           InputIEEE.hpp \
           IntAdder.hpp \
@@ -125,33 +125,33 @@ noinst_HEADERS = \
           IntMultipliers/FixSinPoly.hpp \
           IntMultipliers/FixXPow3Div6.hpp \
           ConstMult/IntConstDiv3.hpp \
-          LongAcc2FP.hpp \
-          LongAcc.hpp LZOC.hpp LZOCShifterSticky.hpp\
+          LargeAccToFP.hpp \
+          FPLargeAcc.hpp LZOC.hpp \
           OutputIEEE.hpp \
           Shifters.hpp \
-          FixFunctions/Function.hpp \
-          FixFunctions/PiecewiseFunction.hpp \
-          FixFunctions/FunctionTable.hpp \
-          FixFunctions/PolyCoeffTable.hpp \
-          FixFunctions/PolynomialEvaluator.hpp \
-          FixFunctions/FunctionEvaluator.hpp \
-          FixFunctions/HOTBM.hpp \
-          FixFunctions/HOTBM/Component.hh \
-          FixFunctions/HOTBM/HOTBMInstance.hh\
-          FixFunctions/HOTBM/Param.hh\
-          FixFunctions/HOTBM/Exhaustive.hh\
-          FixFunctions/HOTBM/Util.hh\
-          FixFunctions/HOTBM/PWPolynomial.hh\
-          FixFunctions/HOTBM/Polynomial.hh\
-          FixFunctions/HOTBM/MPPolynomial.hh\
-          FixFunctions/HOTBM/Power.hh\
-          FixFunctions/HOTBM/PowerAdHoc.hh\
-          FixFunctions/HOTBM/TermROM.hh\
-          FixFunctions/HOTBM/Term.hh\
-          FixFunctions/HOTBM/Minimax.hh\
-          FixFunctions/HOTBM/PowerROM.hh\
-          FixFunctions/HOTBM/TermPowMult.hh \
-          FixFunctions/GenericEvaluator.hpp \
+          FixedPointFunctions/Function.hpp \
+          FixedPointFunctions/PiecewiseFunction.hpp \
+          FixedPointFunctions/FunctionTable.hpp \
+          FixedPointFunctions/PolyCoeffTable.hpp \
+          FixedPointFunctions/PolynomialEvaluator.hpp \
+          FixedPointFunctions/FunctionEvaluator.hpp \
+          FixedPointFunctions/HOTBM.hpp \
+          FixedPointFunctions/HOTBM/Component.hh \
+          FixedPointFunctions/HOTBM/HOTBMInstance.hh\
+          FixedPointFunctions/HOTBM/Param.hh\
+          FixedPointFunctions/HOTBM/Exhaustive.hh\
+          FixedPointFunctions/HOTBM/Util.hh\
+          FixedPointFunctions/HOTBM/PWPolynomial.hh\
+          FixedPointFunctions/HOTBM/Polynomial.hh\
+          FixedPointFunctions/HOTBM/MPPolynomial.hh\
+          FixedPointFunctions/HOTBM/Power.hh\
+          FixedPointFunctions/HOTBM/PowerAdHoc.hh\
+          FixedPointFunctions/HOTBM/TermROM.hh\
+          FixedPointFunctions/HOTBM/Term.hh\
+          FixedPointFunctions/HOTBM/Minimax.hh\
+          FixedPointFunctions/HOTBM/PowerROM.hh\
+          FixedPointFunctions/HOTBM/TermPowMult.hh \
+          FixedPointFunctions/GenericEvaluator.hpp \
           Complex/FixedComplexAdder.hpp \
           Complex/FixedComplexMultiplier.hpp \
           Table.hpp \
@@ -160,16 +160,12 @@ noinst_HEADERS = \
           TestCase.hpp \
           UserDefinedOperator.hpp \
           Wrapper.hpp \
-          FPSumOfSquares.hpp \
-          FixSinCos/FixSinCos.hpp \
-          FixSinCos/FixSinOrCos.hpp \
-          FixSinCos/CordicSinCos.hpp \
-          FixSinCos/CordicAtan2.hpp\
-          FixFIR.hpp \
-          FixDCT.hpp \
-          FixHalfSine.hpp \
-          FixRCF.hpp \
-          FixRRCF.hpp \
+          FPSumOf3Squares.hpp \
+          FixSinCos.hpp \
+          CORDIC/FixedPointSinOrCos.hpp \
+          CORDIC/CordicSinCos.hpp \
+          FixedPointFIR.hpp \
+          FixedPointDCT.hpp \
           FPAddSub.hpp \
           random/urng/LutSrRng.hpp
 
@@ -244,43 +240,39 @@ libflopoco_la_SOURCES = \
                         LZOC.cpp \
                         LZOCShifterSticky.cpp \
                         Shifters.cpp \
-                        FixFunctions/Function.cpp \
-                        FixFunctions/PiecewiseFunction.cpp \
-                        FixFunctions/FunctionTable.cpp \
-                        FixFunctions/PolyCoeffTable.cpp \
-                        FixFunctions/PolynomialEvaluator.cpp \
-                        FixFunctions/FunctionEvaluator.cpp \
-                        FixFunctions/HOTBM.cpp \
-                        FixFunctions/HOTBM/HOTBMInstance.cc\
-                        FixFunctions/HOTBM/Param.cc\
-                        FixFunctions/HOTBM/Exhaustive.cc\
-                        FixFunctions/HOTBM/Util.cc\
-                        FixFunctions/HOTBM/PWPolynomial.cc\
-                        FixFunctions/HOTBM/Polynomial.cc\
-                        FixFunctions/HOTBM/MPPolynomial.cc\
-                        FixFunctions/HOTBM/Power.cc\
-                        FixFunctions/HOTBM/PowerAdHoc.cc\
-                        FixFunctions/HOTBM/TermROM.cc\
-                        FixFunctions/HOTBM/Term.cc\
-                        FixFunctions/HOTBM/Minimax.cc\
-                        FixFunctions/HOTBM/PowerROM.cc\
-                        FixFunctions/HOTBM/TermPowMult.cc \
-                        FixSinCos/FixSinCos.cpp \
-                        FixSinCos/FixSinOrCos.cpp \
-                        FixSinCos/CordicSinCos.cpp \
-                        FixSinCos/CordicAtan2.cpp\
-                        FixFIR.cpp \
-                        FixDCT.cpp \
-                        FixHalfSine.cpp \
-                        FixRCF.cpp \
-                        FixRRCF.cpp \
-                        FPAdderDualPath.cpp \
-                        FPAdderSinglePath.cpp \
-                        FPAdder3Input.cpp \
+                        FixedPointFunctions/Function.cpp \
+                        FixedPointFunctions/PiecewiseFunction.cpp \
+                        FixedPointFunctions/FunctionTable.cpp \
+                        FixedPointFunctions/PolyCoeffTable.cpp \
+                        FixedPointFunctions/PolynomialEvaluator.cpp \
+                        FixedPointFunctions/FunctionEvaluator.cpp \
+                        FixedPointFunctions/HOTBM.cpp \
+                        FixedPointFunctions/HOTBM/HOTBMInstance.cc\
+                        FixedPointFunctions/HOTBM/Param.cc\
+                        FixedPointFunctions/HOTBM/Exhaustive.cc\
+                        FixedPointFunctions/HOTBM/Util.cc\
+                        FixedPointFunctions/HOTBM/PWPolynomial.cc\
+                        FixedPointFunctions/HOTBM/Polynomial.cc\
+                        FixedPointFunctions/HOTBM/MPPolynomial.cc\
+                        FixedPointFunctions/HOTBM/Power.cc\
+                        FixedPointFunctions/HOTBM/PowerAdHoc.cc\
+                        FixedPointFunctions/HOTBM/TermROM.cc\
+                        FixedPointFunctions/HOTBM/Term.cc\
+                        FixedPointFunctions/HOTBM/Minimax.cc\
+                        FixedPointFunctions/HOTBM/PowerROM.cc\
+                        FixedPointFunctions/HOTBM/TermPowMult.cc \
+                        FixSinCos.cpp \
+                        CORDIC/FixedPointSinOrCos.cpp \
+                        CORDIC/CordicSinCos.cpp \
+                        FixedPointFIR.cpp \
+                        FixedPointDCT.cpp \
+                        FPAddDualPath.cpp \
+                        FPAddSinglePath.cpp \
+                        FPAdd3Input.cpp \
                         FPAddSub.cpp \
-                        FPMultiplier.cpp \
-                        FPMultiplierKaratsuba.cpp \
-                        FPSquarer.cpp \
+                        FPMult.cpp \
+                        FPMultKaratsuba.cpp \
+                        FPSquare.cpp \
                         FPDiv.cpp \
                         FPSqrt.cpp \
                         FPSqrtPoly.cpp \
@@ -298,15 +290,15 @@ libflopoco_la_SOURCES = \
                         ConstMult/FPRealKCM.cpp \
                         IntConstDiv.cpp\
                         FPConstDiv.cpp\
-                        FPLog/FirstInvTable.cpp \
-                        FPLog/FirstLogTable.cpp \
-                        FPLog/OtherLogTable.cpp \
+                        fplogarithm/FirstInvTable.cpp \
+                        fplogarithm/FirstLogTable.cpp \
+                        fplogarithm/OtherLogTable.cpp \
                         FPLog.cpp \
                         FPExp.cpp \
                         FPPow.cpp \
-                        LongAcc.cpp \
-                        LongAcc2FP.cpp \
-                        FPSumOfSquares.cpp \
+                        FPLargeAcc.cpp \
+                        LargeAccToFP.cpp \
+                        FPSumOf3Squares.cpp \
                         Fix2FP.cpp \
                         InputIEEE.cpp \
                         OutputIEEE.cpp \
@@ -319,7 +311,7 @@ libflopoco_la_SOURCES = \
                         LNS/LNSDiv.cpp \
                         LNS/LNSSqrt.cpp \
                         LNS/AtanPow.cpp \
-                        FixFunctions/GenericEvaluator.cpp \
+                        FixedPointFunctions/GenericEvaluator.cpp \
                         Complex/FixedComplexAdder.cpp \
                         Complex/FixedComplexMultiplier.cpp \
                         LNS/LogSinCos.cpp \
@@ -327,7 +319,7 @@ libflopoco_la_SOURCES = \
                         apps/FPFMAcc.cpp \
                         apps/FPJacobi.cpp \
                         TestCase.cpp \
-                        FPNumber.cpp \
+                        TestBenchs/FPNumber.cpp \
                         IEEENumber.cpp \
                         UtilSollya.cc \
                         FP2Fix.cpp \

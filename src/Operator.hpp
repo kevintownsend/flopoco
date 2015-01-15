@@ -10,7 +10,7 @@
 #include <gmpxx.h>
 #include "Target.hpp"
 #include "Signal.hpp"
-#include "TestCase.hpp"
+#include "TestBenches/TestCase.hpp"
 #include <float.h>
 #include <utility>
 #include <vector>
@@ -18,6 +18,7 @@
 #include "utils.hpp"
 #include "Tools/ResourceEstimationHelper.hpp"
 #include "Tools/FloorplanningHelper.hpp"
+#include "TestState.hpp"
 
 using namespace std;
 
@@ -29,15 +30,13 @@ namespace flopoco {
 	// global const variables
 	static const map<string, double> emptyDelayMap;
 	const std::string tab = "   ";
-	
+
 	// Reporting levels
 #define LIST 0       // information necessary to the user of FloPoCo
 #define INFO 1       // information useful to the user of FloPoCo
 #define DETAILED 2   // information that shows how the algorithm works
 #define DEBUG 3      // debug info, useful mostly to developers
 #define FULL 4       // pure noise
-
-
 
 #define INNER_SEPARATOR "................................................................................"
 #define DEBUG_SEPARATOR "________________________________________________________________________________"
@@ -132,7 +131,7 @@ public:
 		addInput (name, 1, false);
 	}
 
-	/** Adds an output signal to the operator.
+	/** Adds  signal to the operator.
 	 * Adds a signal of type Signal::out to the the I/O signal list.
 	 * @param name  the name of the signal
 	 * @param width the number of bits of the signal.
@@ -153,6 +152,24 @@ public:
 	void addOutput(const char* name) {
 		addOutput (name, 1, 1, false);
 	}
+
+#if 1
+	// Test:
+	// One option is that fixed-point I/Os should always be plain std_logic_vectors.
+	// It just makes the framework simpler, and anyway typing is managed internally
+	// FP I/O need to be typed to manage the testbenches, e.g. FP equality does not resume to equality on the bit vectors.
+	// This is not the case for fixed-point
+	// (comment by F de Dinechin)
+
+	/** Adds a fixed-point input signal to the operator.
+	 */
+	void addFixInput(const std::string name, const bool isSigned, const int msb, const int lsb);
+
+
+	/** Adds a fixed-point output signal to the operator.
+	 */
+	void addFixOutput(const std::string name, const bool isSigned, const int msb, const int lsb, const int numberOfPossibleOutputValues=1);
+#endif
 
 	/** Adds a floating point (FloPoCo format) input signal to the operator.
 	 * Adds a signal of type Signal::in to the the I/O signal list, 
@@ -250,7 +267,8 @@ public:
 	*/
 	void setNameWithFreq(std::string operatorName = "UnknownOperator");
 
-	/** Sets Operator name to given name.
+	/** Sets Operator name to givenName.
+	 * Sets the name of the operator to operatorName.
 	 * @param operatorName new name of the operator
 	*/
 	void setName(std::string operatorName = "UnknownOperator");
@@ -267,6 +285,12 @@ public:
 	 *                formed with the operator internal parameters
 	*/
 	void setName(std::string prefix, std::string postfix);
+
+
+	/** Adds a comment before the entity declaration, along with the copyright string etc.
+			The "comment" string should include -- at the beginning of each line.
+	*/
+	void addHeaderComment(std::string comment);
 		
 	/** Return the operator name. 
 	 * Returns a string value representing the name of the operator. 
@@ -380,7 +404,7 @@ public:
 	double getSignalDelay(string name);
 
 
-	/** Declares a signal implicitely by having it appearing on the Left Hand Side of a VHDL assignment
+	/** Declares a signal appearing on the Left Hand Side of a VHDL assignment
 	 * @param name is the name of the signal
 	 * @param width is the width of the signal (optional, default 1)
 	 * @param isbus: a signal of width 1 is declared as std_logic when false, as std_logic_vector when true (optional, default false)
@@ -399,7 +423,23 @@ public:
 		return declare(name, 1, false, regType);
 	}
 
-	// TODO: add methods that allow for signals with reset (when rewriting LongAcc for the new framework)
+	/** Declares a fixed-point signal on the Left Hand Side of a VHDL assignment
+	 * @param name is the name of the signal
+	 * @return name
+	 */
+	string declareFixPoint(string name, const bool isSigned, const int MSB, const int LSB, Signal::SignalType regType = Signal::wire );
+
+	/** Resizes a fixed-point signal and assigns it to a new declared signal.
+			May zero-extend, sign-extend, or truncate.
+			Warns at debug level when truncating LSBs, and warns a bit louder when truncating MSBs.  
+	 * @param lhsName is the name of the new (resized) signal
+	 * @param rhsName is the name of the old (to be resized) signal
+	 * @return name
+	 */
+	void resizeFixPoint(string lhsName, string rhsName, const int MSB, const int LSB, const int indentLevel=1);
+
+
+	// TODO: add methods that allow for signals with reset (when rewriting FPLargeAcc for the new framework)
 
 
 #if 1
@@ -495,7 +535,7 @@ public:
 	/**
 	 * Gets the correct value associated to one or more inputs.
 	 * @param tc the test case, filled with the input values, to be filled with the output values.
-	 * @see FPAdder for an example implementation
+	 * @see FPAdd for an example implementation
 	 */
 	virtual void emulate(TestCase * tc);
 		
@@ -512,7 +552,7 @@ public:
 	 * Generate Random Test case identified by an integer . There is a default
 	 * implementation using a uniform random generator, but most
 	 * operators are not exercised efficiently using such a
-	 * generator. For instance, in FPAdder, the random number generator
+	 * generator. For instance, in FPAdd, the random number generator
 	 * should be biased to favor exponents which are relatively close
 	 * so that an effective addition takes place.
 	 * This function create a new TestCase (to be free after use)
@@ -537,7 +577,7 @@ public:
 	 * Append random test cases to a test case list. There is a default
 	 * implementation using a uniform random generator, but most
 	 * operators are not exercised efficiently using such a
-	 * generator. For instance, in FPAdder, the random number generator
+	 * generator. For instance, in FPAdd, the random number generator
 	 * should be biased to favor exponents which are relatively close
 	 * so that an effective addition takes place.
 	 * In most cases you do need to overload this method, 
@@ -917,11 +957,9 @@ public:
 	}
 
 
-	// TODO this probably doesn't belong here.
-	/** Extend the sign of a signal of this operator given by name */
+
 	string signExtend(string name, int w);
 	
-	/** Extend a signal of this operator given by name, by left-padding with zeroes */
 	string zeroExtend(string name, int w);
 
 	int level; //printing issues
@@ -1335,6 +1373,9 @@ public:
 	 * function and according to the user placed constraints.
 	 */
 	std::string createFloorplan();
+
+	static float pickRandomNum ( float limit = 0, int fp = 8, int sp = 4 );
+	static bool checkExistence ( TestState parameters, string opName );
 	/////////////////////////////////////////////////////////////////////////////////////////////////
 
 
@@ -1368,6 +1409,7 @@ public:
 	FloorplanningHelper*		flpHelper;					/**< Tools for floorplanning */
 	/////////////////////////////////////////////////////////////////////////////////////////////////
 	
+	static multimap < string, TestState > testMemory;			/**< multimap which will be used to test if the selected operator already had been tested */
 
 protected:    
 	Target*             target_;          					/**< The target on which the operator will be deployed */
@@ -1386,7 +1428,7 @@ protected:
 	
 
 private:
-	int                    stdLibType_;                 	/**< 0 will use the Synopsys ieee.std_logic_unsigned, -1 uses std_logic_unsigned, 1 uses ieee numeric_std  (preferred) */
+	int                    stdLibType_;                 	/**< 0 will use the Synopsys ieee.std_logic_unsigned, -1 uses std_logic_signed, 1 uses ieee numeric_std  (preferred) */
 	int                    numberOfInputs_;             	/**< The number of inputs of the operator */
 	int                    numberOfOutputs_;            	/**< The number of outputs of the operator */
 	bool                   isSequential_;               	/**< True if the operator needs a clock signal*/
@@ -1400,6 +1442,7 @@ private:
 	bool                   hasRegistersWithAsyncReset_; 	/**< True if the operator has registers having an asynch reset */
 	bool                   hasRegistersWithSyncReset_;  	/**< True if the operator has registers having a synch reset */
 	string                 commentedName_;              	/**< Usually is the default name of the architecture.  */
+	string                 headerComment_;              	/**< Optional comment that gets added to the header. Possibly multiline.  */
 	string                 copyrightString_;            	/**< Authors and years.  */
 	int                    currentCycle_;               	/**< The current cycle, when building a pipeline */
 	double                 criticalPath_;               	/**< The current delay of the current pipeline stage */

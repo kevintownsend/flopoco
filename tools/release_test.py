@@ -5,7 +5,7 @@
 # knows that they are done. Before starting a fresh release it is
 # recommended to flush all the files and recover them from the svn.
 
-
+# TODO remove commands and replace the remaining uses  with subprocess
 
 import random
 import math

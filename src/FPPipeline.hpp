@@ -9,10 +9,10 @@
 #include <iostream>
 #include <fstream>
 
-#include "FPAdderSinglePath.hpp"
+#include "FPAddSinglePath.hpp"
 
-#include "FPMultiplier.hpp"
-#include "FPSquarer.hpp"
+#include "FPMult.hpp"
+#include "FPSquare.hpp"
 #include "FPSqrt.hpp"
 #include "FPExp.hpp"
 #include "FPLog.hpp"

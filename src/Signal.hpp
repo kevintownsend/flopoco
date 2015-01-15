@@ -5,16 +5,12 @@
 #include <sstream>
 #include <gmpxx.h>
 
-#ifdef _WIN32
-  #include "pstdint.h"
-#else
-  #include <inttypes.h>
-#endif
+#include <inttypes.h>
 
 namespace flopoco{
 
 	/**
-	 * A class representing a signal. This is the basic block that operators use
+	 * A class representing a signal. 
 	 */
 	class Signal
 	{
@@ -30,6 +26,17 @@ namespace flopoco{
 			registeredWithZeroInitialiser    /**< if the signal is registered, the it has a zero initialiser (but no reset) */
 		} SignalType;
 
+#if 0 // all these flags could be replaced with something like that
+		/** The possible arithmetic types of a bit vector*/
+		typedef enum {
+			unsigned_integer,          /**<  */
+			signed_integer,          /**<  */
+			unsigned_fixpoint,          /**<  */
+			signed_fixpoint,          /**<  */
+			floating_point          /**<  */
+		} ArithType;
+#endif
+
 		/** Signal constructor.
 		 * The standard constructor for signals which are not floating-point.
 		 * @param name      the name of the signal
@@ -38,6 +45,17 @@ namespace flopoco{
 		 * @param isBus     the flag which signals if the signal is a bus (std_logic_vector)
 		 */
 		Signal(const std::string name, const Signal::SignalType type, const int width = 1, const bool isBus=false);
+
+		/** Signal constructor.
+		 * The standard constructor for signals which are fixed-point.
+		 * @param name      the name of the signal
+		 * @param type      the type of the signal, @see SignalType
+		 * @param isSigned  true for signed fixed-point, false otherwise
+		 * @param MSB       the weight of the MSB
+		 * @param LSB       the weight of the LSB
+		 */
+		Signal(const std::string name, const SignalType type, const bool isSigned, const int MSB, const int LSB);
+
 		/** Signal constructor.
 		 * The standard constructor for signals which are floating-point.
 		 * @param name      the name of the signal
@@ -50,6 +68,10 @@ namespace flopoco{
 		/** Signal destructor.
 		 */		
 		~Signal();
+
+
+		/** When a signal was automatically created as a std_logic_vector, this enables to declare it as Fix */
+		void promoteToFix(const bool isSigned, const int MSB, const int LSB);
 	
 		/** Returns the name of the signal
 		 * @return the name of the signal
@@ -58,49 +80,65 @@ namespace flopoco{
 
 
 		/** Returns the width of the signal
-		 * @return the width of the signal
 		 */	
 		int width() const;
 
 	
 		/** Returns the exponent width of the signal
-		 * @return the width of the exponent if signal is isFP_
 		 */	
 		int wE() const;
 
 		/** Returns the fraction width of the signal
-		 * @return the width of the fraction if signal is isFP_
 		 */	
 		int wF() const;
 	
+		/** Returns the MSB weight of the (fixed-point) signal
+		 */	
+		int MSB() const;
+
+		/** Returns the LSB weight of the (fixed-point) signal
+		 */	
+		int LSB() const;
+	
 		/** Reports if the signal is a FloPoCo floating-point signal
-		 * @return if the signal is a FP signal
 		 */	
 		bool isFP() const;
 	
+		/** Reports if the signal is a fixed-point signal
+		 */	
+		bool isFix() const;
+
+		/** Reports if the signal is a signed fixed-point signal
+		 */	
+		bool isFixSigned() const;
+
+		/** Reports if the signal is an unsigned fixed-point signal
+		 */	
+		bool isFixUnsigned() const;
+
 		/** Reports if the signal is an IEEE floating-point signal
-		 * @return if the signal is a FP signal
 		 */	
 		bool isIEEE() const;
 
 		/** Reports if the signal has the bus flag active
-		 * @return true if the signal is of bus type (std_logic_vector)
 		 */		
 		bool isBus() const;
 
 		/** Returns the type of the signal
-		 * @return type of signal, @see SignalType
 		 */	
 		SignalType type() const;
 	
-		/** outputs the VHDL code for declaring this signal 
-		 * @return the VHDL for this signal. 
+		/** outputs the VHDL code for declaring this signal. TODO should be obsoleted?
 		 */	
 		std::string toVHDL();
 
-		/** obtain the name of a signal delayed by delay 
-		 * @param delay*/
-		std::string delayedName(int delay);
+		/** outputs the VHDL code for the type of this signal 
+		 */	
+		std::string toVHDLType();
+
+		/** obtain the name of a signal delayed by n cycles
+		 * @param delay in cycles */
+		std::string delayedName(int n);
 
 
 		/** outputs the VHDL code for declaring a signal with all its delayed versions
@@ -160,13 +198,15 @@ namespace flopoco{
 	
 		/**
 		 * Converts the value of the signal into a nicely formated VHDL expression,
-		 * including padding and putting quot or apostrophe. (Hex version.)
+		 * including padding and putting quote or apostrophe. (Hex version.)
 		 * @param v value
 		 * @param quot also put quotes around the value
 		 * @return a string holding the value in hexa
 		 */
 		std::string valueToVHDLHex(mpz_class v, bool quot = true);
 
+		void setName(std::string name);
+		void setType(SignalType t);
 
 	private:
 		std::string   name_;        /**< The name of the signal */
@@ -177,14 +217,15 @@ namespace flopoco{
 
 		int           lifeSpan_;    /**< The max delay that will be applied to this signal; */
 		int           cycle_;       /**<  the cycle at which this signal is active in a pipelined operator. 0 means synchronized with the inputs */
-
-
 	
 		bool          isFP_;        /**< If the signal is of the FloPoCo floating-point type */  
+		bool          isFix_;       /**< If the signal is of the FloPoCo fixed-point type */  
 		bool          isIEEE_;      /**< If the signal is of the IEEE floating-point type */  
 		int           wE_;          /**< The width of the exponent. Used for FP signals */
 		int           wF_;          /**< The width of the fraction. Used for FP signals */
-		
+		int           MSB_;         /**< MSB. Used for fixed-point signals */
+		int           LSB_;         /**< LSB. Used for fixed-point signals */
+		bool          isSigned_;    /**< true if this a signed fixed-point signals, false otherwise */
 		bool          isBus_;       /**< True is the signal is a bus (std_logic_vector)*/
 		double        delay_;       /**<  the delay of the signal, starting from a previous register level */
 

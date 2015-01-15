@@ -1,6 +1,5 @@
-@
-#         FPAdder wE wF
+#         FPAdd wE wF
 
-flopoco FPAdder 8 23
-flopoco FPAdder 11 52
-flopoco FPAdder 15 112
+flopoco FPAdd 8 23
+flopoco FPAdd 11 52
+flopoco FPAdd 15 112

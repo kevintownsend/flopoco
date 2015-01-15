@@ -5,6 +5,7 @@
 <head>
   <meta http-equiv="content-type" content="text/html; charset=iso-8859-1" />
   <title>FloPoCo user manual</title>
+  <meta name="generator" content="Amaya 9.54, see http://www.w3.org/Amaya/" />
 </head>
 
 <body>
@@ -19,7 +20,7 @@
 <h3>Single-line installation on Ubuntu 12.10</h3>
 Copy this in a dash/bash shell (and enter your password when prompted):
 
-<p><kbd>yes | sudo apt-get install g++ libgmp3-dev libmpfr-dev libxml2-dev bison libmpfi-dev flex cmake libboost-all-dev libgsl0-dev && wget perso.ens-lyon.fr/damien.stehle/fplll/libfplll-3.0.12.tar.gz && tar xzf libfplll-3.0.12.tar.gz && cd libfplll-3.0.12/ && ./configure && make -j2  && sudo make install && cd .. && wget https://gforge.inria.fr/frs/download.php/28571/sollya-3.0.tar.gz && tar xzf sollya-3.0.tar.gz && cd sollya-3.0/ && ./configure && make -j2  && sudo make install && cd .. && wget https://gforge.inria.fr/frs/download.php/32591/flopoco-2.5.0.tgz && tar xzf flopoco-2.5.0.tgz && cd flopoco-2.5.0/ && cmake . && make -j2  && ./flopoco</kbd></p>
+<p><kbd>yes | sudo apt-get install g++ libgmp3-dev libmpfr-dev libfplll-dev libxml2-dev bison libmpfi-dev flex cmake libboost-all-dev libgsl0-dev && wget https://gforge.inria.fr/frs/download.php/33151/sollya-4.1.tar.gz && tar xzf sollya-4.1.tar.gz && cd sollya-4.1/ && ./configure && make -j4  && sudo make install && cd .. && wget https://gforge.inria.fr/frs/download.php/31858/flopoco-3.0.tgz  && tar xzf flopoco-3.0.tgz && cd flopoco-3.0/ && cmake . && make -j4  && ./flopoco</kbd></p>
 
 <em>We would welcome similar installation scripts for other platforms.</em>
 
@@ -412,6 +413,8 @@ are flushed to zero.
 
 <h3>Floating-point pipelined datapath generation </h3> 
 
+Current FloPoCo release is proud to offer in <i>early alpha</i> version:
+
   <dt><code style="color: blue;">FPPipeline filename wE wF</code></dt>
     <dd> The operator receives the <i>filename</i> containing an
     untimed, untyped description (Python-like) of the datapath to be
@@ -445,12 +448,8 @@ are flushed to zero.
    		</tr>
    		</table>
 	<br/>
-	The currently supported operators are: +,-,*,/, sqr(), sqrt(), exp(), log(). For more than one output, use  <code>output x y z</code>.
+	The currently supported operators are: +,-,*,/, sqr(), sqrt(), exp(), log(). 
     </dd>
-
-FPPipeline is mostly a demonstrator of how FloPoCo could be used to assemble a correct-by-conclusion complex pipeline. Therefore this feature is not complete, doesn't include all the FloPoCo operators, doesn't implement even the most basic optimizations, etc.	<br/>
-
- For more power at barely more development cost, consider writing your pipeline as a FloPoCo class using the FloPoCo library.  <a href="flopoco_developer_manual.pdf">Documentation for this is here.</a>
 
 <h3>Long fixed-point accumulator, and derivatives</h3>
 These operators are described in all the gory details
@@ -769,6 +768,10 @@ The test vectors are coded in the VHDL of the test bench, and can therefore be e
 <p>Example:<br/>
 <code>flopoco FPAdder 8 16  TestBenchFile 20000</code>
 </p>
+	</dd>
+	<dt><code style="color: blue;">./flopoco_soaktest [fileName]</code></dt>
+	<dd>
+<code>flopoco_soaktest</code> is the executable, result of the <code>main_test.cpp</code> which launch several testBenches on different implement operators. Operators to be treated are specified in the text file passed in parameters. By default, if no file are specified, it exists a file named <code>soaktestList</code> which contains the list of all operators which can be treated.
 	</dd>
 </dl>
 </p>
