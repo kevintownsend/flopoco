@@ -1,11 +1,8 @@
-<?xml version="1.0" encoding="iso-8859-1"?>
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML Basic 1.0//EN"
-      "http://www.w3.org/TR/xhtml-basic/xhtml-basic10.dtd">
+<!DOCTYPE html>
 <html>
 <head>
   <meta http-equiv="content-type" content="text/html; charset=iso-8859-1" />
   <title>FloPoCo user manual</title>
-  <meta name="generator" content="Amaya 9.54, see http://www.w3.org/Amaya/" />
 </head>
 
 <body>
@@ -17,18 +14,19 @@
 <hr/>
 <h2>Installation</h2>
 
-<h3>Single-line installation on Ubuntu 12.10</h3>
+<h3>Single-line installation on Ubuntu 14.04 LTS and 14.10</h3>
 Copy this in a dash/bash shell (and enter your password when prompted):
 
-<p><kbd>yes | sudo apt-get install g++ libgmp3-dev libmpfr-dev libfplll-dev libxml2-dev bison libmpfi-dev flex cmake libboost-all-dev libgsl0-dev && wget https://gforge.inria.fr/frs/download.php/33151/sollya-4.1.tar.gz && tar xzf sollya-4.1.tar.gz && cd sollya-4.1/ && ./configure && make -j4  && sudo make install && cd .. && wget https://gforge.inria.fr/frs/download.php/31858/flopoco-3.0.tgz  && tar xzf flopoco-3.0.tgz && cd flopoco-3.0/ && cmake . && make -j4  && ./flopoco</kbd></p>
+<p><kbd>yes | sudo apt-get install g++ libgmp3-dev libmpfr-dev libfplll-dev libxml2-dev bison libmpfi-dev flex cmake libboost-all-dev libgsl0-dev && wget https://gforge.inria.fr/frs/download.php/33151/sollya-4.1.tar.gz && tar xzf sollya-4.1.tar.gz && cd sollya-4.1/ && ./configure && make -j4  && sudo make install && cd .. && wget https://gforge.inria.fr/frs/download.php/file/34430/flopoco-3.0.beta0.tgz  && tar xzf flopoco-3.0.beta0.tgz && cd flopoco-3.0.beta0/ && cmake . && make -j4  && ./flopoco</kbd></p>
 
+<p>This script probably works with only minor modifications on Debian and other Debian derivatives (Mint).</p>
 <em>We would welcome similar installation scripts for other platforms.</em>
 
 <h3>Generic installation instructions</h3>
 
 <p>FloPoCo may be compiled either using CMake or the autotools. 
-The recommended way is CMake, which is available for most Unix and
-Linux distributions and for Windows. If you prefer to use the autotools read the README.autotools file.</p>
+The recommended way is CMake, which is available for most Unix and Linux distributions and for Windows. 
+If you prefer to use the autotools read the README.autotools file.</p>
 
 <p><a href="http://www.cmake.org/">CMake</a> is included in  mainstream Linux/Unix distributions, and is available for other operating systems, including Windows.</p>
 
@@ -36,12 +34,16 @@ Linux distributions and for Windows. If you prefer to use the autotools read the
 all of which are probably available in your favourite Linux/Unix
 distribution. </p>
 
-<p>You really want to link FloPoCo
-against <a href="http://sollya.gforge.inria.fr/">Sollya</a>. This
-enables the more advanced operators (HOTBM, FunctionEvaluator). For this purpose, you
-must download,
-compile and install <a href="http://sollya.gforge.inria.fr/">Sollya</a>.
-FloPoCo is demonstrated to work with version 3.0 of Sollya and should work with future releases.
+<p>You really want to link FloPoCo against <a href="http://sollya.gforge.inria.fr/">Sollya</a>. 
+Most advanced operators depend on it, to the point that we don't check anymore that FloPoCo compiles without Sollya... 
+For this purpose, you must download, compile and install <a href="http://sollya.gforge.inria.fr/">Sollya</a>.
+<ul>
+<li>FloPoCo up to version 2.5.0 works with version 3.0 of Sollya. 
+This in turn requires libfpll-3.0, which is no longer available on the author's page: 
+<a href="https://gforge.inria.fr/frs/download.php/file/34429/libfplll-3.0.12.tar.gz"> a copy is available here </a>  </li>
+<li>FloPoCo version 3.0 and later require Sollya 4.0 or later (and libfplll has become a Debian package, which makes things simpler).</li>
+</ul>
+
 </p>
 
 <p>Compilation is a two-step process:</p>
@@ -51,9 +53,8 @@ FloPoCo is demonstrated to work with version 3.0 of Sollya and should work with 
 <p><code>make</code></p>
 
 
-<p>The adventurous may get FloPoCo from its <a
-href="https://gforge.inria.fr/scm/?group_id=1030">subversion
-repository</a>.</p>
+<p>The adventurous may get the development version of FloPoCo from its <a
+href="https://gforge.inria.fr/scm/?group_id=1030">source code repository</a>.</p>
 
 
 <hr/>
@@ -71,6 +72,14 @@ possibly sub-operators instanciated by them. To use these operators in your
 design, just add this generated file to your project.</p>
 
 <p>FloPoCo will also issue a report with useful information about the generated operators, such as the pipeline depth. In addition, three levels of verbosity are available.</p>
+<h3>Built-in help</h3>
+
+<p>To obtain a concise list of the available operators and options, simply type</p>
+
+<p><code>./flopoco </code></p>
+
+<p>In addition this help may be more in sync with the code than this file,
+especially if you are using a svn snapshot.</p>
 
 <h3>Examples</h3>
 
@@ -93,29 +102,26 @@ specified constant floating-point multiplier by 1768559438007110x2<sup>-50</sup>
 the other one for a needed sub-component (an integer multiplier for the
 significand multiplication).</p>
 
+
 <h3>Options</h3>
 
-<p>Several transversal options are available and will typically change the
-operators occuring after them in the list. For
-instance <code>-frequency=300</code> sets the target
-frequency. The <code>-name=UserProvidedName</code> option replaces the
-(ugly and parameter-dependent) name generated by FloPoCo for the next
-operator with a user-provided one. This allows in particular to change
-parameters while keeping the same entity name, so that these changes
-are transparent to the rest of the project. Options related to pipelining are reviewed below.</p>
+<p>Several transversal options are available and will typically change the operators occuring after them in the list. 
+<ul>
+<li><code>-target=Virtex5</code> sets the target hardware family. 
+	For a list of supported families see the command line. 
+	We typically target the highest speed grade available for a family (see <a href="#pipelining">below</a> for pipelining options).</li>
+<li><code>-frequency=300</code> sets the target frequency (in MHz).</li>
+<li> <code>-name=UserProvidedName</code> replaces the (ugly and parameter-dependent) entity name generated by FloPoCo for the next operator. 
+This allows in particular to change parameters while keeping the same entity name, so that these changes are transparent to the rest of the project. </li>
+<li><code>-plainStupidVHDL=yes</code> instructs FloPoCo to output concise and readable VHDL, using only + and * VHDL operators instead of FloPoCo adders and subtractors.
+This helps understanding the algorithms generated by FloPoCo, but typically prevents automatic pipelining. </li>
+<li><code>-useHardMult=no</code> instructs FloPoCo not to use hard multipliers or DSP block</li>
+<li><code>-unusedHardMultThreshold=0.3</code> instructs FloPoCo to use a hard multiplier (or DSP block) if less than 30% of this hard multiplier are unused. 
+ The ratio is between 0 and 1, such that
+ 0 means: any sub-multiplier that does not fully fill a DSP goes to logic; 
+ 1 means: any sub-multiplier, even very small ones, will consume a DSP</li>
+</ul>
 
-<p>The <code>-target</code> option selects the target FPGA family. We
-try to optimize for the highest speed grade available for this
-family (see <a href="#pipelining">below</a> for pipelining options).</p>
-<h3>Built-in help</h3>
-
-<p>To obtain a concise list of the available operators and options, simply
-type</p>
-
-<p><code>./flopoco </code></p>
-
-<p>In addition this help may be more in sync with the code than this file,
-especially if you are using a svn snapshot.</p>
 
 <h3>Helper programs</h3>
 

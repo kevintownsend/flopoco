@@ -44,13 +44,16 @@ namespace flopoco{
 		 * with a desired frequency of 400MHz and which is allowed to use hardware multipliers
 		 */ 
 		Target()   {
-			pipeline_          = true;
-			useClockEnable_       = false;
 			lutInputs_         = 4;
-			frequency_         = 400000000.;
 			hasHardMultipliers_= true;
 			hasFastLogicTernaryAdders_ = false;
 			id_                = "generic";
+
+			pipeline_          = true;
+			useClockEnable_       = false;
+			frequency_         = 400000000.;
+			useHardMultipliers_= true;
+			unusedHardMultThreshold_=0.5;
 		}
 	
 		/** The destructor */
@@ -314,15 +317,34 @@ namespace flopoco{
 		 */	
 		void setFrequency(double f);
 
-		 /** Sets the use of hardware multipliers 
-		  * @param v use or not harware multipliers
-		  */
-		 void setUseHardMultipliers(bool v);
-
-		/** Returns true if the operator for this target is allowed to use hardware multipliers
-		 * @return the status of hardware multipliers usage
+		/** Returns true if the hardware target has hardware multipliers
 		 */
 		bool hasHardMultipliers();
+
+
+		/** Returns true if the hardware target has hardware multipliers, and flopoco should use them
+		 */
+		bool useHardMultipliers();
+
+
+		/** defines if flopoco should use hardware multipliers
+		 */
+		void setUseHardMultipliers(bool v);
+
+		/** defines if flopoco should produce plain stupid VHDL
+		 */
+		void setPlainStupidVHDL(bool v);
+
+		/** should flopoco produce plain stupid VHDL */
+		bool plainStupidVHDL();
+
+		/** defines the unused hard mult threshold, see the the corresponding attribute for its meaning 
+		 */
+		void setUnusedHardMultThreshold(float v);
+
+		/** returns the value of the unused hard mult threshold, see the the corresponding attribute for its meaning 
+		 */
+		float unusedHardMultThreshold();
 
 		/** Returns true if the target has fast ternary adders in the logic blocks
 		 * @return the status of the hasFastLogicTernaryAdder_ parameter
@@ -606,12 +628,10 @@ namespace flopoco{
 		
 
 	protected:
+		/* Attributes that belong to the FPGA and are therefore static */
 		string id_;
 		string vendor_;
 		int    lutInputs_;          /**< The number of inputs for the LUTs */
-		bool   pipeline_;           /**< True if the target is pipelined/ false otherwise */
-		bool   useClockEnable_;     /**< True if we want a clock enable signal */
-		double frequency_;          /**< The desired frequency for the operator in Hz */
 		bool   hasHardMultipliers_; /**< If true, this target offers hardware multipliers */
 		bool   hasFastLogicTernaryAdders_; /**< If true, this target offers support for ternary addition at the cost of binary addition */
 		int    multXInputs_;        /**< The size for the X dimension of the hardware multipliers (the largest, if they are not equal) */
@@ -619,6 +639,18 @@ namespace flopoco{
 		long   sizeOfBlock_;		    /**< The size of a primitive memory block */
 		double maxFrequencyMHz_ ;   /**< The maximum practical frequency attainable on this target. An indicator of relative performance of FPGAs. 400 is for Virtex4 */
 
+		/* Attributes that belong to the application context and may be modified by the command line
+		 */
+		bool   pipeline_;           /**< True if the target is pipelined/ false otherwise */
+		double frequency_;          /**< The desired frequency for the operator in Hz */
+		bool   useClockEnable_;     /**< True if we want a clock enable signal */
+		bool   useHardMultipliers_;        /**< True if we want to use DSPs, False if we want to generate logic-only architectures */
+		float  unusedHardMultThreshold_;/**< Between 0 and 1. When we have a multiplier smaller than (or equal to) a DSP in both dimensions, 
+																		let r=(sub-multiplier area)/(DSP area); r is between 0 and 1
+																		if r >= 1-unusedHardMultThreshold_   then FloPoCo will use a DSP for this block 
+																		So: 0 means: any sub-multiplier that does not fully fill a DSP goes to logic
+																		1 means: any sub-multiplier, even very small ones, go to DSP*/  
+		bool   plainStupidVHDL_;     /**< True if we want the VHDL code to be concise and readable, with + and * instead of optimized FloPoCo operators. */
 		vector<Operator*>  globalOpList;  /**< A list of sub-operators that should be shared with most operators. Semantically it shouldn't be here but it makes code simpler */
 
 	};

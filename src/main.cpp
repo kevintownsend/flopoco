@@ -24,7 +24,6 @@
 #include <cstdlib>
 
 
-
 #include "FloPoCo.hpp"
 #include "utils.hpp"
 #include "main.hpp"
@@ -490,18 +489,14 @@ void usage(char *name, string opName = ""){
 		cerr << "           |StratixII|StratixIII|StratixIV|StratixV\n";
 		cerr << "           |CycloneII|CycloneIII|CycloneIV|CycloneV>      (default=Virtex5)\n";
 		cerr << "Options affecting the operators that follow them:\n";
-		cerr << "   -pipeline=<yes|no>                       (default=yes)\n";
-		cerr << "   -frequency=<target frequency in MHz>     (default=400)\n";
-		cerr << "   -clockenable=<yes|no>                    (default is no)\n";
-		cerr << "   -DSP_blocks=<yes|no>\n";
-		cerr << " optimize for the use of DSP blocks   (default=yes)\n";
-		cerr << "   -name=<entity name>\n";
-		cerr << " defines the name of the VHDL entity of the next operator\n";
-		cerr << "   -resourceEstimation=level\n";
-		cerr << " level=0 disables resource estimation (default)\n";
-		cerr << " level=1..3 larger number means more details\n";
-		cerr << "   -floorplanning=<yes|no>\n";
-		cerr << " generates a floorplan (experimental, Xilinx only)\n";
+		cerr << "   -name=<entity name>  (define the VHDL entity name)\n";
+		cerr << "   -pipeline=<yes|no>                                     (default=yes)\n";
+		cerr << "   -frequency=<target frequency in MHz>                   (default=400)\n";
+		cerr << "   -clockenable=<yes|no>                                  (default is no)\n";
+		cerr << "   -plainStupidVHDL=<yes|no>                              (default=no)\n";
+		cerr << "   -unusedHardMultThreshold=<float between 0 and 1>       (default=0.5)\n";
+		cerr << "   -resourceEstimation=<0..3> (experimental)              (default=0) \n";
+		cerr << "   -floorplanning=<yes|no> (experimental, Xilinx only)    (default=no)\n";
 		cerr << "Debugging options, affecting the operators that follow them:\n";
 		cerr << "   -verbose=<0|1|2|3>   verbosity level: default=0 (quiet), 3 means full debug \n";
 		cerr << "   -reDebugging=<yes|no>  debug output for resource estimation (default=no)\n";
@@ -648,7 +643,7 @@ bool parseCommandLine(int argc, char* argv[]){
 						cerr<<"WARNING: frequency out of reasonible range, ignoring it."<<endl; 
 					}
 				}
-				else if (o == "DSP_blocks") {
+				else if (o == "plainStupidVHDL") {
 					if(v=="yes") target->setUseHardMultipliers(true);
 					else if(v=="no")  target->setUseHardMultipliers(false);
 					else {

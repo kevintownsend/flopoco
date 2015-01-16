@@ -69,11 +69,31 @@ namespace flopoco{
 	}
 
 	void Target::setUseHardMultipliers(bool v){
-		hasHardMultipliers_ = v;  
+		unusedHardMultThreshold_ = v;  
+	}
+
+	void Target::setPlainStupidVHDL(bool v){
+		plainStupidVHDL_ = v;  
+	}
+
+	bool Target::plainStupidVHDL(){
+		return plainStupidVHDL_;  
 	}
 	
 	bool Target::hasHardMultipliers(){
 		return hasHardMultipliers_ ;
+	}
+
+	bool Target::useHardMultipliers(){
+		return (hasHardMultipliers_ && useHardMultipliers_) ;
+	}
+
+	void Target::setUnusedHardMultThreshold(float v) {
+		unusedHardMultThreshold_=v;
+	}
+
+	float Target::unusedHardMultThreshold() {
+		return unusedHardMultThreshold_;
 	}
 
 	bool Target::hasFastLogicTernaryAdders(){

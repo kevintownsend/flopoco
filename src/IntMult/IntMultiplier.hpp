@@ -18,12 +18,7 @@ namespace flopoco {
 #define GENERATE_SVG 1
 
 	/*
-	  Definition of the DSP use threshold t:
-	  Consider a sub-multiplier block, by definition smaller than (or equal to) a DSP in both dimensions
-	  let r=(sub-multiplier area)/(DSP area); r is between 0 and 1
-	  if r >= 1-t   then use a DSP for this block 
-	  So: t=0 means: any sub-multiplier that does not fill a DSP goes to logic
-        t=1 means: any sub-multiplier, even very small ones, go to DSP
+	  Definition of the DSP use threshold in Target.hpp
 	*/
 
 	/*
