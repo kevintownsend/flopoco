@@ -139,7 +139,7 @@ namespace flopoco{
 			}
 
 			else { // using FixMultAdd
-				//REPORT(INFO, " i=" << i);
+				//REPORT(DEBUG, "*** iteration " << i << );
 				FixMultAdd::newComponentAndInstance(this,
 																						join("Step",i),     // instance name
 																						join("XsTrunc",i),  // x
