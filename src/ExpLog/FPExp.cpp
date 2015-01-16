@@ -274,7 +274,7 @@ namespace flopoco{
 					k=12;
 				}
 			}
-			
+
 			REPORT(DETAILED, "Generic case with k=" << k << " and degree d=" << d);
 			// redefine all the parameters because g depends on the branch
 			sizeY=wF+g;
@@ -598,9 +598,7 @@ namespace flopoco{
 				// We want the LSB value to be  2^(wF+g)
 				FixFunctionByPiecewisePoly *fe;
 				ostringstream function;
-				// TODO Pb is probably here, check the output scaling
-				function << "1b"<<2*k<<"*(exp(x*1b-" << k << ")-x*1b-" << k << "-1)";  // e^z-z-1
-				//function << "exp(x*1b-" << k << ")-x*1b-" << k << "-1";  // e^z-z-1
+				function << "1b"<<2*k-1<<"*(exp(x*1b-" << k << ")-x*1b-" << k << "-1)";  // e^z-z-1
 				fe = new FixFunctionByPiecewisePoly(target, function.str(), 
 																						-sizeZhigh, // lsbIn,
 																						-1, // msbOut // was -2*k
