@@ -73,10 +73,9 @@ namespace flopoco {
 		 * @param[in] wY             Y multiplier size (including sign bit if any)
 		 * @param[in] wOut           wOut size for a truncated multiplier (0 means full multiplier)
 		 * @param[in] signedIO       false=unsigned, true=signed
-		 * @param[in] DSPThreshold   DSP block use threshold, see its def above
 		 **/
 		IntMultiplier(Target* target, int wX, int wY, int wOut=0, bool signedIO = false,
-		              float DSPThreshold = 1.0, map<string, double> inputDelays = emptyDelayMap,bool enableSuperTiles=false);
+		              map<string, double> inputDelays = emptyDelayMap,bool enableSuperTiles=false);
 
 
 		/**
@@ -91,12 +90,11 @@ namespace flopoco {
 		 *                          For a stand-alone multiplier lsbWeightInBitHeap=g, otherwise lsbWeightInBitHeap>=g
 		 * @param[in] negate     if true, the multiplier result is subtracted from the bit heap 
 		 * @param[in] signedIO     false=unsigned, true=signed
-		 * @param[in] DSPThreshold            DSP block use ratio
 		 **/
 		// FIXME: for now, lsbFullMultWeightInBitheap so as no to break compatibility with the rest of the code
 		IntMultiplier (Operator* parentOp, BitHeap* bitHeap,  Signal* x, Signal* y, 
 									 int lsbWeightInBitHeap,
-									 bool negate, bool signedIO, float DSPThreshold,
+									 bool negate, bool signedIO, 
 									 int lsbFullMultWeightInBitheap = 0);
 
 		/** How many guard bits will a truncated multiplier need? Needed to set up the BitHeap of an operator using the virtual constructor */
@@ -119,8 +117,7 @@ namespace flopoco {
 																							 string ySignalName,
 																							 string rSignalName,
 																							 int rMSB,
-																							 int rLSB,
-																							 float DSPThreshold=0.7
+																							 int rLSB
 																							 );
 
 
@@ -217,7 +214,6 @@ namespace flopoco {
 		int wOut;                       /**< size of the output, to be used only in the standalone constructor and emulate.  */
 		int lsbWeightInBitHeap;       	/**< the weight in the bit heap of the lsb of the multiplier result ; equals g for standalone multipliers */
 		int lsbFullMultWeightInBitheap;	/**< the weight in the bit heap of the full multiplication result (used for truncated multiplications)  */
-		double DSPThreshold;			/**< says what proportion of a DSP area is allowed to be lost */
 		double initialCP;    			/**< the initial delay, getMaxInputDelays ( inputDelays_ ).*/
 
 	private:

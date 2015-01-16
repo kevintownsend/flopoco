@@ -53,8 +53,6 @@ namespace flopoco{
 											 int coeffLSB, 
 											 bool signedCoeffs=true, 
 											 bool finalRounding=true,
-											 bool plainStupidVHDL=false,
-											 float DSPThreshold=0.7,
 											 map<string, double> inputDelays = emptyDelayMap);
 
     ~FixHornerEvaluator();
@@ -71,8 +69,6 @@ namespace flopoco{
 																				 Usually true unless known Taylor etc */
 		bool finalRounding;               /** If true, the operator returns a rounded result (i.e. add the half-ulp then truncate)
 																					If false, the operator returns the full, unrounded results including guard bits */
-		bool plainStupidVHDL;             /** If true, generate portable VHDL with multiplications as "*" and additions as "+"
-																					If false, use FloPoCo FixMultAdd operator*/
     vector<int> coeffSize;            /**< vector of the sizes of the coefficients, computed out of MSB and LSB. See FixConstant.hpp for the constant format */
 
   };

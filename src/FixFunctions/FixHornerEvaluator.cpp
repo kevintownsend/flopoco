@@ -28,10 +28,10 @@ namespace flopoco{
   FixHornerEvaluator::FixHornerEvaluator(Target* target, 
 																				 int lsbIn_, int msbOut_, int lsbOut_,
 																				 int degree_, vector<int> coeffMSB_, int coeffLSB_, bool signedCoeffs_, 
-																				 bool finalRounding_, bool plainStupidVHDL_, float DSPThreshold, map<string, double> inputDelays)
+																				 bool finalRounding_, map<string, double> inputDelays)
     : Operator(target), lsbIn(lsbIn_), msbOut(msbOut_), lsbOut(lsbOut_), 
 			degree(degree_), coeffMSB(coeffMSB_), coeffLSB(coeffLSB_), signedCoeffs(signedCoeffs_), 
-			finalRounding(finalRounding_), plainStupidVHDL(plainStupidVHDL_)
+			finalRounding(finalRounding_)
   { 
     
     /* Generate unique name */
@@ -127,7 +127,7 @@ namespace flopoco{
 
 			resizeFixPoint(join("XsTrunc", i), "Xs", 0, xTruncLSB);			
 
-			if(plainStupidVHDL) {	// No pipelining here
+			if(target->plainStupidVHDL()) {	// No pipelining here
 				vhdl << tab << declareFixPoint(join("P", i), true, pMSB,  sigmaLSB  + xTruncLSB /*LSB*/) 
 						 <<  " <= "<< join("XsTrunc", i) <<" * Sigma" << i+1 << ";" << endl;
 				// However the bit of weight pMSB is a 0. We want to keep the bits from  pMSB-1
@@ -146,7 +146,7 @@ namespace flopoco{
 																						join("Sigma", i+1), // y
 																						join("As", i),       // a
 																						join("Sigma", i),   // result 
-																						sigmaMSB, sigmaLSB, DSPThreshold
+																						sigmaMSB, sigmaLSB
 																						);
 			}
 		}

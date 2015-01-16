@@ -13,22 +13,6 @@
 
 namespace flopoco {
 
-	/**
-	 * Checks the area usage of a DSP, according to a given block and DSPThreshold(threshold)
-	 * 		- DSPThreshold(threshold) = says what percentage of 1 DSP area is allowed to be lost
-	 * Algorithm: compute the area which is used out of a DSP, and compute
-	 * the unused ratio from this. The used area can be a triangle, a trapeze or
-	 * a pentagon, in the truncated case, or a rectangle in the case of a full
-	 * multiplier.
-	 **/
-	/*
-	  Definition of the DSP use threshold t:
-	  Consider a submultiplier block, by definition smaller than (or equal to) a DSP in both dimensions
-	  let r=(submultiplier area)/(DSP area); r is between 0 and 1
-	  if r >= 1-t   then use a DSP for this block
-	  So: t=0 means: any submultiplier that does not fill a DSP goes to logic
-		t=1 means: any submultiplier, even very small ones, go to DSP
-	 */
 
 
 	/**
@@ -53,11 +37,10 @@ namespace flopoco {
 		 * @param[in] a                 Signal (should be of fixed-point type)
 		 * @param[in] outMSB            weight of the MSB of the product
 		 * @param[in] outLSB            weight of the LSB of the product
-		 * @param[in] ratio             DSP block use ratio
 		 * @param[in] enableSuperTiles  if true, supertiles will decrease resource consumption but increase latency
 		 **/
 		FixMultAdd(Target* target, Signal* x, Signal* y, Signal* a, int outMSB, int outLSB,
-		           float ratio = 0.95, bool enableSuperTiles=true, map<string, double> inputDelays = emptyDelayMap);
+		           bool enableSuperTiles=true, map<string, double> inputDelays = emptyDelayMap);
 
 
 		/**
@@ -80,8 +63,7 @@ namespace flopoco {
 																							 string aSignalName,
 																							 string rSignalName,
 																							 int rMSB,
-																							 int rLSB,
-																							 float DSPThreshold=0.7
+																							 int rLSB
 																							 );
 		
 		/**
@@ -107,7 +89,6 @@ namespace flopoco {
 		int lsbA;                  	/**< weight of the LSB of A */
 
 		bool signedIO;              /**< if true, inputs and outputs are signed. */
-		double DSPThreshold;        /**< between 0 and 1, the area threshhold for using DSP blocks versus logic*/
 		bool enableSuperTiles;     	/**< if true, supertiles are built (fewer resources, longer latency */
 
 		string xname;              	/**< X input VHDL name */

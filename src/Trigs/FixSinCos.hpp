@@ -42,7 +42,7 @@ public:
 
 public:
 	
-	FixSinCos(Target * target, int w, float ratio=0.5);
+	FixSinCos(Target * target, int w);
 	
 	~FixSinCos();
 	

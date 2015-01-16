@@ -53,7 +53,7 @@ namespace flopoco{
 
 
 
-	CordicAtan2::CordicAtan2(Target* target, int w_, int method, bool plainStupidVHDL, float DSPThreshold, map<string, double> inputDelays) 
+	CordicAtan2::CordicAtan2(Target* target, int w_, int method, map<string, double> inputDelays) 
 		: Operator(target), w(w_)
 	{
 	
@@ -391,9 +391,7 @@ namespace flopoco{
 																msbRecip + 1, // +1 because internally uses signed arithmetic and we want an unsigned result
 																lsbRecip,
 																degree,
-																true, /*finalRounding*/
-																plainStupidVHDL,
-																DSPThreshold
+																true /*finalRounding*/
 																);
 			}
 			recipTable->changeName(join("reciprocal_uid", getNewUId()));
@@ -404,7 +402,7 @@ namespace flopoco{
 			vhdl << tab << declareFixPoint("R", false, msbRecip, lsbRecip) << " <= unsigned(R0" << range(msbRecip-lsbRecip  , 0) << "); -- removing the sign  bit" << endl;
 			vhdl << tab << declareFixPoint("YRU", false, -1, -w+1) << " <= unsigned(YRS);" << endl;
 
-			if(plainStupidVHDL) { // generate a "*"
+			if(target->plainStupidVHDL()) { // generate a "*"
 				vhdl << tab << declareFixPoint("P", false, msbRecip -1 +1, lsbRecip-w+1) << " <= R*YRU;" << endl;
 				resizeFixPoint("PtruncU", "P", msbProduct, lsbProduct);
 				vhdl << tab << declare("P_slv", msbProduct-lsbProduct+1)  << " <=  std_logic_vector(PTruncU);" << endl;
@@ -415,8 +413,7 @@ namespace flopoco{
 																							 "R",  // x
 																							 "YRU", // y
 																							 "P",       // p
-																							 msbProduct, lsbProduct,
-																							 DSPThreshold
+																							 msbProduct, lsbProduct
 																							 );
 			}
 
@@ -437,9 +434,7 @@ namespace flopoco{
 																msbAtan,
 																lsbAtan,
 																degree,
-																true, /*finalRounding*/
-																plainStupidVHDL,
-																DSPThreshold
+																true /*finalRounding*/
 																);
 			}
 			atanTable->changeName(join("atan_uid", getNewUId()));

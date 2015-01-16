@@ -150,12 +150,11 @@ void usage(char *name, string opName = ""){
 		cerr << center("INTEGER/FIXPOINT MULTIPLIERS AND SQUARERS", '_') << "\n";
 
 	 if ( full || opName == "IntMultiplier"){
-	 	OP("IntMultiplier","wInX wInY wOut signed DSP_threshold enableSupertiles");
+	 	OP("IntMultiplier","wInX wInY wOut signed enableSupertiles");
 	 	cerr << "Integer multiplier of two integers X and Y of sizes wInX and wInY \n";
 	 	cerr << "Result is faithfully truncated to wOut bits  (wOut=0 means: full multiplier)\n";
 	 	cerr << "signed=0: unsigned multiplier;     signed=1: signed inputs, signed outputs \n";
-	 	cerr << "0 <= DSP_threshold <= 1;  proportion of a DSP block that may be left unused\n";
-		cerr << "enableSuperTiles: 0/1. 0 => lower latency, higher logic cost \n";
+	 	cerr << "enableSuperTiles: 0/1. 0 => lower latency, higher logic cost \n";
 	 }
 	if ( full || opName == "IntMultiplier" || opName == "IntSquarer"){			
 		OP ("IntSquarer","wIn");
@@ -370,7 +369,7 @@ void usage(char *name, string opName = ""){
 
 
 	if ( full || opName == "FixAtan2"){
-		OP( "FixAtan2","w method plainVHDL DSP_threshold");
+		OP( "FixAtan2","w method");
 		cerr << "Computes atan(x/y) as a=(angle in radian)/pi so a in [-1,1[;\n";
 		cerr << "method is: 0..7 InvMultAtan with approximations of the corresponding degree; 8 plain CORDIC, 9 CORDIC with scaling\n";
 		cerr << tab << tab << tab << tab << "10 based on surface approximation, 11 Taylor order 1, 12 Taylor order 2\n";
@@ -420,12 +419,12 @@ void usage(char *name, string opName = ""){
 	}
 
 	if ( full || opName == "FixFunctionBySimplePoly" || opName == "FixFunction"){					
-		OP( "FixFunctionBySimplePoly","f lsbI msbO lsbO plainVHDL DSPThreshold");
+		OP( "FixFunctionBySimplePoly","f lsbI msbO lsbO");
 		cerr << "Evaluator of function f on [0,1), using a single polynomial with Horner scheme \n";
 	}
 
 	if ( full || opName == "FixFunctionByPiecewisePoly" || opName == "FixFunction"){					
-		OP( "FixFunctionByPiecewisePoly","f lsbI msbO lsbO d plainVHDL DSPThreshold");
+		OP( "FixFunctionByPiecewisePoly","f lsbI msbO lsbO d");
 		cerr << "Evaluator of function f on [0,1), using a piecewise polynomial of degree d with Horner scheme \n";
 	}
 
@@ -905,7 +904,7 @@ else if(opname=="IntAdder"){
 		}
 
 		else if(opname=="IntMultiplier"){
-			int nargs = 6;
+			int nargs = 5;
 			if (i+nargs > argc)
 				usage(argv[0],opname);
 			else {
@@ -913,9 +912,8 @@ else if(opname=="IntAdder"){
 				int wInY		    = checkStrictlyPositive(argv[i++], argv[0]);
 				int wOut		    = atoi(argv[i++]);
 				int signedIO	    =  checkBoolean(argv[i++], argv[0]);
-				float DSPThreshold			= atof(argv[i++]);
 				int buildSuperTiles =  checkBoolean(argv[i++], argv[0]);
-				IntMultiplier* mul=new IntMultiplier(target, wInX, wInY, wOut, signedIO, DSPThreshold, emptyDelayMap,buildSuperTiles);
+				IntMultiplier* mul=new IntMultiplier(target, wInX, wInY, wOut, signedIO, emptyDelayMap,buildSuperTiles);
 				op = mul;
 				addOperator(op);
 			}
@@ -1430,21 +1428,19 @@ else if(opname=="IntAdder"){
 		}
 
 		else if (opname == "FixFunctionBySimplePoly") {
-			int nargs = 6;
+			int nargs = 4;
 			if (i+nargs > argc)
 				usage(argv[0],opname); // and exit
 			string func = argv[i++];
 			int lsbI = atoi(argv[i++]);
 			int msbO = atoi(argv[i++]);
 			int lsbO = atoi(argv[i++]);
-			int plain = atoi(argv[i++]);
-			float DSPThreshold			= atof(argv[i++]);
-			Operator* tg = new FixFunctionBySimplePoly(target, func, lsbI, msbO, lsbO, true /*final rounding*/, plain, DSPThreshold);
+			Operator* tg = new FixFunctionBySimplePoly(target, func, lsbI, msbO, lsbO, true /*final rounding*/);
 			addOperator(tg);
 		}
 
 		else if (opname == "FixFunctionByPiecewisePoly") {
-			int nargs = 7;
+			int nargs = 5;
 			if (i+nargs > argc)
 				usage(argv[0],opname); // and exit
 			string func = argv[i++];
@@ -1452,9 +1448,7 @@ else if(opname=="IntAdder"){
 			int msbO = atoi(argv[i++]);
 			int lsbO = atoi(argv[i++]);
 			int degree = atoi(argv[i++]);
-			int plain = atoi(argv[i++]);
-			float DSPThreshold			= atof(argv[i++]);
-			Operator* tg = new FixFunctionByPiecewisePoly(target, func, lsbI, msbO, lsbO, degree, true /*final rounding*/, plain, DSPThreshold);
+			Operator* tg = new FixFunctionByPiecewisePoly(target, func, lsbI, msbO, lsbO, degree, true /*final rounding*/);
 			addOperator(tg);
 		}
 
@@ -1467,17 +1461,6 @@ else if(opname=="IntAdder"){
 				usage(argv[0],opname); // and exit
 			int lsbIn = atoi(argv[i++]); 
 			Operator* tg = new FixSinCos(target, -lsbIn); // TODO: change interface to FixSinCos
-			addOperator(tg);
-		}
-
-		// Currently hidden. TODO?
-		else if (opname == "FixSinCosExpert") {
-			int nargs = 2;
-			if (i+nargs > argc)
-				usage(argv[0],opname); // and exit
-			int lsbIn = atoi(argv[i++]); 
-			float DSPThreshold = atof(argv[i++]);
-			Operator* tg = new FixSinCos(target, -lsbIn,DSPThreshold);
 			addOperator(tg);
 		}
 
@@ -1506,21 +1489,19 @@ else if(opname=="IntAdder"){
 #endif
 
 		else if (opname == "FixAtan2") {
-			int nargs = 4;
+			int nargs = 2;
 			if (i+nargs > argc)
 				usage(argv[0],opname); // and exit
 			int w = checkStrictlyPositive(argv[i++], argv[0]); // must be >=2 actually
 			int method = atoi(argv[i++]);
-			int plainVHDL = atoi(argv[i++]);
-			float DSPThreshold = atof(argv[i++]);
 			//select the method
 			Operator* tg;
 			if(method < 10)
 			{
-				tg = new CordicAtan2(target, w, method, plainVHDL, DSPThreshold);
+				tg = new CordicAtan2(target, w, method);
 			}else
 			{
-				tg = new FixAtan2(target, w, w, method-10, DSPThreshold, (plainVHDL==1));
+				tg = new FixAtan2(target, w, w, method-10);
 			}
 
 			addOperator(tg);
@@ -1553,7 +1534,7 @@ else if(opname=="IntAdder"){
 
 		else if (opname == "FPExpExpert")
 		{
-			int nargs = 7;
+			int nargs = 6;
 			if (i+nargs > argc)
 				usage(argv[0],opname); // and exit
 			int wE = checkStrictlyPositive(argv[i++], argv[0]);
@@ -1562,8 +1543,7 @@ else if(opname=="IntAdder"){
 			int d=atoi(argv[i++]);
 			int g=atoi(argv[i++]);
 			int fullInput=checkBoolean(argv[i++],  argv[0]);
-			float DSPThreshold = atof(argv[i++]);
-			op = new FPExp(target, wE, wF, k, d, g, fullInput, DSPThreshold);
+			op = new FPExp(target, wE, wF, k, d, g, fullInput);
 			addOperator(op);
 		}
 

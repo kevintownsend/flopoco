@@ -157,8 +157,8 @@ namespace flopoco{
 
 
 
-	FPExp::FPExp(Target* target, int wE_, int wF_, int k_, int d_, int guardBits, bool fullInput, float DSP_threshold_, map<string, double> inputDelays)
-		: Operator(target), wE(wE_), wF(wF_), k(k_), d(d_), g(guardBits), DSPThreshold(DSP_threshold_)
+	FPExp::FPExp(Target* target, int wE_, int wF_, int k_, int d_, int guardBits, bool fullInput,  map<string, double> inputDelays)
+		: Operator(target), wE(wE_), wF(wF_), k(k_), d(d_), g(guardBits)
 	{
 
 #ifndef HAVE_SOLLYA
@@ -607,8 +607,6 @@ namespace flopoco{
 																						-wF-g+2*k-1, // lsbOut // was -wF-g 
 																						d, // degree
 																						true, // finalRounding
-																						true, // plainStupidVHDL
-																						0.7, // DSP threshold
 																						inDelayMap("X", target->localWireDelay() + getCriticalPath()) );
 				addSubComponent(fe);
 				inPortMap(fe, "X", "Zhigh");
@@ -677,7 +675,6 @@ namespace flopoco{
 			lowProd = new IntMultiplier(target, sizeMultIn, sizeExpZm1,  
 			                            0,  // untruncated
 			                            false,  /*unsigned*/
-			                            DSPThreshold, // DSP threshold
 			                            inDelayMap("X", target->LogicToDSPWireDelay() + getCriticalPath() ) );
 			addSubComponent(lowProd);
 			
@@ -710,7 +707,6 @@ namespace flopoco{
 			lowProd = new IntMultiplier(target, sizeMultIn, sizeExpZm1,  
 			                            sizeProd,  // truncated
 			                            false,  /*unsigned*/
-			                            DSPThreshold, // DSP threshold
 			                            inDelayMap("X", target->LogicToDSPWireDelay() + getCriticalPath() ) );
 			addSubComponent(lowProd);
 			

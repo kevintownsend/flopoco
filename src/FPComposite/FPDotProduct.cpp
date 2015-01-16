@@ -92,7 +92,6 @@ namespace flopoco{
 		IntMultiplier *mMult = new IntMultiplier(target, 1+wFX, 1+wFY, 
 		                                         0 /* untruncated*/,  
 		                                         false /*unsigned*/,  
-		                                         ratio,
 		                                         inDelayMap("X", target->localWireDelay() + getCriticalPath()));
 		oplist.push_back(mMult); 
 

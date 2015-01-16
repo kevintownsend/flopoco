@@ -171,10 +171,9 @@ namespace flopoco {
 	IntMultiplier::IntMultiplier (Operator* parentOp_, BitHeap* bitHeap_, 
 																Signal* x, Signal* y,
 																int lsbWeightInBitHeap_,
-																bool negate_, bool signedIO_, float DSPThreshold_,
+																bool negate_, bool signedIO_,
 																int lsbFullMultWeightInBitheap_):
 		Operator (parentOp_->getTarget()), 
-		DSPThreshold(DSPThreshold_),  
 		parentOp(parentOp_), 
 		bitHeap(bitHeap_), 
 		lsbWeightInBitHeap(lsbWeightInBitHeap_),
@@ -185,7 +184,7 @@ namespace flopoco {
 
 		multiplierUid=parentOp->getNewUId();
 		srcFileName="IntMultiplier";
-		useDSP = (DSPThreshold>=0) &&  parentOp->getTarget()->hasHardMultipliers();
+		useDSP = (target->unusedHardMultThreshold()>=0) &&  parentOp->getTarget()->hasHardMultipliers();
 		// TODO remove the following to switch DSP back on
 		useDSP=false;
 
@@ -218,16 +217,16 @@ namespace flopoco {
 
 
 	// The constructor for a stand-alone operator
-	IntMultiplier::IntMultiplier (Target* target_, int wX_, int wY_, int wOut_, bool signedIO_, float DSPThreshold_, map<string, double> inputDelays_, bool enableSuperTiles_):
+	IntMultiplier::IntMultiplier (Target* target_, int wX_, int wY_, int wOut_, bool signedIO_, map<string, double> inputDelays_, bool enableSuperTiles_):
 		Operator ( target_, inputDelays_ ), 
 		wXdecl(wX_), wYdecl(wY_), wOut(wOut_),
-		DSPThreshold(DSPThreshold_), negate(false), signedIO(signedIO_),enableSuperTiles(enableSuperTiles_), target(target_)
+		negate(false), signedIO(signedIO_),enableSuperTiles(enableSuperTiles_), target(target_)
 	{
 		srcFileName="IntMultiplier";
 		setCopyrightString ( "Florent de Dinechin, Kinga Illyes, Bogdan Popa, Bogdan Pasca, 2012" );
 
 		// useDSP or not? 
-		useDSP = (DSPThreshold>=0) && target->hasHardMultipliers();
+		useDSP = (target->unusedHardMultThreshold()>=0) && target->hasHardMultipliers();
 
 		// set the name of the multiplier operator
 		{
@@ -328,8 +327,7 @@ namespace flopoco {
 																												string ySignalName,
 																												string rSignalName,
 																												int rMSB,
-																												int rLSB,
-																												float DSPThreshold
+																												int rLSB
 																												)
 	{
 		Signal* x = parentOp->getSignalByName(xSignalName);
@@ -347,8 +345,7 @@ namespace flopoco {
 #endif
 
 		IntMultiplier* f = new IntMultiplier(parentOp->getTarget(),
-																				 wX, wY, wOut, signedIO, 
-																				 DSPThreshold
+																				 wX, wY, wOut, signedIO
 																				 );
 		parentOp->addSubComponent(f);
 
@@ -1289,16 +1286,16 @@ namespace flopoco {
 			REPORT(DEBUG, "in worthUsingOneDSP:   usable blockArea=" << usefulDSPArea << "   dspArea=" << totalDSPArea);
 			
 			//checking according to ratio/area
-			if(usefulDSPArea >= (1.0-DSPThreshold)*totalDSPArea)
+			if(usefulDSPArea >= (1.0-target->unusedHardMultThreshold())*totalDSPArea)
 			{
 				REPORT(DEBUG, "in worthUsingOneDSP: "
-						<< usefulDSPArea << ">= (1.0-" << DSPThreshold << ")*" << totalDSPArea << " -> worth using a DSP block");
+						<< usefulDSPArea << ">= (1.0-" << target->unusedHardMultThreshold() << ")*" << totalDSPArea << " -> worth using a DSP block");
 				return true;
 			}
 			else
 			{
 				REPORT(DEBUG, "in worthUsingOneDSP: "
-						<< usefulDSPArea << "< (1.0-" << DSPThreshold << ")*" << totalDSPArea << " -> not worth using a DSP block");
+						<< usefulDSPArea << "< (1.0-" << target->unusedHardMultThreshold() << ")*" << totalDSPArea << " -> not worth using a DSP block");
 				return false;
 			}
 		}
@@ -1425,13 +1422,13 @@ namespace flopoco {
 		REPORT(DEBUG, "in worthUsingOneDSP:   intersectX1=" << intersectX1 << " intersectY1=" << intersectY1 << " intersectX2=" << intersectX2 << " intersectY2=" << intersectY2);
 		
 		//test if the DSP DSPThreshold is satisfied
-		if(usefulDSPArea >= (1.0-DSPThreshold)*totalDSPArea)
+		if(usefulDSPArea >= (1.0-target->unusedHardMultThreshold())*totalDSPArea)
 		{
-			REPORT(DEBUG, "in worthUsingOneDSP:   result of the test: " << usefulDSPArea << ">=(1.0-" << DSPThreshold << ")*" << totalDSPArea << " -> WORTH using a DSP block");
+			REPORT(DEBUG, "in worthUsingOneDSP:   result of the test: " << usefulDSPArea << ">=(1.0-" << target->unusedHardMultThreshold() << ")*" << totalDSPArea << " -> WORTH using a DSP block");
 			return true;
 		}else
 		{
-			REPORT(DEBUG, "in worthUsingOneDSP:   result of the test: " << usefulDSPArea << "<(1.0-" << DSPThreshold << ")*" << totalDSPArea << " -> NOT worth using a DSP block");
+			REPORT(DEBUG, "in worthUsingOneDSP:   result of the test: " << usefulDSPArea << "<(1.0-" << target->unusedHardMultThreshold() << ")*" << totalDSPArea << " -> NOT worth using a DSP block");
 			return false;
 		}
 #endif
@@ -1503,11 +1500,11 @@ namespace flopoco {
 				//if both DSP dimensions are large enough, the DSP block might still fit the DSPThreshold
 				if(worthUsingOneDSP(blockTopX, blockTopY, blockBottomX, blockBottomY, dspSizeX, dspSizeY))
 				{
-					//DSPThreshold fulfilled; search is over
+					//target->unusedHardMultThreshold() fulfilled; search is over
 					dspSizeNotFound = false;
 				}else
 				{
-					//DSPThreshold not fulfilled; pass on to the next smaller DSP size
+					//target->unusedHardMultThreshold() not fulfilled; pass on to the next smaller DSP size
 					if(newMultIndex == multWidthsSize-1)
 					{
 						dspSizeNotFound = false;
@@ -1533,11 +1530,11 @@ namespace flopoco {
 					
 					if(worthUsingOneDSP((tx<blockTopX ? blockTopX : tx), (ty<blockTopY ? blockTopY : ty), bx, by, dspSizeX, dspSizeY))
 					{
-						//DSPThreshold fulfilled; search is over
+						//target->unusedHardMultThreshold() fulfilled; search is over
 						dspSizeNotFound = false;
 					}else
 					{
-						//DSPThreshold not fulfilled; pass on to the next smaller DSP size
+						//target->unusedHardMultThreshold() not fulfilled; pass on to the next smaller DSP size
 						if(newMultIndex == multWidthsSize-1)
 						{
 							dspSizeNotFound = false;

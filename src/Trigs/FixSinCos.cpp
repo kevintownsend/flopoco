@@ -148,7 +148,7 @@ mpz_class FixSinCos::SinCosTable::function (int x){
 
 ////////////////////////////////////// FixSinCos ///////////////////
 
-FixSinCos::FixSinCos(Target * target, int w_, float ratio):Operator(target), w(w_){
+FixSinCos::FixSinCos(Target * target, int w_):Operator(target), w(w_){
 	int g=-42; // silly value from the start, because so many different paths may assign it (or forget to do so) 
 	srcFileName="FixSinCos";
 
@@ -504,7 +504,7 @@ FixSinCos::FixSinCos(Target * target, int w_, float ratio):Operator(target), w(w
 				wZ2o2 = 2; //for sanity
 			vhdl << tab << "-- First truncate the inputs of the multiplier to the precision of the output" << endl;
 			vhdl << tab << declare("Z_truncToZ2", wZ2o2) << " <= Z" << range(wZ-1, wZ-wZ2o2) << ";" << endl;
-			sqr_z = new IntMultiplier (target, wZ2o2, wZ2o2, wZ2o2, false, ratio, sqr_z_inputDelays);
+			sqr_z = new IntMultiplier (target, wZ2o2, wZ2o2, wZ2o2, false,  sqr_z_inputDelays);
 			oplist.push_back (sqr_z);
 			inPortMap (sqr_z, "Y", "Z_truncToZ2");
 			inPortMap (sqr_z, "X", "Z_truncToZ2");
@@ -591,7 +591,7 @@ FixSinCos::FixSinCos(Target * target, int w_, float ratio):Operator(target), w(w
 			vhdl << tab << "--  truncate the larger input of each multiplier to the precision of its output" << endl;
 			vhdl << tab << declare("CosPiA_truncToZ2o2", wZ2o2) << " <= CosPiA" << range(w+g-1, w+g-wZ2o2) << ";" << endl;
 			IntMultiplier *c_out_2;
-			c_out_2 = new IntMultiplier (target, wZ2o2, wZ2o2, wZ2o2, false, ratio);
+			c_out_2 = new IntMultiplier (target, wZ2o2, wZ2o2, wZ2o2, false);
 			oplist.push_back (c_out_2);
 			inPortMap (c_out_2, "X", "Z2o2");
 			inPortMap (c_out_2, "Y", "CosPiA_truncToZ2o2");
@@ -621,7 +621,7 @@ FixSinCos::FixSinCos(Target * target, int w_, float ratio):Operator(target), w(w
 			// vhdl:mul (SinZ, SinPiA -> SinZSinPiA)
 			IntMultiplier *c_out_3;
 			
-			c_out_3 = new IntMultiplier (target, wZ, wZ, wZ, false, ratio);
+			c_out_3 = new IntMultiplier (target, wZ, wZ, wZ, false);
 			oplist.push_back (c_out_3);
 			inPortMap (c_out_3, "Y", "SinPiA_truncToZ");
 			inPortMap (c_out_3, "X", "SinZ");
@@ -714,8 +714,8 @@ FixSinCos::FixSinCos(Target * target, int w_, float ratio):Operator(target), w(w
 												 wZ2o2, wZ2o2, wZ2o2,
 												 gMult,
 												 true, // negate
-												 false, // signed inputs
-												 ratio);
+												 false // signed inputs
+												 );
 
 
 
@@ -727,8 +727,7 @@ FixSinCos::FixSinCos(Target * target, int w_, float ratio):Operator(target), w(w
 												 wZ, wZ, wZ,
 												 gMult,
 												 true, // negate
-												 false, // signed inputs
-												 ratio
+												 false // signed inputs
 												 );
 #endif
 			
@@ -758,7 +757,7 @@ FixSinCos::FixSinCos(Target * target, int w_, float ratio):Operator(target), w(w
 			vhdl << tab << "-- First truncate the larger input of the multiplier to the precision of the output" << endl;
 			vhdl << tab << declare("SinPiA_truncToZ2o2", wZ2o2) << " <= SinPiA" << range(w+g-1, w+g-wZ2o2) << ";" << endl;
 			IntMultiplier *s_out_2;
-			s_out_2 = new IntMultiplier (target, wZ2o2, wZ2o2, wZ2o2, false, ratio);
+			s_out_2 = new IntMultiplier (target, wZ2o2, wZ2o2, wZ2o2, false);
 			oplist.push_back (s_out_2);
 			inPortMap (s_out_2, "X", "Z2o2");
 			inPortMap (s_out_2, "Y", "SinPiA_truncToZ2o2");
@@ -777,7 +776,7 @@ FixSinCos::FixSinCos(Target * target, int w_, float ratio):Operator(target), w(w
 			vhdl << tab << declare("CosPiA_truncToSinZ", wZ) << " <= CosPiA" << range(w+g-1, w+g-wZ) << ";" << endl;
 			
 			IntMultiplier *s_out_3;
-			s_out_3 = new IntMultiplier (target, wZ, wZ, wZ, false, ratio);
+			s_out_3 = new IntMultiplier (target, wZ, wZ, wZ, false);
 			oplist.push_back (s_out_3);
 			inPortMap (s_out_3, "X", "SinZ");
 			inPortMap (s_out_3, "Y", "CosPiA_truncToSinZ");

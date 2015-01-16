@@ -33,13 +33,12 @@ namespace flopoco {
 
 	// The constructor for a stand-alone operator
 	FixMultAdd::FixMultAdd(Target* target, Signal* x_, Signal* y_, Signal* a_, int outMSB_, int outLSB_,
-												 float DSPThreshold_, bool enableSuperTiles_, map<string, double> inputDelays_):
+												 bool enableSuperTiles_, map<string, double> inputDelays_):
 		Operator ( target, inputDelays_ ),
 		x(x_), y(y_), a(a_),
 		outMSB(outMSB_),
 		outLSB(outLSB_),
 		wOut(outMSB_- outLSB_ + 1),
-		DSPThreshold(DSPThreshold_),
 		enableSuperTiles(enableSuperTiles_)
 	{
 
@@ -193,8 +192,7 @@ namespace flopoco {
 									 getSignalByName(yname),		//second input to the multiplier (a signal)
 									 pLSB-(outLSB-g),				//offset of the LSB of the multiplier in the bit heap
 									 false /*negate*/,				//whether to subtract the result of the multiplication from the bit heap
-									 signedIO,						//signed/unsigned operator
-									 DSPThreshold);						//DSP DSPThreshold
+									 signedIO);
 		}
 
 		//add the addend to the bit heap
@@ -274,16 +272,14 @@ namespace flopoco {
 													string aSignalName,
 													string rSignalName,
 													int rMSB,
-													int rLSB,
-													float DSPThreshold
-													)
+													int rLSB )
 	{
 		FixMultAdd* f = new FixMultAdd(
 										 op->getTarget(),
 										 op->getSignalByName(xSignalName),
 										 op->getSignalByName(ySignalName),
 										 op->getSignalByName(aSignalName),
-										 rMSB, rLSB, DSPThreshold
+										 rMSB, rLSB
 										 );
 		op->addSubComponent(f);
 

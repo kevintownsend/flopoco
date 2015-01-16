@@ -131,7 +131,7 @@ namespace flopoco{
 																						join("Sigma", i+1), // y
 																						join("A", i),       // a
 																						join("Sigma", i),   // result 
-																						sigmaMSB, sigmaLSB, DSPThreshold  // outMSB, outLSB
+																						sigmaMSB, sigmaLSB  // outMSB, outLSB
 																						);
 				syncCycleFromSignal(join("Sigma", i));
 			}

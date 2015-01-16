@@ -74,7 +74,7 @@ namespace flopoco{
 
 
 
-	FixFunctionByPiecewisePoly::FixFunctionByPiecewisePoly(Target* target, string func, int lsbIn, int msbOut, int lsbOut, int degree_, bool finalRounding_, bool plainStupidVHDL, float DSPThreshold, map<string, double> inputDelays):
+	FixFunctionByPiecewisePoly::FixFunctionByPiecewisePoly(Target* target, string func, int lsbIn, int msbOut, int lsbOut, int degree_, bool finalRounding_, map<string, double> inputDelays):
 		Operator(target, inputDelays), degree(degree_), finalRounding(finalRounding_){
 
 		if(finalRounding==false){
@@ -91,7 +91,7 @@ namespace flopoco{
 
 		setCopyrightString("Florent de Dinechin (2014)");
 		addHeaderComment("-- Evaluator for " +  f-> getDescription() + "\n"); 
-		REPORT(DETAILED, "Entering: FixFunctionByPiecewisePoly \"" << func << "\" " << lsbIn << " " << msbOut << " " << lsbOut << " " << degree << " " << plainStupidVHDL);
+		REPORT(DETAILED, "Entering: FixFunctionByPiecewisePoly \"" << func << "\" " << lsbIn << " " << msbOut << " " << lsbOut << " " << degree << " " << target->plainStupidVHDL());
  		int wX=-lsbIn;
 		addInput("X", wX);
 		int outputSize = msbOut-lsbOut+1; // TODO finalRounding would impact this line
@@ -152,7 +152,7 @@ namespace flopoco{
 				currentShift +=  polyApprox->MSB[i] - polyApprox->LSB +1;
 			}
 
-			FixHornerEvaluator* horner = new FixHornerEvaluator(target, lsbIn+alpha, msbOut, lsbOut, degree, polyApprox->MSB, polyApprox->LSB, true, true, plainStupidVHDL, DSPThreshold);		
+			FixHornerEvaluator* horner = new FixHornerEvaluator(target, lsbIn+alpha, msbOut, lsbOut, degree, polyApprox->MSB, polyApprox->LSB, true, true);		
 			addSubComponent(horner);
 
 			inPortMap(horner, "X", "Z");
