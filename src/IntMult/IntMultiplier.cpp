@@ -657,16 +657,17 @@ namespace flopoco {
 			//manage the pipeline
 			manageCriticalPath(parentOp->getTarget()->DSPMultiplierDelay());
 			s << "DSP_Res_" <<  getuid();
-
+			string sou=(negate || signedIO ? "signed": "unsigned");
 			vhdl << tab << declare(s.str(), dspXSize+dspYSize+(signedIO ? 0 : 2))
-					 << " <=  std_logic_vector(" << (negate || signedIO ? "signed": "unsigned") <<  "(" << (zerosX>0 ? join(zerosXString.str(), " & ") : "") << addUID("XX") << ")"
+					 << " <=  std_logic_vector(" << sou << "'(";
+			vhdl << sou <<  "(" << (zerosX>0 ? join(zerosXString.str(), " & ") : "") << addUID("XX") << ")"
 						 << " * ";
-			vhdl	 << (negate || signedIO ? "signed": "unsigned") ;
+			vhdl	 << sou ;
 			if(negate)
 				vhdl <<  "(" << addUID("YY") << "_neg)";
 			else
 				vhdl	 << "(" << (zerosY>0 ? zerosYString.str()+" & " : "") << addUID("YY") << ")";
-			vhdl << ");" << endl;
+			vhdl << "));" << endl;
 			
 			//manage the pipeline: TODO
 			//syncCycleFromSignal(s.str());
