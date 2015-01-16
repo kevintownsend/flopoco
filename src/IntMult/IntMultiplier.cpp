@@ -184,7 +184,7 @@ namespace flopoco {
 
 		multiplierUid=parentOp->getNewUId();
 		srcFileName="IntMultiplier";
-		useDSP = (target->unusedHardMultThreshold()>=0) &&  parentOp->getTarget()->hasHardMultipliers();
+		useDSP = parentOp->getTarget()->useHardMultipliers();
 		// TODO remove the following to switch DSP back on
 		useDSP=false;
 

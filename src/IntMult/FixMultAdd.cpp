@@ -181,9 +181,9 @@ namespace flopoco {
 		bitHeap->setSignedIO(signedIO);
 
 		//FIXME: are the guard bits included in the bits output by the multiplier?
-
 		//create the multiplier
 		//	this is a virtual operator, which uses the bit heap to do all its computations
+		//cerr << "Before " << getCurrentCycle() << endl;
 		if(pMSB >= outLSB-g)
 		{
 			mult = new IntMultiplier(this,							//parent operator
@@ -194,6 +194,7 @@ namespace flopoco {
 									 false /*negate*/,				//whether to subtract the result of the multiplication from the bit heap
 									 signedIO);
 		}
+		//cerr << "After " << getCurrentCycle() << endl;
 
 		//add the addend to the bit heap
 		int addendWeight;
@@ -246,7 +247,6 @@ namespace flopoco {
 
 		//compress the bit heap
 		bitHeap -> generateCompressorVHDL();
-
 		//assign the output
 		vhdl << tab << rname << " <= " << bitHeap->getSumName() << range(wOut+g-1, g) << ";" << endl;
 		
