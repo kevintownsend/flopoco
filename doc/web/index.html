@@ -28,8 +28,8 @@
 		</div>
 
 
-		<div align="center" style="padding:10px;border:2px solid blue;background-color:#94FF21;">
-			<p style="color: red;"><b>Version 2.5.0 is out since June 8, 2013!</b></p>
+		<div align="center" style="padding:10px;border:2px solid blue;background-color:#FFD0FF;">
+			<p style="color: red;"><b>Version 3.0 is being released in 2015!</b></p>
 
 			<p>Check out its  <a href="flopoco_user_manual.html#AvailableOperators">list of operators</a>.</p>
 
@@ -43,25 +43,27 @@
  		<h2>FPGA Arithmetic the way it should be</h2>
 
 		<p>FloPoCo is a generator of arithmetic cores
-			(<strong>Flo</strong>ating-<strong>Po</strong>int <strong>Co</strong>res, but
-			not only) for FPGAs (but not only).</p>
+			(<strong>Flo</strong>ating-<strong>Po</strong>int <strong>Co</strong>res, but not only) for FPGAs (but not only).
+			</p>
 
-		<p>The purpose of the FloPoCo project is to explore the many ways in
-			which the flexibility of the FPGA target can be exploited in the
-			arithmetic realm, with a focus on floating-point.</p>
+		<p>The first motto of FloPoCo is that <strong>arithmetic on FPGAs should not  mimick processor arithmetic</strong>. 
+			By designing	radically new operators, one may obtain more accurate results with	less hardware in less time. 
+			This thesis was first detailed in <a href="https://hal.inria.fr/ensl-00174627/document">this document</a>.</p>
 
-		<p>The philosophy of FloPoCo is that floating-point on FPGAs should not rely on operators that mimick those available in processors. By designing	radically new operators, one may obtain more accurate results with	less hardware in less time. This thesis was first detailed in <a href="http://prunel.ccsd.cnrs.fr/ensl-00174627/fr/">this document</a>.</p>
-
-		<p>Therefore FloPoCo focuses on exotic operators and exotic	precisions. However it also provides basic operators(+,-,*,/ and square root) whose performance matches  vendor-supplied operators while offering more flexibility.
+		<p>The second motto of FloPoCo is to enable <strong>computing just right</strong>. 
+			All FloPoCo operators are 
+			<ol> 
+				<li>fully parameterized in precision, so that your application may use just the precision it needs, and</li>
+				<li>accurate to the last bit, so that your wires don't carry meaningless noise.</li>
+			</ol>
+			Internally, FloPoCo operators are carefully designed to ensure that no bit is computed that is not useful to the final result. 
 		</p>
 
 
-		<p>FloPoCo is not a library of operators, but a generator of operators written in C++. It inputs operator specifications, and outputs synthesizable VHDL. This approach allows much better optimization and customization than what  VHDL alone permits. In addition, FloPoCo is to our knowledge the easiest way to design complex operators with flexible pipeline.
+		<p>FloPoCo is not a library of operators, but a generator of operators written in C++. 
+			It inputs operator specifications, and outputs synthesizable VHDL. 
 		</p>
 
-
-		<p>FloPoCo supersedes  <a
-															href="http://www.ens-lyon.fr/LIP/Arenaire/Ware/FPLibrary/">FPLibrary</a>, and is compatible with it.</p>
 
 		<h2>Distribution</h2>
 
@@ -79,13 +81,6 @@
 
 		<h2>Get it!</h2>
 
-		<p>Get the latest version from the  <a
-																					 href="https://gforge.inria.fr/frs/?group_id=1030">InriaGForge page</a> of the project
-		</p>
-
-		<p>Alternatively, get a development version  from the <a
-																														 href="https://gforge.inria.fr/scm/?group_id=1030">subversion
-				repository</a>.</p>
 
 		<p>Installation instructions (including one-line install for Ubuntu) are provided in the  <a href="flopoco_user_manual.html">user manual</a>.</p>
 
@@ -120,6 +115,22 @@
 
 
 			<tr valign="top">
+				<td class="bibtexnumber" align="right">
+					[<a name="2014-RR-SOPCJR">41</a>]
+				</td>
+				<td class="bibtexitem">
+					Florent de&nbsp;Dinechin, Matei Istoan, and Abdelbassat Massouri.
+					Sum-of-product architectures computing just right.
+					In <em>Application-Specific Systems, Architectures and Processors
+						(ASAP)</em>. IEEE, 2014.
+					[&nbsp;<a href="http://perso.citi-lab.fr/fdedinec/recherche/f2d_bib.html#2014-RR-SOPCJR">bib</a>&nbsp;| 
+					<a href="http://hal.inria.fr/hal-00957609">http</a>&nbsp;| 
+					<a href="http://hal.inria.fr/hal-00957609/PDF/SoPCCJR.pdf">.pdf</a>&nbsp;]
+					
+				</td>
+			</tr>
+
+			<tr valign="top">
 				<td align="right" class="bibtexnumber">
 					[<a name="DinIstSer2013-FPL-BitHeap">40</a>]
 				</td>
@@ -127,7 +138,7 @@
 					Nicolas Brunie, Florent de&nbsp;Dinechin, Matei Istoan, Guillaume Sergent, Kinga Illyes, and Bogdan Popa.
 					Arithmetic core generation using bit heaps.
 					In <em>Field-Programmable Logic and Applications</em>, September 2013.
-					[&nbsp;<a href="f2d_bib.html#DinIstSer2013-FPL-BitHeap">bib</a>&nbsp;| 
+					[&nbsp;<a href="http://perso.citi-lab.fr/fdedinec/recherche/f2d_bib.html#DinIstSer2013-FPL-BitHeap">bib</a>&nbsp;| 
 					<a href="http://perso.citi-lab.fr/fdedinec/recherche/publis/2013-FPL-BitHeap.pdf">.pdf</a>&nbsp;]
 				</td>
 			</tr>
@@ -141,7 +152,7 @@
 					Florent de&nbsp;Dinechin, Matei Istoan, and Guillaume Sergent.
 					Fixed-point trigonometric functions on FPGAs.
 					In <em>Highly-Efficient Accelerators and Reconfigurable Technologies</em>, March 2013.
-					[&nbsp;<a href="f2d_bib.html#DinIstSer2013-HEART-SinCos">bib</a>&nbsp;| 
+					[&nbsp;<a href="http://perso.citi-lab.fr/fdedinec/recherche/f2d_bib.html#DinIstSer2013-HEART-SinCos">bib</a>&nbsp;| 
 					<a href="http://perso.citi-lab.fr/fdedinec/recherche/publis/2013-HEART-SinCos.pdf">.pdf</a>&nbsp;]
 				</td>
 			</tr>
@@ -155,7 +166,7 @@
 					Florent de&nbsp;Dinechin, Pedro Echeverr&iacute;a, Marisa L&oacute;pez-Vallejo, and Bogdan  Pasca.
 					Floating-point exponentiation units for reconfigurable computing.
 					<em>ACM Transactions on Reconfigurable Technology and Systems</em>,  6(1), 2013.
-					[&nbsp;<a href="f2d_bib.html#DinechinEtAl-2013-power">bib</a>&nbsp;| 
+					[&nbsp;<a href="http://perso.citi-lab.fr/fdedinec/recherche/f2d_bib.html#DinechinEtAl-2013-power">bib</a>&nbsp;| 
 					<a href="http://dl.acm.org/citation.cfm?id=2457447">http</a>&nbsp;| 
 					<a href="http://perso.citi-lab.fr/fdedinec/recherche/publis/2013-TRETS-Exponentiation.pdf">.pdf</a>&nbsp;]
 				</td>
@@ -170,7 +181,7 @@
 					Florent de&nbsp;Dinechin and Bogdan Pasca.
 					<em>High-Performance Computing using FPGAs</em>, chapter Reconfigurable Arithmetic for High Performance Computing, pages 631-664.
 					Springer, 2013.
-					[&nbsp;<a href="f2d_bib.html#DinechinPasca2013:HPC">bib</a>&nbsp;| 
+					[&nbsp;<a href="http://perso.citi-lab.fr/fdedinec/recherche/f2d_bib.html#DinechinPasca2013:HPC">bib</a>&nbsp;| 
 					<a href="http://perso.citi-lab.fr/fdedinec/recherche/publis/2013-Arith4HPC-chapter.pdf">.pdf</a>&nbsp;]
 				</td>
 			</tr>
@@ -185,7 +196,7 @@
 					Table-based division by small integer constants.
 					In <em>Applied Reconfigurable Computing</em>, pages 53-63, Hong Kong,
 					Hong Kong, March 2012.
-					[&nbsp;<a href="f2d_bib.html#dedinechin:2012:ensl-00642145:1">bib</a>&nbsp;| 
+					[&nbsp;<a href="http://perso.citi-lab.fr/fdedinec/recherche/f2d_bib.html#dedinechin:2012:ensl-00642145:1">bib</a>&nbsp;| 
 					<a href="http://hal.inria.fr/ensl-00642145/en">http</a>&nbsp;| 
 					<a href="http://perso.citi-lab.fr/fdedinec/recherche/publis/2012-ARC-LUTConstDiv.pdf">.pdf</a>&nbsp;]
 				</td>
@@ -201,7 +212,7 @@
 					Hong Diep Nguyen, Bogdan Pasca, Thomas B. Preuﬂer.
 					FPGA-Specific Arithmetic Optimizations of Short-Latency Adders.
 					<em>Field Programmable Logic and Applications</em>, 2011.
-					[&nbsp;<a href="f2d_bib.html#Dinechin2011-TCASII">bib</a>&nbsp;| 
+					[&nbsp;<a href="http://perso.citi-lab.fr/fdedinec/recherche/f2d_bib.html#Dinechin2011-TCASII">bib</a>&nbsp;| 
 					<a href="http://prunel.ccsd.cnrs.fr/ensl-00610328">http</a>&nbsp;| 
 					<a href="http://perso.citi-lab.fr/fdedinec/recherche/publis/2012-TCASII-rational-constmult.pdf">.pdf</a>&nbsp;]
 
@@ -219,7 +230,7 @@
 					Florent de&nbsp;Dinechin.
 					Multiplication by rational constants.
 					<em>IEEE Transactions on Circuits and Systems, II</em>, 2011.
-					[&nbsp;<a href="f2d_bib.html#Dinechin2011-TCASII">bib</a>&nbsp;| 
+					[&nbsp;<a href="http://perso.citi-lab.fr/fdedinec/recherche/f2d_bib.html#Dinechin2011-TCASII">bib</a>&nbsp;| 
 					<a href="http://prunel.ccsd.cnrs.fr/ensl-00610328">http</a>&nbsp;| 
 					<a href="http://perso.citi-lab.fr/fdedinec/recherche/publis/2012-TCASII-rational-constmult.pdf">.pdf</a>&nbsp;]
 
@@ -237,7 +248,7 @@
 					The arithmetic operators you will never see in a microprocessor.
 					In <em>20th IEEE Symposium of Computer Arithmetic</em>, pages pp
 					189-190, Germany, July 2011. IEEE.
-					[&nbsp;<a href="f2d_bib.html#dedinechin:2011:ensl-00642164:1">bib</a>&nbsp;| 
+					[&nbsp;<a href="http://perso.citi-lab.fr/fdedinec/recherche/f2d_bib.html#dedinechin:2011:ensl-00642164:1">bib</a>&nbsp;| 
 					<a href="http://hal.inria.fr/ensl-00642164/en">http</a>&nbsp;]
 
 				</td>
@@ -255,7 +266,7 @@
 						(ASAP), 2011 IEEE International Conference on</em>, pages 187-194, Santa
 					Monica, United States, 2011. IEEE Computer Society.
 					Best paper award.
-					[&nbsp;<a href="f2d_bib.html#dedinechin:2011:ensl-00640063:1">bib</a>&nbsp;| 
+					[&nbsp;<a href="http://perso.citi-lab.fr/fdedinec/recherche/f2d_bib.html#dedinechin:2011:ensl-00640063:1">bib</a>&nbsp;| 
 					<a href="http://dx.doi.org/10.1109/ASAP.2011.6043267">DOI</a>&nbsp;| 
 					<a href="http://hal.inria.fr/ensl-00640063/en">http</a>&nbsp;]
 
@@ -297,7 +308,7 @@
 					Florent de&nbsp;Dinechin and Bogdan Pasca.
 					Floating-point exponential functions for DSP-enabled FPGAs.
 					In <em>Field Programmable Technologies</em>, 2010.
-					[&nbsp;<a href="f2d_bib.html#DinechinPasca2010-FPT">bib</a>&nbsp;| 
+					[&nbsp;<a href="http://perso.citi-lab.fr/fdedinec/recherche/f2d_bib.html#DinechinPasca2010-FPT">bib</a>&nbsp;| 
 					<a href="http://prunel.ccsd.cnrs.fr/ensl-00506125/">http</a>&nbsp;]
 
 				</td>
@@ -314,7 +325,7 @@
 					function evaluation.
 					In <em>Application-specific Systems, Architectures and Processors</em>.
 					IEEE, 2010.
-					[&nbsp;<a href="f2d_bib.html#DinJolPas2010-poly">bib</a>&nbsp;| 
+					[&nbsp;<a href="http://perso.citi-lab.fr/fdedinec/recherche/f2d_bib.html#DinJolPas2010-poly">bib</a>&nbsp;| 
 					<a href="http://perso.citi-lab.fr/fdedinec/recherche/publis/2010-ASAP-Polynomials.pdf">.pdf</a>&nbsp;]
 				</td>
 			</tr>
@@ -330,7 +341,7 @@
 					FPGAs.
 					In <em>Highly-Efficient Accelerators and Reconfigurable
 						Technologies</em>, 2010.
-					[&nbsp;<a href="f2d_bib.html#BaDinPasTud2010">bib</a>&nbsp;| 
+					[&nbsp;<a href="http://perso.citi-lab.fr/fdedinec/recherche/f2d_bib.html#BaDinPasTud2010">bib</a>&nbsp;| 
 					<a href="http://perso.citi-lab.fr/fdedinec/recherche/publis/2010-HEART-Multipliers.pdf">.pdf</a>&nbsp;]
 
 				</td>
@@ -346,7 +357,7 @@
 					Multiplicative square root algorithms for FPGAs.
 					In <em>Field-Programmable Logic and Applications</em>, pages 574-577,
 					2010.
-					[&nbsp;<a href="f2d_bib.html#DinJolPasRev2010">bib</a>&nbsp;| 
+					[&nbsp;<a href="http://perso.citi-lab.fr/fdedinec/recherche/f2d_bib.html#DinJolPasRev2010">bib</a>&nbsp;| 
 					<a href="http://perso.citi-lab.fr/fdedinec/recherche/publis/2010-FPL-Sqrt.pdf">.pdf</a>&nbsp;]
 
 				</td>
@@ -362,7 +373,7 @@
 					Pipelined FPGA adders.
 					In <em>Field-Programmable Logic and Applications</em>, pages 422-427,
 					2010.
-					[&nbsp;<a href="f2d_bib.html#DinNguPas2010">bib</a>&nbsp;| 
+					[&nbsp;<a href="http://perso.citi-lab.fr/fdedinec/recherche/f2d_bib.html#DinNguPas2010">bib</a>&nbsp;| 
 					<a href="http://perso.citi-lab.fr/fdedinec/recherche/publis/2010-FPL-Adders.pdf">.pdf</a>&nbsp;]
 
 				</td>
@@ -377,7 +388,7 @@
 					Florent de&nbsp;Dinechin.
 					A flexible floating-point logarithm for reconfigurable computers.
 					Lip research report rr2010-22, ENS-Lyon, 2010.
-					[&nbsp;<a href="f2d_bib.html#2010-RR-FPLog">bib</a>&nbsp;| 
+					[&nbsp;<a href="http://perso.citi-lab.fr/fdedinec/recherche/f2d_bib.html#2010-RR-FPLog">bib</a>&nbsp;| 
 					<a href="http://prunel.ccsd.cnrs.fr/ensl-00506122/">http</a>&nbsp;]
 
 				</td>
@@ -392,7 +403,7 @@
 					Racines carr&eacute;es multiplicatives sur FPGA.
 					In <em>SYMPosium en Architectures nouvelles de machines
 						(SYMPA)</em>, Toulouse, September 2009.
-					[&nbsp;<a href="f2d_bib.html#DinechinJoldesPasca2009LIP">bib</a>&nbsp;| 
+					[&nbsp;<a href="http://perso.citi-lab.fr/fdedinec/recherche/f2d_bib.html#DinechinJoldesPasca2009LIP">bib</a>&nbsp;| 
 					<a href="http://perso.citi-lab.fr/fdedinec/recherche/publis/2009-Sympa-sqrt.pdf">.pdf</a>&nbsp;]
 				</td>
 			</tr>
@@ -407,7 +418,7 @@
 					Generating high-performance custom floating-point pipelines.
 					In <em>Field Programmable Logic and Applications</em>. IEEE, August
 					2009.
-					[&nbsp;<a href="f2d_bib.html#DinechinKleinPasca2009:FPL">bib</a>&nbsp;| 
+					[&nbsp;<a href="http://perso.citi-lab.fr/fdedinec/recherche/f2d_bib.html#DinechinKleinPasca2009:FPL">bib</a>&nbsp;| 
 
 					<a href="http://perso.citi-lab.fr/fdedinec/recherche/publis/2009-FPL-FloPoCo.pdf">.pdf</a>&nbsp;]
 
@@ -424,7 +435,7 @@
 					Large multipliers with fewer DSP blocks.
 					In <em>Field Programmable Logic and Applications</em>. IEEE, August
 					2009.
-					[&nbsp;<a href="f2d_bib.html#DinechinPasca2009:FPL">bib</a>&nbsp;| 
+					[&nbsp;<a href="http://perso.citi-lab.fr/fdedinec/recherche/f2d_bib.html#DinechinPasca2009:FPL">bib</a>&nbsp;| 
 					<a href="http://perso.citi-lab.fr/fdedinec/recherche/publis/2009-FPL-Multipliers.pdf">.pdf</a>&nbsp;]
 				</td>
 			</tr>
