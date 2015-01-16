@@ -99,19 +99,6 @@ void usage(char *name, string opName = ""){
 		OP("LOCShifterSticky","wIn wOut");
 
 
-	if ( full )
-		cerr << center("FixFilters", '_') << "\n";
-
-	if ( full || opName == "ShiftReg") {
-		OP("ShiftReg", "wIn n");
-		cerr << "Shift Register with n taps\n";
-	}
-	if ( full || opName == "FixFIR") {
-		OP("FixFIR","p useBitheap taps [coeff list]");
-		cerr << "      A faithful FIR on an (1,p) fixed-point format\n";
-		cerr << "      The filter may, or may not use bit heaps\n";
-	}
-
 
 	if ( full )
 		cerr << center("INTEGER/FIXPOINT ADDERS/SUBTRACTERS", '_') << "\n";
@@ -337,10 +324,13 @@ void usage(char *name, string opName = ""){
 	if ( full )
 		cerr << center("ELEMENTARY FUNCTIONS", '_') << "\n";
 
+#if 0 // TODO fixit!
 	if ( full || opName == "FixSinCos"  || opName == "SinCos"){
 		OP( "FixSinCos","lsbIn");
 		cerr << "Sin/Cosine of Pi*x for x signed in in [-1,1)\n";
 	}
+	// and add FixSinOrCos after fixing it
+#endif
 
 	if ( full || opName == "CordicSinCos" || opName == "SinCos"){
 		OP( "CordicSinCos","lsbIn lsbOut reduced");
@@ -348,11 +338,13 @@ void usage(char *name, string opName = ""){
 		cerr << "if reduced=1, fewer iterations at the cost of two multiplications \n";
 	}
 
+#if 0 // TODO fixit!
 	if ( full || opName == "FPLog"){					
 		OP( "FPLog","wE wF InTableSize");
 		cerr << "Floating-point logarithm function, iterative algorithm;\n";
 		cerr << "InTableSize is the table input size: O defaults to something sensible\n";
 	}
+#endif
 
 	if ( full || opName == "FPExp"){					
 		OP( "FPExp","wE wF");
@@ -427,6 +419,24 @@ void usage(char *name, string opName = ""){
 		OP( "FixFunctionByPiecewisePoly","f lsbI msbO lsbO d");
 		cerr << "Evaluator of function f on [0,1), using a piecewise polynomial of degree d with Horner scheme \n";
 	}
+
+
+
+
+	if ( full )
+		cerr << center("FIXED POINT FILTERS", '_') << "\n";
+
+	if ( full || opName == "ShiftReg") {
+		OP("ShiftReg", "wIn n");
+		cerr << "Shift Register with n taps\n";
+	}
+	if ( full || opName == "FixFIR") {
+		OP("FixFIR","p useBitheap taps [coeff list]");
+		cerr << "      A faithful FIR on an (1,p) fixed-point format\n";
+		cerr << "      The filter may, or may not use bit heaps\n";
+	}
+   
+
 
 	if ( full )
 		cerr << center("PSEUDO-RANDOM NUMBER GENERATORS", '_') << "\n";
@@ -1475,7 +1485,7 @@ else if(opname=="IntAdder"){
 
 
 		//-------------------Trigonometric functions ----------------------
-
+		// TODO fix it
 		else if (opname == "FixSinCos") {
 			int nargs = 1;
 			if (i+nargs > argc)
@@ -1484,7 +1494,6 @@ else if(opname=="IntAdder"){
 			Operator* tg = new FixSinCos(target, -lsbIn); // TODO: change interface to FixSinCos
 			addOperator(tg);
 		}
-
 		
 		else if (opname == "CordicSinCos") {
 			int nargs = 3;
@@ -1497,7 +1506,7 @@ else if(opname=="IntAdder"){
 			addOperator(tg);
 		}
 
-#if 0 // replug when poly approx fixed
+#if 0
 		else if (opname == "FixSinOrCos") {
 			int nargs = 2;
 			if (i+nargs > argc)

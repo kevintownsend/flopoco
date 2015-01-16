@@ -14,13 +14,23 @@
 <hr/>
 <h2>Installation</h2>
 
-<h3>Single-line installation on Ubuntu 14.04 LTS and 14.10</h3>
-Copy this in a dash/bash shell (and enter your password when prompted):
+<p>Operators tend to come and go as we struggle to support them, and we apologize for that. Maybe the one you want works better in an older version: read the <a href="ReleaseNotes.txt">release notes</a>.</p> 
 
+<h3>Single-line installation scripts</h3>
+<p>These scripts should work on the current Debian, Ubuntu,  and other Debian derivatives.</p>
+<em>We would welcome similar installation scripts for other platforms.</em>
+
+Copy this in a dash/bash shell (and enter your password when prompted):
+<h4>Version 3.0, which will be the greatest ever if it ever gets out of beta</h4>
 <p><kbd>yes | sudo apt-get install g++ libgmp3-dev libmpfr-dev libfplll-dev libxml2-dev bison libmpfi-dev flex cmake libboost-all-dev libgsl0-dev && wget https://gforge.inria.fr/frs/download.php/33151/sollya-4.1.tar.gz && tar xzf sollya-4.1.tar.gz && cd sollya-4.1/ && ./configure && make -j4  && sudo make install && cd .. && wget https://gforge.inria.fr/frs/download.php/file/34430/flopoco-3.0.beta0.tgz  && tar xzf flopoco-3.0.beta0.tgz && cd flopoco-3.0.beta0/ && cmake . && make -j4  && ./flopoco</kbd></p>
 
-<p>This script probably works with only minor modifications on Debian and other Debian derivatives (Mint).</p>
-<em>We would welcome similar installation scripts for other platforms.</em>
+<h4>Version 2.5.0, the last version before the transition to Sollya4 broke everything that bit heaps had not yet broken</h4>
+<p><kbd>yes | sudo apt-get install g++ libgmp3-dev libmpfr-dev libxml2-dev bison libmpfi-dev flex cmake libboost-all-dev libgsl0-dev && wget https://gforge.inria.fr/frs/download.php/file/34429/libfplll-3.0.12.tar.gz && tar xzf libfplll-3.0.12.tar.gz && cd libfplll-3.0.12/ && ./configure && make -j2  && sudo make install && cd .. && wget https://gforge.inria.fr/frs/download.php/28571/sollya-3.0.tar.gz && tar xzf sollya-3.0.tar.gz && cd sollya-3.0/ && ./configure && make -j4  && sudo make install && cd .. && wget https://gforge.inria.fr/frs/download.php/file/32591/flopoco-2.5.0.tgz  && tar xzf flopoco-2.5.0.tgz && cd flopoco-2.5.0/ && cmake . && make -j4  && ./flopoco</kbd></p>
+
+<h4>Version 2.3.1, the last version before the Great Leader embarked the project in the bit heap hazardous adventure</h4>
+<p><kbd>yes | sudo apt-get install g++ libgmp3-dev libmpfr-dev libxml2-dev bison libmpfi-dev flex cmake libboost-all-dev libgsl0-dev && wget https://gforge.inria.fr/frs/download.php/file/34429/libfplll-3.0.12.tar.gz && tar xzf libfplll-3.0.12.tar.gz && cd libfplll-3.0.12/ && ./configure && make -j2  && sudo make install && cd .. && wget https://gforge.inria.fr/frs/download.php/28571/sollya-3.0.tar.gz && tar xzf sollya-3.0.tar.gz && cd sollya-3.0/ && ./configure && make -j4  && sudo make install && cd .. && wget https://gforge.inria.fr/frs/download.php/file/30159/flopoco-2.3.1.tgz  && tar xzf flopoco-2.3.1.tgz && cd flopoco-2.3.1/ && cmake . && make -j4  && ./flopoco</kbd></p>
+
+
 
 <h3>Generic installation instructions</h3>
 
@@ -316,17 +326,6 @@ reference.</p>
 </dl>
 
 
-<h3>Fixed Point Filters</h3>
-<dl>
-  <dt><code style="color: blue;">ShiftReg</code></dt>
-    <dd>Shift Register with n taps</dd>
-</dl>
-<dl>
-  <dt><code style="color: blue;">FixFIR p useBitheap taps [coeff list]</code></dt>
-    <dd>A faithful FIR on an (1,p) fixed-point format.
-      The filter may, or may not use bit heaps.</dd>
-</dl>
-
 <h3>Integer or fixed-point  standard operators</h3>
 <dl>
   <h4><i> Adders </i></h4>
@@ -343,13 +342,14 @@ reference.</p>
       adder are already buffered or not using the option <code>bufferedInputs=<0,1></code>.
       Automatic design space exploration is performed by setting <code>implementation=-1</code>.
       Forcing architecture selection can be done by setting <code>implementation=<0,1,2></code>
-      where <code>0=Classical, 1=Alternative, 2=Short-Latency</code>. Please check out this
-      <a href="http://prunel.ccsd.cnrs.fr/docs/00/47/57/80/PDF/RR-LIP-2010-16.pdf">article</a>
+      where <code>0=Classical, 1=Alternative, 2=Short-Latency</code>. Please check out 
+      <a href="https://hal-ens-lyon.archives-ouvertes.fr/ensl-00542389/document">this article</a> and
+      <a href="http://perso.citi-lab.fr/fdedinec/recherche/publis/2010-FPL-Adders.pdf">this one</a>
       for more details.
   <dt><code style="color: blue;">LongIntAdderAddAddMux wIn generation</code></dt>
   <dt><code style="color: blue;">LongIntAdderCmpAddInc wIn generation</code></dt>
   <dt><code style="color: blue;">LongIntAdderCmpCmpAdd wIn generation</code></dt>
-    <dd>  The first generation are the 2010 version, while the second generation are the 2011 version.
+    <dd>  Parameter <code>generation=1</code> is the 2010 version, 2 is the 2011 version.
 	 </dd>
   <dt><code style="color: blue;">IntDualSub wIn opType</code></dt>
     <dd> Integer adder/subtracter or dual subtracter, possibly pipelined. The
@@ -622,7 +622,6 @@ article</a>.
 
 <h3>Generic fixed point function evaluators</h3>
 
-<em>These operators need libsollya! They will not be available otherwise.</em>
 <dl>
 	<dt><code style="color: blue;">FunctionEvaluator f x</code></dt>
 	<dd>Helper/debug feature, does not generate VHDL.
@@ -733,6 +732,18 @@ Interface variations on HOTBM:
 
 
 <p>Note that the  <code>HOTBM*</code> operators perform an exploration process that typically takes a few minutes for 16 bits, and may take hours for 24 bits.</p>
+
+
+<h3>Fixed Point Filters</h3>
+<dl>
+  <dt><code style="color: blue;">ShiftReg</code></dt>
+    <dd>Shift Register with n taps</dd>
+</dl>
+<dl>
+  <dt><code style="color: blue;">FixFIR p useBitheap taps [coeff list]</code></dt>
+    <dd>A faithful FIR on an (1,p) fixed-point format.
+      The filter may, or may not use bit heaps.</dd>
+</dl>
 
 
 <h3>Pseudo-Random Number Generators</h3>

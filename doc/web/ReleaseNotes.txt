@@ -1,10 +1,13 @@
 ======================================================================
-Version ???
-Shifts to Sollya 4.0 library. Polynomial evaluator rewritten in the process
-Sum of constant products, and a few filters.
+Version 3.0
+Shifts to Sollya 4.0 library. Polynomial evaluator rewritten in the process.
+Reorganisation of the source code, better naming consistency.
+plainStupidVHDL and unusedHardMultThreshold become framework-wide target options.
+More fixed-point filters.
+Added FixAtan2
 First steps towards fixed-point support in the framework.
-A few multi-operand adders removed: with bit heaps, these are no longer components.
-If somebody asks for it we will rebuild them using bit heaps
+A few multi-operand adders removed: with bit heaps, they are no longer needed as components.
+
 ======================================================================
 Version 2.5.0
 Added a clock enable option.
@@ -25,7 +28,6 @@ New operators:
     FixComplexAdder, FixComplexMultiplier: complex operators
     FPAddSub : fused adder+subtractor for e.g. butterfly structures
     FixSinCos, CordicSinCos, FixSinOrCos: variations on the trigs
-
 
 ======================================================================
 Version 2.3.1
