@@ -226,7 +226,7 @@ namespace flopoco {
 		setCopyrightString ( "Florent de Dinechin, Kinga Illyes, Bogdan Popa, Bogdan Pasca, 2012" );
 
 		// useDSP or not? 
-		useDSP = (target->unusedHardMultThreshold()>=0) && target->hasHardMultipliers();
+		useDSP = target->useHardMultipliers();
 
 		// set the name of the multiplier operator
 		{
@@ -274,46 +274,43 @@ namespace flopoco {
 		addInput ( yname  , wYdecl, true );
 		addOutput ( "R"  , wOut, 2 , true );
 
-		// Set up the VHDL library style // TODO
-#if 0
-		if(signedIO)
-			useNumericStd_Signed();
-		else
-			useNumericStd_Unsigned();
-#else
-		useNumericStd();
-#endif
-		
-
-		// The bit heap
-		bitHeap = new BitHeap(this, wOut+g, enableSuperTiles);
-
-		//FIXME: a bitheap doesn't have a sign, does it?
-		bitHeap->setSignedIO(signedIO);
-
-
-		// initialize the critical path
-		setCriticalPath(getMaxInputDelays ( inputDelays_ ));
-
-
-		fillBitHeap();
-
-		// For a stand-alone operator, we add the rounding-by-truncation bit,
-		// The following turns truncation into rounding, except that the overhead is large for small multipliers.
-		// No rounding needed for a tabulated multiplier.
-		if(lsbWeightInBitHeap<0 && !tabulatedMultiplierP(target, wX, wY))
-		{
-			//int weight = -lsbWeightInBitHeap-1;
-			int weight = g-1;
-
-			bitHeap->addConstantOneBit(weight);
+		if(target->plainStupidVHDL()) {
+			vhdl << tab << declareFixPoint("XX",signedIO,-1, -wXdecl) << " <= " << (signedIO?"signed":"unsigned") << "(" << xname <<");" << endl;  
+			vhdl << tab << declareFixPoint("YY",signedIO,-1, -wYdecl) << " <= " << (signedIO?"signed":"unsigned") << "(" << yname <<");" << endl;  
+			vhdl << tab << declareFixPoint("RR",signedIO,-1, -wXdecl-wYdecl) << " <= XX*YY;" << endl;  
+			vhdl << tab << "R <= std_logic_vector(RR" << range(wXdecl+wYdecl-1, wXdecl+wYdecl-wOut) << ");" << endl;
 		}
+		else{
+
+			// The bit heap
+			bitHeap = new BitHeap(this, wOut+g, enableSuperTiles);
+			
+			//FIXME: a bitheap doesn't have a sign, does it?
+			bitHeap->setSignedIO(signedIO);
+			
+
+			// initialize the critical path
+			setCriticalPath(getMaxInputDelays ( inputDelays_ ));
+			
+
+			fillBitHeap();
+
+			// For a stand-alone operator, we add the rounding-by-truncation bit,
+			// The following turns truncation into rounding, except that the overhead is large for small multipliers.
+			// No rounding needed for a tabulated multiplier.
+			if(lsbWeightInBitHeap<0 && !tabulatedMultiplierP(target, wX, wY))
+				{
+					//int weight = -lsbWeightInBitHeap-1;
+					int weight = g-1;
+
+					bitHeap->addConstantOneBit(weight);
+				}
 		
-		bitHeap -> generateCompressorVHDL();
+			bitHeap -> generateCompressorVHDL();
 
-		vhdl << tab << "R" << " <= " << bitHeap-> getSumName() << range(wOut+g-1, g) << ";" << endl;
+			vhdl << tab << "R" << " <= " << bitHeap-> getSumName() << range(wOut+g-1, g) << ";" << endl;
+		}
 	}
-
 
 
 
