@@ -324,7 +324,7 @@ void usage(char *name, string opName = ""){
 	if ( full )
 		cerr << center("ELEMENTARY FUNCTIONS", '_') << "\n";
 
-#if 0 // TODO fixit!
+#if 1 // TODO: better, but still needs to be checked
 	if ( full || opName == "FixSinCos"  || opName == "SinCos"){
 		OP( "FixSinCos","lsbIn");
 		cerr << "Sin/Cosine of Pi*x for x signed in in [-1,1)\n";
@@ -1491,6 +1491,12 @@ else if(opname=="IntAdder"){
 			if (i+nargs > argc)
 				usage(argv[0],opname); // and exit
 			int lsbIn = atoi(argv[i++]); 
+			
+			if(lsbIn>0)
+			{
+				cerr << "Warning: lsbIn>0; assuming you meant to use lsbIn=" << (-lsbIn) << endl;
+				lsbIn = -lsbIn;
+			}
 			Operator* tg = new FixSinCos(target, -lsbIn); // TODO: change interface to FixSinCos
 			addOperator(tg);
 		}

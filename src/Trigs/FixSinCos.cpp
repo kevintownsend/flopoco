@@ -177,7 +177,7 @@ FixSinCos::FixSinCos(Target * target, int w_):Operator(target), w(w_){
 	addOutput("S", w+1);
 	addOutput("C", w+1);
 
-	// These are borders between small-precision cases for which we generate simpler architectures 
+	// These are limits between small-precision cases for which we generate simpler architectures
 
 	// plain tabulation fits LUTs
 	bool wSmallerThanBorder1 = ( w <= target->lutInputs() );    
@@ -381,13 +381,13 @@ FixSinCos::FixSinCos(Target * target, int w_):Operator(target), w(w_){
 		int wZ=w-wA+g; // see alignment below. Actually w-2-wA+2  (-2 because Q&O bits, +2 because mult by Pi)
 
 		pi_mult = new FixRealKCM (target,
-															false,    // signedInput
-															-2-wA-1,  // msbIn
-															-w-g,     // lsbIn
-															-w-g ,    // lsbOut
-															"pi",     // constant 
-															1.0,      // targetUlpError
-															pi_mult_inputDelays); 
+									false,    // signedInput
+									-2-wA-1,  // msbIn
+									-w-g,     // lsbIn
+									-w-g ,    // lsbOut
+									"pi",     // constant
+									1.0,      // targetUlpError
+									pi_mult_inputDelays);
 		oplist.push_back (pi_mult);
 		inPortMap (pi_mult, "X", "Y_red");
 		outPortMap (pi_mult, "R", "Z");
@@ -448,12 +448,18 @@ FixSinCos::FixSinCos(Target * target, int w_):Operator(target), w(w_){
 
 		vhdl << tab << declare("CosPiA_trunc", wZ2o2Guarded) << " <= CosPiA" << range(w+g-1, w+g-wZ2o2Guarded) << ";" << endl;
 		vhdl << tab << declare("Z2o2CosPiA", 2*wZ2o2Guarded)<< " <=  CosPiA_trunc * Z2o2_trunc;" << endl;
-		vhdl << tab << declare("Z2o2CosPiA_aligned", w+g)<< " <= " << zg(2*wA+1) << " & Z2o2CosPiA" << range(2*wZ2o2Guarded-1, 2*wZ2o2Guarded- wZ2o2) << ";" << endl;
+		vhdl << tab << declare("Z2o2CosPiA_aligned", w+g)<< " <= " << zg(2*wA+1);
+		if(2*wZ2o2Guarded-1 >= 2*wZ2o2Guarded- wZ2o2)
+			vhdl << " & Z2o2CosPiA" << range(2*wZ2o2Guarded-1, 2*wZ2o2Guarded- wZ2o2);
+		vhdl << ";" << endl;
 		vhdl << tab << declare("CosPiACosZ", w+g) << "<= CosPiA - Z2o2CosPiA_aligned;" << endl;
 
 		vhdl << tab << declare("SinPiA_trunc", wZ2o2Guarded) << " <= SinPiA" << range(w+g-1, w+g-wZ2o2Guarded) << ";" << endl;
 		vhdl << tab << declare("Z2o2SinPiA", 2*wZ2o2Guarded)<< " <=  SinPiA_trunc * Z2o2_trunc;" << endl;
-		vhdl << tab << declare("Z2o2SinPiA_aligned", w+g)<< " <= " << zg(2*wA+1) << " & Z2o2SinPiA" << range(2*wZ2o2Guarded-1, 2*wZ2o2Guarded- wZ2o2) << ";" << endl;
+		vhdl << tab << declare("Z2o2SinPiA_aligned", w+g)<< " <= " << zg(2*wA+1);
+		if(2*wZ2o2Guarded-1 >= 2*wZ2o2Guarded- wZ2o2)
+			vhdl << " & Z2o2SinPiA" << range(2*wZ2o2Guarded-1, 2*wZ2o2Guarded- wZ2o2);
+		vhdl << ";" << endl;
 		vhdl << tab << declare("SinPiACosZ", w+g) << "<= SinPiA - Z2o2SinPiA_aligned;" << endl;
 
 
