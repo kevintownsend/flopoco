@@ -1037,7 +1037,7 @@ namespace flopoco{
 			// define its cycle 
 			if(isSequential())
 				s->setCycle( this->currentCycle_ + op->getPipelineDepth() );
-		
+			// REPORT(0, "outPortMap: signal " << actualSignalName << " declared at cycle " << s->getCycle());
 			// add this signal to the declare table
 			declareTable[actualSignalName] = s->getCycle();
 			

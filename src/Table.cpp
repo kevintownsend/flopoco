@@ -79,12 +79,14 @@ namespace flopoco{
 		else
 			full=false;
 		if (wIn > 10)
-		  REPORT(0, "WARNING : FloPoCo is building a table with " << wIn << " input bits, it will be large.");
+		  REPORT(0, "WARNING: FloPoCo is building a table with " << wIn << " input bits, it will be large.");
 		 
-		// TODO 
-		// I cannot use manageCriticalPath because the table construction is atomic so far
-		// All this should be rethought carefully
+		// Pipelining is managed as follows:
+		// Declaration of the signal TableOut at cycle 0. It will be assigned in outputVHDL() below
+		// computation of the needed number of cycles (out of Target etc)
+		// The delaying of TableOut will be managed by buildVHDLRegisters() as soon as we have manually defined its lifeSpan
 
+		declare("TableOut",  wOut);
 		setCriticalPath(getMaxInputDelays(inputDelays));
 
 		if (logicTable_ == 1)  {
@@ -101,139 +103,62 @@ namespace flopoco{
 		}
 		else{
 			addToCriticalPath(target->RAMDelay());
-			nextCycle();
+			nextCycle(); // TODO more cycles for higher frequency
 		}
 
+		getSignalByName("TableOut") -> updateLifeSpan(getCurrentCycle()); 
 		outDelayMap["Y"] =   getCriticalPath();
 	}
+
+
+
 
 	Table::Table(Target* target) : 
 		Operator(target){
 		setCopyrightString("Florent de Dinechin, Bogdan Pasca (2007, 2010)");
 	}
 
+
+
+
 	// We have to define this method because the constructor of Table cannot use the (pure virtual) function()
+	// If the table has internal pipeline registers, they must be managed manually here and it is a pain
 	void Table::outputVHDL(std::ostream& o, std::string name) {
 
 		licence(o);
 			o << "library ieee; " << endl;
 			o << "use ieee.std_logic_1164.all;" << endl;
-			o << "use ieee.numeric_std.all;" << endl;
 			o << "library work;" << endl;
 		outputVHDLEntity(o);
 		newArchitecture(o,name);
-		if (true || logicTable_==1 || wIn <= target_->lutInputs()){
-			int i,x;
-			mpz_class y;
-			beginArchitecture(o);		
-			o	<< "  with X select  Y <= " << endl;
-			REPORT(FULL,"Table.cpp: Filling the table");
-			for (x = minIn; x <= maxIn; x++) {
-				y=function(x);
-				//if( y>=(1<<wOut) || y<0)
-					//REPORT(0, "Output out of range" << "x=" << x << "  y= " << y );
-				o<< tab << "\"" << unsignedBinary(y, wOut) << "\" when \"" << unsignedBinary(x, wIn) << "\"," << endl;
-			}
-			o << tab << "\"";
-			for (i = 0; i < wOut; i++) 
-				o << "-";
-			o <<  "\" when others;" << endl;
-//			Operator::outputVHDL(o,  name);
+		o << buildVHDLSignalDeclarations();
+
+		// All the following is a generic table, hoping that the synthesis tools will do the job.
+		// Xilinx-specific BRAM code generation can be found in the older versions, to be resurrected if needed
+		int i,x;
+		mpz_class y;
+		beginArchitecture(o);		
+		o<<buildVHDLRegisters();
+		o	<< "  with X select TableOut <= " << endl;
+		REPORT(FULL,"Table.cpp: Filling the table");
+		for (x = minIn; x <= maxIn; x++) {
+			y=function(x);
+			//if( y>=(1<<wOut) || y<0)
+			//REPORT(0, "Output out of range" << "x=" << x << "  y= " << y );
+			o<< tab << "\"" << unsignedBinary(y, wOut) << "\" when \"" << unsignedBinary(x, wIn) << "\"," << endl;
 		}
-
-/* TODO The code below generates VHDL specific to one tool, one architecture, one FPGA... 
-It is therefore currently unplugged, but it was probabaly added because it was improving performance. */
-
-		else { 
-			int x;
-			mpz_class y;
-			
-			o << tab << "-- Build a 2-D array type for the RoM" << endl;
-
-			if (maxIn-minIn<=256 && wOut>36){
-				o << tab << "subtype word_t is std_logic_vector("<< (wOut%2==0?wOut/2-1:(wOut+1)/2-1) <<" downto 0);" << endl;
-				o << tab << "type memory_t is array(0 to 511) of word_t;" << endl;
-			}else{
-				o << tab << "subtype word_t is std_logic_vector("<< wOut-1 <<" downto 0);" << endl;
-				o << tab << "type memory_t is array(0 to " << ((1<<wIn) -1) <<") of word_t;" << endl;
-			}
-			
-			o << tab <<"function init_rom" << endl;
-			o << tab << tab << "return memory_t is " << endl;
-			o << tab << tab << "variable tmp : memory_t := (" << endl;
-			
-			int left = (wOut%2==0?wOut/2:(wOut+1)/2);
-			int right= wOut - left;
-			if (maxIn-minIn <= 256 && wOut>36 /* TODO Replace with target->getBRAMWidth */){
-				/*special BRAM packing */	
-				//The first maxIn/2 go in the upper part of the table 
-				for (x = minIn; x <= maxIn; x++) {				
-					y=function(x);
-					o << tab << "\"" << unsignedBinary(y>>right, (wOut%2==0?wOut/2:(wOut+1)/2)) << "\"," << endl;
-				}
-				for (x = maxIn; x < 255; x++) {				
-					o << tab << "\"" << unsignedBinary(0, (wOut%2==0?wOut/2:(wOut+1)/2)) << "\"," << endl;
-				}
-				for (x = minIn; x <= maxIn; x++) {				
-					y=function(x);
-					y=y % (mpz_class(1) << right);
-					o << tab << "\"" << unsignedBinary(y, (wOut%2==0?wOut/2:(wOut+1)/2)) << "\"," << endl;
-				}
-				for (x = maxIn; x < 255; x++) {				
-					o << tab << "\"" << unsignedBinary(0, (wOut%2==0?wOut/2:(wOut+1)/2)) << "\"," << endl;
-				}
-			}else{
-				for (x = minIn; x <= maxIn; x++) {
-					y=function(x);
-					//if( y>=(1<<wOut) || y<0)
-						//REPORT(0, "Output out of range" << "x=" << x << "  y= " << y );
-					o << tab << "\"" << unsignedBinary(y, wOut) << "\"," << endl;
-				}
-			}
-			
-			o << tab << tab << "others => (others => '0'));" << endl;
-			o << tab << tab << "	begin " << endl;
-			o << tab << tab << "return tmp;" << endl;
-			o << tab << tab << "end init_rom;" << endl;
-			
-			o << "	signal rom : memory_t := init_rom;" << endl;
-			if (maxIn-minIn <= 256 && wOut>36){
-				declare("Y1",(wOut%2==0?wOut/2:(wOut+1)/2));
-				declare("Y0",(wOut%2==0?wOut/2:(wOut+1)/2));
-				declare("Z1",9);
-				declare("Z0",9);
-			}else{
-				declare("Y0",wOut);
-			}
-//				o << tab << "signal Y1,Y0: std_logic_vector("<<(wOut%2==0?wOut/2-1:(wOut+1)/2-1) <<" downto 0);" << endl;
-			
-			outputVHDLSignalDeclarations(o);
-			beginArchitecture(o);
-			if (maxIn-minIn <= 256 && wOut>36){
-				o << "Z0 <= " << zg(8-wIn) << (wIn>7 ? " &" : "") << " '1' & X;"<<endl;
-				o << "Z1 <= " << zg(8-wIn) << (wIn>7 ? " &" : "") << " '0' & X;"<<endl;
-			}
-					
-			if(isSequential()){
-				o << "	process(clk)" << endl;
-				o << tab << "begin" << endl;
-				o << tab << "if(rising_edge(clk)) then" << endl;
-			}
-			if (maxIn-minIn <= 256 && wOut>36){
-				o << tab << "	Y1 <= rom(  TO_INTEGER(unsigned(Z1)));" << endl;
-				o << tab << "	Y0 <= rom(  TO_INTEGER(unsigned(Z0)));" << endl;
-			}else{
-				o << tab << "	Y0 <= rom(  TO_INTEGER(unsigned(X))  );" << endl;
-			}
-			if(isSequential()){
-				o << tab << "end if;" << endl;
-				o << tab << "end process;" << endl;
-			}
-			if (maxIn-minIn <= 256 && wOut>36){
-				o << tab << " Y <= Y1 & Y0"<<range((wOut%2==0?wOut/2-1:(wOut-1)/2-1),0)<<";"<<endl; 
-			}else
-				o << tab << " Y <= Y0;"<<endl; 
+		o << tab << "\"";
+		for (i = 0; i < wOut; i++) 
+			o << "-";
+		o <<  "\" when others;" << endl;
+		
+		// Delay the output properly
+		o << tab << " Y <= TableOut";
+		if(isSequential() && getPipelineDepth()!=0) {
+			o << "_d" << getPipelineDepth();
 		}
+		o << ";" << endl; 			
+
 		endArchitecture(o);
 	}
 

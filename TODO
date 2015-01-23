@@ -1,7 +1,6 @@
 TODO file for FloPoCo
 
 Release-critical:
-- install doc for older versions
 - Pipelining: PolyEval
 - Interface to FunctionTable has changed deeply, manually convert everything
 	 This is triggered by FunctionTable being renamed to FixFunctionByTable
@@ -15,7 +14,6 @@ Release-critical:
 - Cache file in PiecewisePolyApprox
 
 - Get rid of the useBitHeap arg in KCMs
-- plainStupidVHDL as a field of Target, with a command-line option to set it.
  
 - bug  ./flopoco FixSinCos -16 TestBenchFile 1000
   (close corresponding bug when fixed)

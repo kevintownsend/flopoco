@@ -636,15 +636,15 @@ namespace flopoco{
 
 		vhdl << tab << declare("A0", a[0]) << " <= X" << range(wF-1,  wF-a[0]) << ";" << endl;
 
-		nextCycle(); //buffer input to get synthetized into BRAM
+		nextCycle(); //buffer input to get synthetized into BRAM: TODO
 		vhdl << tab << "-- First inv table" << endl;
 		FirstInvTable* it0 = new FirstInvTable(target, a[0], a[0]+1);
 		oplist.push_back(it0);
 		inPortMap       (it0, "X", "A0");
 		outPortMap      (it0, "Y", "InvA0");
-		vhdl << instance(it0, "itO");
 		useHardRAM(it0);
-		nextCycle(); //this gets absorbed into the bram
+		vhdl << instance(it0, "itO");
+		// nextCycle(); //this gets absorbed into the bram
 
 		// TODO: somehow arbitrary
 		// TODO: unplugged

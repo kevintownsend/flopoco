@@ -338,11 +338,11 @@ void usage(char *name, string opName = ""){
 		cerr << "if reduced=1, fewer iterations at the cost of two multiplications \n";
 	}
 
-#if 0 // TODO fixit!
+#if 1 // TODO fixit!
 	if ( full || opName == "FPLog"){					
 		OP( "FPLog","wE wF InTableSize");
 		cerr << "Floating-point logarithm function, iterative algorithm;\n";
-		cerr << "InTableSize is the table input size: O defaults to something sensible\n";
+		cerr << "InTableSize is the table input size: 0 defaults to something sensible\n";
 	}
 #endif
 
@@ -356,7 +356,6 @@ void usage(char *name, string opName = ""){
 		cerr << "      k: number of bits addressing the table;   d: degree of the polynomial;\n";
 		cerr << "      g: number of guard bits\n";
 		cerr << "      fullInput (boolean): if 1, accepts extended (typically unrounded) input\n";
-		cerr << "      DSP_threshold (float): between 0 and 1, proportion of a DSP block that may be left unused\n";
 	}
 
 
