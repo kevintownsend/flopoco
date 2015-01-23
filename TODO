@@ -1,17 +1,17 @@
 TODO file for FloPoCo
 
 Release-critical:
+- Cache file in PiecewisePolyApprox
+- add to target the following methods that return an estimate of the pipeline: 
+    tablePipelineDepth(wIn, wOut)
+    		(code currently in Table)
+    plainMultPipelineDepth(wX,wY,wOut)
+    pipelinePlainMult(wX,wY,wOut)
 - Pipelining: PolyEval
-- Interface to FunctionTable has changed deeply, manually convert everything
-	 This is triggered by FunctionTable being renamed to FixFunctionByTable
-   (not that bad, need to replace wIn with lsbIn=-wIn, and exchange lsbOut and msbOut)
 -reverse MSB and LSB in FPLargeAcc etc
 - get rid of use() in Operator
-- Check DualTable and DualTable2
+- Clean up DualTable
 
-
-- Clean up Table and DualTable
-- Cache file in PiecewisePolyApprox
 
 - Get rid of the useBitHeap arg in KCMs
  
@@ -26,7 +26,6 @@ Release-critical:
 - Fuse CordicAtan2 and FixAtan2
 - compression bug: ./flopoco IntMultiplier 2 16 16 1 0 0 does not produce a simple adder
 - interface: simple and expert versions of IntMultiplier
-
 
 
 ** Bit heap and multipliers
