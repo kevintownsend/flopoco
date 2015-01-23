@@ -35,7 +35,7 @@ namespace flopoco{
 
 
 	PiecewisePolyApprox::PiecewisePolyApprox(string sollyaString_, double targetAccuracy_, int degree_):
-	targetAccuracy(targetAccuracy_), degree(degree_)
+		targetAccuracy(targetAccuracy_), degree(degree_)
 	{
 		//  parsing delegated to FixFunction
 		f = new FixFunction(sollyaString_);
@@ -63,132 +63,242 @@ namespace flopoco{
 		return giS;
 	}
 
+
+
+
+
 	// split into smaller and smaller intervals until the function can be approximated by a polynomial of degree degree.
 	void PiecewisePolyApprox::build() {
 		
-		sollya_obj_t fS = f->getSollyaObj(); // no need to free this one
-		int nbIntervals;
+		ostringstream cacheFileName;
+		cacheFileName << "Poly_"<<vhdlize(f->description) << "_" << degree << "_" << targetAccuracy << ".cache";
 
-		// Limit alpha to 24, because alpha will be the number of bits input to a table
-		// it will take too long before that anyway
-		bool alphaOK;
-		for (alpha=0; alpha<24; alpha++) {
-			nbIntervals=1<<alpha;
-			alphaOK=true;
-			REPORT(DETAILED, " Testing alpha=" << alpha );
-			for (int i=0; i<nbIntervals; i++) {
-				// The worst case is typically on the left (i==0) or on the right (i==nbIntervals-1).
-				// To test these two first, we do this small rotation of i
-				int ii=(i+nbIntervals-1) & ((1<<alpha)-1);
-
-				// First build g_i(x) = f(2^-alpha*x + i*2^-alpha)
-				sollya_obj_t giS = buildSubIntervalFunction(fS, alpha, ii);
-
-				if(DEBUG <= verbose)
-					sollya_lib_printf("> PiecewisePolyApprox: alpha=%d, ii=%d, testing  %b \n", alpha, ii, giS);
-				// Now what degree do we need to approximate gi?
-				int degreeInf, degreeSup;
-				BasicPolyApprox::guessDegree(giS, targetAccuracy, &degreeInf, &degreeSup);
-				// REPORT(DEBUG, " guessDegree returned (" << degreeInf <<  ", " << degreeSup<<")" ); // no need to report, it is done by guessDegree()
-				sollya_lib_clear_obj(giS);
-				// For now we only consider degreeSup. Is this a TODO?
-				if(degreeSup>degree) {
-					REPORT(DEBUG, "   alpha=" << alpha << " failed." );
-					alphaOK=false;
-					break;
-				}
-			} // end for loop on i
-			
-			// Did we success?
-			if (alphaOK)
-				break;
-		} // end for loop on alpha
-		if (alphaOK)
-			REPORT(DETAILED, " Found alpha=" << alpha << " OK");
-
-		// Still have to do a while loop because we can't trust guessdegree, damn 
-		bool success=false;
-		while(!success) {
-			// Now fill the vector of polynomials, computing the coefficient parameters along.
-			//		LSB=INT_MAX; // very large
-			// MSB=INT_MIN; // very small
-			approxErrorBound = 0.0;
-			BasicPolyApprox *p;
-
-			REPORT(DETAILED, " Now computing the actual polynomials ");
-			// initialize the vector of MSB weights
-			for (int j=0; j<=degree; j++) {
-				MSB.push_back(INT_MIN);
+		// cerr << cacheFileName.str() <<endl<<endl;
+		// Test existence of cache file
+		fstream file;
+		file.open(cacheFileName.str().c_str(), ios::in);
+		
+		// check for bogus .cache file
+		if(file.is_open() && file.peek() == std::ifstream::traits_type::eof())
+			{
+				file.close();
+				std::remove(cacheFileName.str().c_str());
+				file.open(cacheFileName.str().c_str(), ios::in);
 			}
 
-			// Compute the LSB of each coefficient.
-			// It should be at least floor(log2(targetAccuracy)); 
-			// However we can get a bit extra accuracy/slack because the evaluation will use log2(degree) guard bits.
-			// Adding these to the constants is almost for free: let's do it.  
-			LSB = floor(log2(targetAccuracy/degree));
-			REPORT(DEBUG, "To obtain target accuracy " << targetAccuracy << " with a degree-"<<degree <<" polynomial, we compute coefficients accurate to " << targetAccuracy/degree
-						 << " (LSB="<<LSB<<")"); 
-		
-			for (int i=0; i<nbIntervals; i++) {
-				REPORT(DETAILED, " ... computing polynomial approx for interval " << i << " / "<< nbIntervals);
-				// Recompute the substitution. No big deal.
-				sollya_obj_t giS = buildSubIntervalFunction(fS, alpha, i);
+		if(true || !file.is_open()){ // TODO remove the true when all works
+			//********************** Do the work, then write the cache ********************* 
 
-				p = new BasicPolyApprox(giS, degree, LSB);
-				poly.push_back(p);
-				if (approxErrorBound < p->approxErrorBound){ 
-					REPORT(DEBUG, "   new approxErrorBound=" << p->approxErrorBound );
-					approxErrorBound = p->approxErrorBound;
-				}
+			sollya_obj_t fS = f->getSollyaObj(); // no need to free this one
+			int nbIntervals;
 
-				// Now compute the englobing MSB and LSB for each coefficient	
-				for (int j=0; j<=degree; j++) {
-					// if the coeff is zero, we can set its MSB to anything, so we exclude this case
-					if (  (!p->coeff[j]->isZero())  &&  (p->coeff[j]->MSB > MSB[j])  )
-						MSB[j] = p->coeff[j]->MSB;
-				}
-		
-			} // end for loop on i
-
-
-			if (approxErrorBound < targetAccuracy) {
-				REPORT(INFO, " *** Success! Final approxErrorBound=" << approxErrorBound << "  is smaller than target accuracy: " << targetAccuracy  );
-				success=true;
-			}
-			else {
-				REPORT(INFO, " guessDegree mislead us, measured approx error:" << approxErrorBound << " is larger than target accuracy: " << targetAccuracy << ". Now increasing alpha and starting over, thank you for your patience");
-				//empty poly
- 				for (int i=0; i<nbIntervals; i++) {
-					free(poly.back());
-					poly.pop_back();
-				}
-				alpha++;
+			// Limit alpha to 24, because alpha will be the number of bits input to a table
+			// it will take too long before that anyway
+			bool alphaOK;
+			for (alpha=0; alpha<24; alpha++) {
 				nbIntervals=1<<alpha;
+				alphaOK=true;
+				REPORT(DETAILED, " Testing alpha=" << alpha );
+				for (int i=0; i<nbIntervals; i++) {
+					// The worst case is typically on the left (i==0) or on the right (i==nbIntervals-1).
+					// To test these two first, we do this small rotation of i
+					int ii=(i+nbIntervals-1) & ((1<<alpha)-1);
+
+					// First build g_i(x) = f(2^-alpha*x + i*2^-alpha)
+					sollya_obj_t giS = buildSubIntervalFunction(fS, alpha, ii);
+
+					if(DEBUG <= verbose)
+						sollya_lib_printf("> PiecewisePolyApprox: alpha=%d, ii=%d, testing  %b \n", alpha, ii, giS);
+					// Now what degree do we need to approximate gi?
+					int degreeInf, degreeSup;
+					BasicPolyApprox::guessDegree(giS, targetAccuracy, &degreeInf, &degreeSup);
+					// REPORT(DEBUG, " guessDegree returned (" << degreeInf <<  ", " << degreeSup<<")" ); // no need to report, it is done by guessDegree()
+					sollya_lib_clear_obj(giS);
+					// For now we only consider degreeSup. Is this a TODO?
+					if(degreeSup>degree) {
+						REPORT(DEBUG, "   alpha=" << alpha << " failed." );
+						alphaOK=false;
+						break;
+					}
+				} // end for loop on i
+			
+				// Did we success?
+				if (alphaOK)
+					break;
+			} // end for loop on alpha
+			if (alphaOK)
+				REPORT(DETAILED, " Found alpha=" << alpha << " OK");
+
+			// Still have to do a while loop because we can't trust guessdegree, damn 
+			bool success=false;
+			while(!success) {
+				// Now fill the vector of polynomials, computing the coefficient parameters along.
+				//		LSB=INT_MAX; // very large
+				// MSB=INT_MIN; // very small
+				approxErrorBound = 0.0;
+				BasicPolyApprox *p;
+
+				REPORT(DETAILED, " Now computing the actual polynomials ");
+				// initialize the vector of MSB weights
+				for (int j=0; j<=degree; j++) {
+					MSB.push_back(INT_MIN);
+				}
+
+				// Compute the LSB of each coefficient.
+				// It should be at least floor(log2(targetAccuracy)); 
+				// However we can get a bit extra accuracy/slack because the evaluation will use log2(degree) guard bits.
+				// Adding these to the constants is almost for free: let's do it.  
+				LSB = floor(log2(targetAccuracy/degree));
+				REPORT(DEBUG, "To obtain target accuracy " << targetAccuracy << " with a degree-"<<degree <<" polynomial, we compute coefficients accurate to " << targetAccuracy/degree
+							 << " (LSB="<<LSB<<")"); 
+		
+				for (int i=0; i<nbIntervals; i++) {
+					REPORT(DETAILED, " ... computing polynomial approx for interval " << i << " / "<< nbIntervals);
+					// Recompute the substitution. No big deal.
+					sollya_obj_t giS = buildSubIntervalFunction(fS, alpha, i);
+
+					p = new BasicPolyApprox(giS, degree, LSB);
+					poly.push_back(p);
+					if (approxErrorBound < p->approxErrorBound){ 
+						REPORT(DEBUG, "   new approxErrorBound=" << p->approxErrorBound );
+						approxErrorBound = p->approxErrorBound;
+					}
+
+					// Now compute the englobing MSB and LSB for each coefficient	
+					for (int j=0; j<=degree; j++) {
+						// if the coeff is zero, we can set its MSB to anything, so we exclude this case
+						if (  (!p->coeff[j]->isZero())  &&  (p->coeff[j]->MSB > MSB[j])  )
+							MSB[j] = p->coeff[j]->MSB;
+					}
+		
+				} // end for loop on i
+
+
+				if (approxErrorBound < targetAccuracy) {
+					REPORT(INFO, " *** Success! Final approxErrorBound=" << approxErrorBound << "  is smaller than target accuracy: " << targetAccuracy  );
+					success=true;
+				}
+				else {
+					REPORT(INFO, " guessDegree mislead us, measured approx error:" << approxErrorBound << " is larger than target accuracy: " << targetAccuracy << ". Now increasing alpha and starting over, thank you for your patience");
+					//empty poly
+					for (int i=0; i<nbIntervals; i++) {
+						free(poly.back());
+						poly.pop_back();
+					}
+					alpha++;
+					nbIntervals=1<<alpha;
+				}
+			} // end while(!success)
+
+
+			// Now we need to resize all the coefficients of degree i to the largest one
+			for (int i=0; i<nbIntervals; i++) {
+				for (int j=0; j<=degree; j++) {
+					// REPORT(DEBUG "Resizing MSB of coeff " << j << " of poly " << i << " : from " << poly[i] -> coeff[j] -> MSB << " to " <<  MSB[j]);  
+					poly[i] -> coeff[j] -> changeMSB(MSB[j]);
+					// REPORT(DEBUG, "   Now  " << poly[i] -> coeff[j] -> MSB);  
+				}
 			}
-		} // end while(!success)
+			// TODO? In the previous loop we could also check if one of the coeffs is always positive or negative, and optimize generated code accordingly 
 
-
-		// Now we need to resize all the coefficients of degree i to the largest one
-		for (int i=0; i<nbIntervals; i++) {
+			// A bit of reporting
+			REPORT(INFO,"Final report: ");
+			REPORT(INFO,"  Degree=" << degree	<< "      maxApproxErrorBound=" << approxErrorBound);
+			int totalOutputSize=0;
 			for (int j=0; j<=degree; j++) {
-				// REPORT(DEBUG "Resizing MSB of coeff " << j << " of poly " << i << " : from " << poly[i] -> coeff[j] -> MSB << " to " <<  MSB[j]);  
-				poly[i] -> coeff[j] -> changeMSB(MSB[j]);
-				// REPORT(DEBUG, "   Now  " << poly[i] -> coeff[j] -> MSB);  
+				int size = MSB[j]-LSB +1;
+				totalOutputSize += size ;
+				REPORT(INFO,"      MSB["<<j<<"] = " << MSB[j] << "  size=" << size);
 			}
+			REPORT(INFO, "  Total size of the table is " << nbIntervals << " x " << totalOutputSize << " bits");
+		
+#if 0
+		REPORT(INFO, "Writing the cache file");
+		file << "Polynomial data cache for " << cacheFileName.str() << endl;
+		file << "Erasing this file is harmless, but do not try to edit it." <<endl; 
+		file << wIn  << endl;
+		file << wOut << endl;
+		// The approx error
+		file << mpfr_get_d(*getMaxApproxError(), GMP_RNDU) << endl;
+		// The size of the nrIntervalsArray
+		file << nrIntervalsArray.size() << endl;  
+		// The values of nrIntervalsArray
+		for(k=0; (unsigned)k<nrIntervalsArray.size(); k++) {
+			file << nrIntervalsArray[k] << endl;
 		}
-		// TODO? In the previous loop we could also check if one of the coeffs is always positive or negative, and optimize generated code accordingly 
-
-		// A bit of reporting
-		REPORT(INFO,"Final report: ");
-		REPORT(INFO,"  Degree=" << degree	<< "      maxApproxErrorBound=" << approxErrorBound);
- 		int totalOutputSize=0;
-		for (int j=0; j<=degree; j++) {
-			int size = MSB[j]-LSB +1;
-			totalOutputSize += size ;
-			REPORT(INFO,"      MSB["<<j<<"] = " << MSB[j] << "  size=" << size);
+		// The size of the actual table
+		file << actualTable.size() << endl;  
+		// The compact array
+		for(k=0; (unsigned)k<actualTable.size(); k++) {
+			mpz_class r = actualTable[k];
+			file << r << endl;
 		}
-		REPORT(INFO, "  Total size of the table is " << nbIntervals << " x " << totalOutputSize << " bits");
+		// The coefficient details
+		file << coeffParamVector.size()  << endl;
+		for(k=0; (unsigned)k<coeffParamVector.size(); k++) {
+			file << coeffParamVector[k]->getSize() << endl;
+			file << coeffParamVector[k]->getWeight() << endl;
+		}
 
+
+#endif
+		}
+
+		else {
+#if 0
+			REPORT(INFO, "Polynomial data cache found: " << cacheFileName.str());
+			//********************** Just read the cache ********************* 
+			string line;
+			int nrIntervals, nrCoeffs;
+			getline(file, line); // ignore the first line which is a comment
+			getline(file, line); // ignore the second line which is a comment
+			file >> wIn; // third line
+			file >> wOut; // fourth line
+			// The approx error
+			double maxApproxError;
+			file >> maxApproxError;
+			maxError=(mpfr_t*) safeMalloc(sizeof(mpfr_t));
+			mpfr_init2(*maxError, 53);
+			mpfr_set_d(*maxError, maxApproxError, GMP_RNDU);
+			// The size of the nrIntervalsArray
+			int nrIntervalsArraySize;
+			file >> nrIntervalsArraySize;
+			// The values of nrIntervalsArray
+			for(int k=0; k<nrIntervalsArraySize; k++) {
+				int nrInter;
+				file >> nrInter;
+				nrIntervalsArray.push_back(nrInter);
+			}
+			// The size of the actual table
+			file >> nrIntervals;
+			// The compact array
+			for (int i=0; i<nrIntervals; i++){
+				mpz_class t;
+				file >> t;
+				actualTable.push_back(t);
+			}
+			// these are two attributes of Table.
+			minIn=0;
+			maxIn=actualTable.size()-1;
+			// Now in the file: the coefficient details
+			file >> nrCoeffs;
+			for (int i=0; i<nrCoeffs; i++){
+				FixedPointCoefficient *c;
+				int size, weight;
+				file >> size;
+				file >> weight;
+				c = new FixedPointCoefficient(size, weight);
+				coeffParamVector.push_back(c);
+			}
+
+			//generateDebugPwf();
+			if (verbose>=INFO){	
+				printPolynomialCoefficientsVector();
+				REPORT(DETAILED, "Parameters for polynomial evaluator:");
+				printCoeffParamVector();
+			}
+#endif
+		} // end if cache
 	}
 	
 	mpz_class PiecewisePolyApprox::getCoeff(int i, int d){
