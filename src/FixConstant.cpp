@@ -17,6 +17,17 @@ namespace flopoco{
 	}
 
 
+	FixConstant::FixConstant(const int MSB_, int LSB_, const bool isSigned_, const mpz_class zval):
+		MSB(MSB_), LSB(LSB_), width(MSB_-LSB_+1), isSigned(isSigned_) 
+	{
+		// cout <<  "Entering FixConstant "<< zval  <<endl;
+		mpfr_init2(fpValue, width);
+		mpfr_set_z(fpValue, zval.get_mpz_t(), GMP_RNDN); // TODO check no error?
+		mpfr_mul_2si(fpValue, fpValue, LSB, GMP_RNDN); // exact
+		if( (! isSigned) && (mpfr_sgn(fpValue)<0) )
+			THROWERROR("In FixConstant constructor: Negative constant " << printMPFR(fpValue) << " cannot be represented as a signed constant");
+		// cout <<  "Exiting FixConstant "<< zval <<endl;
+	}
 
 
 #if 0 // Warning the following code is unfinished and untested
@@ -68,7 +79,7 @@ namespace flopoco{
 
 	FixConstant::~FixConstant(){
 		mpfr_clear(fpValue);
-	} 
+	}
 	
 	mpz_class FixConstant::getBitVectorAsMPZ() {
 		mpz_class h;

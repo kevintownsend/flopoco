@@ -14,7 +14,7 @@ Release-critical:
 
 
 - Get rid of the useBitHeap arg in KCMs
- 
+
 - bug  ./flopoco FixSinCos -16 TestBenchFile 1000
   (close corresponding bug when fixed)
 - change interface to FixSinCos and CordicSinCos to use lsb and not w

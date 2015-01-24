@@ -71,7 +71,7 @@ namespace flopoco{
 	void PiecewisePolyApprox::build() {
 		
 		ostringstream cacheFileName;
-		cacheFileName << "Poly_"<<vhdlize(f->description) << "_" << degree << "_" << targetAccuracy << ".cache";
+		cacheFileName << "PiecewisePoly_"<<vhdlize(f->description) << "_" << degree << "_" << targetAccuracy << ".cache";
 
 		// cerr << cacheFileName.str() <<endl<<endl;
 		// Test existence of cache file
@@ -83,12 +83,11 @@ namespace flopoco{
 			{
 				file.close();
 				std::remove(cacheFileName.str().c_str());
-				file.open(cacheFileName.str().c_str(), ios::in);
+				file.open(cacheFileName.str().c_str(), ios::in); // of course this one will fail
 			}
 
-		if(true || !file.is_open()){ // TODO remove the true when all works
+		if(!file.is_open()){ // TODO remove the true when all works
 			//********************** Do the work, then write the cache ********************* 
-
 			sollya_obj_t fS = f->getSollyaObj(); // no need to free this one
 			int nbIntervals;
 
@@ -211,93 +210,54 @@ namespace flopoco{
 				REPORT(INFO,"      MSB["<<j<<"] = " << MSB[j] << "  size=" << size);
 			}
 			REPORT(INFO, "  Total size of the table is " << nbIntervals << " x " << totalOutputSize << " bits");
-		
-#if 0
-		REPORT(INFO, "Writing the cache file");
-		file << "Polynomial data cache for " << cacheFileName.str() << endl;
-		file << "Erasing this file is harmless, but do not try to edit it." <<endl; 
-		file << wIn  << endl;
-		file << wOut << endl;
-		// The approx error
-		file << mpfr_get_d(*getMaxApproxError(), GMP_RNDU) << endl;
-		// The size of the nrIntervalsArray
-		file << nrIntervalsArray.size() << endl;  
-		// The values of nrIntervalsArray
-		for(k=0; (unsigned)k<nrIntervalsArray.size(); k++) {
-			file << nrIntervalsArray[k] << endl;
-		}
-		// The size of the actual table
-		file << actualTable.size() << endl;  
-		// The compact array
-		for(k=0; (unsigned)k<actualTable.size(); k++) {
-			mpz_class r = actualTable[k];
-			file << r << endl;
-		}
-		// The coefficient details
-		file << coeffParamVector.size()  << endl;
-		for(k=0; (unsigned)k<coeffParamVector.size(); k++) {
-			file << coeffParamVector[k]->getSize() << endl;
-			file << coeffParamVector[k]->getWeight() << endl;
-		}
-
-
-#endif
+			
+			// Write the cache file
+			REPORT(INFO, "Writing to cache file: " << cacheFileName.str());
+			file.open(cacheFileName.str().c_str(), ios::out);
+			file << "Polynomial data cache for " << cacheFileName.str() << endl;
+			file << "Erasing this file is harmless, but do not try to edit it." <<endl; 
+			file << degree <<endl;
+			file << alpha <<endl;
+			file << LSB <<endl;
+			for (int j=0; j<=degree; j++) {
+				file << MSB[j] << endl;
+			} 
+			file << approxErrorBound << endl;
+			// now the coefficients themselves
+			for (int i=0; i<(1<<alpha); i++) {
+				for (int j=0; j<=degree; j++) {
+					file <<  poly[i] -> coeff[j] -> getBitVectorAsMPZ() << endl;
+				}
+			}
 		}
 
 		else {
-#if 0
 			REPORT(INFO, "Polynomial data cache found: " << cacheFileName.str());
 			//********************** Just read the cache ********************* 
 			string line;
-			int nrIntervals, nrCoeffs;
 			getline(file, line); // ignore the first line which is a comment
 			getline(file, line); // ignore the second line which is a comment
-			file >> wIn; // third line
-			file >> wOut; // fourth line
-			// The approx error
-			double maxApproxError;
-			file >> maxApproxError;
-			maxError=(mpfr_t*) safeMalloc(sizeof(mpfr_t));
-			mpfr_init2(*maxError, 53);
-			mpfr_set_d(*maxError, maxApproxError, GMP_RNDU);
-			// The size of the nrIntervalsArray
-			int nrIntervalsArraySize;
-			file >> nrIntervalsArraySize;
-			// The values of nrIntervalsArray
-			for(int k=0; k<nrIntervalsArraySize; k++) {
-				int nrInter;
-				file >> nrInter;
-				nrIntervalsArray.push_back(nrInter);
-			}
-			// The size of the actual table
-			file >> nrIntervals;
-			// The compact array
-			for (int i=0; i<nrIntervals; i++){
-				mpz_class t;
-				file >> t;
-				actualTable.push_back(t);
-			}
-			// these are two attributes of Table.
-			minIn=0;
-			maxIn=actualTable.size()-1;
-			// Now in the file: the coefficient details
-			file >> nrCoeffs;
-			for (int i=0; i<nrCoeffs; i++){
-				FixedPointCoefficient *c;
-				int size, weight;
-				file >> size;
-				file >> weight;
-				c = new FixedPointCoefficient(size, weight);
-				coeffParamVector.push_back(c);
-			}
+			file >> degree;
+			file >> alpha;
+			file >> LSB;
 
-			//generateDebugPwf();
-			if (verbose>=INFO){	
-				printPolynomialCoefficientsVector();
-				REPORT(DETAILED, "Parameters for polynomial evaluator:");
-				printCoeffParamVector();
+			for (int j=0; j<=degree; j++) {
+				int msb;
+				file >> msb; 
+				MSB.push_back(msb);
 			}
-#endif
+			file >> approxErrorBound;
+
+			for (int i=0; i<(1<<alpha); i++) {
+				vector<mpz_class> coeff;
+				for (int j=0; j<=degree; j++) {
+					mpz_class c; 
+					file >> c;
+					coeff.push_back(c);
+				}				
+				BasicPolyApprox* p = new BasicPolyApprox(degree,MSB,LSB,coeff);
+				poly.push_back(p);
+			}
 		} // end if cache
 	}
 	

@@ -64,6 +64,19 @@ namespace flopoco{
 	}
 
 
+
+	BasicPolyApprox::BasicPolyApprox(int degree_, vector<int> MSB, int LSB_, vector<mpz_class> mpzCoeff): 
+		degree(degree_), LSB(LSB_)
+  {
+		needToFreeF = false;
+		initialize();
+		for (int i=0; i<=degree; i++){
+			FixConstant* fixcoeff =	new FixConstant(MSB[i], LSB, true/*signed*/, mpzCoeff[i]);
+			coeff.push_back(fixcoeff);
+		}
+	}
+
+
 	void BasicPolyApprox::initialize() {
 		srcFileName="BasicPolyApprox"; // should be somehow static but this is too much to ask me
 		fixedS = sollya_lib_fixed();

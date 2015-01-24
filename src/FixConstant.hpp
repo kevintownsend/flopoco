@@ -25,8 +25,11 @@ namespace flopoco{
 	{
 	public:
 
-		/** A constructor with explicit wLSB and wMSB. May perform rounding, or have MSB or LSB zeroes */
-		FixConstant(const int wMSB, const int wLSB, const bool isSigned, const mpfr_t val);
+		/** A constructor with explicit MSB and LSB. May perform rounding, or have MSB or LSB zeroes. No overflow check yet: TODO*/
+		FixConstant(const int weightMSB, const int weightLSB, const bool isSigned, const mpfr_t val);
+
+		/** A constructor with explicit wLSB and wMSB. May have MSB or LSB zeroes. No overflow check yet: TODO */
+		FixConstant(const int weightMSB, const int weightLSB, const bool isSigned, const mpz_class val);
 
 #if 0
 		/** A constructor that deduces wLSB and wMSB from the value of the mpfr passed 

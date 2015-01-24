@@ -79,6 +79,10 @@ namespace flopoco{
 		 */
 		BasicPolyApprox(string sollyaString, double targetAccuracy, int addGuardBits=-1);
 
+		/** A constructor for the case you already have the coefficients, e.g. you read them from a file
+		 */
+		BasicPolyApprox(int degree, vector<int> MSB, int LSB, vector<mpz_class> coeff);
+
 
 		virtual ~BasicPolyApprox();
 
