@@ -1,7 +1,6 @@
 TODO file for FloPoCo
 
 Release-critical:
-- Cache file in PiecewisePolyApprox
 - add to target the following methods that return an estimate of the pipeline: 
     tablePipelineDepth(wIn, wOut)
     		(code currently in Table)
