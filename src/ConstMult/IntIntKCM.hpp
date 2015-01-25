@@ -6,7 +6,7 @@
 #include <gmpxx.h>
 #include "../Operator.hpp"
 
-#include "../BitHeap.hpp"
+#include "../BitHeap/BitHeap.hpp"
 #include "../Signal.hpp"
 
 namespace flopoco{

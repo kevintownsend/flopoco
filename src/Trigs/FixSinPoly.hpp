@@ -10,7 +10,7 @@
 
 #include "../Operator.hpp"
 
-#include "../BitHeap.hpp"
+#include "../BitHeap/BitHeap.hpp"
 #include "../Signal.hpp"
 
 #include "../utils.hpp"

@@ -77,7 +77,7 @@
 #include "Targets/StratixII.hpp"
 #include "Targets/StratixIII.hpp"
 #include "Targets/StratixIV.hpp"
-#include "Plotter.hpp"
+#include "../BitHeap/Plotter.hpp"
 
 using namespace std;
 

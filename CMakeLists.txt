@@ -218,9 +218,9 @@ ADD_LIBRARY(FloPoCoLib STATIC
 
 
 # Bit heap  ------------------------------------------------
- src/BitHeap
- src/WeightedBit
- src/Plotter
+ src/BitHeap/BitHeap
+ src/BitHeap/WeightedBit
+ src/BitHeap/Plotter
 
 
 #--------------------------------------------------------------------

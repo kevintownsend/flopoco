@@ -1,17 +1,16 @@
 TODO file for FloPoCo
 
 Release-critical:
+- FPPipeline
 - add to target the following methods that return an estimate of the pipeline: 
     tablePipelineDepth(wIn, wOut)
     		(code currently in Table)
     plainMultPipelineDepth(wX,wY,wOut)
     pipelinePlainMult(wX,wY,wOut)
 - Pipelining: PolyEval
--reverse MSB and LSB in FPLargeAcc etc
+
 - get rid of use() in Operator
 - Clean up DualTable
-
-
 - Get rid of the useBitHeap arg in KCMs
 
 - bug  ./flopoco FixSinCos -16 TestBenchFile 1000

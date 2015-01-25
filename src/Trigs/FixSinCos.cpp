@@ -15,7 +15,7 @@
 #include "ConstMult/FixRealKCM.hpp"
 #include "IntMult//IntMultiplier.hpp"
 #include "FixFunctions/FixFunctionByTable.hpp"
-#include "BitHeap.hpp"
+#include "BitHeap/BitHeap.hpp"
 #include "FixSinPoly.hpp"
 
 #include <iostream>

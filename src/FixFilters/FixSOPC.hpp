@@ -4,7 +4,7 @@
 #include "Operator.hpp"
 #include "utils.hpp"
 
-#include "BitHeap.hpp"
+#include "BitHeap/BitHeap.hpp"
 
 /*  All flopoco operators and utility functions are declared within
   the flopoco namespace.

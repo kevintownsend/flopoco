@@ -7,7 +7,7 @@
 #include "utils.hpp"
 #include "Operator.hpp"
 #include "Table.hpp"
-#include "BitHeap.hpp"
+#include "BitHeap/BitHeap.hpp"
 #include "TestState.hpp"
 
 #include "IntMult//MultiplierBlock.hpp"

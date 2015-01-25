@@ -29,7 +29,7 @@
 #if 0 
 #include "IntMultiAdder.hpp"
 #else 
-#include "BitHeap.hpp"
+#include "../BitHeap/BitHeap.hpp"
 #endif
 using namespace std;
 namespace flopoco{

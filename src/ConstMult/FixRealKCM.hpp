@@ -3,7 +3,7 @@
 #include "../Operator.hpp"
 #include "../Table.hpp"
 
-#include "../BitHeap.hpp"
+#include "../BitHeap/BitHeap.hpp"
 
 namespace flopoco{
 

@@ -7,8 +7,7 @@
 #include "utils.hpp"
 #include "Operator.hpp"
 #include "IntMultiplier.hpp"
-#include "BitHeap.hpp"
-#include "Plotter.hpp"
+#include "BitHeap/BitHeap.hpp"
 
 
 namespace flopoco {

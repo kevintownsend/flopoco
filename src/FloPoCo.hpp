@@ -260,7 +260,6 @@ use withing matrix-multiplication scenarios ------------------ */
 /* misc ------------------------------------------------------ */
 #include "TestBenches/Wrapper.hpp"
 #include "UserDefinedOperator.hpp"
-#include "Plotter.hpp"
 
 
 #endif //FLOPOCO_HPP
