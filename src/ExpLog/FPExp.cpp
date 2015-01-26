@@ -552,8 +552,9 @@ namespace flopoco{
 				magicTable* table = new magicTable(target, sizeExpA, sizeExpZPart, useMagicTableExpZmZm1);
 				addSubComponent(table);
 			
+				// TODO: delegate this cycle management to Table
 				/* Magic Table is an instance of DualTable which is, for now combinatorial */
-				nextCycle(); //However, to get the MagicTable inferred as a dual-port ram, it needs buffered inputs			
+				//				nextCycle(); //However, to get the MagicTable inferred as a dual-port ram, it needs buffered inputs			
 				outPortMap(table, "Y2", "expZ_output");
 				inPortMap(table, "X2", "Addr2");
 				outPortMap(table, "Y1", "expA_output");

@@ -234,7 +234,7 @@ namespace flopoco{
 
 		/**
 		 * How many registers should be added to the pipeline after a multiplier written as "*" in VHDL
-		 * assuming that these registers will be pushed inside by retiming 
+		 * hoping that these registers will be pushed inside by retiming 
 		 % This function is highly heuristic, as it depends on synthesis tool options that are not known
 		 * @param multBlock the multiplier block representing the DSP to be added
 		 * @param cycleDelay the number of cycles that need to be added
@@ -271,7 +271,7 @@ namespace flopoco{
 
 		/**
 		 * How many registers should be added to the pipeline after a BRAM-based table
-		 * assuming that these registers will be pushed inside by retiming 
+		 * hoping that these registers will be pushed inside by retiming 
 		 % This function is highly heuristic, as it depends on synthesis tool options that are not known
 		 * @param multBlock the multiplier block representing the DSP to be added
 		 * @param cycleDelay the number of cycles that need to be added
@@ -659,13 +659,17 @@ namespace flopoco{
 		/* Attributes that belong to the FPGA and are therefore static */
 		string id_;
 		string vendor_;
+		double maxFrequencyMHz_ ;   /**< The maximum practical frequency attainable on this target. An indicator of relative performance of FPGAs. 400 is for Virtex4 */
 		int    lutInputs_;          /**< The number of inputs for the LUTs */
+		// DSP related
 		bool   hasHardMultipliers_; /**< If true, this target offers hardware multipliers */
 		bool   hasFastLogicTernaryAdders_; /**< If true, this target offers support for ternary addition at the cost of binary addition */
 		int    multXInputs_;        /**< The size for the X dimension of the hardware multipliers (the largest, if they are not equal) */
 		int    multYInputs_;        /**< The size for the Y dimension of the hardware multipliers  (the smallest, if they are not equal)*/
+		int    registerLevelsInDSP_; /**< How many register levels inside a DSP TODO: not set yet in actual targets */ 
+		// block memory related 
+		bool   hasMemoryBlock_;     /**< If true, this target offers hardware memory blocks */
 		long   sizeOfBlock_;		    /**< The size of a primitive memory block */
-		double maxFrequencyMHz_ ;   /**< The maximum practical frequency attainable on this target. An indicator of relative performance of FPGAs. 400 is for Virtex4 */
 
 		/* Attributes that belong to the application context and may be modified by the command line
 		 */

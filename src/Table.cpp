@@ -54,9 +54,9 @@ namespace flopoco{
 
 
 
-	Table::Table(Target* target, int _wIn, int _wOut, int _minIn, int _maxIn, int logicTable, map<string, double> inputDelays) : 
+	Table::Table(Target* target, int _wIn, int _wOut, int _minIn, int _maxIn, int _logicTable, map<string, double> inputDelays) : 
 		Operator(target),
-		wIn(_wIn), wOut(_wOut), minIn(_minIn), maxIn(_maxIn), logicTable_(logicTable)
+		wIn(_wIn), wOut(_wOut), minIn(_minIn), maxIn(_maxIn)
 	{
 		srcFileName="Table";
 		setCopyrightString("Florent de Dinechin (2007-2012)");
@@ -80,7 +80,18 @@ namespace flopoco{
 			full=false;
 		if (wIn > 10)
 		  REPORT(0, "WARNING: FloPoCo is building a table with " << wIn << " input bits, it will be large.");
-		 
+
+		
+		if(_logicTable==1)
+			logicTable=true;
+		else if (_logicTable==-1)
+			logicTable=false;
+		else { // the constructor should decide
+			logicTable=(wOut * (mpz_class(1) << wIn) < 0.5*target->sizeOfMemoryBlock()); 
+			REPORT(DETAILED, "This table will be implemented in memory blocks");
+		}
+		
+
 		// Pipelining is managed as follows:
 		// Declaration of the signal TableOut at cycle 0. It will be assigned in outputVHDL() below
 		// computation of the needed number of cycles (out of Target etc)
@@ -89,7 +100,7 @@ namespace flopoco{
 		declare("TableOut",  wOut);
 		setCriticalPath(getMaxInputDelays(inputDelays));
 
-		if (logicTable_ == 1)  {
+		if (logicTable)  {
 			// Delay is that of broadcasting the input bits to wOut LUTs, plus the LUT delay itself
 			if(wIn <= target->lutInputs()) 
 				addToCriticalPath(target->localWireDelay(wOut) + target->lutDelay());
@@ -102,8 +113,7 @@ namespace flopoco{
 			}
 		}
 		else{
-			addToCriticalPath(target->RAMDelay());
-			nextCycle(); // TODO more cycles for higher frequency
+			manageCriticalPath(target->LogicToRAMWireDelay() + target->RAMToLogicWireDelay() + target->RAMDelay()); // will hopefully insert the extra register when needed
 		}
 
 		getSignalByName("TableOut") -> updateLifeSpan(getCurrentCycle()); 

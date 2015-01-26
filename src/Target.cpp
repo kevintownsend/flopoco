@@ -131,7 +131,7 @@ namespace flopoco{
 			cycles = ( DSPMultiplierDelay() + adds* DSPAdderDelay() ) * frequency_;
 		}
 		else {
-			// assuming a plain block multiplier
+			// assuming a plain block multiplier, critical path through wX+wY full adders. Could be refined.
 			double init, carry;
 			getAdderParameters(init, carry, wX+wY);
 			cycles = (init + (wX+wY)*carry) *frequency_;

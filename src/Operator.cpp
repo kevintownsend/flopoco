@@ -776,24 +776,15 @@ namespace flopoco{
 	void Operator::addToCriticalPath(double delay){
 		criticalPath_ += delay;
 	}
-	
-//	bool Operator::manageCriticalPath(double delay, bool report){
-//		//		criticalPath_ += delay;
-//		if ( target_->ffDelay() + (criticalPath_ + delay) + target_->localWireDelay() > (1.0/target_->frequency())){
-//			nextCycle(report); //TODO Warning
-//			criticalPath_ = min(delay, 1.0/target_->frequency());
-//			return true;
-//		}
-//		else{
-//			criticalPath_ += delay;
-//			return false;
-//		}
-//	}
+
+
+
+
 
 	bool Operator::manageCriticalPath(double delay, bool report){
-		//		criticalPath_ += delay;
 				if(isSequential()) {
-					if ( target_->ffDelay() + (criticalPath_ + delay) > (1.0/target_->frequency())){
+#if 0 // code up to version 3.0
+					if ( target_->ffDelay() + (totalDelay) > (1.0/target_->frequency())){
 						nextCycle(report); //TODO Warning
 						criticalPath_ = min(delay, 1.0/target_->frequency());
 						return true;
@@ -802,6 +793,19 @@ namespace flopoco{
 						criticalPath_ += delay;
 						return false;
 					}
+#else // May insert several register levels, experimental in 3.0
+					double totalDelay = criticalPath_ + delay;
+					criticalPath_ = totalDelay;  // will possibly be reset in the loop below
+					// cout << "total delay =" << totalDelay << endl;
+					while ( target_->ffDelay() + (totalDelay) > (1.0/target_->frequency())){
+						// This code behaves as the previous as long as delay < 1/frequency
+						// if delay > 1/frequency, it may insert several pipeline levels.
+						// This is what we want to pipeline blockrams and DSPs up to the nominal frequency by just passing their overall delay.
+							nextCycle(); // this resets criticalPath. Therefore, if we entered the loop, CP=0 when we exit
+							totalDelay -= (1.0/target_->frequency()) + target_->ffDelay();
+							// cout << " after one nextCycle total delay =" << totalDelay << endl;
+					} 
+#endif
 				}
 				else {
 					criticalPath_ += delay;
