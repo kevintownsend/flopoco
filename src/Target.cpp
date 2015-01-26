@@ -109,6 +109,45 @@ namespace flopoco{
 			return true;
 
 	}
+
+
+	// A heuristic that is equally bad  for any target
+	int Target::plainMultDepth(int wX, int wY){
+		int cycles;
+		if(hasHardMultipliers_) {
+			int nX1 = ceil( (double)wX/(double)multXInputs_ );
+			int nY1 = ceil( (double)wY/(double)multYInputs_ );
+			int nX2 = ceil( (double)wY/(double)multXInputs_ );
+			int nY2 = ceil( (double)wX/(double)multYInputs_ );
+			int nX,nY;
+			if(nX1*nY1>nX2*nY2) {
+				nX=nX2;
+				nY=nY2;
+			} else {
+				nX=nX1;
+				nY=nY1;
+			}
+			int adds=nX1+nX2;
+			cycles = ( DSPMultiplierDelay() + adds* DSPAdderDelay() ) * frequency_;
+		}
+		else {
+			// assuming a plain block multiplier
+			double init, carry;
+			getAdderParameters(init, carry, wX+wY);
+			cycles = (init + (wX+wY)*carry) *frequency_;
+		}
+		cout << "Warining: using generic Target::plainMultDepth(); pipelining a "<<wX<<"x"<<wY<< " multiplier in " << cycles << " cycles using a gross estimate of the target" << endl;
+		return cycles;
+	}
+
+
+
+	int Target::tableDepth(int wIn, int wOut){
+		cout << "Warning: using the generic Target::tableDepth(); pipelining using a gross estimate of the target" << endl;
+		return 2; // TODO
+	}
+
+
 	
 	/*-------- Resource Estimation - target specific functions -------*/
 	/*----------------------------------------------------------------*/

@@ -405,5 +405,8 @@ namespace flopoco{
 		cpDelay = totalPeriod-targetPeriod*cycleDelay;
 	}
 	
+
 	
 }
+
+

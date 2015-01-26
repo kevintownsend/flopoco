@@ -27,7 +27,7 @@
 #include <string>
 #include <math.h>
 #include "Targets/DSP.hpp"
-#include "IntMult//MultiplierBlock.hpp"
+#include "IntMult/MultiplierBlock.hpp"
 
 using namespace std;
 
@@ -230,6 +230,19 @@ namespace flopoco{
 		 */
 		virtual void delayForDSP(MultiplierBlock* multBlock, double currentCp, int& cycleDelay, double& cpDelay)=0;
 
+
+
+		/**
+		 * How many registers should be added to the pipeline after a multiplier written as "*" in VHDL
+		 * assuming that these registers will be pushed inside by retiming 
+		 % This function is highly heuristic, as it depends on synthesis tool options that are not known
+		 * @param multBlock the multiplier block representing the DSP to be added
+		 * @param cycleDelay the number of cycles that need to be added
+		 * @param cpDelay the delay in the critical path (needed on top of the 
+		 * 	@cycleDelay cycles added)
+		 */
+		virtual int plainMultDepth(int wX, int wY);
+
 		/* -------------------  BRAM related  --------------------------------*/
 
 		/** Function which returns the delay between
@@ -255,6 +268,17 @@ namespace flopoco{
 		 */	
 		virtual long sizeOfMemoryBlock() = 0 ;
 
+
+		/**
+		 * How many registers should be added to the pipeline after a BRAM-based table
+		 * assuming that these registers will be pushed inside by retiming 
+		 % This function is highly heuristic, as it depends on synthesis tool options that are not known
+		 * @param multBlock the multiplier block representing the DSP to be added
+		 * @param cycleDelay the number of cycles that need to be added
+		 * @param cpDelay the delay in the critical path (needed on top of the 
+		 * 	@cycleDelay cycles added)
+		 */
+		virtual int tableDepth(int wIn, int wOut);
 	
 		/** Function which returns the Equivalence between slices and a DSP.
 		 * @return X ,  where X * Slices = 1 DSP
@@ -264,8 +288,7 @@ namespace flopoco{
 		/** Function which returns the number of DSPs that exist in FPGA
 		 * @return number of DSPs
 		 */
-	
-		virtual int getNumberOfDSPs() = 0;
+			virtual int getNumberOfDSPs() = 0;
 	
 		/** Function which returns the maximum widths of the operands of a DSP
 		 * @return widths with x>y
@@ -275,6 +298,11 @@ namespace flopoco{
 
 		/** adder delay is modeled as d = k1 + (size-1)k2 */
 		virtual void getAdderParameters(double &k1, double &k2, int size) = 0;
+
+
+
+
+
 
 		// Methods related to target behaviour and performance
 		/** Sets the target to pipelined */

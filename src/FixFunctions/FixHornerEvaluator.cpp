@@ -133,6 +133,7 @@ namespace flopoco{
 				// However the bit of weight pMSB is a 0. We want to keep the bits from  pMSB-1
 				resizeFixPoint(join("Ptrunc", i), join("P", i), sigmaMSB, sigmaLSB);
 				resizeFixPoint(join("Aext", i), join("As", i), sigmaMSB, sigmaLSB);
+				setCycle(getCurrentCycle() + target->plainMultDepth(1-xTruncLSB, sigmaMSB-sigmaLSB+1) ); 
 				
 				vhdl << tab << declareFixPoint(join("Sigma", i), true, sigmaMSB, sigmaLSB)   
 					<< " <= " << join("Aext", i) << " + " << join("Ptrunc", i) << ";" << endl;
