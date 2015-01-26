@@ -179,7 +179,8 @@ namespace flopoco {
 		lsbWeightInBitHeap(lsbWeightInBitHeap_),
 		lsbFullMultWeightInBitheap(lsbFullMultWeightInBitheap_),
 		negate(negate_), 
-		signedIO(signedIO_) 
+		signedIO(signedIO_),
+		target(parentOp_->getTarget())
 	{
 
 		multiplierUid=parentOp->getNewUId();

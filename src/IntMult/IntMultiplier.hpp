@@ -111,14 +111,14 @@ namespace flopoco {
 		 * and rSignalName+"_slv" is the equivalent standard_logic_vector 
 		 */
 		static IntMultiplier* newComponentAndInstance(
-																							 Operator* op,
-																							 string instanceName,
-																							 string xSignalName,
-																							 string ySignalName,
-																							 string rSignalName,
-																							 int rMSB,
-																							 int rLSB
-																							 );
+														 Operator* op,
+														 string instanceName,
+														 string xSignalName,
+														 string ySignalName,
+														 string rSignalName,
+														 int rMSB,
+														 int rLSB
+														 );
 
 
 		/**
