@@ -46,6 +46,7 @@ namespace flopoco {
 		// REPORT(INFO,getCycleFromSignal("Y0", false));
 		// REPORT(INFO,getCurrentCycle());
 		syncCycleFromSignal("Y0");
+		mpfr_set_default_prec(10000);
 
 		FixSOPC *fixSOPC = new FixSOPC(target, p, coeff, useBitheap, inputDelays);
 		for (int i=0; i<n; i++) {
@@ -82,6 +83,9 @@ namespace flopoco {
 
 
 		listTC[idx] = tc;
+
+		if(n == 1)					// if the fir part has only one tap we don't wait to get the output
+			full = true; 
 
 		// We are waiting until the first meaningful value comes out of the FIR
 		if (full) {

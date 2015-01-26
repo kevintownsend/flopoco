@@ -18,7 +18,7 @@ using namespace std;
 
 namespace flopoco {
 
-	FixIIR::FixIIR(Target* target, int p_,int leadingBit_, int H_, vector<string> coeffb_, vector<string> coeffa_, bool useBitheap_, map<string, double> inputDelays) : 
+	FixIIR::FixIIR(Target* target, int p_,int leadingBit_, double H_, vector<string> coeffb_, vector<string> coeffa_, bool useBitheap_, map<string, double> inputDelays) : 
 		Operator(target), p(p_),leadingBit(leadingBit_), H(H_), coeffb(coeffb_), coeffa(coeffa_), useBitheap(useBitheap_)
 	{
 		srcFileName="FixIIR";
@@ -49,7 +49,6 @@ namespace flopoco {
 		{
 			// parse the coeffs from the string, with Sollya parsing
 			sollya_obj_t node;
-			mpfr_t mpC;
 			
 			node = sollya_lib_parse_string(coeffb[i].c_str());
 			// If conversion did not succeed (i.e. parse error)
@@ -60,12 +59,8 @@ namespace flopoco {
 				throw error.str();
 			}
 
-			mpfr_init2(mpC, 10000);
-			// setToolPrecision(10000);
-			// evaluateConstantExpression(mpC, node,  getToolPrecision());
-			sollya_lib_get_constant(mpC, node);
-			
-			mpfr_init_set(mpcoeffb[i], mpC, GMP_RNDN);
+			mpfr_init2(mpcoeffb[i], 10000);
+			sollya_lib_get_constant(mpcoeffb[i], node);
 			if(mpfr_get_d(mpcoeffb[i], GMP_RNDN) < 0)
 				coeffsignb[i] = 1;
 			else
@@ -79,7 +74,6 @@ namespace flopoco {
 		{
 			// parse the coeffs from the string, with Sollya parsing
 			sollya_obj_t node;
-			mpfr_t mpC;
 			
 			node = sollya_lib_parse_string(coeffa[i].c_str());
 			// If conversion did not succeed (i.e. parse error)
@@ -90,12 +84,9 @@ namespace flopoco {
 				throw error.str();
 			}
 
-			mpfr_init2(mpC, 10000);
-			// setToolPrecision(10000);
-			// evaluateConstantExpression(mpC, node,  getToolPrecision());
-			sollya_lib_get_constant(mpC, node);
+			mpfr_init2(mpcoeffa[i], 10000);
+			sollya_lib_get_constant(mpcoeffa[i], node);
 			
-			mpfr_init_set(mpcoeffa[i], mpC, GMP_RNDN);
 			if(mpfr_get_d(mpcoeffa[i], GMP_RNDN) < 0)
 				coeffsigna[i] = 1;
 			else
@@ -128,7 +119,7 @@ namespace flopoco {
 		int guardBitsKCM = max(guardBitsKCM_A, guardBitsKCM_B);
 
 		// size += guardBitsKCM; // sign + overflow  bits on the left, guard bits + guard bits from KCMs on the right
-		REPORT(INFO, "Sum size with KCM guard bits is: "<< size);
+		REPORT(INFO, "Sum size with KCM guard bits is: "<< size+guardBitsKCM);
 
 
 		//Pour info
@@ -345,28 +336,30 @@ namespace flopoco {
 		static int first = 1;
 		static bool full = false; 							// set to true when the fir start to output valid data (after n input) 
 		static TestCase * listTC [10000]; // should be enough for everybody
-
 		static mpfr_t shiftRegA[10000];
+
+		int hugePrec = 10*(1+leadingBit+p+g); // huge precision used by mpfr
 
 		if (first)
 		{
+			if(n == 1)					// if the fir part has only one tap we don't wait to get the output
+				full = true; 
 			for (int i = 0; i<10000; i++)
 			{
-				mpfr_init2 (shiftRegA[i], 10*(1+leadingBit+p+g));
+				mpfr_init2 (shiftRegA[i], hugePrec);
 				mpfr_set_d(shiftRegA[i], 0.0, GMP_RNDN);
 			}
 			first = 0;
 		}
 
-
 		listTC[idxB] = tc;
 
-		
+
 		mpfr_t x, t, u, s;
 		mpfr_init2 (x, 1+p);
-		mpfr_init2 (t, 10*(1+p));
-		mpfr_init2 (u, 10*(1+leadingBit+p+g));
-		mpfr_init2 (s, 10*(1+leadingBit+p+g));	
+		mpfr_init2 (t, hugePrec);
+		mpfr_init2 (u, hugePrec);
+		mpfr_init2 (s, hugePrec);	
 
 		mpfr_set_d(s, 0.0, GMP_RNDN); // initialize s to 0
 
@@ -396,6 +389,7 @@ namespace flopoco {
 
 			mpfr_add(s, s, t, GMP_RNDN); 							// same comment as above
 		
+			
 			k = (k+1)%n;	
 		}
 
@@ -410,14 +404,13 @@ namespace flopoco {
 
 			mpfr_add(s, s, u, GMP_RNDN); 							// same comment as above
 		
+
 			l = (l+1)%m;
 
 		}
 
 
 		k = (k-1+n)%n; //to get the testCase corresponding to the outputed value
-
-
 
 		mpfr_set(shiftRegA[idxA], s, GMP_RNDN);
 
@@ -428,8 +421,7 @@ namespace flopoco {
 		// make s an integer -- no rounding here 
 		mpfr_mul_2si (s, s, p, GMP_RNDN);
 
-
-
+		
 		// We are waiting until the first meaningful value comes out of the IIR
 		if (full) {
 			mpz_class rdz, ruz;
