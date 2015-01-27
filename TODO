@@ -2,12 +2,6 @@ TODO file for FloPoCo
 
 Release-critical:
 - FPPipeline
-- add to target the following methods that return an estimate of the pipeline: 
-    tablePipelineDepth(wIn, wOut)
-    		(code currently in Table)
-    plainMultPipelineDepth(wX,wY)
-    pipelinePlainMult(wX,wY,wOut)
-- Pipelining: PolyEval
 - clean up Target
 
 - get rid of use() in Operator
