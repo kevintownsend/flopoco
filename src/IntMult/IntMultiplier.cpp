@@ -229,6 +229,8 @@ namespace flopoco {
 		// useDSP or not? 
 		useDSP = target->useHardMultipliers();
 
+		useNumericStd();
+
 		// set the name of the multiplier operator
 		{
 			ostringstream name;
@@ -318,15 +320,15 @@ namespace flopoco {
 
 
 	IntMultiplier* IntMultiplier::newComponentAndInstance(
-																												Operator* parentOp,
-																												// use this name because of the #defines on top of this file
-																												string instanceName,
-																												string xSignalName,
-																												string ySignalName,
-																												string rSignalName,
-																												int rMSB,
-																												int rLSB
-																												)
+															Operator* parentOp,
+															// use this name because of the #defines on top of this file
+															string instanceName,
+															string xSignalName,
+															string ySignalName,
+															string rSignalName,
+															int rMSB,
+															int rLSB
+															)
 	{
 		Signal* x = parentOp->getSignalByName(xSignalName);
 		Signal* y = parentOp->getSignalByName(ySignalName);
