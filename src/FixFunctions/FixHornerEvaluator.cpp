@@ -152,6 +152,7 @@ namespace flopoco{
 																						);
 			}
 			syncCycleFromSignal(join("Sigma", i));
+			nextCycle();
 		}
 		resizeFixPoint("Ys", "Sigma0",  msbOut, lsbOut);
 

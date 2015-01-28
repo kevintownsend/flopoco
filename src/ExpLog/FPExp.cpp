@@ -666,6 +666,7 @@ namespace flopoco{
 				syncCycleFromSignal( "expZminus1");
 			else
 				syncCycleFromSignal( "expZminus1", addexpZminus1->getOutputDelay("R"));
+			nextCycle();
 		
 #if 0 // full product, truncated
 			int sizeProd;
@@ -684,11 +685,6 @@ namespace flopoco{
 			vhdl << instance(lowProd, "TheLowerProduct")<<endl;
 			syncCycleFromSignal("lowerProduct", lowProd->getOutputDelay("R") );
 			nextCycle(); // needed for the 1-DSP case TODO: fix in IntMultiplier instead 
-#if 0 // Should be fixed in IntMultiplier
-			if(target->normalizedFrequency()>=0.5 && sizeProd>12){ 
-				nextCycle(); // TODO should be something cleaner, fix in IntMultiplier instead
-			}
-#endif
 			vhdl << tab << declare("extendedLowerProduct",sizeExpY) << " <= (" << rangeAssign(sizeExpY-1, sizeExpY-k+1, "'0'") 
 			     << " & lowerProduct" << range(sizeProd-1, sizeProd - (sizeExpY-k+1)) << ");" << endl;
 
@@ -697,11 +693,6 @@ namespace flopoco{
 
 			int sizeProd;
 			sizeProd = sizeExpZm1+1;
-#if 0 // Should be fixed in IntMultiplier
-			if(target->normalizedFrequency()>=0.5 && sizeProd>12){ 
-				nextCycle(); // TODO should be something cleaner, fix in IntMultiplier instead
-			}
-#endif
 			Operator* lowProd;
 			lowProd = new IntMultiplier(target, sizeMultIn, sizeExpZm1,  
 			                            sizeProd,  // truncated
