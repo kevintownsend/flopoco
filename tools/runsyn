@@ -15,13 +15,14 @@ virtex4="xc4vfx100-12-ff1152"
 virtex5="xc5vfx100T-3-ff1738"
 virtex6="xc6vhx380T-3-ff1923"
 
-
-
 spartan3="xc3s200-5-pq208"
 spartan3e="xc3s100e-5-tq144"
 
 
-if [ $target == "virtex4" ]; then
+if [ -z "$target" ]; then
+	selected_target=$virtex6
+	target="virtex6"
+elif [ $target == "virtex4" ]; then
 	selected_target=$virtex4
 elif [ $target == "virtex5" ]; then
 	selected_target=$virtex5
@@ -32,7 +33,8 @@ elif [ $target == "spartan3" ]; then
 elif [ $target == "spartan3e" ]; then
 	selected_target=$spartan3e
 else
-	selected_target=$virtex5
+	selected_target=$virtex6
+	target="virtex6"
 fi 
 
 
@@ -148,7 +150,7 @@ run
 -reduce_control_sets auto
 -fsm_extract YES -fsm_encoding Auto
 -safe_implementation No
--fsm_style lut
+-fsm_style LUT
 -ram_extract Yes
 -ram_style Auto
 -rom_extract Yes
@@ -157,6 +159,7 @@ run
 -auto_bram_packing YES
 -resource_sharing YES
 -async_to_sync NO
+-shreg_min_size 2
 -use_dsp48 $DSP
 -iobuf YES
 -max_fanout 100000
@@ -301,7 +304,7 @@ echo "> INFO: Top Module name is: |$topModule| "
 #check if $topModule exists
 searchPattern="entity $topModule is"
 grepResult=`grep "$searchPattern" flopoco.vhdl`
-grepResult2=`grep "$searchPattern" $projectPath/flopoco.vhdl`
+#grepResult2=`grep "$searchPattern" $projectPath/flopoco.vhdl`
 if [ "$grepResult" == "" ]; then 
 	if [ "$grepResult2" == "" ]; then 
 		echo "> ERROR: requested top module: $topModule is not found in flopoco.vhdl"
@@ -590,18 +593,18 @@ spaces=$s
 
 lines=20
 
-if [ $target == "virtex4" ]; then
+if [ $selected_target == "virtex4" ]; then
 	lines=20
-elif [ $target == "virtex5" ]; then
+elif [ $selected_target == "virtex5" ]; then
 	lines=27
-elif [ $target == "virtex6" ]; then
+elif [ $selected_target == "virtex6" ]; then
 	lines=30
-elif [ $target == "spartan3" ]; then
+elif [ $selected_target == "spartan3" ]; then
 	lines=20
-elif [ $target == "spartan3e" ]; then
+elif [ $selected_target == "spartan3e" ]; then
 	lines=20
 else
-	lines=20
+	lines=30
 fi 
 
 cd $startPath
