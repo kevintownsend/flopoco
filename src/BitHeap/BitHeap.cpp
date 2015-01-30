@@ -1622,7 +1622,7 @@ namespace flopoco
 		}
 		else
 		{
-			cin << "\'0\';";
+			cin << "\"0\";";
 		}
 		removeCompressedBits(lsb, cnt[lsb]);
 		
@@ -1642,7 +1642,7 @@ namespace flopoco
 
 		op->vhdl << tab << op->declare(join(inAdder0Name, adderIndex), msb-lsb+2) << " <= \'0\' & " << inAdder0.str() << endl;
 		op->vhdl << tab << op->declare(join(inAdder1Name, adderIndex), msb-lsb+2) << " <= \'0\' & " << inAdder1.str() << endl;
-		op->vhdl << tab << op->declare(join(cinName, adderIndex)) << " <= " << cin.str() << endl;
+		op->vhdl << tab << op->declare(join(cinName, adderIndex), 1) << " <= " << cin.str() << endl;
 		
 		op->syncCycleFromSignal(join(inAdder0Name,adderIndex));
 		op->syncCycleFromSignal(join(inAdder1Name,adderIndex));
