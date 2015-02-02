@@ -575,9 +575,16 @@ namespace flopoco
 							for(int j=0; j<current->getSigLength()-next->getSigLength()+1; j++)
 								zeros << next->getSigName() << "(" << next->getSigLength()-1 << ") & ";
 							
-							op->vhdl << tab << sumName.str()
-						         << "<= (" << current->getSigName() << "(" << current->getSigLength()-1 << ") & " << current->getSigName()
-						         << ") +  ( " << zeros.str() << next->getSigName() << " );" <<endl;
+							if(signedIO)
+							{
+								op->vhdl << tab << sumName.str()
+						        		 << "<= std_logic_vector(signed(" << current->getSigName() << "(" << current->getSigLength()-1 << ") & " << current->getSigName()
+										 << ") +  signed( " << zeros.str() << next->getSigName() << " ));" <<endl;
+							}else{
+								op->vhdl << tab << sumName.str()
+										<< "<= std_logic_vector(unsigned(" << current->getSigName() << "(" << current->getSigLength()-1 << ") & " << current->getSigName()
+										<< ") +  unsigned( " << zeros.str() << next->getSigName() << " ));" <<endl;
+							}
 						}
 						else
 						{
@@ -673,16 +680,16 @@ namespace flopoco
 							newLength++;
 
 							op->vhdl << tab <<  op->declare(join("DSP_bh",guid,"_ch",i,"_",DSPuid),newLength)
-									 << "<= " <<next->getSigName()
-									 << " +  ( "<<  s.str() <<" & "<<"  "
+									 << "<= std_logic_vector(signed(" <<next->getSigName()
+									 << ") +  signed( "<<  s.str() <<" & "<<"  "
 									 <<current->getSigName()
-									 <<range(current->getSigLength()-1,17)<<" );"<<endl ;
+									 <<range(current->getSigLength()-1,17)<<" ));"<<endl ;
 						}else
 						{
 							op->vhdl << tab <<  op->declare(join("DSP_bh",guid,"_ch",i,"_",DSPuid),newLength)
-									 << "<= " <<next->getSigName()
-									 << " +  ( "<<  zg(17) /* s.str()*/ <<" & "<<"  "
-									 <<current->getSigName()<<range(newLength-1,17)<<" );"<<endl ;
+									 << "<= std_logic_vector(unsigned(" <<next->getSigName()
+									 << ") +  unsigned( "<<  zg(17) /* s.str()*/ <<" & "<<"  "
+									 <<current->getSigName()<<range(newLength-1,17)<<" ));"<<endl ;
 						}
 
 						//sending the 17 lsb to the bitheap
@@ -1668,8 +1675,14 @@ namespace flopoco
 		//op->setCriticalPath( adder->getOutputDelay("R") );
 
 #else
-		op->vhdl << tab << op->declare(join(outAdder, adderIndex), msb-lsb+2) << " <= "
-			<<  join(inAdder0Name, adderIndex) << " + " << join(inAdder1Name,adderIndex) << " + " << join(cinName, adderIndex) << ";" <<endl ;
+		if(signedIO)
+		{
+			op->vhdl << tab << op->declare(join(outAdder, adderIndex), msb-lsb+2) << " <= std_logic_vector("
+				<< "signed(" <<  join(inAdder0Name, adderIndex) << ") + signed(" << join(inAdder1Name,adderIndex) << ") + signed(" << join(cinName, adderIndex) << "));" <<endl ;
+		}else{
+			op->vhdl << tab << op->declare(join(outAdder, adderIndex), msb-lsb+2) << " <= std_logic_vector("
+					<< "unsigned(" <<  join(inAdder0Name, adderIndex) << ") + unsigned(" << join(inAdder1Name,adderIndex) << ") + unsigned(" << join(cinName, adderIndex) << "));" <<endl ;
+		}
 
 #endif
 

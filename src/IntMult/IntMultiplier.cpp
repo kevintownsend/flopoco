@@ -230,11 +230,7 @@ namespace flopoco {
 		useDSP = target->useHardMultipliers();
 
 		//commented-out because the addition operators need the ieee_std_signed/unsigned libraries
-		//useNumericStd();
-		if(signedIO)
-			useNumericStd_Signed();
-		else
-			useNumericStd_Unsigned();
+		useNumericStd();
 
 		// set the name of the multiplier operator
 		{
