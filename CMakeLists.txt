@@ -72,10 +72,9 @@ FIND_LIBRARY(PYTHON_LIB
 FIND_LIBRARY( SOLLYA_LIB sollya )
 
 IF (SOLLYA_LIB)
-	ADD_DEFINITIONS(-DHAVE_SOLLYA)
 	MESSAGE(STATUS "Found Sollya: ${SOLLYA_LIB}")
 ELSE (SOLLYA_LIB)
-	MESSAGE(STATUS "Sollya not found, many very nice operators won't be available")
+	MESSAGE(FATAL_ERROR "Sollya not found")
 ENDIF (SOLLYA_LIB)
 
 IF ( PYTHON_LIB )
@@ -286,10 +285,13 @@ src/Conversions/Fix2FP
 
  
 # Multiplication related --------------------------------------------
- src/IntMult//IntMultiplier
- src/IntMult//FixMultAdd
- src/IntMult//MultiplierBlock
- src/IntMult//IntSquarer
+ src/IntMult/IntMultiplier
+ src/IntMult/FixMultAdd
+ src/IntMult/MultiplierBlock
+ src/IntMult/IntSquarer
+
+# Complex numbers ---------------------------------------------------
+# TODO for Matei
 
 
 # Floating-point adders and subtracters -----------------------------
@@ -347,6 +349,7 @@ src/Tools/Point
 # Exp, Log and Power
 src/ExpLog/FPExp
 src/ExpLog/IterativeLog
+src/ExpLog/FPPow
 )
 
 IF (SOLLYA_LIB)

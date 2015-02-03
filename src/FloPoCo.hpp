@@ -76,12 +76,12 @@
 #include "IntAddSubCmp/LongIntAdderMuxNetwork.hpp"
 
 /* Integer and fixed-point multipliers ------------------------ */
-#include "IntMult//IntMultiplier.hpp"
-#include "IntMult//FixMultAdd.hpp"
-// #include "IntMult//IntKaratsuba.hpp"
-#include "IntMult//IntSquarer.hpp"
-// #include "IntMult//GenericBinaryPolynomial.hpp"
-// #include "IntMult//IntPower.hpp"
+#include "IntMult/IntMultiplier.hpp"
+#include "IntMult/FixMultAdd.hpp"
+// #include "IntMult/IntKaratsuba.hpp"
+#include "IntMult/IntSquarer.hpp"
+// #include "IntMult/GenericBinaryPolynomial.hpp"
+// #include "IntMult/IntPower.hpp"
 
 
 /* Floating-point adder variants ----------------------------- */
@@ -137,8 +137,7 @@
 // #include "Trigs/FixSinOrCos.hpp"  Replug when poly eval fixed
 #include "ExpLog/IterativeLog.hpp"
 #include "ExpLog/FPExp.hpp"
-
-// #include "ExpLog/FPPow.hpp"
+#include "ExpLog/FPPow.hpp"
 
 
 #include "Conversions/Fix2FP.hpp"
@@ -148,7 +147,18 @@
 
 
 
+/* misc ------------------------------------------------------ */
+#include "TestBenches/Wrapper.hpp"
+#include "UserDefinedOperator.hpp"
+
+
+
+
 #if 0
+// Old stuff removed from older versions, some of which to bring back to life
+/* Complex arithmetic */
+#include "Complex/FixedComplexAdder.hpp"
+#include "Complex/FixedComplexMultiplier.hpp"
 
 
 
@@ -159,68 +169,8 @@
 #include "IntAddSubCmp/PopCount.hpp"
 #include "IntAddSubCmp/BasicCompressor.hpp"
 #include "IntAddSubCmp/NewCompressorTree.hpp"
-
-/* multiplication-related ------------------------------------ */
-#include "IntMultiplier.hpp"
-#include "FixMultAdd.hpp"
-#include "IntMult//IntKaratsuba.hpp"
-#include "IntSquarer.hpp"
-#include "IntMult//GenericBinaryPolynomial.hpp"
-#include "IntMult//IntPower.hpp"
-
-#include "IntMult//FixSinPoly.hpp"
-#include "IntMult//FixXPow3Div6.hpp"
-#include "IntMult//MultiplierBlock.hpp"
-
-
-
-
-
-/* fixed-point function evaluation---------------------------- */
-#ifndef _WIN32
-
-#ifdef HAVE_SOLLYA
-#endif
-#endif
-/* fixed-point ----------------------------------------------- */
-#ifdef HAVE_SOLLYA
-
-#include "FixedPointFIR.hpp"
-
-#include "FixedPointDCT.hpp"
-
-#endif
-
-/* floating-point -------------------------------------------- */ 
-#include "FPMult.hpp"
-#include "FPMultKaratsuba.hpp"
-#include "FPSquare.hpp"
-
-#ifndef _WIN32
-#ifdef HAVE_SOLLYA
-#include "ConstMult/CRFPConstMult.hpp"
-#endif
-#endif
-
-// #include "FP2DNorm.hpp" // The world is not ready yet 
+#include "FP2DNorm.hpp"
 #include "FPSqrtPoly.hpp"
-
-#include "FPComposite/FPLargeAcc.hpp"
-#include "LargeAccToFP.hpp"
-
-#include "FPFPComposite/FPDotProduct.hpp"
-#include "FPSumOf3Squares.hpp"
-
-#include "FPPipeline.hpp"
-
-
-/* Complex arithmetic */
-#include "Complex/FixedComplexAdder.hpp"
-#include "Complex/FixedComplexMultiplier.hpp"
-
-
-
-
 /* applications ---------------------------------------------- */
 
 /* Coil Inductance application */
@@ -241,8 +191,6 @@ use withing matrix-multiplication scenarios ------------------ */
 #include "Apps/FPJacobi.hpp"
 
 /* logarithmic number system  -------------------------------- */ 
-#ifndef _WIN32
-#ifdef HAVE_LNS
 #include "LNS/LNSAddSub.hpp"
 #include "LNS/LNSAdd.hpp"
 #include "LNS/CotranTables.hpp"
@@ -253,13 +201,7 @@ use withing matrix-multiplication scenarios ------------------ */
 #include "LNS/LNSSqrt.hpp"
 #include "LNS/AtanPow.hpp"
 #include "LNS/LogSinCos.hpp"
-#endif
-#endif
-#endif /////////////////////////////////////////////////////0
-
-/* misc ------------------------------------------------------ */
-#include "TestBenches/Wrapper.hpp"
-#include "UserDefinedOperator.hpp"
+#endif // 0
 
 
 #endif //FLOPOCO_HPP

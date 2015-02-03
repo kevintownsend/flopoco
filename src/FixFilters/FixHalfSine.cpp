@@ -2,7 +2,6 @@
 #include "config.h"
 #endif
 
-#ifdef HAVE_SOLLYA
 
 #include "FixHalfSine.hpp"
 
@@ -240,4 +239,3 @@ namespace flopoco{
 }
 
 
-#endif //have sollya

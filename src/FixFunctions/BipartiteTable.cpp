@@ -25,7 +25,6 @@
 #include "../utils.hpp"
 
 
-//#ifdef HAVE_SOLLYA
 
 using namespace std;
 
@@ -355,4 +354,3 @@ namespace flopoco{
 
 }
 
-//#endif //HAVE_SOLLYA

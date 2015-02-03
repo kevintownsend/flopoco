@@ -13,7 +13,6 @@
  */
 
 // works only with sollya
-#ifdef HAVE_SOLLYA
 
 #include "Cotran.hpp"
 #include "../utils.hpp"
@@ -219,4 +218,3 @@ namespace flopoco{
 	}
 
 }
-#endif// HAVE_SOLLYA

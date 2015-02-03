@@ -16,11 +16,11 @@
 #include <fstream>
 #include <sstream>
 #include <math.h>	// for NaN
-#include "FPLog.hpp"
-#include "FPExp.hpp"
-#include "LZOC.hpp"
 #include "FPPow.hpp"
-#include "FPMult.hpp"
+#include "IterativeLog.hpp"
+#include "FPExp.hpp"
+#include "ShiftersEtc/LZOC.hpp"
+#include "FPMultSquare/FPMult.hpp"
 #include "TestBenches/FPNumber.hpp"
 #include "utils.hpp"
 
@@ -301,7 +301,7 @@ namespace flopoco{
 		// For the input to the log, take |X| as the case X<0 is managed separately
 		vhdl << tab << declare("logIn", 3+wE + logwF) << " <= flagsX & \"0\" & expFieldX & fracX & " << rangeAssign(logwF-wF-1, 0, "'0'") << " ;" << endl; 
 
-		FPLog* log = new FPLog(target,  wE,  logwF, logTableSize );
+		IterativeLog* log = new IterativeLog(target,  wE,  logwF, logTableSize );
 		oplist.push_back(log);
 		inPortMap(log, "X", "logIn");
 		outPortMap(log, "R", "lnX");

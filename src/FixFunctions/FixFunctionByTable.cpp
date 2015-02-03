@@ -28,8 +28,6 @@
 
 #include "FixFunctionByTable.hpp"
 
-#ifdef HAVE_SOLLYA
-
 using namespace std;
 
 namespace flopoco{
@@ -65,5 +63,3 @@ namespace flopoco{
 		f->emulate(tc, true /* correct rounding */); 
 	}
 }
-	
-#endif //HAVE_SOLLYA	

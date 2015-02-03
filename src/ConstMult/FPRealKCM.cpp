@@ -23,7 +23,6 @@
 #include "../utils.hpp"
 #include "../Operator.hpp"
 
-#ifdef HAVE_SOLLYA
 #include "FPRealKCM.hpp"
 #include "FixRealKCM.hpp"
 
@@ -162,4 +161,3 @@ namespace flopoco{
 
 
 
-#endif //HAVE_SOLLYA

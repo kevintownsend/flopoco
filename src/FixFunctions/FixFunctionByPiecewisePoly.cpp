@@ -32,8 +32,6 @@
 #include "FixFunctionByTable.hpp"
 #include "FixHornerEvaluator.hpp"
 
-#ifdef HAVE_SOLLYA
-
 using namespace std;
 
 namespace flopoco{
@@ -196,4 +194,3 @@ namespace flopoco{
 
 }
 	
-#endif //HAVE_SOLLYA	

@@ -4,9 +4,9 @@
 #include <sstream>
 
 #include "Operator.hpp"
-#include "LZOC.hpp"
-#include "LZOCShifterSticky.hpp"
-#include "Shifters.hpp"
+#include "ShiftersEtc/LZOC.hpp"
+#include "ShiftersEtc/LZOCShifterSticky.hpp"
+#include "ShiftersEtc/Shifters.hpp"
 
 
 namespace flopoco{

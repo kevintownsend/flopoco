@@ -3,9 +3,7 @@
 #include <vector>
 #include <sstream>
 
-#include "../Operator.hpp"
-#include "../IntMultiplier.hpp"
-#include "../IntAdder.hpp"
+#include "Operator.hpp"
 
 namespace flopoco{
 	

@@ -14,8 +14,6 @@
 
  */
 
-// works only with sollya
-#ifdef HAVE_SOLLYA
 #include "LNSAdd.hpp"
 #include <sstream>
 #include <vector>
@@ -135,4 +133,3 @@ namespace flopoco{
 
 #endif
 }
-#endif// HAVE_SOLLYA

@@ -23,7 +23,6 @@
 #include <sollya.h>
 #include "../utils.hpp"
 #include "../Operator.hpp"
-#ifdef HAVE_SOLLYA
 #include "FPConstMult.hpp"
 #include "CRFPConstMult.hpp"
 #include "../TestBenches/FPNumber.hpp"
@@ -149,4 +148,3 @@ namespace flopoco{
 
 
 }
-#endif //HAVE_SOLLYA

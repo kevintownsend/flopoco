@@ -26,7 +26,6 @@
 #include <gmpxx.h>
 #include "../utils.hpp"
 #include "../Operator.hpp"
-#ifdef HAVE_SOLLYA
 
 #include "FPJacobi.hpp"
 #include "../FPAdd3Input.hpp"
@@ -140,4 +139,3 @@ namespace flopoco{
 	}
 
 }
-#endif //HAVE_SOLLYA

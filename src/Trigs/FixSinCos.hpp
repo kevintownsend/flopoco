@@ -5,8 +5,6 @@
 #include "config.h"
 #endif
 
-// works only with Sollya
-#ifdef HAVE_SOLLYA
 
 #include <gmpxx.h>
 
@@ -60,7 +58,6 @@ private:
 	Operator *pi_mult; // may be a FixRealKCM or an IntConstMult
 };
 
-#endif // HAVE_SOLLYA
 
 #endif // header guard
 

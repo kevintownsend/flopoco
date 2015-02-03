@@ -21,10 +21,9 @@ namespace flopoco{
 		/** An empty constructor,  used by CRFPConstMult */
 		FPConstMult(Target* target, int wE_in, int wF_in, int wE_out, int wF_out);
 		
-#ifdef HAVE_SOLLYA
 		/** A constructor that parses an expression for the constant */
 		FPConstMult(Target* target, int wE_in, int wF_in, int wE_out, int wF_out, int wF_C, string constant);
-#endif //HAVE_SOLLYA
+
 		~FPConstMult();
 
 		int wE_in; 

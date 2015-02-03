@@ -10,8 +10,6 @@
 #include "config.h"
 #endif
 
-// works only with sollya
-#ifdef HAVE_SOLLYA
 #include "ConstMult/FixRealKCM.hpp"
 #include "IntMult//IntMultiplier.hpp"
 #include "FixFunctions/FixFunctionByTable.hpp"
@@ -966,6 +964,4 @@ void FixSinCos::buildStandardTestCases(TestCaseList * tcl)
 	mpfr_clears (z, NULL);
 
 }
-
-#endif // SOLLYA
 

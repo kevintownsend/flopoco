@@ -2,7 +2,6 @@
 #include "config.h"
 #endif
 
-#ifdef HAVE_SOLLYA
 #include <iostream>
 #include <sstream>
 
@@ -238,4 +237,3 @@ namespace flopoco{
 	}
 
 }
-#endif //HAVE_SOLLYA	

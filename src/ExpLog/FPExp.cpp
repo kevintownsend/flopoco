@@ -161,11 +161,6 @@ namespace flopoco{
 		: Operator(target), wE(wE_), wF(wF_), k(k_), d(d_), g(guardBits)
 	{
 
-#ifndef HAVE_SOLLYA
-		ostringstream e;
-		e << "ERROR in FPExp, unable to build architecture if HAVE_SOLLYA is not enabled" <<endl;
-		throw e.str();
-#endif
 
 		// Paperwork
 
@@ -510,7 +505,6 @@ namespace flopoco{
 
 		
 
- #ifdef HAVE_SOLLYA
 
 		if(expYTabulated) {
 			ExpYTable* table;
@@ -729,10 +723,6 @@ namespace flopoco{
 			
 		} // end if(expYTabulated)
 				       
-#else
-		throw string("FPExp requires Sollya for this precision, sorry.");
-#endif
-
 
 		// The following is generic normalization/rounding code if we have in expY an approx of exp(y) of size 	sizeExpY 
 		// with MSB of weight 2^1

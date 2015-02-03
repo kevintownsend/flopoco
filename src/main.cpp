@@ -338,13 +338,11 @@ void usage(char *name, string opName = ""){
 		cerr << "if reduced=1, fewer iterations at the cost of two multiplications \n";
 	}
 
-#if 1 // TODO fixit!
 	if ( full || opName == "FPLog"){					
 		OP( "FPLog","wE wF InTableSize");
 		cerr << "Floating-point logarithm function, iterative algorithm;\n";
 		cerr << "InTableSize is the table input size: 0 defaults to something sensible\n";
 	}
-#endif
 
 	if ( full || opName == "FPExp"){					
 		OP( "FPExp","wE wF");
@@ -358,6 +356,16 @@ void usage(char *name, string opName = ""){
 		cerr << "      fullInput (boolean): if 1, accepts extended (typically unrounded) input\n";
 	}
 
+	if ( full || opName == "FPPowr" || opName == "FPPow"  || opName == "FPPower"|| opName == "FPPowerExpert" ){					
+		OP( "FPPow","wE wF");
+		cerr << "      Floating-point pow from C99 and IEEE-754-2008; \n";
+		OP( "FPPowr","wE wF");
+		cerr << "      Floating-point powr from IEEE-754-2008; \n";
+		OP( "FPPowerExpert","wE wF  type LogTableSize ExpTableSize ExpDegree");
+		cerr << "      Floating-point pow (if type=0) or powr (if type=1) function from IEEE-754-2008; \n";
+		cerr << "      Example of parameters:  8 23 0 10 10 2 3 3 (simple), 11 52 0 12 12 2 33  (double)\n";
+		cerr << "      For each parameter, 0 should default to something sensible\n";
+	}
 
 	if ( full || opName == "FixAtan2"){
 		OP( "FixAtan2","w method");
@@ -381,6 +389,7 @@ void usage(char *name, string opName = ""){
 	if ( full )
 		cerr << center("FUNCTION EVALUATORS", '_') << "\n";
 
+#if 0 // the world needn't know
 	if ( full || opName == "FixFunctionEval"){					
 		OP( "FixFunctionEval", "f x");	
 		cerr << "** Helper/debug feature, does not generate VHDL **\n";
@@ -400,6 +409,7 @@ void usage(char *name, string opName = ""){
 		cerr << "Piecewise polynomial approximation of function f on [0,1),\n";
 		cerr << " accurate to targetAcc and using polynomials of degree d\n";
 	}
+#endif
 
 	if ( full || opName == "FixFunctionByTable" || opName == "FixFunction"){					
 		OP( "FixFunctionByTable","f lsbI  msbO lsbO");
@@ -1582,6 +1592,49 @@ else if(opname=="IntAdder"){
 			addOperator(op);
 		}
 
+		else if (opname == "FPPowerExpert")
+		{
+			int nargs = 6;
+			if (i+nargs > argc)
+				usage(argv[0],opname); // and exit 
+
+			//int logTableSize, int expTableSize, int expDegree, int expG, int logG int type
+			int wE = checkStrictlyPositive(argv[i++], argv[0]);
+			int wF = checkStrictlyPositive(argv[i++], argv[0]);
+			int type=atoi(argv[i++]);
+			int logTableSize=atoi(argv[i++]);
+			int expTableSize=atoi(argv[i++]);
+			int expDegree=atoi(argv[i++]);
+			op = new FPPow(target, wE, wF, type, logTableSize, expTableSize, expDegree);
+			addOperator(op);
+		}
+
+		else if (opname == "FPPow")
+		{
+			int nargs = 2;
+			if (i+nargs > argc)
+				usage(argv[0],opname); // and exit 
+
+			//int logTableSize, int expTableSize, int expDegree, int expG, int logG
+			int wE = checkStrictlyPositive(argv[i++], argv[0]);
+			int wF = checkStrictlyPositive(argv[i++], argv[0]);
+			op = new FPPow(target, wE, wF, 0);
+			addOperator(op);
+		}
+
+		else if (opname == "FPPowr")
+		{
+			int nargs = 2;
+			if (i+nargs > argc)
+				usage(argv[0],opname); // and exit 
+
+			//int logTableSize, int expTableSize, int expDegree, int expG, int logG
+			int wE = checkStrictlyPositive(argv[i++], argv[0]);
+			int wF = checkStrictlyPositive(argv[i++], argv[0]);
+			op = new FPPow(target, wE, wF, 1);
+			addOperator(op);
+		}
+
 		else if(opname=="Fix2FP"){
 			int nargs = 5;
 			if (i+nargs > argc)
@@ -1613,6 +1666,23 @@ else if(opname=="IntAdder"){
 				addOperator(op);
 			}
 		}
+
+#if 0
+		// hidden and undocumented for now
+		else if (opname == "OperatorPipeline") {
+            int nargs = 4;
+			if (i+nargs > argc)
+				usage(argv[0],opname); // and exit
+            string filename = argv[i++];
+            bool fortran_enabled=argv[i++];
+            bool use_multi_entry_operators=argv[i++];
+            bool allow_reordering=argv[i++];
+
+            Operator* tg = new OperatorPipeline(target, filename, fortran_enabled,use_multi_entry_operators,allow_reordering);
+			addOperator(tg);
+
+		}
+#endif
 
 
 		else if(random_parseCommandLine(argc, argv, target, opname, i)){
@@ -1737,9 +1807,7 @@ else if(opname=="IntAdder"){
 
 int main(int argc, char* argv[] )
 {
-#ifdef HAVE_SOLLYA
 	sollya_lib_init();
-#endif
 
 	uint32_t i;
 	
@@ -1847,9 +1915,7 @@ int main(int argc, char* argv[] )
 
 	//------------------------------------------------------------------
 
-#ifdef HAVE_SOLLYA
 	sollya_lib_close();
-#endif
 
 	return 0;
 }

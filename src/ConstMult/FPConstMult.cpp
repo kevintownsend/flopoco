@@ -321,7 +321,6 @@ namespace flopoco{
 
 
 
-#ifdef HAVE_SOLLYA
 
 
 	// The parser version
@@ -383,8 +382,6 @@ namespace flopoco{
 		
 		buildVHDL();
 	}
-
-#endif //HAVE_SOLLYA
 
 
 

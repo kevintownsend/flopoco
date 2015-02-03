@@ -16,7 +16,6 @@
 
 #include "../Operator.hpp"
 
-#ifdef HAVE_SOLLYA
 #include <iostream>
 #include <sstream>
 #include <vector>
@@ -959,5 +958,3 @@ namespace flopoco{
 
 
 
-
-#endif //HAVE_SOLLYA

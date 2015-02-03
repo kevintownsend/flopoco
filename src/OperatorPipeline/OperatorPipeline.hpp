@@ -13,11 +13,12 @@
 #include "Operator.hpp"
 
 //this one is kept for the moment to have node class.
-#include "FPExpressions/ExpressionParserData.h"
+#include "ExpressionTreeData.h"
 
 
 // #include "HOTBM/sollya.h"	// Do NOT use libsollya from user's environment
 // #include "UtilSollya.hh"
+
 
 namespace flopoco{
 
@@ -34,8 +35,8 @@ public:
              * @param[in] wE         Exponent width
              * @param[in] wF         Fraction width
             **/
-    OperatorPipeline(Target* target, string filename, int wE, int wF);
-
+    OperatorPipeline(Target* target, string filename, bool fortran_enabled_i, bool use_multi_entry_enabled_i, bool allow_reordering_i);
+//arget, filename, fortran_enabled,use_multi_entry_operators,allow_reordering);
     /**
             * OperatorPipeline destructor
             */
@@ -48,7 +49,7 @@ public:
              * @param[in] top  Boolean describing if this function is called from
              * the statement level, or in some recursion level
             */
-    void generateVHDL_c(node* n, bool top);
+    void generateVHDL_c(Node* n, bool top);
 
 
     /**
@@ -56,8 +57,11 @@ public:
          */
     void optimise_tree();
 protected:
-    int wE;   /**< Exponent size*/
-    int wF;  /**< Significand fraction size */
+    bool fortran_enabled;
+    bool use_multi_entry_enabled;
+    bool allow_reordering;
+
+    Program program;
 };
 
 }
