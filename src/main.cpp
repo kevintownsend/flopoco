@@ -1667,7 +1667,7 @@ else if(opname=="IntAdder"){
 			}
 		}
 
-#if 1
+#if 0
 		// hidden and undocumented for now
 		else if (opname == "OperatorPipeline") {
             int nargs = 4;
