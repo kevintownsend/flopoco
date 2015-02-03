@@ -1667,7 +1667,7 @@ else if(opname=="IntAdder"){
 			}
 		}
 
-#if 0
+#if 0 // TODO, won't compile, bits of CMakeList to bring from toSollya4.0
 		// hidden and undocumented for now
 		else if (opname == "OperatorPipeline") {
             int nargs = 4;
