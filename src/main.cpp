@@ -441,8 +441,13 @@ void usage(char *name, string opName = ""){
 	}
 	if ( full || opName == "FixFIR") {
 		OP("FixFIR","lsb taps [coeff list]");
-		cerr << "      A faithful FIR, inputting signed numbers in [-1,1]. Inputs and outputs have lsb precision\n";
-		cerr << "      [coeff list] is a space-separated list of real numbers in Sollya syntax, e.g. \"sin(3*pi/8)\" \n";
+		cerr << "A faithful FIR, inputting signed numbers in [-1,1]. Inputs and outputs have lsb precision\n";
+		cerr << "  [coeff list] is a space-separated list of real numbers in Sollya syntax, e.g. \"sin(3*pi/8)\" \n";
+	}
+   
+	if ( full || opName == "FixHalfSine") {
+		OP("FixHalfSine","lsb N");
+		cerr << "A faithful half-sine filter with 2N-1 coefficients, for input signal in [-1,1].\n";
 	}
    
 
@@ -841,33 +846,12 @@ bool parseCommandLine(int argc, char* argv[]){
 			}
 		}
 
-		else if(opname=="FixFIR")
-		{
-			if (i+3 > argc)
-				usage(argv[0],opname);
-			else {
-				int p = atoi(argv[i++]);
-				int taps = checkStrictlyPositive(argv[i++], argv[0]);
-				if (i+taps > argc)
-					usage(argv[0],opname);
-				else {
-					std::vector<string> coeff;
-					for (int j = 0; j < taps; j++) 
-						{
-							coeff.push_back(argv[i++]);
-						}
-					op = new FixFIR(target, p, coeff);
-					addOperator(op);
-				}
-			}
-		}
-
 		else if(opname=="FixSOPC")
 		{
 			if (i+3 > argc)
 				usage(argv[0],opname);
 			else {
-				int p = atoi(argv[i++]);
+				int lsb = atoi(argv[i++]);
 				int taps = checkStrictlyPositive(argv[i++], argv[0]);
 				if (i+taps > argc)
 					usage(argv[0],opname);
@@ -877,12 +861,44 @@ bool parseCommandLine(int argc, char* argv[]){
 						{
 							coeff.push_back(argv[i++]);
 						}
-					op = new FixSOPC(target, p, coeff);
+					op = new FixSOPC(target, lsb, coeff);
 					addOperator(op);
 				}
 			}
 		}
 
+		else if(opname=="FixFIR")
+		{
+			if (i+3 > argc)
+				usage(argv[0],opname);
+			else {
+				int lsb = atoi(argv[i++]);
+				int taps = checkStrictlyPositive(argv[i++], argv[0]);
+				if (i+taps > argc)
+					usage(argv[0],opname);
+				else {
+					std::vector<string> coeff;
+					for (int j = 0; j < taps; j++) 
+						{
+							coeff.push_back(argv[i++]);
+						}
+					op = new FixFIR(target, lsb, coeff);
+					addOperator(op);
+				}
+			}
+		}
+
+		else if(opname=="FixHalfSine")
+		{
+			if (i+2 > argc)
+				usage(argv[0],opname);
+			else {
+				int lsb = atoi(argv[i++]);
+				int N = checkStrictlyPositive(argv[i++], argv[0]);
+				op = new FixHalfSine(target, lsb, N);
+				addOperator(op);
+			}
+		}
 
 		else if(opname=="IntAdder"){
 			int nargs = 1;

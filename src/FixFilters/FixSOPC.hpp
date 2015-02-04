@@ -27,13 +27,11 @@ namespace flopoco{
 		
 		BitHeap* bitHeap;    			/**< The heap of weighted bits that will be used to do the additions */
 		
-		bool useBitheap;
-
 	public:
 		// definition of some function for the operator    
 
 		// constructor, defined there with two parameters
-		FixSOPC(Target* target, int lsb_, vector<string> coeff_, bool useBitheap = false, map<string, double> inputDelays = emptyDelayMap);
+		FixSOPC(Target* target, int lsb_, vector<string> coeff_,  map<string, double> inputDelays = emptyDelayMap);
 
 		// destructor
 		~FixSOPC() {};

@@ -244,6 +244,7 @@ src/Conversions/Fix2FP
  src/ShiftReg
  src/FixFilters/FixSOPC
  src/FixFilters/FixFIR
+ src/FixFilters/FixHalfSine
  src/FixFilters/FixIIR
 
 

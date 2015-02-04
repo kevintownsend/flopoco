@@ -14,8 +14,8 @@ namespace flopoco{
 
 	// A small cleanup TODO: this was written with a positive p representing a negative LSB...
 	// F2D obsessively changed the interface, but not the code
-	FixSOPC::FixSOPC(Target* target, int lsb_, vector<string> coeff_, bool useBitheap_, map<string, double> inputDelays) : 
-		Operator(target), p(-lsb_), coeff(coeff_), useBitheap(useBitheap_)
+	FixSOPC::FixSOPC(Target* target, int lsb_, vector<string> coeff_, map<string, double> inputDelays) : 
+		Operator(target), p(-lsb_), coeff(coeff_)
 	{
 		srcFileName="FixSOPC";
 					
@@ -161,7 +161,7 @@ namespace flopoco{
 			vhdl << tab << "R" << " <= " << bitHeap-> getSumName() << range(size-1, g+guardBitsKCM) << ";" << endl;
 		}
 
-		else // plainVHDL currently doesn't work because of FixRealKCM
+		else // plainVHDL currently doesn't work because of FixRealKCM. 
 
 		{
 			// All the KCMs in parallel
@@ -187,10 +187,14 @@ namespace flopoco{
 				// Addition
 				int pSize = getSignalByName(join("P", i))->width();
 				vhdl << tab << declare(join("S", i+1), size) << " <= " <<  join("S",i);
+#if 0 // Since we passed the signed coeff to FixRealKCM it should work like this
 				if(coeffsign[i] == 1)
 					vhdl << " - (" ;
 				else
 					vhdl << " + (" ;
+#else
+				vhdl << " + (" ;
+#endif
 				if(size>pSize) 
 					vhdl << "("<< size-1 << " downto " << pSize<< " => "<< join("P",i) << of(pSize-1) << ")" << " & " ;
 				vhdl << join("P", i) << ");" << endl;

@@ -13,34 +13,35 @@ using namespace std;
 
 namespace flopoco {
 
-	FixFIR::FixFIR(Target* target, int lsb_, vector<string> coeff_, bool useBitheap_, map<string, double> inputDelays) : 
-		Operator(target), p(-lsb_), coeff(coeff_), useBitheap(useBitheap_)
+	FixFIR::FixFIR(Target* target, int lsb_) : 
+		Operator(target), p(-lsb_)	{	}
+
+	FixFIR::FixFIR(Target* target, int lsb_, vector<string> coeff_, map<string, double> inputDelays) : 
+		Operator(target), p(-lsb_), coeff(coeff_)
 	{
 		srcFileName="FixFIR";
 		setCopyrightString ( "Louis Beseme, Florent de Dinechin (2014)" );
-		useNumericStd_Unsigned();
 
+		ostringstream name;
+		name << "FixFIR_" << p << "_" << coeff.size() << "_uid" << getNewUId();
+		setNameWithFreq( name.str() );
+
+		buildVHDL();
+	};
+
+	
+
+	// The method that does the work once coeff[] is known
+	void FixFIR::buildVHDL(){
+		n=coeff.size();
+
+		useNumericStd_Unsigned();
 		if(p<1) {
 			THROWERROR("Can't build an architecture for this value of LSB")
 		}
-		ostringstream name;
-		name << "FixFIR_"<< p << "_uid" << getNewUId();
-		setNameWithFreq( name.str() );
-
-		n=coeff.size();
-
-		// initialize stuff for emulate
-		for(int i=0; i<=n; i++) {
-			xHistory[i]=0;
-		}
-		currentIndex=0;
-
-		//manage the critical path
-		setCriticalPath(getMaxInputDelays(inputDelays));
-
 		addInput("X", 1+p, true);
 
-		ShiftReg *shiftReg = new ShiftReg(target, 1+p, n, inputDelays);
+		ShiftReg *shiftReg = new ShiftReg(getTarget(), 1+p, n);
 
 		addSubComponent(shiftReg);
 		inPortMap(shiftReg, "X", "X");
@@ -51,23 +52,14 @@ namespace flopoco {
 
 		vhdl << instance(shiftReg, "shiftReg");
 
-
-		// REPORT(INFO,getCycleFromSignal("Y0", false));
-		// REPORT(INFO,getCurrentCycle());
-#if 0
-		syncCycleFromSignal("Y0");
-#else 
 		setCycle(0);
-#endif
 		mpfr_set_default_prec(10000);
 
-		FixSOPC *fixSOPC = new FixSOPC(target, -p, coeff, useBitheap, inputDelays);
-		for (int i=0; i<n; i++) {
-			mpfr_init_set(mpcoeff[i], fixSOPC->mpcoeff[i], GMP_RNDN);
-			coeffsign[i] = fixSOPC->coeffsign[i];
-		}
+		FixSOPC *fixSOPC = new FixSOPC(getTarget(), -p, coeff);
+
 		wO = fixSOPC->wO;
 
+		// Here we should set the critical path of x[0] only by some setCriticalPath();
 		addSubComponent(fixSOPC);
 
 		for(int i=0; i<n; i++) {
@@ -82,7 +74,17 @@ namespace flopoco {
 		addOutput("R", fixSOPC->wO, true);
 		vhdl << "R <= Rtmp;" << endl;
 
-	};
+		// initialize stuff for emulate
+		for(int i=0; i<=n; i++) {
+			xHistory[i]=0;
+		}
+		currentIndex=0;
+		for (int i=0; i<n; i++) {
+			mpfr_init_set(mpcoeff[i], fixSOPC->mpcoeff[i], GMP_RNDN);
+			coeffsign[i] = fixSOPC->coeffsign[i];
+		}
+
+};
 
 	FixFIR::~FixFIR(){
 
