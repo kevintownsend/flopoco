@@ -336,12 +336,25 @@ namespace flopoco{
 				TestCase* tc = tcl_.getTestCase(i);
 				if (fileOut) fileOut << tc->generateInputString(IOorderInput,IOorderOutput);
 			} 
+			
+			//let's not reinvent the wheel
+			/*
 			// generation on the fly of random test case
 			for (int i = 0; i < n_; i++) {
 				TestCase* tc = op_->buildRandomTestCase(i);
 				if (fileOut) fileOut << tc->generateInputString(IOorderInput,IOorderOutput);
 				delete tc; 
-			}; 
+			};
+			*/
+			TestCaseList *tcl = new TestCaseList();
+
+			op_->buildRandomTestCaseList(tcl, n_);
+			for (int i = 0; i < n_; i++) {
+				TestCase* tc = tcl->getTestCase(i);
+				if (fileOut) fileOut << tc->generateInputString(IOorderInput,IOorderOutput);
+				delete tc;
+			};
+			delete tcl;
 
 			// closing input file
 			fileOut.close();
