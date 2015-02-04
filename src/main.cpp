@@ -440,9 +440,10 @@ void usage(char *name, string opName = ""){
 		cerr << "Shift Register with n taps\n";
 	}
 	if ( full || opName == "FixFIR") {
-		OP("FixFIR","p useBitheap taps [coeff list]");
-		cerr << "      A faithful FIR on an (1,p) fixed-point format\n";
-		cerr << "      The filter may, or may not use bit heaps\n";
+		OP("FixFIR","lsb useBitheap taps [coeff list]");
+		cerr << "      A faithful FIR, inputting signed numbers in [-1,1]. Inputs and outputs have lsb precision\n";
+		cerr << "      if useBitHeap=1, the filter is built using a single bit heap (recommended)\n";
+		cerr << "      [coeff list] is a space-separated list of real numbers in Sollya syntax, e.g. \"sin(3*pi/8)\" \n";
 	}
    
 
@@ -846,7 +847,7 @@ bool parseCommandLine(int argc, char* argv[]){
 			if (i+3 > argc)
 				usage(argv[0],opname);
 			else {
-				int p = checkStrictlyPositive(argv[i++], argv[0]);
+				int p = atoi(argv[i++]);
 				int useBitheap = checkBoolean(argv[i++], argv[0]);
 				int taps = checkStrictlyPositive(argv[i++], argv[0]);
 				if (i+taps > argc)

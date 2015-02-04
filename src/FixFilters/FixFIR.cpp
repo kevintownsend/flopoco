@@ -13,13 +13,16 @@ using namespace std;
 
 namespace flopoco {
 
-	FixFIR::FixFIR(Target* target, int p_, vector<string> coeff_, bool useBitheap_, map<string, double> inputDelays) : 
-		Operator(target), p(p_), coeff(coeff_), useBitheap(useBitheap_)
+	FixFIR::FixFIR(Target* target, int lsb_, vector<string> coeff_, bool useBitheap_, map<string, double> inputDelays) : 
+		Operator(target), p(-lsb_), coeff(coeff_), useBitheap(useBitheap_)
 	{
 		srcFileName="FixFIR";
 		setCopyrightString ( "Louis Beseme, Florent de Dinechin (2014)" );
 		useNumericStd_Unsigned();
 
+		if(p<1) {
+			THROWERROR("Can't build an architecture for this value of LSB")
+		}
 		ostringstream name;
 		name << "FixFIR_"<< p << "_uid" << getNewUId();
 		setNameWithFreq( name.str() );
@@ -48,7 +51,7 @@ namespace flopoco {
 		syncCycleFromSignal("Y0");
 		mpfr_set_default_prec(10000);
 
-		FixSOPC *fixSOPC = new FixSOPC(target, p, coeff, useBitheap, inputDelays);
+		FixSOPC *fixSOPC = new FixSOPC(target, -p, coeff, useBitheap, inputDelays);
 		for (int i=0; i<n; i++) {
 			mpfr_init_set(mpcoeff[i], fixSOPC->mpcoeff[i], GMP_RNDN);
 			coeffsign[i] = fixSOPC->coeffsign[i];

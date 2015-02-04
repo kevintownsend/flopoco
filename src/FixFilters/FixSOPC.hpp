@@ -17,7 +17,7 @@ namespace flopoco{
 	// new operator class declaration
 	class FixSOPC : public Operator {
 	public:
-		int p;							/**< The precision of inputs and outputs */ 
+		int p;							/**< The precision (opposite of LSB weight) of inputs and outputs */ 
 		int n;							/**< number of taps */
 		vector<string> coeff;			/**< the coefficients as strings */
 		mpfr_t mpcoeff[10000];			/**< the absolute values of the coefficients as MPFR numbers */
@@ -33,7 +33,7 @@ namespace flopoco{
 		// definition of some function for the operator    
 
 		// constructor, defined there with two parameters
-		FixSOPC(Target* target, int p_, vector<string> coeff_, bool useBitheap = false, map<string, double> inputDelays = emptyDelayMap);
+		FixSOPC(Target* target, int lsb_, vector<string> coeff_, bool useBitheap = false, map<string, double> inputDelays = emptyDelayMap);
 
 		// destructor
 		~FixSOPC() {};

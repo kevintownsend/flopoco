@@ -11,7 +11,7 @@ namespace flopoco{
 	  
 		public:
 			/* Constructor ; you must use bitheap in case of negative coefficient*/
-			FixFIR(Target* target, int p_, vector<string> coeff_, bool useBitheap = true, map<string, double> inputDelays = emptyDelayMap); 
+			FixFIR(Target* target, int lsb_, vector<string> coeff_, bool useBitheap = true, map<string, double> inputDelays = emptyDelayMap); 
 
 			/* Destructor */
 			~FixFIR();
@@ -22,7 +22,7 @@ namespace flopoco{
 			void emulate(TestCase * tc);
 
 	  	private:
-			int p;							/**< The precision of inputs and outputs */ 
+			int p;							/**< The precision (opposite of LSB weight) of inputs and outputs */ 
 			int n;							/**< number of taps */
 			vector<string> coeff;			/**< the coefficients as strings */
 

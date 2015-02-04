@@ -12,9 +12,10 @@
 using namespace std;
 namespace flopoco{
 
-
-	FixSOPC::FixSOPC(Target* target, int p_, vector<string> coeff_, bool useBitheap_, map<string, double> inputDelays) : 
-		Operator(target), p(p_), coeff(coeff_), useBitheap(useBitheap_)
+	// A small cleanup TODO: this was written with a positive p representing a negative LSB...
+	// F2D obsessively changed the interface, but not the code
+	FixSOPC::FixSOPC(Target* target, int lsb_, vector<string> coeff_, bool useBitheap_, map<string, double> inputDelays) : 
+		Operator(target), p(-lsb_), coeff(coeff_), useBitheap(useBitheap_)
 	{
 		srcFileName="FixSOPC";
 					

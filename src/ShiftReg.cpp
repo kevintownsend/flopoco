@@ -33,9 +33,9 @@ namespace flopoco {
 
 		
 		for(int i=0; i<n; i++) {
-			vhdl << join("Xd", i) << " <= XX;" << endl;
+			vhdl << tab << join("Xd", i) << " <= XX;" << endl;
 			if (i<n-1)
-				nextCycle();
+				nextCycle(false);
 		}
 
 	};
