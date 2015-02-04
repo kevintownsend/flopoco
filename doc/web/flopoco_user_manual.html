@@ -740,9 +740,12 @@ Interface variations on HOTBM:
     <dd>Shift Register with n taps</dd>
 </dl>
 <dl>
-  <dt><code style="color: blue;">FixFIR p useBitheap taps [coeff list]</code></dt>
-    <dd>A faithful FIR on an (1,p) fixed-point format.
-      The filter may, or may not use bit heaps.</dd>
+  <dt><code style="color: blue;">FixFIR lsb useBitheap taps [coeff list]</code></dt>
+    <dd>A faithful FIR, inputting signed numbers in [-1,1]. Inputs and outputs have lsb precision.
+      If useBitHeap=1, the filter is built using a single bit heap (recommended).
+      [coeff list] is a space-separated list of real numbers in Sollya syntax, e.g. <code>"sin(3*pi/8)"</code> 
+
+      </dd>
 </dl>
 
 
