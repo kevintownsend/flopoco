@@ -30,8 +30,11 @@ namespace flopoco{
 
 			int wO;
 
-			mpfr_t mpcoeff[10000];			/**< the absolute values of the coefficients as MPFR numbers */
-			bool coeffsign[10000];			/**< the signs of the coefficients */
+	private:
+		mpfr_t mpcoeff[10000];			/**< the absolute values of the coefficients as MPFR numbers */
+		bool coeffsign[10000];			/**< the signs of the coefficients */
+		mpz_class xHistory[10000]; // history of x used by emulate
+		int currentIndex;
 	};
 
 }

@@ -819,6 +819,9 @@ public:
 	*/
 	int getPipelineDepth();
 
+	/** Should not be used for operators without memory */
+	void setPipelineDepth(int d);
+
 	/**
 	* @return the output map containing the signal -> delay associations 
 	*/	

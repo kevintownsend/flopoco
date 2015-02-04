@@ -523,6 +523,10 @@ namespace flopoco{
 		return pipelineDepth_; 
 	}
 	
+	void Operator::setPipelineDepth(int d) {
+		pipelineDepth_ = d; 
+	}
+	
 	void Operator::outputFinalReport(int level) {
 
 		if (getIndirectOperator()!=NULL){ // interface operator

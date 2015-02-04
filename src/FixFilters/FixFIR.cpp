@@ -28,7 +28,13 @@ namespace flopoco {
 		setNameWithFreq( name.str() );
 
 		n=coeff.size();
-		
+
+		// initialize stuff for emulate
+		for(int i=0; i<=n; i++) {
+			xHistory[i]=0;
+		}
+		currentIndex=0;
+
 		//manage the critical path
 		setCriticalPath(getMaxInputDelays(inputDelays));
 
@@ -48,7 +54,11 @@ namespace flopoco {
 
 		// REPORT(INFO,getCycleFromSignal("Y0", false));
 		// REPORT(INFO,getCurrentCycle());
+#if 0
 		syncCycleFromSignal("Y0");
+#else 
+		setCycle(0);
+#endif
 		mpfr_set_default_prec(10000);
 
 		FixSOPC *fixSOPC = new FixSOPC(target, -p, coeff, useBitheap, inputDelays);
@@ -80,6 +90,57 @@ namespace flopoco {
 
 	void FixFIR::emulate(TestCase * tc){
 
+#if 1
+		mpz_class sx;
+
+		sx = tc->getInputValue("X"); 		// get the input bit vector as an integer
+		xHistory[currentIndex] = sx;
+
+		mpfr_t x, t, s, rd, ru;
+		mpfr_init2 (x, 1+p);
+		mpfr_init2 (t, 10*(1+p));
+		mpfr_init2 (s, 10*(1+p));
+		mpfr_init2 (rd, 1+p);
+		mpfr_init2 (ru, 1+p);		
+		mpfr_set_d(s, 0.0, GMP_RNDN); // initialize s to 0
+		
+		for (int i=0; i< n; i++)	{
+			sx = xHistory[(currentIndex+n-i)%n];
+			sx = bitVectorToSigned(sx, 1+p); 						// convert it to a signed mpz_class
+			mpfr_set_z (x, sx.get_mpz_t(), GMP_RNDD); 	 // convert this integer to an MPFR; this rounding is exact
+			mpfr_div_2si (x, x, p, GMP_RNDD); 						// multiply this integer by 2^-p to obtain a fixed-point value; this rounding is again exact
+			
+			mpfr_mul(t, x, mpcoeff[i], GMP_RNDN); 					// Here rounding possible, but precision used is ridiculously high so it won't matter
+
+			if(coeffsign[i]==1)
+				mpfr_neg(t, t, GMP_RNDN); 
+			
+			mpfr_add(s, s, t, GMP_RNDN); 							// same comment as above
+			}
+
+			// now we should have in s the (exact in most cases) sum
+			// round it up and down
+
+			// make s an integer -- no rounding here
+			mpfr_mul_2si (s, s, p, GMP_RNDN);
+
+			mpz_class rdz, ruz;
+
+			mpfr_get_z (rdz.get_mpz_t(), s, GMP_RNDD); 					// there can be a real rounding here
+			rdz=signedToBitVector(rdz, wO);
+			tc->addExpectedOutput ("R", rdz);
+			// tc->addExpectedOutput ("R", rdz);
+
+			mpfr_get_z (ruz.get_mpz_t(), s, GMP_RNDU); 					// there can be a real rounding here	
+			ruz=signedToBitVector(ruz, wO);
+			tc->addExpectedOutput ("R", ruz);
+
+			mpfr_clears (x, t, s, rd, ru, NULL);
+			
+			currentIndex=(currentIndex+1)%n; //  circular buffer to store the inputs
+
+	
+#else
 		static int idx = 0;
 		static bool full = false; 							// set to true when the fir start to output valid data (after n input) 
 		static TestCase * listTC [10000]; // should be enough for everybody
@@ -135,6 +196,7 @@ namespace flopoco {
 			mpfr_get_z (rdz.get_mpz_t(), s, GMP_RNDD); 					// there can be a real rounding here
 			rdz=signedToBitVector(rdz, wO);
 			listTC[k]->addExpectedOutput ("R", rdz);
+			// tc->addExpectedOutput ("R", rdz);
 
 			mpfr_get_z (ruz.get_mpz_t(), s, GMP_RNDU); 					// there can be a real rounding here	
 			ruz=signedToBitVector(ruz, wO);
@@ -148,6 +210,8 @@ namespace flopoco {
 		if (idx ==  1) {
 			full = true;
 		}
+
+#endif
 	};
 
 

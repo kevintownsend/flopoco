@@ -29,7 +29,7 @@ namespace flopoco {
 
 		setCriticalPath(getMaxInputDelays(inputDelays));
 
-		vhdl << declare("XX", w, false, Signal::registeredWithAsyncReset) << " <= X;" << endl;
+		vhdl << tab << declare("XX", w, false, Signal::registeredWithAsyncReset) << " <= X;" << endl;
 
 		
 		for(int i=0; i<n; i++) {
@@ -37,7 +37,7 @@ namespace flopoco {
 			if (i<n-1)
 				nextCycle(false);
 		}
-
+		setPipelineDepth(0);
 	};
 
 	ShiftReg::~ShiftReg(){
