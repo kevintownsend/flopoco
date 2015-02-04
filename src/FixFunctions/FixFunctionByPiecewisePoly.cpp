@@ -89,7 +89,7 @@ namespace flopoco{
 
 		setCopyrightString("Florent de Dinechin (2014)");
 		addHeaderComment("-- Evaluator for " +  f-> getDescription() + "\n"); 
-		REPORT(DETAILED, "Entering: FixFunctionByPiecewisePoly \"" << func << "\" " << lsbIn << " " << msbOut << " " << lsbOut << " " << degree << " " << target->plainStupidVHDL());
+		REPORT(DETAILED, "Entering: FixFunctionByPiecewisePoly \"" << func << "\" " << lsbIn << " " << msbOut << " " << lsbOut << " " << degree);
  		int wX=-lsbIn;
 		addInput("X", wX);
 		int outputSize = msbOut-lsbOut+1; // TODO finalRounding would impact this line

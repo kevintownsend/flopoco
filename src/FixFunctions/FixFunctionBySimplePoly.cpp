@@ -36,7 +36,7 @@ namespace flopoco{
 #define DEBUGVHDL 0
 
 
-	FixFunctionBySimplePoly::FixFunctionBySimplePoly(Target* target, string func, int lsbIn, int msbOut, int lsbOut, bool finalRounding_, bool plainStupidVHDL, float DSPThreshold, map<string, double> inputDelays):
+	FixFunctionBySimplePoly::FixFunctionBySimplePoly(Target* target, string func, int lsbIn, int msbOut, int lsbOut, bool finalRounding_, float DSPThreshold, map<string, double> inputDelays):
 		Operator(target, inputDelays), finalRounding(finalRounding_){
 		f=new FixFunction(func, lsbIn, msbOut, lsbOut);
 		
@@ -111,7 +111,7 @@ namespace flopoco{
 
 			resizeFixPoint(join("XsTrunc", i), "Xs", 0, xTruncLSB);			
 
-			if(plainStupidVHDL) {				// No pipelining here
+			if(target->plainVHDL()) {				// No pipelining here
 				vhdl << tab << declareFixPoint(join("P", i), true, pMSB,  sigmaLSB  + xTruncLSB /*LSB*/) 
 						 <<  " <= "<< join("XsTrunc", i) <<" * Sigma" << i+1 << ";" << endl;
 				// However the bit of weight pMSB is a 0. We want to keep the bits from  pMSB-1

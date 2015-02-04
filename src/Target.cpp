@@ -72,12 +72,12 @@ namespace flopoco{
 		unusedHardMultThreshold_ = v;  
 	}
 
-	void Target::setPlainStupidVHDL(bool v){
-		plainStupidVHDL_ = v;  
+	void Target::setPlainVHDL(bool v){
+		plainVHDL_ = v;  
 	}
 
-	bool Target::plainStupidVHDL(){
-		return plainStupidVHDL_;  
+	bool Target::plainVHDL(){
+		return plainVHDL_;  
 	}
 	
 	bool Target::hasHardMultipliers(){

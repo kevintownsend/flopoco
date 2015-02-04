@@ -440,9 +440,8 @@ void usage(char *name, string opName = ""){
 		cerr << "Shift Register with n taps\n";
 	}
 	if ( full || opName == "FixFIR") {
-		OP("FixFIR","lsb useBitheap taps [coeff list]");
+		OP("FixFIR","lsb taps [coeff list]");
 		cerr << "      A faithful FIR, inputting signed numbers in [-1,1]. Inputs and outputs have lsb precision\n";
-		cerr << "      if useBitHeap=1, the filter is built using a single bit heap (recommended)\n";
 		cerr << "      [coeff list] is a space-separated list of real numbers in Sollya syntax, e.g. \"sin(3*pi/8)\" \n";
 	}
    
@@ -512,7 +511,7 @@ void usage(char *name, string opName = ""){
 		cerr << "   -pipeline=<yes|no>                                     (default=yes)\n";
 		cerr << "   -frequency=<target frequency in MHz>                   (default=400)\n";
 		cerr << "   -clockenable=<yes|no>                                  (default is no)\n";
-		cerr << "   -plainStupidVHDL=<yes|no>                              (default=no)\n";
+		cerr << "   -plainVHDL=<yes|no>                                    (default=no)\n";
 		cerr << "   -useHardMult=<yes|no>                                  (default=yes)\n";
 		cerr << "   -unusedHardMultThreshold=<float between 0 and 1>       (default=0.5)\n";
 		cerr << "   -resourceEstimation=<0..3> (experimental)              (default=0) \n";
@@ -672,11 +671,11 @@ bool parseCommandLine(int argc, char* argv[]){
 						usage(argv[0],"options");
 					}
 				}
-				else if (o == "plainStupidVHDL") {
-					if(v=="yes") target->setPlainStupidVHDL(true);
-					else if(v=="no")  target->setPlainStupidVHDL(false);
+				else if (o == "plainVHDL") {
+					if(v=="yes") target->setPlainVHDL(true);
+					else if(v=="no")  target->setPlainVHDL(false);
 					else {
-						cerr<<"ERROR: plainStupidVHDL option should be yes or no,    got "<<v<<"."<<endl; 
+						cerr<<"ERROR: plainVHDL option should be yes or no,    got "<<v<<"."<<endl; 
 						usage(argv[0],"options");
 					}
 				}
@@ -848,7 +847,6 @@ bool parseCommandLine(int argc, char* argv[]){
 				usage(argv[0],opname);
 			else {
 				int p = atoi(argv[i++]);
-				int useBitheap = checkBoolean(argv[i++], argv[0]);
 				int taps = checkStrictlyPositive(argv[i++], argv[0]);
 				if (i+taps > argc)
 					usage(argv[0],opname);
@@ -858,14 +856,35 @@ bool parseCommandLine(int argc, char* argv[]){
 						{
 							coeff.push_back(argv[i++]);
 						}
-					op = new FixFIR(target, p, coeff, useBitheap);
+					op = new FixFIR(target, p, coeff);
+					addOperator(op);
+				}
+			}
+		}
+
+		else if(opname=="FixSOPC")
+		{
+			if (i+3 > argc)
+				usage(argv[0],opname);
+			else {
+				int p = atoi(argv[i++]);
+				int taps = checkStrictlyPositive(argv[i++], argv[0]);
+				if (i+taps > argc)
+					usage(argv[0],opname);
+				else {
+					std::vector<string> coeff;
+					for (int j = 0; j < taps; j++) 
+						{
+							coeff.push_back(argv[i++]);
+						}
+					op = new FixSOPC(target, p, coeff);
 					addOperator(op);
 				}
 			}
 		}
 
 
-else if(opname=="IntAdder"){
+		else if(opname=="IntAdder"){
 			int nargs = 1;
 			if (i+nargs > argc)
 				usage(argv[0], opname);

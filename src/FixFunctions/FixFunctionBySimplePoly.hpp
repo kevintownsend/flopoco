@@ -33,7 +33,7 @@ namespace flopoco{
 			 This would require quite a lot of work for non-trivial functions (isolating roots of the derivative etc).
 			 So this is currently left to the user.
 		 */
-		FixFunctionBySimplePoly(Target* target, string func, int lsbIn, int msbOut, int lsbOut, bool finalRounding = true, bool plainStupidVHDL=false, float DSPThreshold=0.7,  map<string, double> inputDelays = emptyDelayMap);
+		FixFunctionBySimplePoly(Target* target, string func, int lsbIn, int msbOut, int lsbOut, bool finalRounding = true, float DSPThreshold=0.7,  map<string, double> inputDelays = emptyDelayMap);
 
 		/**
 		 * FixFunctionBySimplePoly destructor

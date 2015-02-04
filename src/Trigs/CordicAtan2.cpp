@@ -402,7 +402,7 @@ namespace flopoco{
 			vhdl << tab << declareFixPoint("R", false, msbRecip, lsbRecip) << " <= unsigned(R0" << range(msbRecip-lsbRecip  , 0) << "); -- removing the sign  bit" << endl;
 			vhdl << tab << declareFixPoint("YRU", false, -1, -w+1) << " <= unsigned(YRS);" << endl;
 
-			if(target->plainStupidVHDL()) { // generate a "*"
+			if(target->plainVHDL()) { // generate a "*"
 				vhdl << tab << declareFixPoint("P", false, msbRecip -1 +1, lsbRecip-w+1) << " <= R*YRU;" << endl;
 				resizeFixPoint("PtruncU", "P", msbProduct, lsbProduct);
 				vhdl << tab << declare("P_slv", msbProduct-lsbProduct+1)  << " <=  std_logic_vector(PTruncU);" << endl;

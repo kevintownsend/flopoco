@@ -361,10 +361,10 @@ namespace flopoco{
 
 		/** defines if flopoco should produce plain stupid VHDL
 		 */
-		void setPlainStupidVHDL(bool v);
+		void setPlainVHDL(bool v);
 
 		/** should flopoco produce plain stupid VHDL */
-		bool plainStupidVHDL();
+		bool plainVHDL();
 
 		/** defines the unused hard mult threshold, see the the corresponding attribute for its meaning 
 		 */
@@ -682,7 +682,7 @@ namespace flopoco{
 																		if r >= 1-unusedHardMultThreshold_   then FloPoCo will use a DSP for this block 
 																		So: 0 means: any sub-multiplier that does not fully fill a DSP goes to logic
 																		1 means: any sub-multiplier, even very small ones, go to DSP*/  
-		bool   plainStupidVHDL_;     /**< True if we want the VHDL code to be concise and readable, with + and * instead of optimized FloPoCo operators. */
+		bool   plainVHDL_;     /**< True if we want the VHDL code to be concise and readable, with + and * instead of optimized FloPoCo operators. */
 		vector<Operator*>  globalOpList;  /**< A list of sub-operators that should be shared with most operators. Semantically it shouldn't be here but it makes code simpler */
 
 	};

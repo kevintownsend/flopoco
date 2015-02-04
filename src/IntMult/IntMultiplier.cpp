@@ -278,7 +278,7 @@ namespace flopoco {
 		addInput ( yname  , wYdecl, true );
 		addOutput ( "R"  , wOut, 2 , true );
 
-		if(target->plainStupidVHDL()) {
+		if(target->plainVHDL()) {
 			vhdl << tab << declareFixPoint("XX",signedIO,-1, -wXdecl) << " <= " << (signedIO?"signed":"unsigned") << "(" << xname <<");" << endl;  
 			vhdl << tab << declareFixPoint("YY",signedIO,-1, -wYdecl) << " <= " << (signedIO?"signed":"unsigned") << "(" << yname <<");" << endl;  
 			vhdl << tab << declareFixPoint("RR",signedIO,-1, -wXdecl-wYdecl) << " <= XX*YY;" << endl;  

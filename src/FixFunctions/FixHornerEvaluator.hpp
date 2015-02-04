@@ -40,7 +40,6 @@ namespace flopoco{
 			 @param    signedCoeff  true if the coefficients are signed numbers (usually true)
 			 @param   finalRounding: if false, the operator outputs its guard bits as well, saving the half-ulp rounding error. 
 			                 This makes sense in situations that further process the result with further guard bits.
-			 @param   plainStupidVHDL: if true, generate * and +; if false, use BitHeap-based FixMultAdd
 
      */
 

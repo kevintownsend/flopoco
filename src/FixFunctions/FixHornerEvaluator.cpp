@@ -127,7 +127,7 @@ namespace flopoco{
 
 			resizeFixPoint(join("XsTrunc", i), "Xs", 0, xTruncLSB);			
 
-			if(target->plainStupidVHDL()) {	// stupid pipelining here
+			if(target->plainVHDL()) {	// stupid pipelining here
 				vhdl << tab << declareFixPoint(join("P", i), true, pMSB,  sigmaLSB  + xTruncLSB /*LSB*/) 
 						 <<  " <= "<< join("XsTrunc", i) <<" * Sigma" << i+1 << ";" << endl;
 				// However the bit of weight pMSB is a 0. We want to keep the bits from  pMSB-1
