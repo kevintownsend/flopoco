@@ -444,7 +444,11 @@ void usage(char *name, string opName = ""){
 		cerr << "A faithful FIR, inputting signed numbers in [-1,1]. Inputs and outputs have lsb precision\n";
 		cerr << "  [coeff list] is a space-separated list of real numbers in Sollya syntax, e.g. \"sin(3*pi/8)\" \n";
 	}
-   
+	if ( full || opName == "FixIIR") {
+		OP("FixIIR","p leadingBit H useBitheap tapsB [coeffb list] tapsA [coeffa list]");
+		cerr << "      A faithful IIR on an (1,p) fixed-point format\n";
+		cerr << "      The filter may, or may not use bit heaps\n";
+	}
 	if ( full || opName == "FixHalfSine") {
 		OP("FixHalfSine","lsb N");
 		cerr << "A faithful half-sine filter with 2N-1 coefficients, for input signal in [-1,1].\n";
@@ -884,6 +888,41 @@ bool parseCommandLine(int argc, char* argv[]){
 						}
 					op = new FixFIR(target, lsb, coeff);
 					addOperator(op);
+				}
+			}
+		}
+
+		else if(opname=="FixIIR")
+		{
+			if (i+3 > argc)
+				usage(argv[0],opname);
+			else {
+				int p = checkStrictlyPositive(argv[i++], argv[0]);
+				int leadingBit = atoi(argv[i++]);
+				double H = atof(argv[i++]);
+				int useBitheap = checkBoolean(argv[i++], argv[0]);
+				int tapsB = checkStrictlyPositive(argv[i++], argv[0]);
+				if (i+tapsB > argc)
+					usage(argv[0],opname);
+				else {
+					std::vector<string> coeffB;
+					for (int j = 0; j < tapsB; j++) 
+						{
+							coeffB.push_back(argv[i++]);
+						}
+					int tapsA = checkStrictlyPositive(argv[i++], argv[0]);
+					if (i+tapsA > argc)
+						usage(argv[0],opname);
+					else {
+						std::vector<string> coeffA;
+						for (int j = 0; j < tapsA; j++) 
+							{
+								coeffA.push_back(argv[i++]);
+							}
+
+						op = new FixIIR(target, p, leadingBit, H, coeffB, coeffA, useBitheap);
+						addOperator(op);
+					}
 				}
 			}
 		}

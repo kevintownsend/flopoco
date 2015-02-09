@@ -410,7 +410,7 @@ namespace flopoco {
 		}
 
 
-		k = (k-1+n)%n; //to get the testCase corresponding to the outputed value
+		// k = (k-1+n)%n; //to get the testCase corresponding to the outputed value
 
 		mpfr_set(shiftRegA[idxA], s, GMP_RNDN);
 
