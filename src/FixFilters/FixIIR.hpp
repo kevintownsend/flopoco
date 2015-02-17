@@ -11,7 +11,7 @@ namespace flopoco{
 
 	public:
 		/* Constructor ; you must use bitheap in case of negative coefficient*/
-		FixIIR(Target* target, int p_, int leadingBit_, double H_, vector<string> coeffb_, vector<string> coeffa_, bool useBitheap = true, map<string, double> inputDelays = emptyDelayMap); 
+		FixIIR(Target* target, int lsb_, int leadingBit_, double H_, vector<string> coeffb_, vector<string> coeffa_, map<string, double> inputDelays = emptyDelayMap); 
 
 		/* Destructor */
 		~FixIIR();
@@ -31,7 +31,6 @@ namespace flopoco{
 		vector<string> coeffa;			/**< the coefficients as strings */
 		vector<string> coeffb;			/**< the coefficients as strings */
 
-		bool useBitheap;
 		BitHeap* bitHeapA;    			/**< The heap of weighted bits that will be used to do the additions */
 		BitHeap* bitHeapB;    			/**< The heap of weighted bits that will be used to do the additions */
 

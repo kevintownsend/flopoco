@@ -18,8 +18,8 @@ using namespace std;
 
 namespace flopoco {
 
-	FixIIR::FixIIR(Target* target, int p_,int leadingBit_, double H_, vector<string> coeffb_, vector<string> coeffa_, bool useBitheap_, map<string, double> inputDelays) : 
-		Operator(target), p(p_),leadingBit(leadingBit_), H(H_), coeffb(coeffb_), coeffa(coeffa_), useBitheap(useBitheap_)
+	FixIIR::FixIIR(Target* target, int lsb_,int leadingBit_, double H_, vector<string> coeffb_, vector<string> coeffa_, map<string, double> inputDelays) : 
+		Operator(target), p(-lsb_),leadingBit(leadingBit_), H(H_), coeffb(coeffb_), coeffa(coeffa_)
 	{
 		srcFileName="FixIIR";
 		setCopyrightString ( "Louis Beseme, Florent de Dinechin (2014)" );
@@ -175,7 +175,7 @@ namespace flopoco {
 		setCombinatorial();
 
 		
-		if (useBitheap)
+		if (!target->plainVHDL())
 		{
 			//create the bitheap that computes the sum
 			bitHeapB = new BitHeap(this, size+guardBitsKCM_B);
@@ -277,7 +277,6 @@ namespace flopoco {
 				setCycleFromSignal(join("Ya",i));
 				previousCycle();
 				getSignalByName(join("Ya",i))->setCycle(getCurrentCycle());
-
 
 				// Multiplication: instantiating a KCM object. 
 				FixRealKCM* mult = new FixRealKCM(target, 

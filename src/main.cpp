@@ -445,9 +445,9 @@ void usage(char *name, string opName = ""){
 		cerr << "  [coeff list] is a space-separated list of real numbers in Sollya syntax, e.g. \"sin(3*pi/8)\" \n";
 	}
 	if ( full || opName == "FixIIR") {
-		OP("FixIIR","p leadingBit H useBitheap tapsB [coeffb list] tapsA [coeffa list]");
-		cerr << "      A faithful IIR on an (1,p) fixed-point format\n";
-		cerr << "      The filter may, or may not use bit heaps\n";
+		OP("FixIIR","lsb leadingBit H tapsB [coeffb list] tapsA [coeffa list]");
+		cerr << "A faithful IIR, inputting signed numbers in [-1,1]. Inputs and outputs have lsb precision\n";
+		cerr << "  [coeff list] is a space-separated list of real numbers in Sollya syntax, e.g. \"sin(3*pi/8)\" \n";
 	}
 	if ( full || opName == "FixHalfSine") {
 		OP("FixHalfSine","lsb N");
@@ -897,10 +897,9 @@ bool parseCommandLine(int argc, char* argv[]){
 			if (i+3 > argc)
 				usage(argv[0],opname);
 			else {
-				int p = checkStrictlyPositive(argv[i++], argv[0]);
+				int lsb = atoi(argv[i++]);
 				int leadingBit = atoi(argv[i++]);
 				double H = atof(argv[i++]);
-				int useBitheap = checkBoolean(argv[i++], argv[0]);
 				int tapsB = checkStrictlyPositive(argv[i++], argv[0]);
 				if (i+tapsB > argc)
 					usage(argv[0],opname);
@@ -920,7 +919,7 @@ bool parseCommandLine(int argc, char* argv[]){
 								coeffA.push_back(argv[i++]);
 							}
 
-						op = new FixIIR(target, p, leadingBit, H, coeffB, coeffA, useBitheap);
+						op = new FixIIR(target, lsb, leadingBit, H, coeffB, coeffA);
 						addOperator(op);
 					}
 				}
