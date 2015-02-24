@@ -444,6 +444,11 @@ void usage(char *name, string opName = ""){
 		cerr << "A faithful FIR, inputting signed numbers in [-1,1]. Inputs and outputs have lsb precision\n";
 		cerr << "  [coeff list] is a space-separated list of real numbers in Sollya syntax, e.g. \"sin(3*pi/8)\" \n";
 	}
+	if ( full || opName == "FixSOPC") {
+		OP("FixSOPC","lsb taps [coeff list]");
+		cerr << "A faithful sum-of-products-by-constants, inputting signed numbers in [-1,1]. Inputs and outputs have lsb precision\n";
+		cerr << "  [coeff list] is a space-separated list of real numbers in Sollya syntax, e.g. \"sin(3*pi/8)\" \n";
+	}
 	if ( full || opName == "FixIIR") {
 		OP("FixIIR","lsb leadingBit H tapsB [coeffb list] tapsA [coeffa list]");
 		cerr << "A faithful IIR, inputting signed numbers in [-1,1]. Inputs and outputs have lsb precision\n";
