@@ -341,8 +341,8 @@ namespace flopoco{
 		for (int i=0; i<=degree; i++){
 			int lsb= coeff[i]->LSB;
 			int msb= coeff[i]->MSB;
-			debugstring <<  endl << ">    coeff " << right << setw(4) << i << ": " 
-									<< " (" << setw(4)<< msb << ", " << setw(4)<< lsb << ")   " 
+			debugstring <<  endl << "> coeff" << right << setw(2) << i << ": " 
+									<< " (" << setw(2)<< msb << ", " << setw(3)<< lsb << ")   " 
 									<< setw(bitwidth + lsb0-lsb) << coeff[i]->getBitVector()
 									<< "  " << setw(10) << printMPFR(coeff[i]->fpValue) ;
 		}
