@@ -2,7 +2,6 @@
 - change all the interfaces to MSBweight, LSBweight instead of wI, wF
 - add them to the CMakeList and FloPoCo.hpp
 
-
-
-- prefix the FP complex operator with FP
+FP stuff:
+- use FPAddSub
 - add them too
