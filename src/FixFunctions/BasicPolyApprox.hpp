@@ -18,22 +18,23 @@ namespace flopoco{
 	
 	/** The BasicPolyApprox object builds and maintains a machine-efficient polynomial approximation to a fixed-point function over [0,1]
 			Fixed point, hence only absolute errors/accuracy targets.
-			Eventually there should be two constructors: 
-			one that inputs target accuracy and computes degree and approximation error,
-			one that inputs degree and computes approximation error.
 
-			The two are needed in the typical case of a domain split: we will first call the first for each subinterval,
-			then take the max of the degrees, and call the second with that.
+			There are two families of constructors: 
+			one that inputs target accuracy and computes degree and approximation error (calling the buildApproxFromTargetAccuracy method)
+			one that inputs degree and computes approximation error (calling the buildApproxFromDegreeAndLSBs method).
 
-			We then call guessDegree.
-			target_accuracy implies the target LSB of the constant part of the polynomial.
-			if  addGuardBitsToConstante, we add g=ceil(log2(degree+1)) bits to the LSB of the constant: 
+			The first is useful in standalone, or to evaluate degree/MSBs etc.
+			The second is needed in the typical case of a domain split, where the degree is determined when determining the split.
+
+			Sketch of te algo for  buildApproxFromTargetAccuracy:
+		  guessDegree gives a tentative degree.
+			target_accuracy defines the best-case LSB of the constant part of the polynomial.
+			if  addGuardBitsToConstant, we add g=ceil(log2(degree+1)) bits to the LSB of the constant: 
 			this provides a bit of freedom to fpminimax, for free in terms of evaluation.
 			And we call fpminimax with that, and check what it provided.
 			Since x is in [0,1], the MSB of coefficient i is then exactly the MSB of a_i.x^i
 			For the same reason, all the coefficients should have the same target LSB
 			
-			To start with, this class is for "expert" users: 
 			No domain splitting or other range reduction here: these should be managed in different classes
 			No good handling of functions with zero coefficients for now. 
 			- a function with zero constant should be transformed into a "proper" one outside this class. 
@@ -47,11 +48,9 @@ namespace flopoco{
 	class BasicPolyApprox {
 	public:
 
-		/**< A wrapper for Sollya guessdegree */
-		static	void guessDegree(sollya_obj_t fS, double targetAccuracy, int* degreeInfP, int* degreeSupP);
 
-
-		/** A minimal constructor inputting target accuracy
+		/** A minimal constructor inputting target accuracy.
+				@param f: defines the function and if the input interval is [0,1] or [-1,1]
 				@param addGuardBits: 
 				if >=0, add this number of bits to the LSB of each coeff
 				if -1, add to each coeff a number of LSB bits that corresponds to the bits needed for a faithful Horner evaluation based on faithful (truncated) multipliers
@@ -62,24 +61,27 @@ namespace flopoco{
 				@param addGuardBits: 
 				if >=0, add this number of bits to the LSB of each coeff
 				if -1, add to each coeff a number of LSB bits that corresponds to the bits needed for a faithful Horner evaluation based on faithful (truncated) multipliers
+				@param signedx:  if true, we consider an approximation on [-1,1]. If false, it will be on [0,1]
 		 */
-		BasicPolyApprox(sollya_obj_t fS, double targetAccuracy, int addGuardBits=-1);
+		BasicPolyApprox(sollya_obj_t fS, double targetAccuracy, int addGuardBits=-1, bool signedInput =false);
 
 
 		/** A minimal constructor that inputs a sollya_obj_t function, a degree and the weight of the LSBs.
 				This one is mostly for "internal" use by classes that compute degree separately, e.g. PiecewisePolyApprox  
+				@param signedx:  if true, we consider an approximation on [-1,1]. If false, it will be on [0,1]
 
 		 */
-		BasicPolyApprox(sollya_obj_t fS, int degree, int LSB);
+		BasicPolyApprox(sollya_obj_t fS, int degree, int LSB, bool signedInput =false);
 
 		/** A minimal constructor that parses a sollya string, inputting target accuracy
 				@param addGuardBits: 
 				if >=0, add this number of bits to the LSB of each coeff
 				if -1, add to each coeff a number of LSB bits that corresponds to the bits needed for a faithful Horner evaluation based on faithful (truncated) multipliers
+				@param signedx:  if true, we consider an approximation on [-1,1]. If false, it will be on [0,1]
 		 */
-		BasicPolyApprox(string sollyaString, double targetAccuracy, int addGuardBits=-1);
+		BasicPolyApprox(string sollyaString, double targetAccuracy, int addGuardBits=-1, bool signedx=false);
 
-		/** A constructor for the case you already have the coefficients, e.g. you read them from a file
+		/** A constructor for the case you already have the coefficients, e.g. you read them from a file. Beware, f is un-initialized in this case
 		 */
 		BasicPolyApprox(int degree, vector<int> MSB, int LSB, vector<mpz_class> coeff);
 
@@ -93,6 +95,9 @@ namespace flopoco{
 																						Essentially a wrapper for Sollya fpminimax() followed by supnorm()*/
 		int LSB;                          /**< weight of the LSB of the polynomial approximation. Also weight of the LSB of each constant, since x \in [0,1) */
 
+		/** A wrapper for Sollya guessdegree */
+		static	void guessDegree(sollya_obj_t fS, double targetAccuracy, int* degreeInfP, int* degreeSupP);
+
 	private:
 		FixFunction *f;                   /**< The function to be approximated */
 		sollya_obj_t polynomialS;         /**< The polynomial approximating it */
@@ -105,9 +110,10 @@ namespace flopoco{
 		void buildApproxFromTargetAccuracy(double targetAccuracy, int addGuardBitsToConstant); /**< constructor code for the general case factored out. */
 		void buildFixFormatVector(); /**< Build coeff, the vector of coefficients, out of pS, the sollya polynomial. Constructor code, factored out */
 
-		sollya_obj_t fixedS;        /**< constant */
-		sollya_obj_t absoluteS;     /**< constant */
-		sollya_obj_t rangeS;        /**< constant */
+
+		sollya_obj_t fixedS;        /**< a constant sollya_obj_t */
+		sollya_obj_t absoluteS;     /**< a constant sollya_obj_t */
+		sollya_obj_t rangeS;        /**< a constant sollya_obj_t */
 
 	};
 

@@ -27,7 +27,6 @@ namespace flopoco{
 		 */
 		PiecewisePolyApprox(FixFunction* f, double targetAccuracy, int degree);
 
-
 		/** A minimal constructor that parses a sollya string		 */
 		PiecewisePolyApprox(string sollyaString, double targetAccuracy, int degree);
 

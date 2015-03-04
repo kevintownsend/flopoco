@@ -38,7 +38,7 @@ namespace flopoco{
 		targetAccuracy(targetAccuracy_), degree(degree_)
 	{
 		//  parsing delegated to FixFunction
-		f = new FixFunction(sollyaString_);
+		f = new FixFunction(sollyaString_, false /* on [0,1]*/);
 		needToFreeF = true;
 		srcFileName="PiecewisePolyApprox"; // should be somehow static but this is too much to ask me
 		build();

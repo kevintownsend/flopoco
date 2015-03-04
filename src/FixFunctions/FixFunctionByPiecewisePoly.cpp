@@ -79,7 +79,7 @@ namespace flopoco{
 			THROWERROR("FinalRounding=false not implemented yet" );
 		}
 
-		f=new FixFunction(func, lsbIn, msbOut, lsbOut); // this will provide emulate etc.
+		f=new FixFunction(func, false, lsbIn, msbOut, lsbOut); // this will provide emulate etc.
 		
 		srcFileName="FixFunctionByPiecewisePoly";
 		
@@ -98,7 +98,7 @@ namespace flopoco{
 
 		if(degree==0){ // This is a simple table
 			REPORT(DETAILED, "Degree 0: building a simple table");
-			FixFunctionByTable* table=new FixFunctionByTable(target, func, lsbIn, msbOut, lsbOut);
+			FixFunctionByTable* table=new FixFunctionByTable(target, func, false, lsbIn, msbOut, lsbOut);
 			addSubComponent(table);
 
 			inPortMap(table, "X", "X");

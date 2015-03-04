@@ -24,7 +24,7 @@
 #include "ShiftersEtc/Shifters.hpp"
 #include "IntMult/IntMultiplier.hpp"
 #include "FixFunctions/FixFunctionByPiecewisePoly.hpp"
-#include "FixFunctions/FixFunctionBySimplePoly.hpp"
+//#include "FixFunctions/FixFunctionBySimplePoly.hpp"
 #include "FixFunctions/FixFunctionByTable.hpp"
 #include "utils.hpp"
 #include "IntAddSubCmp/IntAdder.hpp"

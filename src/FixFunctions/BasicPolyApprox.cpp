@@ -32,10 +32,10 @@ namespace flopoco{
 	}
 
 
-	BasicPolyApprox::BasicPolyApprox(string sollyaString_, double targetAccuracy, int addGuardBits)
+	BasicPolyApprox::BasicPolyApprox(string sollyaString_, double targetAccuracy, int addGuardBits, bool signedIn)
 	{
 		//  parsing delegated to FixFunction
-		f = new FixFunction(sollyaString_);
+		f = new FixFunction(sollyaString_, signedIn);
 		needToFreeF = true;
 		initialize();
 		buildApproxFromTargetAccuracy(targetAccuracy,  addGuardBits);
@@ -44,19 +44,19 @@ namespace flopoco{
 
 
 
-	BasicPolyApprox::BasicPolyApprox(sollya_obj_t fS_, double targetAccuracy, int addGuardBits)
+	BasicPolyApprox::BasicPolyApprox(sollya_obj_t fS_, double targetAccuracy, int addGuardBits, bool signedIn)
 	{
-		f = new FixFunction(fS_);
+		f = new FixFunction(fS_,signedIn);
 		needToFreeF = true;
 		initialize();
 		buildApproxFromTargetAccuracy(targetAccuracy,  addGuardBits);
 		buildFixFormatVector();
 	}
 
-	BasicPolyApprox::BasicPolyApprox(sollya_obj_t fS_, int degree_, int lsb_): 
+	BasicPolyApprox::BasicPolyApprox(sollya_obj_t fS_, int degree_, int lsb_, bool signedIn): 
 		degree(degree_), LSB(lsb_)
 	{
-		f = new FixFunction(fS_);
+		f = new FixFunction(fS_, signedIn);
 		needToFreeF = true;
 		initialize();
 		buildApproxFromDegreeAndLSBs();
@@ -66,10 +66,9 @@ namespace flopoco{
 
 
 	BasicPolyApprox::BasicPolyApprox(int degree_, vector<int> MSB, int LSB_, vector<mpz_class> mpzCoeff): 
-		degree(degree_), LSB(LSB_)
+	  degree(degree_), LSB(LSB_)
   {
 		needToFreeF = false;
-		initialize();
 		for (int i=0; i<=degree; i++){
 			FixConstant* fixcoeff =	new FixConstant(MSB[i], LSB, true/*signed*/, mpzCoeff[i]);
 			coeff.push_back(fixcoeff);
@@ -81,7 +80,10 @@ namespace flopoco{
 		srcFileName="BasicPolyApprox"; // should be somehow static but this is too much to ask me
 		fixedS = sollya_lib_fixed();
 		absoluteS = sollya_lib_absolute();
-		rangeS = sollya_lib_parse_string("[0;1]");
+		if(f->signedIn) 
+			rangeS = sollya_lib_parse_string("[-1;1]");
+		else
+			rangeS = sollya_lib_parse_string("[0;1]");
 	}
 
 

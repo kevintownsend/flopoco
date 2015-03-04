@@ -529,9 +529,10 @@ FixSinCos::FixSinCos(Target * target, int w_):Operator(target), w(w_){
 				vhdl << tab << declare("Z_truncToZ3o6", wZ3o6) << " <= Z" << range(wZ-1, wZ-wZ3o6) << ";" << endl;
 				FixFunctionByTable *z3o6Table;
 				z3o6Table = new FixFunctionByTable (target, "x^3/6", 
-																			 -wZ3o6, // lsbIn
-																			 -3,  //  msbOut
-																			 -wZ3o6-2); // lsbOut
+																						false, // signedIn
+																						-wZ3o6, // lsbIn
+																						-3,  //  msbOut
+																						-wZ3o6-2); // lsbOut
 				z3o6Table -> changeName(getName() + "_Z3o6Table");
 				oplist.push_back (z3o6Table);
 				inPortMap (z3o6Table, "X", "Z_truncToZ3o6");

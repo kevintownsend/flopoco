@@ -20,11 +20,20 @@
 namespace flopoco{
 
 
-	FixFunction::FixFunction(string sollyaString_, int lsbIn_, int msbOut_, int lsbOut_):
-		lsbIn(lsbIn_),wIn(-lsbIn_), msbOut(msbOut_), lsbOut(lsbOut_), wOut(msbOut_-lsbOut+1)
+	FixFunction::FixFunction(string sollyaString_, bool signedIn_, int lsbIn_, int msbOut_, int lsbOut_):
+		signedIn(signedIn_), lsbIn(lsbIn_), msbOut(msbOut_), lsbOut(lsbOut_), wOut(msbOut_-lsbOut+1)
 	{
+		if(signedIn)
+			wIn=-lsbIn+1; // add the sign bit at position 0 
+		else
+			wIn=-lsbIn;
  		ostringstream completeDescription;
-		completeDescription << sollyaString_  << " on[0,1)";
+		completeDescription << sollyaString_;
+		if(signedIn)
+			completeDescription << " on[-1,1)";
+		else
+			completeDescription << " on[0,1)";
+
 		if(lsbIn!=0) // we have an IO specification
 			completeDescription << " for lsbIn=" << lsbIn << " (wIn=" << wIn << "), msbout=" << msbOut << ", lsbOut=" << lsbOut ;
 		description = completeDescription.str();
@@ -37,7 +46,7 @@ namespace flopoco{
 			throw("FixFunction: Unable to parse input function.");
 	}
 
-	FixFunction::FixFunction(sollya_obj_t fS_): fS(fS_)
+	FixFunction::FixFunction(sollya_obj_t fS_, bool signedIn_): fS(fS_), signedIn(signedIn_)
 	{
 	}
 
@@ -84,10 +93,15 @@ namespace flopoco{
 		mpfr_init2(mpX,wIn+2);
 		mpfr_init2(mpR,precision);
 
+		if(signedIn) {
+			mpz_class negateBit = mpz_class(1) << (wIn);
+			if ((x >> (-lsbIn)) !=0) 
+				x -= negateBit;
+		}
 		/* Convert x to an mpfr_t in [0,1[ */
 		mpfr_set_z(mpX, x.get_mpz_t(), GMP_RNDN);
-		mpfr_div_2si(mpX, mpX, wIn, GMP_RNDN);
-	
+		mpfr_div_2si(mpX, mpX, -lsbIn, GMP_RNDN);
+
 		/* Compute the function */
 		eval(mpR, mpX);
 		//		REPORT(FULL,"function() input is:"<<sPrintBinary(mpX)); 

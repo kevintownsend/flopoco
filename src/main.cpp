@@ -412,16 +412,16 @@ void usage(char *name, string opName = ""){
 #endif
 
 	if ( full || opName == "FixFunctionByTable" || opName == "FixFunction"){					
-		OP( "FixFunctionByTable","f lsbI  msbO lsbO");
-		cerr << "Simple tabulation of function f defined on [0,1)\n";
+		OP( "FixFunctionByTable","f signedInput lsbI  msbO lsbO");
+		cerr << "Simple tabulation of function f defined on [0,1) or [-1,1) (depending on signedInput)\n";
 		cerr << "  lsbI: weight of input LSB, for instance -8 for an 8-bit input\n";
 		cerr << "  msbO and lsbO: weights of output MSB and LSB\n";
 		cerr << " f in Sollya syntax, e.g. \"sin(x*Pi/2)\" or \"exp(x*1b-8)\"\n";
 	}
 
 	if ( full || opName == "FixFunctionBySimplePoly" || opName == "FixFunction"){					
-		OP( "FixFunctionBySimplePoly","f lsbI msbO lsbO");
-		cerr << "Evaluator of function f on [0,1), using a single polynomial with Horner scheme \n";
+		OP( "FixFunctionBySimplePoly","f signedInput lsbI msbO lsbO");
+		cerr << "Evaluator of function f on [0,1) or [-1,1) (depending on signedInput), using a single polynomial with Horner scheme \n";
 	}
 
 	if ( full || opName == "FixFunctionByPiecewisePoly" || opName == "FixFunction"){					
@@ -1528,7 +1528,7 @@ bool parseCommandLine(int argc, char* argv[]){
 			int nargs = 2;
 			if (i+nargs > argc)
 				usage(argv[0],opname); // and exit
-			FixFunction *f = new FixFunction(argv[i++]);
+			FixFunction *f = new FixFunction(argv[i++], false);
 			double x = strtod(argv[i++], NULL);
 			double r = f -> eval(x);
 			cout << "\n r=" << r << endl;  
@@ -1539,10 +1539,11 @@ bool parseCommandLine(int argc, char* argv[]){
 			if (i+nargs > argc)
 				usage(argv[0],opname); // and exit
 			string func = argv[i++];
+			int signedI = atoi(argv[i++]);
 			int lsbI = atoi(argv[i++]);
 			int msbO = atoi(argv[i++]);
 			int lsbO = atoi(argv[i++]);
-			Operator* tg = new FixFunctionByTable(target, func, lsbI, msbO, lsbO);
+			Operator* tg = new FixFunctionByTable(target, func, signedI, lsbI, msbO, lsbO);
 			addOperator(tg);
 		}
 
@@ -1551,10 +1552,11 @@ bool parseCommandLine(int argc, char* argv[]){
 			if (i+nargs > argc)
 				usage(argv[0],opname); // and exit
 			string func = argv[i++];
+			int signedI = atoi(argv[i++]);
 			int lsbI = atoi(argv[i++]);
 			int msbO = atoi(argv[i++]);
 			int lsbO = atoi(argv[i++]);
-			Operator* tg = new FixFunctionBySimplePoly(target, func, lsbI, msbO, lsbO, true /*final rounding*/);
+			Operator* tg = new FixFunctionBySimplePoly(target, func, signedI, lsbI, msbO, lsbO, true /*final rounding*/);
 			addOperator(tg);
 		}
 

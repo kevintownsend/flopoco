@@ -36,9 +36,9 @@ namespace flopoco{
 #define DEBUGVHDL 0
 
 
-	FixFunctionBySimplePoly::FixFunctionBySimplePoly(Target* target, string func, int lsbIn, int msbOut, int lsbOut, bool finalRounding_, float DSPThreshold, map<string, double> inputDelays):
+	FixFunctionBySimplePoly::FixFunctionBySimplePoly(Target* target, string func, bool signedIn, int lsbIn, int msbOut, int lsbOut, bool finalRounding_, map<string, double> inputDelays):
 		Operator(target, inputDelays), finalRounding(finalRounding_){
-		f=new FixFunction(func, lsbIn, msbOut, lsbOut);
+		f = new FixFunction(func, signedIn, lsbIn, msbOut, lsbOut);
 		
 		srcFileName="FixFunctionBySimplePoly";
 		
@@ -58,7 +58,10 @@ namespace flopoco{
 		useNumericStd();
 		setCriticalPath( getMaxInputDelays(inputDelays) + target->localWireDelay() );
 
-		vhdl << tab << declareFixPoint("Xs", true, 0, lsbIn) << " <= signed('0' & X);  -- sign extension of X" << endl; 
+		if(f->signedIn)
+			vhdl << tab << declareFixPoint("Xs", true, 0, lsbIn) << " <= signed(X);" << endl; 
+		else
+			vhdl << tab << declareFixPoint("Xs", true, 0, lsbIn) << " <= signed('0' & X);  -- sign extension of X" << endl; 
 
 		// Polynomial approximation
 		double targetApproxError = pow(2,lsbOut-1); 
