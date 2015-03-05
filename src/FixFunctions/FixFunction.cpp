@@ -27,12 +27,16 @@ namespace flopoco{
 			wIn=-lsbIn+1; // add the sign bit at position 0 
 		else
 			wIn=-lsbIn;
+		if(signedIn) 
+			rangeS = sollya_lib_parse_string("[-1;1]");
+		else
+			rangeS = sollya_lib_parse_string("[0;1]");
  		ostringstream completeDescription;
 		completeDescription << sollyaString_;
 		if(signedIn)
-			completeDescription << " on[-1,1)";
+			completeDescription << " on [-1,1)";
 		else
-			completeDescription << " on[0,1)";
+			completeDescription << " on [0,1)";
 
 		if(lsbIn!=0) // we have an IO specification
 			completeDescription << " for lsbIn=" << lsbIn << " (wIn=" << wIn << "), msbout=" << msbOut << ", lsbOut=" << lsbOut ;
@@ -46,8 +50,16 @@ namespace flopoco{
 			throw("FixFunction: Unable to parse input function.");
 	}
 
-	FixFunction::FixFunction(sollya_obj_t fS_, bool signedIn_): fS(fS_), signedIn(signedIn_)
+
+
+
+	FixFunction::FixFunction(sollya_obj_t fS_, bool signedIn_): 
+		fS(fS_), signedIn(signedIn_)
 	{
+		if(signedIn) 
+			rangeS = sollya_lib_parse_string("[-1;1]");
+		else
+			rangeS = sollya_lib_parse_string("[0;1]");
 	}
 
 
@@ -56,6 +68,7 @@ namespace flopoco{
 	FixFunction::~FixFunction()
 	{
 	  sollya_lib_clear_obj(fS);
+	  sollya_lib_clear_obj(rangeS);
 	}
 
 	string FixFunction::getDescription() const
@@ -124,11 +137,6 @@ namespace flopoco{
 		mpfr_clear(mpR);
 	}
 
-
-	sollya_obj_t FixFunction::getSollyaObj() const
-	{
-		return fS;
-	}
 
 
 

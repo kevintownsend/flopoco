@@ -52,7 +52,7 @@ namespace flopoco{
 
 		setCopyrightString("Florent de Dinechin (2014)");
 		addHeaderComment("-- Evaluator for " +  f-> getDescription() + "\n"); 
-		addInput("X"  , -lsbIn);
+		addInput("X"  , -lsbIn + (signedIn?1:0));
 		int outputSize = msbOut-lsbOut+1;
 		addOutput("Y" ,outputSize , 2);
 		useNumericStd();
@@ -157,17 +157,27 @@ namespace flopoco{
 
 	void FixFunctionBySimplePoly::buildStandardTestCases(TestCaseList* tcl){
 		TestCase *tc;
-
+		int lsbIn = f->lsbIn;
+		bool signedIn = f->signedIn;
+		// Testing the extremal cases
 		tc = new TestCase(this); 
 		tc->addInput("X", 0);
 		emulate(tc);
 		tcl->add(tc);
 
 		tc = new TestCase(this); 
-		tc->addInput("X", (mpz_class(1) << f->wIn) -1);
+		tc->addInput("X", (mpz_class(1)<<(-lsbIn) ) -1);
+		tc -> addComment("largest positive value, corresponding to 1");
 		emulate(tc);
 		tcl->add(tc);
 
+		if(signedIn) {
+			tc = new TestCase(this); 
+			tc->addInput("X", (mpz_class(1)<<(-lsbIn) ));
+			tc -> addComment("Smallest two's complement value, corresponding to -1");
+			emulate(tc);
+			tcl->add(tc);
+		}
 	}
 
 }

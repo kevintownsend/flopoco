@@ -79,7 +79,7 @@ namespace flopoco{
 				if -1, add to each coeff a number of LSB bits that corresponds to the bits needed for a faithful Horner evaluation based on faithful (truncated) multipliers
 				@param signedx:  if true, we consider an approximation on [-1,1]. If false, it will be on [0,1]
 		 */
-		BasicPolyApprox(string sollyaString, double targetAccuracy, int addGuardBits=-1, bool signedx=false);
+		BasicPolyApprox(string sollyaString, double targetAccuracy, int addGuardBits=-1, bool signedInput=false);
 
 		/** A constructor for the case you already have the coefficients, e.g. you read them from a file. Beware, f is un-initialized in this case
 		 */
@@ -96,7 +96,7 @@ namespace flopoco{
 		int LSB;                          /**< weight of the LSB of the polynomial approximation. Also weight of the LSB of each constant, since x \in [0,1) */
 
 		/** A wrapper for Sollya guessdegree */
-		static	void guessDegree(sollya_obj_t fS, double targetAccuracy, int* degreeInfP, int* degreeSupP);
+		static	void guessDegree(sollya_obj_t fS, sollya_obj_t rangeS, double targetAccuracy, int* degreeInfP, int* degreeSupP);
 
 	private:
 		FixFunction *f;                   /**< The function to be approximated */
@@ -113,7 +113,6 @@ namespace flopoco{
 
 		sollya_obj_t fixedS;        /**< a constant sollya_obj_t */
 		sollya_obj_t absoluteS;     /**< a constant sollya_obj_t */
-		sollya_obj_t rangeS;        /**< a constant sollya_obj_t */
 
 	};
 

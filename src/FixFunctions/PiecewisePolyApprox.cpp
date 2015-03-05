@@ -1,6 +1,9 @@
 /*
 
-  A class that manages polynomial approximation for FloPoCo (and possibly later for metalibm). 
+  A class that manages fixed-point  polynomial approximation for FloPoCo (and possibly later for metalibm). 
+
+	At the moment, only on [0,1], no possibility to have it on [-1,1].
+	Rationale: no point really as soon as we are not in the degenerate case alpha=0.
 
   Authors: Florent de Dinechin
 
@@ -86,9 +89,16 @@ namespace flopoco{
 				file.open(cacheFileName.str().c_str(), ios::in); // of course this one will fail
 			}
 
-		if(!file.is_open()){ // TODO remove the true when all works
+		if(!file.is_open()){ 
 			//********************** Do the work, then write the cache ********************* 
-			sollya_obj_t fS = f->getSollyaObj(); // no need to free this one
+			sollya_obj_t fS = f->fS; // no need to free this one
+			sollya_obj_t rangeS; 
+
+			rangeS  = sollya_lib_parse_string("[0;1]"); 
+			// TODO test with [-1,1] which is the whole point of current refactoring.
+			// There needs to be a bit of logic here because rangeS should be [-1,1] by default to exploit signed arith, 
+			// except in the case when alpha=0 because then rangeS should be f->rangeS (and should not be freed)
+
 			int nbIntervals;
 
 			// Limit alpha to 24, because alpha will be the number of bits input to a table
@@ -110,7 +120,7 @@ namespace flopoco{
 						sollya_lib_printf("> PiecewisePolyApprox: alpha=%d, ii=%d, testing  %b \n", alpha, ii, giS);
 					// Now what degree do we need to approximate gi?
 					int degreeInf, degreeSup;
-					BasicPolyApprox::guessDegree(giS, targetAccuracy, &degreeInf, &degreeSup);
+					BasicPolyApprox::guessDegree(giS, rangeS, targetAccuracy, &degreeInf, &degreeSup);
 					// REPORT(DEBUG, " guessDegree returned (" << degreeInf <<  ", " << degreeSup<<")" ); // no need to report, it is done by guessDegree()
 					sollya_lib_clear_obj(giS);
 					// For now we only consider degreeSup. Is this a TODO?
@@ -229,6 +239,7 @@ namespace flopoco{
 					file <<  poly[i] -> coeff[j] -> getBitVectorAsMPZ() << endl;
 				}
 			}
+			sollya_lib_clear_obj(rangeS);
 		}
 
 		else {
@@ -260,6 +271,9 @@ namespace flopoco{
 			}
 		} // end if cache
 	}
+
+
+
 	
 	mpz_class PiecewisePolyApprox::getCoeff(int i, int d){
 		BasicPolyApprox* p = poly[i];

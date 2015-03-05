@@ -53,9 +53,9 @@ namespace flopoco{
 		/** if correctlyRounded is true, compute the CR result in rNorD; otherwise computes the RD in rNorD and the RU in ru */
 		void eval(mpz_class x, mpz_class &rNorD, mpz_class &ru, bool correctlyRounded=false) const;
 
-		sollya_obj_t getSollyaObj() const;
-
 		void emulate(TestCase * tc,	bool correctlyRounded=false /**< if true, correctly rounded RN; if false, faithful function */);
+
+		// All the following public, not good practice I know, but life is complicated enough
 		int lsbIn;   
 		int wIn;   
 		int msbOut;
@@ -63,9 +63,8 @@ namespace flopoco{
 		int wOut;
 		bool signedIn;
 		string description;
-	private:
-
 		sollya_obj_t fS;
+		sollya_obj_t rangeS;
 	};
 
 }
