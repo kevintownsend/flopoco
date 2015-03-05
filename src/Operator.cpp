@@ -931,8 +931,7 @@ namespace flopoco{
 		// Possible left padding/sign extension
 		if(paddLeft) {
 			if(isSigned) 	{
-				for(int i=0; i<paddLeftSize; i++)
-					vhdl << rhsName << of(oldSize-1) << " & "; // sign extension
+				vhdl << "(" << paddLeftSize -1 << " downto 0 => " << rhsName << of(oldSize-1) << ") & "; // sign extension
 			}
 			else {
 				vhdl << zg(paddLeftSize) << " & ";

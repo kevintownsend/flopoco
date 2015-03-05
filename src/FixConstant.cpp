@@ -12,8 +12,9 @@ namespace flopoco{
 		MSB(MSB_), LSB(LSB_), width(MSB_-LSB_+1), isSigned(isSigned_) {
 		mpfr_init2(fpValue, width);
 		mpfr_set(fpValue, val_, GMP_RNDN); // TODO check no error?
+		isZeroP = mpfr_zero_p(val_);
 		if( (! isSigned) && (mpfr_sgn(fpValue)<0) )
-			THROWERROR("In FixConstant constructor: Negative constant " << printMPFR(fpValue) << " cannot be represented as a signed constant");
+			THROWERROR("In FixConstant constructor: Negative constant " << printMPFR(fpValue) << " cannot be represented as an unsigned constant");
 	}
 
 
@@ -24,8 +25,9 @@ namespace flopoco{
 		mpfr_init2(fpValue, width);
 		mpfr_set_z(fpValue, zval.get_mpz_t(), GMP_RNDN); // TODO check no error?
 		mpfr_mul_2si(fpValue, fpValue, LSB, GMP_RNDN); // exact
+		isZeroP = mpfr_zero_p(fpValue);
 		if( (! isSigned) && (mpfr_sgn(fpValue)<0) )
-			THROWERROR("In FixConstant constructor: Negative constant " << printMPFR(fpValue) << " cannot be represented as a signed constant");
+			THROWERROR("In FixConstant constructor: Negative constant " << printMPFR(fpValue) << " cannot be represented as an unsigned constant");
 		// cout <<  "Exiting FixConstant "<< zval <<endl;
 	}
 
@@ -110,7 +112,8 @@ namespace flopoco{
 	}
 
 	bool FixConstant::isZero(){
-		return mpfr_zero_p(fpValue);
+		//		return mpfr_zero_p(fpValue);
+		return isZeroP;
 	}
 
 	void FixConstant::changeMSB(int newMSB){
@@ -121,6 +124,7 @@ namespace flopoco{
 		}
 		else{
 			// TODO: check that the number fits its new size, and bork otherwise. 
+			throw("FixConstant::changeMSB: TODO");
 		}
 	}
 
@@ -129,24 +133,36 @@ namespace flopoco{
 	}
 
 	void  FixConstant::addRoundBit(int weight){
-		if(weight<LSB) {
-			ostringstream e;
-			e << "in FixConstant::addRoundBit, weight of the round bit is "<< weight << ", lower than LSB=" << LSB;
-			throw e.str();
+		if(isZeroP) {
+			isZeroP=false;
+			mpfr_init2(fpValue,2);
+			mpfr_set_ui_2exp(fpValue, 1, weight, GMP_RNDN); //exact
+			MSB=weight+1;
+			LSB=weight;
+			width=2;
 		}
-		mpfr_t b,s;
-		mpfr_init2(b,16);
-		mpfr_init2(s,width+1);
-		mpfr_set_ui_2exp(b, 1, weight, GMP_RNDN); //exact
-		mpfr_add(s, fpValue, b, GMP_RNDN);
-		if(mpfr_get_exp(s) != mpfr_get_exp(fpValue)) {
+		else {
+			if(weight<LSB) {
+				ostringstream e;
+				e << "in FixConstant::addRoundBit, weight of the round bit is "<< weight << ", lower than LSB=" << LSB;
+				throw e.str();
+			}
+			mpfr_t b,s;
+			mpfr_init2(b,16);
+			mpfr_init2(s,width+1);
+			mpfr_set_ui_2exp(b, 1, weight, GMP_RNDN); //exact
+			mpfr_add(s, fpValue, b, GMP_RNDN);
+			if(mpfr_get_exp(s) != mpfr_get_exp(fpValue)) {
 			//cerr << "FixConstant::addRoundBit has increased MSB";
-			MSB++;
-			width++;
-			mpfr_set_prec(fpValue, width);
+				MSB++;
+				width++;
+				mpfr_set_prec(fpValue, width);
+			}
+			// just in case we did  get a zero
+			isZeroP = mpfr_zero_p(fpValue);
+			mpfr_set(fpValue, s,  GMP_RNDN); //exact
+			mpfr_clears(s,b, NULL);
 		}
-		mpfr_set(fpValue, s,  GMP_RNDN); //exact
-		mpfr_clears(s,b, NULL);
 	}
 
 	std::string FixConstant::report(){

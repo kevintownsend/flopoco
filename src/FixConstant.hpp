@@ -43,11 +43,12 @@ namespace flopoco{
 		int LSB;              /**< weight of the LSB*/
 		int width;            /**< wMSB - wLSB +1*/
 		mpfr_t fpValue;       /**< the value of this constant as an mpfr_t */
+		bool isZeroP;          /**< true if the constant is zero */
 
 		mpz_class getBitVectorAsMPZ(); /**< return the constant as a bit vector in a positive MPZ.   */ 
 		std::string getBitVector(int margins=0);     /**< return the textual version of the constant. See utils.hpp for margins  */ 
 		bool isZero();        /**< as name suggests */
-		void addRoundBit(int weight);   /**< updates the value to add a bit of a certain weight */
+		void addRoundBit(int weight);   /**< updates the value to add a bit of a certain weight . This weight has to be between LSB and MSB.*/
 		void changeMSB(int newMSB);
 		void changeLSB(int newMSB);
 		std::string report();
