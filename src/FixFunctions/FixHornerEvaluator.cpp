@@ -71,7 +71,7 @@ namespace flopoco{
 		 Managing that properly is a TODO: it impacts only efficiency, not numerical quality.
 		 Maybe it can be done with a bit more Sollya.
  
-		 This is a simplified version of the computation in the ASAP 2010 paper, simplified because x is in [0,1) 
+		 This is a simplified version of the computation in the ASAP 2010 paper, simplified because x is in [-1,1) 
 
 		 WRT the ASAP paper,	
 		 1/we want to use FixMultAdd operations: 
@@ -79,20 +79,18 @@ namespace flopoco{
 		 \sigma_j  =  a_{d-j} + x^T_i * \sigma_{j-1}     \forall j \in \{ 1...d\}
 		 p(y)      =  \sigma_d
 		 
-		 2/ we integrate the multiplication guard bits (g^\pi_j in the paper) into the coeffs a_j themselves
-		 so we truncate the product \pi_j to the LSB of a_{d-j} so that the addition is aligned
-		 Philosophically, this should provide a better balance of approx versus rounding error.
-		 But main advantage is that it is simpler to maintain.
+		 2/ we have only one value of g for all the steps.
+		 Main advantage is that it is simpler to maintain.
 
-		 We still should consider the DSP granularity to truncate y to the smallest DSP-friendly size larger than |sigma_{j-1}|
+		 We still should consider the DSP granularity to truncate x to the smallest DSP-friendly size larger than |sigma_{j-1}|
 		 TODO
 
 		 So all that remains is to compute the parameters of the FixMultAdd.
 		 We need 
-		 * size of \sigma_d: this is the size of a_{d-j}
-		 * size of y truncated : see above
-		 * weight of the MSB of the product: since y \in [0,1), this is the MSB of \sigma_{j-1}, i.e. the MSB of a_{d-j+1}
-		 ** true in case of unsigned coeffs
+		 * size of \sigma_d: MSB is that of  a_{d-j}, plus 1 for overflows (sign extended).
+		                     LSB is the common LSB: lsbOut-g
+		 * size of x truncated : see above
+		 * weight of the MSB of the product: since y \in [-1,1), this is the MSB of \sigma_{j-1}, i.e. the MSB of a_{d-j+1}
 		 ** in case of signed coeffs, the max abs value is 2^(MSB-1).
 		 **   however, since we have zero-extended x in this case there is some thinking TODO 
 		 * size of the truncated result: 
@@ -102,10 +100,7 @@ namespace flopoco{
 
 		//		vhdl << tab << tab << declare("h0", coeffSize[degree]) << " <= " << join("A", degree)  << endl;
 
-		if(signedCoeffs)
-			vhdl << tab << declareFixPoint("Xs", true, 0, lsbIn) << " <= signed('0' & X);  -- sign extension of X" << endl; 
-		else 
-			vhdl << tab << declareFixPoint("Xs", true, -1, lsbIn) << " <= unsigned(X);" << endl; 
+		vhdl << tab << declareFixPoint("Xs", true, 0, lsbIn) << " <= signed(X);" << endl; 
 
 		for(int i=0; i<=degree; i++) {
 			vhdl << tab << declareFixPoint(join("As", i), signedCoeffs, coeffMSB[i], coeffLSB) 

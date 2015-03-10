@@ -55,7 +55,10 @@ namespace flopoco{
 	}
 
 
-	/** a local function to build g_i(x) = f(2^-alpha*x + i*2^-alpha) */
+
+#if 0
+	/** a local function to build g_i(x) = f(2^(-alpha)*x + i*2^-alpha) defined on [0,1] */
+
 	sollya_obj_t buildSubIntervalFunction(sollya_obj_t fS, int alpha, int i){
 		stringstream s;
 		s << "(1b-" << alpha << ")*x + ("<< i << "b-" << alpha << ")";
@@ -65,7 +68,18 @@ namespace flopoco{
 		sollya_lib_clear_obj(newxS);
 		return giS;
 	}
-
+#else
+	/** a local function to build g_i(x) = f(2^(-alpha-1)*x + i*2^-alpha + 2^(-alpha-1)) defined on [-1,1] */
+	sollya_obj_t buildSubIntervalFunction(sollya_obj_t fS, int alpha, int i){
+		stringstream s;
+		s << "(1b-" << alpha+1 << ")*x + ("<< i << "b-" << alpha << " + 1b-" << alpha+1 << ")";
+		string ss = s.str(); // do not use c_str directly on the stringstream, it is too transient (?) 
+		sollya_obj_t newxS = sollya_lib_parse_string(ss.c_str());
+		sollya_obj_t giS = sollya_lib_substitute(fS,newxS);
+		sollya_lib_clear_obj(newxS);
+		return giS;
+	}
+#endif
 
 
 
@@ -94,7 +108,11 @@ namespace flopoco{
 			sollya_obj_t fS = f->fS; // no need to free this one
 			sollya_obj_t rangeS; 
 
+#if 0
 			rangeS  = sollya_lib_parse_string("[0;1]"); 
+#else
+			rangeS  = sollya_lib_parse_string("[-1;1]"); 
+#endif
 			// TODO test with [-1,1] which is the whole point of current refactoring.
 			// There needs to be a bit of logic here because rangeS should be [-1,1] by default to exploit signed arith, 
 			// except in the case when alpha=0 because then rangeS should be f->rangeS (and should not be freed)
