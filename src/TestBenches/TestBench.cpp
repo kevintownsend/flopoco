@@ -375,7 +375,7 @@ namespace flopoco{
 			// getting signal width
 			for (int i = 0; i < length; i++) IOwidth[i] = inputSignalVector[i]->width(); 
 			mpz_class* bound = new mpz_class[length];
-            mpz_class* counters = new mpz_class[length];
+			mpz_class* counters = new mpz_class[length];
 			int number = 1; 
 			for (int i = 0; i < length; i++) {
 				bound[i] = (mpz_class(1) << IOwidth[i]);// * tmp;
@@ -383,19 +383,18 @@ namespace flopoco{
 				number *= pow(2,IOwidth[i]);
 			}
 			// getting signal name
-            string* IOname = new string[length];
+			string* IOname = new string[length];
 			for (int i = 0; i < length; i++) IOname[i] = inputSignalVector[i]->getName();
 			TestCase* tc;
 			
 			// simulation time computation
 			currentOutputTime = 0;
-            // init
+			// init
 			currentOutputTime += 10;
 			currentOutputTime += 5 * number;
-			currentOutputTime += op_->getPipelineDepth()*10* number;
+			currentOutputTime += op_->getPipelineDepth()*10;
 			currentOutputTime += 5 * number;
-            simulationTime=currentOutputTime;
-			
+			simulationTime=currentOutputTime;
 			  
 
 			while (true) {
@@ -639,4 +638,11 @@ namespace flopoco{
 
 
 	}
+
+
+		/** Return the total simulation time*/
+		int TestBench::getSimulationTime(){
+			return simulationTime;
+		}
+
 }
