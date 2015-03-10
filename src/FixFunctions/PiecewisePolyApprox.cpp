@@ -155,9 +155,14 @@ namespace flopoco{
 
 				// Compute the LSB of each coefficient.
 				// It should be at least floor(log2(targetAccuracy)); 
+#if 0
 				// However we can get a bit extra accuracy/slack because the evaluation will use log2(degree) guard bits.
 				// Adding these to the constants is almost for free: let's do it.  
 				LSB = floor(log2(targetAccuracy/degree));
+#else
+				// Actually it turns out to be useless to add guard bits
+				LSB = floor(log2(targetAccuracy));
+#endif
 				REPORT(DEBUG, "To obtain target accuracy " << targetAccuracy << " with a degree-"<<degree <<" polynomial, we compute coefficients accurate to " << targetAccuracy/degree
 							 << " (LSB="<<LSB<<")"); 
 		
