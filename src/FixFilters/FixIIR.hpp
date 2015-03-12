@@ -11,7 +11,7 @@ namespace flopoco{
 
 	public:
 		/* Constructor ; you must use bitheap in case of negative coefficient*/
-		FixIIR(Target* target, int lsb_, int leadingBit_, double H_, vector<string> coeffb_, vector<string> coeffa_, map<string, double> inputDelays = emptyDelayMap); 
+		FixIIR(Target* target, int msbOut_, int lsbOut_, double H_, vector<string> coeffb_, vector<string> coeffa_, map<string, double> inputDelays = emptyDelayMap); 
 
 		/* Destructor */
 		~FixIIR();
@@ -36,7 +36,7 @@ namespace flopoco{
 
 		int g;							/**< number of guard bits */
 		int wO;							/**< width of the result */
-		int leadingBit;					/**< weight of the MSB in the result */
+		int msbOut;					/**< weight of the MSB in the result */
 		double H;						/**< Worst case peak gain */
 
 	private:

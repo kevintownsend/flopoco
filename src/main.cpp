@@ -450,8 +450,8 @@ void usage(char *name, string opName = ""){
 		cerr << "  [coeff list] is a space-separated list of real numbers in Sollya syntax, e.g. \"sin(3*pi/8)\" \n";
 	}
 	if ( full || opName == "FixIIR") {
-		OP("FixIIR","lsb leadingBit H tapsB [coeffb list] tapsA [coeffa list]");
-		cerr << "A faithful IIR, inputting signed numbers in [-1,1]. Inputs and outputs have lsb precision\n";
+		OP("FixIIR","msbOut lsbOut H tapsB [coeffb list] tapsA [coeffa list]");
+		cerr << "A faithful IIR, inputting signed numbers in [-1,1]. Inputs and outputs have lsbOut precision\n";
 		cerr << "  [coeff list] is a space-separated list of real numbers in Sollya syntax, e.g. \"sin(3*pi/8)\" \n";
 	}
 	if ( full || opName == "FixHalfSine") {
@@ -902,8 +902,8 @@ bool parseCommandLine(int argc, char* argv[]){
 			if (i+3 > argc)
 				usage(argv[0],opname);
 			else {
-				int lsb = atoi(argv[i++]);
-				int leadingBit = atoi(argv[i++]);
+				int msbOut = atoi(argv[i++]);
+				int lsbOut = atoi(argv[i++]);
 				double H = atof(argv[i++]);
 				int tapsB = checkStrictlyPositive(argv[i++], argv[0]);
 				if (i+tapsB > argc)
@@ -924,7 +924,7 @@ bool parseCommandLine(int argc, char* argv[]){
 								coeffA.push_back(argv[i++]);
 							}
 
-						op = new FixIIR(target, lsb, leadingBit, H, coeffB, coeffA);
+						op = new FixIIR(target, msbOut, lsbOut, H, coeffB, coeffA);
 						addOperator(op);
 					}
 				}
