@@ -12,26 +12,42 @@
 using namespace std;
 namespace flopoco{
 
-	// A small cleanup TODO: this was written with a positive p representing a negative LSB...
-	// F2D obsessively changed the interface, but not the code
-	FixSOPC::FixSOPC(Target* target, int lsb_, vector<string> coeff_, map<string, double> inputDelays) : 
-		Operator(target), p(-lsb_), coeff(coeff_)
+	FixSOPC::FixSOPC(Target* target_, int lsbIn_, int lsbOut_, vector<string> coeff_) : 
+		Operator(target_), n(coeff.size()), coeff(coeff_), computeMsbOut(true), lsbOut(lsbOut_)
+	{
+		for (int i=0; i<n; i++) {
+			msbIn.push_back(0);
+			lsbIn.push_back(lsbIn_);
+		}
+		initialize();
+	}
+	
+
+	FixSOPC::FixSOPC(Target* target_, vector<int> msbIn_, vector<int> lsbIn_, int lsbOut_, vector<string> coeff_) :
+		Operator(target_), n(coeff.size()), coeff(coeff_),  msbIn(msbIn_), lsbIn(lsbIn_), computeMsbOut(true), lsbOut(lsbOut_)
+	{
+		initialize();
+	}
+
+	FixSOPC::FixSOPC(Target* target_, vector<int> msbIn_, vector<int> lsbIn_, int msbOut_, int lsbOut_, vector<string> coeff_) :
+		Operator(target_), n(coeff.size()), coeff(coeff_),  msbIn(msbIn_), lsbIn(lsbIn_), computeMsbOut(false), msbOut(msbOut_), lsbOut(lsbOut_)
+	{
+		initialize();
+	}
+
+	void FixSOPC::initialize()
 	{
 		srcFileName="FixSOPC";
 					
 		ostringstream name;
-		name<<"FixSOPC_"<<p<<"_uid"<<getNewUId(); 
+		name<<"FixSOPC_uid"<<getNewUId(); 
 		setName(name.str()); 
 	
-		setCopyrightString("Florent de Dinechin (2013)");
-
-		n=coeff.size();
+		setCopyrightString("Matei Istoan, Louis Besème, Florent de Dinechin (2013-2015)");
 		
-		//manage the critical path
-		setCriticalPath(getMaxInputDelays(inputDelays));
-
 		for (int i=0; i< n; i++)
-			addInput(join("X",i), 1+p); // sign + p bits, from weights -1 to -p		
+			addFixInput(join("X",i), true, msbIn[i], lsbIn[i]); // sign + p bits, from weights -1 to -p		
+#if 0
 
 		//reporting on the filter
 		ostringstream clist;
@@ -208,11 +224,21 @@ namespace flopoco{
 			vhdl << tab << declare("R_int", wO+1) << " <= " <<  join("S", n) << range(size-1, size-wO-1) << " + (" << zg(wO) << " & \'1\');" << endl;
 			vhdl << tab << "R <= " <<  "R_int" << range(wO, 1) << ";" << endl;
 		}
+#endif
 	};
 
 	
+
+
+
+
+
+
+
+
 	void FixSOPC::emulate(TestCase * tc) {
 
+#if 0
 		// Not completely safe: we compute everything on 10 times the required precision, and hope that rounding this result is equivalent to rounding the exact result
 
 		mpfr_t x, t, s, rd, ru;
@@ -256,7 +282,7 @@ namespace flopoco{
 		tc->addExpectedOutput ("R", ruz);
 		
 		mpfr_clears (x, t, s, rd, ru, NULL);
-
+#endif
 	}
 
 
@@ -268,6 +294,7 @@ namespace flopoco{
 	void FixSOPC::buildStandardTestCases(TestCaseList * tcl) {
 		TestCase *tc;
 
+#if 0
 		// first few cases to check emulate()
 		// All zeroes
 		tc = new TestCase(this);
@@ -295,5 +322,7 @@ namespace flopoco{
 			emulate(tc);
 			tcl->add(tc);
 		}
+#endif
 	}
+
 }

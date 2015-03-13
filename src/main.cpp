@@ -870,7 +870,7 @@ bool parseCommandLine(int argc, char* argv[]){
 						{
 							coeff.push_back(argv[i++]);
 						}
-					op = new FixSOPC(target, lsb, coeff);
+					op = new FixSOPC(target, lsb, lsb, coeff);
 					addOperator(op);
 				}
 			}
