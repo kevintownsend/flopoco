@@ -18,8 +18,8 @@ using namespace std;
 
 namespace flopoco {
 
-	FixIIR::FixIIR(Target* target, int lsb_,int leadingBit_, double H_, vector<string> coeffb_, vector<string> coeffa_, map<string, double> inputDelays) : 
-		Operator(target), p(-lsb_),leadingBit(leadingBit_), H(H_), coeffb(coeffb_), coeffa(coeffa_)
+	FixIIR::FixIIR(Target* target, int msbOut_, int lsbOut_, double H_, vector<string> coeffb_, vector<string> coeffa_, map<string, double> inputDelays) : 
+		Operator(target), p(-lsbOut_),msbOut(msbOut_), H(H_), coeffb(coeffb_), coeffa(coeffa_)
 	{
 		srcFileName="FixIIR";
 		setCopyrightString ( "Louis Beseme, Florent de Dinechin (2014)" );
@@ -45,7 +45,7 @@ namespace flopoco {
 		g= intlog2(2*H*(n+m)); 
 		REPORT(INFO, "g=" << g);
 
-		hugePrec = 10*(1+leadingBit+p+g);
+		hugePrec = 10*(1+msbOut+p+g);
 		currentIndexA=0;
 		currentIndexB=0;
 		for (int i = 0; i<m; i++)
@@ -110,13 +110,13 @@ namespace flopoco {
 		}
 		
 
-		REPORT(INFO, "Worst-case weight of MSB of the result is " << leadingBit);
+		REPORT(INFO, "Worst-case weight of MSB of the result is " << msbOut);
 
-		wO = 1+ (leadingBit - (-p)) + 1; //1 + sign  ; 
+		wO = 1+ (msbOut - (-p)) + 1; //1 + sign  ; 
 
 		
 
-		int size = 1+ (leadingBit - (-p) +1) + g ; // sign + overflow  bits on the left, guard bits on the right
+		int size = 1+ (msbOut - (-p) +1) + g ; // sign + overflow  bits on the left, guard bits on the right
 		REPORT(INFO, "Sum size is: "<< size );
 
 		
@@ -126,7 +126,7 @@ namespace flopoco {
 		double targetUlpError = 1.0;
 		int guardBitsKCM_B = FixRealKCM::neededGuardBits(target, wInKCM_B, lsbOutKCM, targetUlpError);
 
-		int wInKCM_A = 1+1+leadingBit+p+g;
+		int wInKCM_A = 1+1+msbOut+p+g;
 		int guardBitsKCM_A = FixRealKCM::neededGuardBits(target, wInKCM_A, lsbOutKCM, targetUlpError);
 
 		int guardBitsKCM = max(guardBitsKCM_A, guardBitsKCM_B);
@@ -204,7 +204,7 @@ namespace flopoco {
 														target, 	// the target FPGA
 														getSignalByName(join("Ya",i)),
 														true, 		// signed
-														leadingBit, 		// input MSB, but one sign bit will be added
+														msbOut, 		// input MSB, but one sign bit will be added
 														-p-g, 		// input LSB weight
 														lsbOutKCM, 		// output LSB weight -- the output MSB is computed out of the constant
 														coeffa[i], 	// pass the string unmodified
@@ -281,7 +281,7 @@ namespace flopoco {
 				// Multiplication: instantiating a KCM object. 
 				FixRealKCM* mult = new FixRealKCM(target, 
 												  true, // signed
-												  leadingBit, // input MSB, but one sign bit will be added
+												  msbOut, // input MSB, but one sign bit will be added
 												  -p-g, // input LSB weight
 												  lsbOutKCM, // output LSB weight -- the output MSB is computed out of the constant
 												  coeffa[i] // pass the string unmodified
@@ -342,7 +342,7 @@ namespace flopoco {
 
 
 	void FixIIR::emulate(TestCase * tc){
-#if 1
+
 		mpz_class sx;
 
 		sx = tc->getInputValue("X"); 		// get the input bit vector as an integer
@@ -413,122 +413,6 @@ namespace flopoco {
 		currentIndexA = (currentIndexA +1)%m;
 
 
-#else
-		static int idxA = 0;
-		static int idxB = 0;
-		static int first = 1;
-		static bool full = false; 							// set to true when the fir start to output valid data (after n input) 
-		static TestCase * listTC [10000]; // should be enough for everybody
-		static mpfr_t shiftRegA[10000];
-
-		int hugePrec = 10*(1+leadingBit+p+g); // huge precision used by mpfr
-
-		if (first)
-		{
-			if(n == 1)					// if the fir part has only one tap we don't wait to get the output
-				full = true; 
-			for (int i = 0; i<10000; i++)
-			{
-				mpfr_init2 (shiftRegA[i], hugePrec);
-				mpfr_set_d(shiftRegA[i], 0.0, GMP_RNDN);
-			}
-			first = 0;
-		}
-
-		listTC[idxB] = tc;
-
-
-		mpfr_t x, t, u, s;
-		mpfr_init2 (x, 1+p);
-		mpfr_init2 (t, hugePrec);
-		mpfr_init2 (u, hugePrec);
-		mpfr_init2 (s, hugePrec);	
-
-		mpfr_set_d(s, 0.0, GMP_RNDN); // initialize s to 0
-
-
-		int k = idxB; // We start to sum from the last input
-
-		for (int i=0; i< n; i++)
-		{
-			mpz_class sx;
-			if (!full and i>=((n-idxB+1)%n))
-			{
-				sx = 0;
-			}
-			else
-			{
-				sx = listTC[k]->getInputValue("X"); 		// get the input bit vector as an integer
-			}
-			sx = bitVectorToSigned(sx, 1+p); 						// convert it to a signed mpz_class
-			
-			mpfr_set_z (x, sx.get_mpz_t(), GMP_RNDD); 				// convert this integer to an MPFR; this rounding is exact
-			mpfr_div_2si (x, x, p, GMP_RNDD); 						// multiply this integer by 2^-p to obtain a fixed-point value; this rounding is again exact
-
-			mpfr_mul(t, x, mpcoeffb[i], GMP_RNDN); 					// Here rounding possible, but precision used is ridiculously high so it won't matter
-
-			if(coeffsignb[i]==1)
-				mpfr_neg(t, t, GMP_RNDN); 
-
-			mpfr_add(s, s, t, GMP_RNDN); 							// same comment as above
-		
-			
-			k = (k+1)%n;	
-		}
-
-		int l = (idxA+1)%m;
-		for (int i=0; i<m; i++)
-		{
-
-			mpfr_mul(u, shiftRegA[l], mpcoeffa[i], GMP_RNDN); 					// Here rounding possible, but precision used is ridiculously high so it won't matter
-
-			if(coeffsigna[i]==1)
-				mpfr_neg(u, u, GMP_RNDN); 
-
-			mpfr_add(s, s, u, GMP_RNDN); 							// same comment as above
-		
-
-			l = (l+1)%m;
-
-		}
-
-
-		// k = (k-1+n)%n; //to get the testCase corresponding to the outputed value
-
-		mpfr_set(shiftRegA[idxA], s, GMP_RNDN);
-
-
-		// now we should have in s the (exact in most cases) sum
-		// round it up and down
-
-		// make s an integer -- no rounding here 
-		mpfr_mul_2si (s, s, p, GMP_RNDN);
-
-		
-		// We are waiting until the first meaningful value comes out of the IIR
-		if (full) {
-			mpz_class rdz, ruz;
-
-			mpfr_get_z (rdz.get_mpz_t(), s, GMP_RNDD); 					// there can be a real rounding here
-			rdz=signedToBitVector(rdz, wO);
-			listTC[k]->addExpectedOutput ("R", rdz);
-
-			mpfr_get_z (ruz.get_mpz_t(), s, GMP_RNDU); 					// there can be a real rounding here	
-			ruz=signedToBitVector(ruz, wO);
-			listTC[k]->addExpectedOutput ("R", ruz);
-
-			
-		}
-		
-		mpfr_clears (x, t, u, s, NULL);
-
-		idxB = (idxB-1+n)%n; // We use a circular buffer to store the inputs
-		idxA = (idxA -1 + m)%m;
-
-		if (idxB ==  1) {
-			full = true;
-		}
-#endif
 	};
 
 	void FixIIR::buildStandardTestCases(TestCaseList* tcl){};
