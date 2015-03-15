@@ -46,7 +46,10 @@ namespace flopoco{
 		setCopyrightString("Matei Istoan, Louis Besème, Florent de Dinechin (2013-2015)");
 		
 		for (int i=0; i< n; i++)
-			addFixInput(join("X",i), true, msbIn[i], lsbIn[i]); // sign + p bits, from weights -1 to -p		
+			addFixInput(join("X",i), true, msbIn[i], lsbIn[i]); 
+		addFixInput("R", true, msbOut, lsbOut); 
+
+
 #if 0
 
 		//reporting on the filter
@@ -110,7 +113,6 @@ namespace flopoco{
 
 		wO = 1+ (leadingBit - (-p)) + 1; //1 + sign  ; 
 
-		addOutput("R", wO, 2); // sign + 
 
 
 #if 0		
@@ -237,52 +239,46 @@ namespace flopoco{
 
 
 	void FixSOPC::emulate(TestCase * tc) {
-
-#if 0
-		// Not completely safe: we compute everything on 10 times the required precision, and hope that rounding this result is equivalent to rounding the exact result
-
-		mpfr_t x, t, s, rd, ru;
-		mpfr_init2 (x, 1+p);
-		mpfr_init2 (t, 10*(1+p));
-		mpfr_init2 (s, 10*(1+p));
-		mpfr_init2 (rd, 1+p);
-		mpfr_init2 (ru, 1+p);		
-
+		const int veryLargePrec = 32*20000;  /*640 Kbits should be enough for anybody */
+		// Not completely safe: we compute everything on veryLargePrec, and hope that rounding this result is equivalent to rounding the exact result
+		mpfr_t t, s, rd, ru;
+		mpfr_init2 (t, veryLargePrec);
+		mpfr_init2 (s, veryLargePrec);
 		mpfr_set_d(s, 0.0, GMP_RNDN); // initialize s to 0
 
-		for (int i=0; i< n; i++)
-		{
+		for (int i=0; i< n; i++)	{
+			mpfr_t x;
 			mpz_class sx = tc->getInputValue(join("X", i)); 		// get the input bit vector as an integer
-			sx = bitVectorToSigned(sx, 1+p); 						// convert it to a signed mpz_class
+			sx = bitVectorToSigned(sx, 1+msbIn[i]-lsbIn[i]); 						// convert it to a signed mpz_class
+			mpfr_init2 (x, 1+msbIn[i]-lsbIn[i]);
 			mpfr_set_z (x, sx.get_mpz_t(), GMP_RNDD); 				// convert this integer to an MPFR; this rounding is exact
-			mpfr_div_2si (x, x, p, GMP_RNDD); 						// multiply this integer by 2^-p to obtain a fixed-point value; this rounding is again exact
+			mpfr_mul_2si (x, x, lsbIn[i], GMP_RNDD); 						// multiply this integer by 2^-lsb to obtain a fixed-point value; this rounding is again exact
 
 			mpfr_mul(t, x, mpcoeff[i], GMP_RNDN); 					// Here rounding possible, but precision used is ridiculously high so it won't matter
-
-			if(coeffsign[i]==1)
-				mpfr_neg(t, t, GMP_RNDN); 
-
 			mpfr_add(s, s, t, GMP_RNDN); 							// same comment as above
+			mpfr_clears (x, NULL);
 		}
 
-		// now we should have in s the (exact in most cases) sum
+		// now we should have in s the (very accurate) sum
 		// round it up and down
 
 		// make s an integer -- no rounding here
-		mpfr_mul_2si (s, s, p, GMP_RNDN);
+		mpfr_mul_2si (s, s, -lsbOut, GMP_RNDN);
+
+		mpfr_init2 (rd, 1+msbOut-lsbOut);
+		mpfr_init2 (ru, 1+msbOut-lsbOut);		
 
 		mpz_class rdz, ruz;
 
 		mpfr_get_z (rdz.get_mpz_t(), s, GMP_RNDD); 					// there can be a real rounding here
-		rdz=signedToBitVector(rdz, wO);
+		rdz=signedToBitVector(rdz, 1+msbOut-lsbOut);
 		tc->addExpectedOutput ("R", rdz);
 
 		mpfr_get_z (ruz.get_mpz_t(), s, GMP_RNDU); 					// there can be a real rounding here	
-		ruz=signedToBitVector(ruz, wO);
+		ruz=signedToBitVector(ruz, 1+msbOut-lsbOut);
 		tc->addExpectedOutput ("R", ruz);
 		
-		mpfr_clears (x, t, s, rd, ru, NULL);
-#endif
+		mpfr_clears (t, s, rd, ru, NULL);
 	}
 
 

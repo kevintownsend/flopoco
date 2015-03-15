@@ -41,7 +41,6 @@ namespace flopoco{
 		void buildStandardTestCases(TestCaseList* tcl);
 
 
-	private:
 	protected:
 		int n;							        /**< number of products, also size of the vectors coeff, msbIn and lsbIn */
 		vector<string> coeff;			  /**< the coefficients as strings */
@@ -53,6 +52,7 @@ namespace flopoco{
 		int lsbOut;							    /**< LSB weight of the output */
 		BitHeap* bitHeap;    			/**< The heap of weighted bits that will be used to do the additions */
 
+	private:
 	};
 
 
