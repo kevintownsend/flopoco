@@ -1,0 +1,17 @@
+*.a
+CMakeCache.txt
+CMakeFiles/
+CPackConfig.cmake
+CPackSourceConfig.cmake
+Makefile
+VHDLLexer.cpp
+bin2fp
+cmake_install.cmake
+flopoco
+flopoco_soaktest
+fp2bin
+longacc2fp
+src/random/CMakeFiles/
+src/random/Makefile
+src/random/cmake_install.cmake
+
