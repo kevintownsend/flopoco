@@ -12,9 +12,13 @@
 using namespace std;
 namespace flopoco{
 
+	const int veryLargePrec = 32*20000;  /*640 Kbits should be enough for anybody */
+
+
 	FixSOPC::FixSOPC(Target* target_, int lsbIn_, int lsbOut_, vector<string> coeff_) : 
-		Operator(target_), n(coeff.size()), coeff(coeff_), computeMsbOut(true), lsbOut(lsbOut_)
+		Operator(target_),  lsbOut(lsbOut_), coeff(coeff_), g(-1), computeGuardBits(true), addFinalRoundBit(true), computeMSBOut(true)
 	{
+		n = coeff.size();
 		for (int i=0; i<n; i++) {
 			msbIn.push_back(0);
 			lsbIn.push_back(lsbIn_);
@@ -23,20 +27,33 @@ namespace flopoco{
 	}
 	
 
-	FixSOPC::FixSOPC(Target* target_, vector<int> msbIn_, vector<int> lsbIn_, int lsbOut_, vector<string> coeff_) :
-		Operator(target_), n(coeff.size()), coeff(coeff_),  msbIn(msbIn_), lsbIn(lsbIn_), computeMsbOut(true), lsbOut(lsbOut_)
+	FixSOPC::FixSOPC(Target* target_, vector<int> msbIn_, vector<int> lsbIn_, int msbOut_, int lsbOut_, vector<string> coeff_, int g_) :
+		Operator(target_),  msbIn(msbIn_), lsbIn(lsbIn_), msbOut(msbOut_), lsbOut(lsbOut_), coeff(coeff_), g(g_), computeMSBOut(false)
 	{
+		n = coeff.size();
+		if (g==-1)
+			computeGuardBits=true;
+
+		addFinalRoundBit = (g==0 ? false : true);
+
 		initialize();
 	}
 
-	FixSOPC::FixSOPC(Target* target_, vector<int> msbIn_, vector<int> lsbIn_, int msbOut_, int lsbOut_, vector<string> coeff_) :
-		Operator(target_), n(coeff.size()), coeff(coeff_),  msbIn(msbIn_), lsbIn(lsbIn_), computeMsbOut(false), msbOut(msbOut_), lsbOut(lsbOut_)
+
+
+
+	FixSOPC::~FixSOPC()
 	{
-		initialize();
+		for (int i=0; i<n; i++) {
+			mpfr_clear(mpcoeff[i]);
+		}
 	}
 
-	void FixSOPC::initialize()
-	{
+
+
+
+
+	void FixSOPC::initialize()	{
 		srcFileName="FixSOPC";
 					
 		ostringstream name;
@@ -47,70 +64,69 @@ namespace flopoco{
 		
 		for (int i=0; i< n; i++)
 			addFixInput(join("X",i), true, msbIn[i], lsbIn[i]); 
-		addFixInput("R", true, msbOut, lsbOut); 
-
-
-#if 0
 
 		//reporting on the filter
 		ostringstream clist;
 		for (int i=0; i< n; i++)
 			clist << "    " << coeff[i] << ", ";
-		REPORT(INFO, "Building a " << n << "-tap FIR of precision " << p << " for coefficients " << clist.str());
+		REPORT(INFO, "Building a " << n << "-tap FIR; lsbOut=" << lsbOut << " for coefficients " << clist.str());
 
-		// guard bits for a faithful result
-		int g= 1+ intlog2(n-1); 
-		REPORT(INFO, "g=" << g);
 
-		mpfr_t absCoeff, sumAbsCoeff;
-		mpfr_init2 (absCoeff, 10*(1+p));
-		mpfr_init2 (sumAbsCoeff, 10*(1+p));
-		mpfr_set_d (sumAbsCoeff, 0.0, GMP_RNDN);
+		if(computeGuardBits) {
+			// guard bits for a faithful result
+			g = 1+ intlog2(n-1); 
+			REPORT(INFO, "g=" << g);
+		}
+
 		
-		for (int i=0; i< n; i++)
-		{
-			// parse the coeffs from the string, with Sollya parsing
-			sollya_obj_t node;
-			
-			node = sollya_lib_parse_string(coeff[i].c_str());
-			// If conversion did not succeed (i.e. parse error)
-			if(node == 0)
-			{
-				ostringstream error;
-				error << srcFileName << ": Unable to parse string " << coeff[i] << " as a numeric constant" << endl;
-				throw error.str();
+		for (int i=0; i< n; i++)	{
+				// parse the coeffs from the string, with Sollya parsing
+				sollya_obj_t node;
+				
+				node = sollya_lib_parse_string(coeff[i].c_str());
+				// If conversion did not succeed (i.e. parse error)
+				if(node == 0)	{
+						ostringstream error;
+						error << srcFileName << ": Unable to parse string " << coeff[i] << " as a numeric constant" << endl;
+						throw error.str();
+					}
+				
+				mpfr_init2(mpcoeff[i], veryLargePrec);
+				sollya_lib_get_constant(mpcoeff[i], node);
+				sollya_lib_clear_obj(node);
+			}
+		
+
+		if(computeMSBOut) {
+			mpfr_t sumAbsCoeff, absCoeff;
+			mpfr_init2 (sumAbsCoeff, veryLargePrec);
+			mpfr_init2 (absCoeff, veryLargePrec);
+			mpfr_set_d (sumAbsCoeff, 0.0, GMP_RNDN);
+			for (int i=0; i< n; i++)	{
+			// Accumulate the absolute values
+				mpfr_abs(absCoeff, mpcoeff[i], GMP_RNDU);
+				mpfr_add(sumAbsCoeff, sumAbsCoeff, mpcoeff[i], GMP_RNDU);
 			}
 
-			mpfr_init2(mpcoeff[i], 10000);
-			sollya_lib_get_constant(mpcoeff[i], node);
-			
+			// now sumAbsCoeff is the max value that the filter can take.
+			double sumAbs = mpfr_get_d(sumAbsCoeff, GMP_RNDU); // just to make the following loop easier
+			REPORT(INFO, "sumAbs=" << sumAbs);
+			msbOut=1;
+			while(sumAbs>=2.0)		{
+					sumAbs*=0.5;
+					msbOut++;
+				}
+			while(sumAbs<1.0)	{
+					sumAbs*=2.0;
+					msbOut--;
+				}
+			REPORT(INFO, "Worst-case weight of MSB of the result is " << msbOut);
+			mpfr_clears(sumAbsCoeff, absCoeff, NULL);
+		}			
 
-			if(mpfr_get_d(mpcoeff[i], GMP_RNDN) < 0)
-				coeffsign[i] = 1;
-			else
-				coeffsign[i] = 0;
-			
-			mpfr_abs(mpcoeff[i], mpcoeff[i], GMP_RNDN);
-				
-			// Accumulate the absolute values
-			mpfr_add(sumAbsCoeff, sumAbsCoeff, mpcoeff[i], GMP_RNDU);
-		}
-		
-		// now sumAbsCoeff is the max value that the filter can take.
-		double sumAbs = mpfr_get_d(sumAbsCoeff, GMP_RNDU); // just to make the following loop easier
-		int leadingBit=0;
-		while(sumAbs>=2.0)
-		{
-			sumAbs*=0.5;
-			leadingBit++;
-		}
-		while(sumAbs<1.0)
-		{
-			sumAbs*=2.0;
-			leadingBit--;
-		}
-		REPORT(INFO, "Worst-case weight of MSB of the result is " << leadingBit);
+		addFixOutput("R", true, msbOut, lsbOut); 
 
+#if 0
 		wO = 1+ (leadingBit - (-p)) + 1; //1 + sign  ; 
 
 
@@ -227,6 +243,8 @@ namespace flopoco{
 			vhdl << tab << "R <= " <<  "R_int" << range(wO, 1) << ";" << endl;
 		}
 #endif
+
+
 	};
 
 	
@@ -239,7 +257,6 @@ namespace flopoco{
 
 
 	void FixSOPC::emulate(TestCase * tc) {
-		const int veryLargePrec = 32*20000;  /*640 Kbits should be enough for anybody */
 		// Not completely safe: we compute everything on veryLargePrec, and hope that rounding this result is equivalent to rounding the exact result
 		mpfr_t t, s, rd, ru;
 		mpfr_init2 (t, veryLargePrec);

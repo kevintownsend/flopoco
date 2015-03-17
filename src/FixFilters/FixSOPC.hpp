@@ -17,17 +17,21 @@ namespace flopoco{
 	class FixSOPC : public Operator {
 	public:
 
-		/** simplest constructor for inputs in the fixed-point format (0, lsbIn), computing msbOut out of the coeffs */
+		/** simplest constructor for inputs in the fixed-point format (0, lsbIn), computing msbOut out of the coeffs, computing the internal format.
+		 This constructor is all we need for a FIR */
 		FixSOPC(Target* target, int lsbIn, int lsbOut, vector<string> coeff);
 
-		/** constructor for inputs in various formats, computing msbOut  */
-		FixSOPC(Target* target, vector<int> msbIn, vector<int> lsbIn, int lsbOut, vector<string> coeff);
 
-		/** constructor for inputs in various formats, msbOut provided  */
-		FixSOPC(Target* target, vector<int> msbIn, vector<int> lsbIn, int msbOut, int lsbOut, vector<string> coeff_);
+		/** Generic constructor for inputs in various formats and/or for splitting a SOPC into several ones, etc. 
+				msbOut must be provided. 
+				If g=-1, the number of needed guard bits will be computed for a faithful result, and a final round bit added in position lsbOut-1. 
+				If g=0, the architecture will have no guard bit, no final round bit will be added. The architecture will not be faithful. 
+				If g>0, the provided number of guard bits will be used and a final round bit added in position lsbOut-1.
+ */
+		FixSOPC(Target* target, vector<int> msbIn, vector<int> lsbIn, int msbOut, int lsbOut, vector<string> coeff_, int g=-1);
 
 		/** destructor */
-		~FixSOPC() {};
+		~FixSOPC();
 
 		/** The method that does most of operator construction for the two constructors */
 		void initialize();
@@ -43,16 +47,19 @@ namespace flopoco{
 
 	protected:
 		int n;							        /**< number of products, also size of the vectors coeff, msbIn and lsbIn */
-		vector<string> coeff;			  /**< the coefficients as strings */
-		vector<mpfr_t> mpcoeff;			/**< the coefficients as MPFR numbers */
 		vector<int> msbIn;			    /**< MSB weights of the inputs */
 		vector<int> lsbIn;			    /**< LSB weights of the inputs */
-		bool computeMsbOut;         /**< if true, initialize should compute msbOut. Otherwise the caller has provided it */
 		int msbOut;							    /**< MSB weight of the output, may be computed out of the constants (depending on the constructor used) */
 		int lsbOut;							    /**< LSB weight of the output */
-		BitHeap* bitHeap;    			/**< The heap of weighted bits that will be used to do the additions */
+		vector<string> coeff;			  /**< the coefficients as strings */
+		mpfr_t mpcoeff[10000];			/**< the coefficients as MPFR numbers -- 10000 should be enough for anybody */
+		int g;                      /**< Number of guard bits; the internal format will have LSB at lsbOut-g  */
 
 	private:
+		bool computeMSBOut;     /** <*/
+		bool computeGuardBits;     /** <*/
+		bool addFinalRoundBit;     /** <*/
+		BitHeap* bitHeap;    			 /**< The heap of weighted bits that will be used to do the additions */
 	};
 
 
