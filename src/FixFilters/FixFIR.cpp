@@ -7,7 +7,6 @@
 #include "FixFIR.hpp"
 
 #include "ShiftReg.hpp"
-#include "FixSOPC.hpp"
 
 using namespace std;
 
@@ -33,16 +32,15 @@ namespace flopoco {
 
 	// The method that does the work once coeff[] is known
 	void FixFIR::buildVHDL(){
-#if 0
 		n=coeff.size();
 
 		useNumericStd_Unsigned();
-		if(p<1) {
-			THROWERROR("Can't build an architecture for this value of LSB")
+		if(-lsbInOut<1) {
+			THROWERROR("Can't build an architecture for this value of lsbInOut: " << lsbInOut)
 		}
-		addInput("X", 1+p, true);
+		addInput("X", 1-lsbInOut, true);
 
-		ShiftReg *shiftReg = new ShiftReg(getTarget(), 1+p, n);
+		ShiftReg *shiftReg = new ShiftReg(getTarget(), 1-lsbInOut, n);
 
 		addSubComponent(shiftReg);
 		inPortMap(shiftReg, "X", "X");
@@ -56,11 +54,7 @@ namespace flopoco {
 		setCycle(0);
 		mpfr_set_default_prec(10000);
 
-		FixSOPC *fixSOPC = new FixSOPC(getTarget(), -p, coeff);
-
-		wO = fixSOPC->wO;
-
-		// Here we should set the critical path of x[0] only by some setCriticalPath();
+		fixSOPC = new FixSOPC(getTarget(), lsbInOut, lsbInOut, coeff);
 		addSubComponent(fixSOPC);
 
 		for(int i=0; i<n; i++) {
@@ -72,7 +66,7 @@ namespace flopoco {
 		vhdl << instance(fixSOPC, "fixSOPC");
 		syncCycleFromSignal("Rtmp");
 
-		addOutput("R", fixSOPC->wO, true);
+		addOutput("R", fixSOPC->msbOut - fixSOPC->lsbOut + 1,   true);
 		vhdl << "R <= Rtmp;" << endl;
 
 		// initialize stuff for emulate
@@ -80,25 +74,30 @@ namespace flopoco {
 			xHistory[i]=0;
 		}
 		currentIndex=0;
-		for (int i=0; i<n; i++) {
-			mpfr_init_set(mpcoeff[i], fixSOPC->mpcoeff[i], GMP_RNDN);
-			coeffsign[i] = fixSOPC->coeffsign[i];
-		}
-#endif
 	};
 
 	FixFIR::~FixFIR(){
-
 	};
 
-	void FixFIR::emulate(TestCase * tc){
-		// TODO: delegate the computation to a method of FixSOPC
-#if 0
-		mpz_class sx;
 
-		sx = tc->getInputValue("X"); 		// get the input bit vector as an integer
+
+	void FixFIR::emulate(TestCase * tc){
+		mpz_class sx = tc->getInputValue("X"); 		// get the input bit vector as an integer
 		xHistory[currentIndex] = sx;
 
+		// Not completely optimal in terms of object copies...
+		vector<mpz_class> inputs; 
+		for (int i=0; i< n; i++)	{
+			sx = xHistory[(currentIndex+n-i)%n];
+			inputs.push_back(sx);
+		}
+		pair<mpz_class,mpz_class> results = fixSOPC-> computeSOPCForEmulate(inputs);
+		
+		tc->addExpectedOutput ("R", results.first);
+		tc->addExpectedOutput ("R", results.second);
+		currentIndex=(currentIndex+1)%n; //  circular buffer to store the inputs
+
+#if 0
 		mpfr_t x, t, s, rd, ru;
 		mpfr_init2 (x, 1+p);
 		mpfr_init2 (t, 10*(1+p));

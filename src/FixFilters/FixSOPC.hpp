@@ -36,24 +36,27 @@ namespace flopoco{
 		/** The method that does most of operator construction for the two constructors */
 		void initialize();
 
-		// Below all the functions needed to test the operator
-		/* the emulate function is used to simulate in software the operator
-		   in order to compare this result with those outputed by the vhdl opertator */
+		/** Overloading the method of Operator */
 		void emulate(TestCase * tc);
 
-		/* function used to create Standard testCase defined by the developper */
+		/** Overloading the method of Operator */
 		void buildStandardTestCases(TestCaseList* tcl);
 
+		/** This method does most of the work for emulate(), because we want to call it also from the emulate() of FixFIR */
+		pair<mpz_class,mpz_class> computeSOPCForEmulate(vector<mpz_class> x);
 
 	protected:
 		int n;							        /**< number of products, also size of the vectors coeff, msbIn and lsbIn */
 		vector<int> msbIn;			    /**< MSB weights of the inputs */
 		vector<int> lsbIn;			    /**< LSB weights of the inputs */
+	public: // readable by FIR etc
 		int msbOut;							    /**< MSB weight of the output, may be computed out of the constants (depending on the constructor used) */
 		int lsbOut;							    /**< LSB weight of the output */
+	protected:
 		vector<string> coeff;			  /**< the coefficients as strings */
 		mpfr_t mpcoeff[10000];			/**< the coefficients as MPFR numbers -- 10000 should be enough for anybody */
 		int g;                      /**< Number of guard bits; the internal format will have LSB at lsbOut-g  */
+
 
 	private:
 		bool computeMSBOut;     /** <*/

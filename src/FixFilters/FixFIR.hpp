@@ -2,6 +2,7 @@
 #define FIXFIR_HPP
 
 #include "Operator.hpp"
+#include "FixSOPC.hpp"
 #include "utils.hpp"
 
 namespace flopoco{ 
@@ -19,9 +20,6 @@ namespace flopoco{
 		/* Destructor */
 		~FixFIR();
 
-		/** The method that does the bulk of operator construction, isolated to enable sub-classes such as FixHalfSine etc */
-		void buildVHDL();
-
 		// Below all the functions needed to test the operator
 		/* the emulate function is used to simulate in software the operator
 			 in order to compare this result with those outputed by the vhdl opertator */
@@ -29,12 +27,15 @@ namespace flopoco{
 
 	private:
 	protected:
+		/** The method that does the bulk of operator construction, isolated to enable sub-classes such as FixHalfSine etc */
+		void buildVHDL();
+
 		int n;							/**< number of taps */
 		vector<string> coeff;			  /**< the coefficients as strings */
 		int lsbInOut;
-		int msbOut;
 		mpz_class xHistory[10000]; // history of x used by emulate
 		int currentIndex;
+		FixSOPC *fixSOPC; /**< most of the work done here */
 	};
 
 }

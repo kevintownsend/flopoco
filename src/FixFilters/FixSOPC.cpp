@@ -12,7 +12,7 @@
 using namespace std;
 namespace flopoco{
 
-	const int veryLargePrec = 32*20000;  /*640 Kbits should be enough for anybody */
+	const int veryLargePrec = 6400;  /*6400 bits should be enough for anybody */
 
 
 	FixSOPC::FixSOPC(Target* target_, int lsbIn_, int lsbOut_, vector<string> coeff_) : 
@@ -221,22 +221,16 @@ namespace flopoco{
 
 
 
-
-
-
-
-
-	void FixSOPC::emulate(TestCase * tc) {
+	// Function that factors the work done by emulate() of FixFIR and the emulate() of FixSOPC 
+	pair<mpz_class,mpz_class> FixSOPC::computeSOPCForEmulate(vector<mpz_class> inputs) {
 		// Not completely safe: we compute everything on veryLargePrec, and hope that rounding this result is equivalent to rounding the exact result
 		mpfr_t t, s, rd, ru;
 		mpfr_init2 (t, veryLargePrec);
 		mpfr_init2 (s, veryLargePrec);
 		mpfr_set_d(s, 0.0, GMP_RNDN); // initialize s to 0
-
 		for (int i=0; i< n; i++)	{
 			mpfr_t x;
-			mpz_class sx = tc->getInputValue(join("X", i)); 		// get the input bit vector as an integer
-			sx = bitVectorToSigned(sx, 1+msbIn[i]-lsbIn[i]); 						// convert it to a signed mpz_class
+			mpz_class sx = bitVectorToSigned(inputs[i], 1+msbIn[i]-lsbIn[i]); 						// convert it to a signed mpz_class
 			mpfr_init2 (x, 1+msbIn[i]-lsbIn[i]);
 			mpfr_set_z (x, sx.get_mpz_t(), GMP_RNDD); 				// convert this integer to an MPFR; this rounding is exact
 			mpfr_mul_2si (x, x, lsbIn[i], GMP_RNDD); 						// multiply this integer by 2^-lsb to obtain a fixed-point value; this rounding is again exact
@@ -259,13 +253,29 @@ namespace flopoco{
 
 		mpfr_get_z (rdz.get_mpz_t(), s, GMP_RNDD); 					// there can be a real rounding here
 		rdz=signedToBitVector(rdz, 1+msbOut-lsbOut);
-		tc->addExpectedOutput ("R", rdz);
 
 		mpfr_get_z (ruz.get_mpz_t(), s, GMP_RNDU); 					// there can be a real rounding here	
 		ruz=signedToBitVector(ruz, 1+msbOut-lsbOut);
-		tc->addExpectedOutput ("R", ruz);
 		
 		mpfr_clears (t, s, rd, ru, NULL);
+
+		return make_pair(rdz, ruz);
+	}
+
+
+
+
+
+	void FixSOPC::emulate(TestCase * tc) {
+		vector<mpz_class> inputs;
+		for (int i=0; i< n; i++)	{
+			mpz_class sx = tc->getInputValue(join("X", i)); 		// get the input bit vector as an integer
+			inputs.push_back(sx);
+		}
+		pair<mpz_class,mpz_class> results = computeSOPCForEmulate(inputs);
+
+		tc->addExpectedOutput ("R", results.first);
+		tc->addExpectedOutput ("R", results.second);
 	}
 
 

@@ -16,7 +16,7 @@ namespace flopoco{
 		srcFileName="FixHalfSine";
 		
 		ostringstream name;
-		name << "FixHalfSine_" << "_" << N << "_uid" << getNewUId();
+		name << "FixHalfSine_" << -lsb_  << "_" << N << "_uid" << getNewUId();
 		setName(name.str());
 
 		setCopyrightString("Florent de Dinechin, Matei Istoan (2014)");
