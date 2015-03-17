@@ -13,7 +13,8 @@ namespace flopoco{
 	{
 	public:
 
-		/** Input size will be msbIn-lsbIn+1 if unsigned, msbIn-lsbIn+2 if signed */
+		/** Input size will be msbIn-lsbIn+1 if unsigned, msbIn-lsbIn+2 if signed. 
+				TODO this is not the standard interface. msbIn should be the sign bit if signed. Fix this some day */
 		FixRealKCM(Target* target, bool signedInput, int msbIn, int lsbIn, int lsbOut, string constant,
 							 double targetUlpError = 1.0, map<string, double> inputDelays = emptyDelayMap,
 							 bool useBitheap = false);

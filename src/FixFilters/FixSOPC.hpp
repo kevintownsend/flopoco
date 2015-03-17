@@ -14,28 +14,27 @@
 
 namespace flopoco{
 
-	// new operator class declaration
 	class FixSOPC : public Operator {
 	public:
-		int p;							/**< The precision (opposite of LSB weight) of inputs and outputs */ 
-		int n;							/**< number of taps */
-		vector<string> coeff;			/**< the coefficients as strings */
-		mpfr_t mpcoeff[10000];			/**< the absolute values of the coefficients as MPFR numbers */
-		bool coeffsign[10000];			/**< the signs of the coefficients */
 
-		int wO;							/**< output size, will be computed out of the constants */
-		
-		BitHeap* bitHeap;    			/**< The heap of weighted bits that will be used to do the additions */
-		
-	public:
-		// definition of some function for the operator    
+		/** simplest constructor for inputs in the fixed-point format (0, lsbIn), computing msbOut out of the coeffs, computing the internal format.
+		 This constructor is all we need for a FIR */
+		FixSOPC(Target* target, int lsbIn, int lsbOut, vector<string> coeff);
 
-		// constructor, defined there with two parameters
-		FixSOPC(Target* target, int lsb_, vector<string> coeff_,  map<string, double> inputDelays = emptyDelayMap);
 
-		// destructor
-		~FixSOPC() {};
+		/** Generic constructor for inputs in various formats and/or for splitting a SOPC into several ones, etc. 
+				msbOut must be provided. 
+				If g=-1, the number of needed guard bits will be computed for a faithful result, and a final round bit added in position lsbOut-1. 
+				If g=0, the architecture will have no guard bit, no final round bit will be added. The architecture will not be faithful. 
+				If g>0, the provided number of guard bits will be used and a final round bit added in position lsbOut-1.
+ */
+		FixSOPC(Target* target, vector<int> msbIn, vector<int> lsbIn, int msbOut, int lsbOut, vector<string> coeff_, int g=-1);
 
+		/** destructor */
+		~FixSOPC();
+
+		/** The method that does most of operator construction for the two constructors */
+		void initialize();
 
 		// Below all the functions needed to test the operator
 		/* the emulate function is used to simulate in software the operator
@@ -46,9 +45,21 @@ namespace flopoco{
 		void buildStandardTestCases(TestCaseList* tcl);
 
 
-		/* function used to bias the (uniform by default) random test generator
-		   See FPExp.cpp for an example */
-		// TestCase* buildRandomTestCase(int i);
+	protected:
+		int n;							        /**< number of products, also size of the vectors coeff, msbIn and lsbIn */
+		vector<int> msbIn;			    /**< MSB weights of the inputs */
+		vector<int> lsbIn;			    /**< LSB weights of the inputs */
+		int msbOut;							    /**< MSB weight of the output, may be computed out of the constants (depending on the constructor used) */
+		int lsbOut;							    /**< LSB weight of the output */
+		vector<string> coeff;			  /**< the coefficients as strings */
+		mpfr_t mpcoeff[10000];			/**< the coefficients as MPFR numbers -- 10000 should be enough for anybody */
+		int g;                      /**< Number of guard bits; the internal format will have LSB at lsbOut-g  */
+
+	private:
+		bool computeMSBOut;     /** <*/
+		bool computeGuardBits;     /** <*/
+		bool addFinalRoundBit;     /** <*/
+		BitHeap* bitHeap;    			 /**< The heap of weighted bits that will be used to do the additions */
 	};
 
 

@@ -24,14 +24,14 @@
 namespace flopoco{
 
 	/** An Horner polynomial evaluator computing just right.
-	 It assumes the input X is an unsigned number in [0, 1[ so msbX=-wX.
+	 It assumes the input X is an signed number in [-1, 1[ so msbX=-wX.
 	*/
 
   class FixHornerEvaluator : public Operator
   {
   public:
     /** The constructor with manual control of all options.
-     * @param    lsbIn input lsb weight, also -inputSize since X is in [0,1)
+     * @param    lsbIn input lsb weight, also -inputSize since X is in [-1,1)
 			 @param    msbOut  output MSB weight, used to determine wOut
 			 @param    lsbOut  output LSB weight
 			 @param    degree  degree of the polynomial
