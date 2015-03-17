@@ -63,7 +63,7 @@ namespace flopoco{
 		setCopyrightString("Matei Istoan, Louis Besème, Florent de Dinechin (2013-2015)");
 		
 		for (int i=0; i< n; i++)
-			addFixInput(join("X",i), true, msbIn[i], lsbIn[i]); 
+			addInput(join("X",i), msbIn[i]-lsbIn[i]+1); 
 
 		//reporting on the filter
 		ostringstream clist;
@@ -105,13 +105,13 @@ namespace flopoco{
 			for (int i=0; i< n; i++)	{
 			// Accumulate the absolute values
 				mpfr_abs(absCoeff, mpcoeff[i], GMP_RNDU);
-				mpfr_add(sumAbsCoeff, sumAbsCoeff, mpcoeff[i], GMP_RNDU);
+				mpfr_add(sumAbsCoeff, sumAbsCoeff, absCoeff, GMP_RNDU);
 			}
 
 			// now sumAbsCoeff is the max value that the filter can take.
 			double sumAbs = mpfr_get_d(sumAbsCoeff, GMP_RNDU); // just to make the following loop easier
 			REPORT(INFO, "sumAbs=" << sumAbs);
-			msbOut=1;
+			msbOut=1; 
 			while(sumAbs>=2.0)		{
 					sumAbs*=0.5;
 					msbOut++;
@@ -124,66 +124,42 @@ namespace flopoco{
 			mpfr_clears(sumAbsCoeff, absCoeff, NULL);
 		}			
 
-		addFixOutput("R", true, msbOut, lsbOut); 
+		addOutput("R", msbOut-lsbOut+1); 
 
-#if 0
-		wO = 1+ (leadingBit - (-p)) + 1; //1 + sign  ; 
-
-
-
-#if 0		
-		ostringstream dlist;
-		for (int i=0; i< n; i++) {
-			char *ptr;
-			mp_exp_t exp;
-			ptr = mpfr_get_str (0,  &exp, 10, 0, mpcoeff[i], GMP_RNDN);
-			dlist << "  ." << ptr  << "e"<< exp <<  ", ";
-			if(exp>0)
-				THROWERROR("Coefficient #" << i << " ("<< coeff[i]<<") larger than one in absolute value")
-			mpfr_free_str(ptr);
-		}
-		REPORT(DEBUG, "After conversion to MPFR: " << dlist.str());
-#endif		
-
-
-		int size = 1+ (leadingBit - (-p) +1) + g ; // sign + overflow  bits on the left, guard bits on the right
-		REPORT(INFO, "Sum size is: "<< size );
+		int sumSize = 1 + msbOut - lsbOut  + g ; 
+		REPORT(DETAILED, "Sum size is: "<< sumSize );
 		
-		//compute the guard bits from the KCM mulipliers
+		//compute the guard bits from the KCM mulipliers, and take the max
 		int guardBitsKCM = 0;
-		int wInKCM = p + 1;	//p bits + 1 sign bit
-		int lsbOutKCM = -p-g;
-		
-		for(int i=0; i<n; i++)
-		{
+		int lsbOutKCM = lsbOut-g; // we want each KCM to be faithful to this ulp
+		for(int i=0; i<n; i++)		{
+			int wInKCM = msbIn[i]-lsbIn[i]+1;	//p bits + 1 sign bit
 			double targetUlpError = 1.0;
-			int temp = FixRealKCM::neededGuardBits(target, wInKCM, lsbOutKCM, targetUlpError);
-			
+			int temp = FixRealKCM::neededGuardBits(getTarget(), wInKCM, lsbOutKCM, targetUlpError);			
 			if(temp > guardBitsKCM)
 				guardBitsKCM = temp;
 		}
 		
-		size += guardBitsKCM; // sign + overflow  bits on the left, guard bits + guard bits from KCMs on the right
-		REPORT(INFO, "Sum size with KCM guard bits is: "<< size);
+		sumSize += guardBitsKCM; 
+		REPORT(DETAILED, "Sum size with KCM guard bits is: "<< sumSize);
 		
-		if(!target->plainVHDL())
+		if(!getTarget()->plainVHDL())
 		{
 			//create the bitheap that computes the sum
-			bitHeap = new BitHeap(this, size);
+			bitHeap = new BitHeap(this, sumSize);
 			
-			for (int i=0; i<n; i++) 
-			{
+			for (int i=0; i<n; i++)	{
 				// Multiplication: instantiating a KCM object. It will add bits also to the right of lsbOutKCM
 				FixRealKCM* mult = new FixRealKCM(this,				// the envelopping operator
-														target, 	// the target FPGA
-														getSignalByName(join("X",i)),
-														true, 		// signed
-														-1, 		// input MSB, but one sign bit will be added
-														-p, 		// input LSB weight
-														lsbOutKCM, 		// output LSB weight -- the output MSB is computed out of the constant
-														coeff[i], 	// pass the string unmodified
-														bitHeap		// pass the reference to the bitheap that will accumulate the intermediary products
-													);
+																					getTarget(), 	// the target FPGA
+																					getSignalByName(join("X",i)),
+																					true, 		// signed
+																					msbIn[i]-1, 		// input MSB ?? TODO one sign bit will be added by KCM because it has a non-standard interface. To be fixed someday
+																					lsbIn[i], 		// input LSB weight
+																					lsbOutKCM, 		// output LSB weight -- the output MSB is computed out of the constant
+																					coeff[i], 	// pass the string unmodified
+																					bitHeap		// pass the reference to the bitheap that will accumulate the intermediary products
+																					);
 			}
 			
 			//rounding - add 1/2 ulps
@@ -192,19 +168,22 @@ namespace flopoco{
 			//compress the bitheap
 			bitHeap -> generateCompressorVHDL();
 			
-			vhdl << tab << "R" << " <= " << bitHeap-> getSumName() << range(size-1, g+guardBitsKCM) << ";" << endl;
+			vhdl << tab << "R" << " <= " << bitHeap-> getSumName() << range(sumSize-1, g+guardBitsKCM) << ";" << endl;
 		}
 
-		else // plainVHDL currently doesn't work because of FixRealKCM. 
+		else 
 
 		{
+			 THROWERROR("Sorry, plainVHDL doesn't work at the moment for FixSOPC. Somebody has to fix it and remove this message" );
+			// Technically if you comment the line above it generates non-correct VHDL
+
 			// All the KCMs in parallel
 			for(int i=0; i< n; i++)	{
-				FixRealKCM* mult = new FixRealKCM(target, 
+				FixRealKCM* mult = new FixRealKCM(getTarget(), 
 																					true, // signed
-																					-1, // input MSB, but one sign bit will be added
-																					-p, // input LSB weight
-																					-p-g, // output LSB weight -- the output MSB is computed out of the constant
+																					msbIn[i]-1, // input MSB,TODO one sign bit will be added by KCM because it has a non-standard interface. To be fixed someday
+																					lsbIn[i], // input LSB weight
+																					lsbOut-g, // output LSB weight -- the output MSB is computed out of the constant
 																					coeff[i] // pass the string unmodified
 																					);
 				addSubComponent(mult);
@@ -214,35 +193,26 @@ namespace flopoco{
 			}
 			// Now advance to their output, and build a pipelined rake
 			syncCycleFromSignal("P0");
-			vhdl << tab << declare("S0", size) << " <= " << zg(size) << ";" << endl;
+			vhdl << tab << declare("S0", sumSize) << " <= " << zg(sumSize) << ";" << endl;
 			for(int i=0; i< n; i++)		{				
 				//manage the critical path
-				manageCriticalPath(target->adderDelay(size));
+				manageCriticalPath(getTarget()->adderDelay(sumSize));
 				// Addition
 				int pSize = getSignalByName(join("P", i))->width();
-				vhdl << tab << declare(join("S", i+1), size) << " <= " <<  join("S",i);
-#if 0 // Since we passed the signed coeff to FixRealKCM it should work like this
-				if(coeffsign[i] == 1)
-					vhdl << " - (" ;
-				else
-					vhdl << " + (" ;
-#else
+				vhdl << tab << declare(join("S", i+1), sumSize) << " <= " <<  join("S",i);
 				vhdl << " + (" ;
-#endif
-				if(size>pSize) 
-					vhdl << "("<< size-1 << " downto " << pSize<< " => "<< join("P",i) << of(pSize-1) << ")" << " & " ;
+				if(sumSize>pSize) 
+					vhdl << "("<< sumSize-1 << " downto " << pSize<< " => "<< join("P",i) << of(pSize-1) << ")" << " & " ;
 				vhdl << join("P", i) << ");" << endl;
 			}
 						
 			// Rounding costs one more adder to add the half-ulp round bit. 
 			// This could be avoided by pushing this bit in one of the KCM tables
 			syncCycleFromSignal(join("S", n));
-			manageCriticalPath(target->adderDelay(wO+1));
-			
-			vhdl << tab << declare("R_int", wO+1) << " <= " <<  join("S", n) << range(size-1, size-wO-1) << " + (" << zg(wO) << " & \'1\');" << endl;
-			vhdl << tab << "R <= " <<  "R_int" << range(wO, 1) << ";" << endl;
+			manageCriticalPath(getTarget()->adderDelay(msbOut-lsbOut+1));
+			vhdl << tab << declare("R_int", sumSize+1) << " <= " <<  join("S", n) << range(sumSize-1, sumSize-(msbOut-lsbOut+1)-1) << " + (" << zg(sumSize) << " & \'1\');" << endl;
+			vhdl << tab << "R <= " <<  "R_int" << range(sumSize, 1) << ";" << endl;
 		}
-#endif
 
 
 	};
