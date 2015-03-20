@@ -11,11 +11,18 @@ namespace flopoco{
 	class FixFIR : public Operator {
 	  
 	public:
-		/** normal constructor, building the FIR out of the coefficients */
-		FixFIR(Target* target, int lsbInOut, vector<string> coeff, map<string, double> inputDelays = emptyDelayMap); 
+		/** normal constructor, building the FIR out of the coefficients.
+			 The coefficients are considered as real numbers, provided as string expresssions such as 0.1564565756768 or sin(3*pi/8).
+		 Input is assumed to be in [-1,1], with msb (sign bit) at position 0 and lsb at postion lsbInOut.
+		 Output has lsb at position lsbInOut. 
+		 If rescale=false, the msb of the output is computed so as to avoid overflow.
+		 If rescale=true, all the coefficients are rescaled by 1/sum(|coeffs|). 
+		 This way the output is also in [-1,1], output size is equal to input size, and the output signal makes full use of the output range.
+		*/
+		FixFIR(Target* target, int lsbInOut, vector<string> coeff, bool rescale=false, map<string, double> inputDelays = emptyDelayMap); 
 		
 		/**empty constructor, to be called by subclasses */
-		FixFIR(Target* target, int lsbInOut);
+		FixFIR(Target* target, int lsbInOut, bool rescale=false);
 
 		/* Destructor */
 		~FixFIR();
@@ -31,8 +38,9 @@ namespace flopoco{
 		void buildVHDL();
 
 		int n;							/**< number of taps */
-		vector<string> coeff;			  /**< the coefficients as strings */
 		int lsbInOut;
+		vector<string> coeff;			  /**< the coefficients as strings */
+		bool rescale; /**< if true, the output is rescaled to [-1,1]  (to the same format as input) */
 		mpz_class xHistory[10000]; // history of x used by emulate
 		int currentIndex;
 		FixSOPC *fixSOPC; /**< most of the work done here */

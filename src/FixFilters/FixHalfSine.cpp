@@ -11,7 +11,7 @@ namespace flopoco{
 
 
 	FixHalfSine::FixHalfSine(Target* target, int lsb_, int N_) :
-		FixFIR(target, lsb_), N(N_)
+		FixFIR(target, lsb_, true /*rescale*/),    N(N_)
 	{
 		srcFileName="FixHalfSine";
 		
