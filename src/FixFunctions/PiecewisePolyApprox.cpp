@@ -156,6 +156,15 @@ namespace flopoco{
 			if (alphaOK)
 				REPORT(DETAILED, " Found alpha=" << alpha << " OK");
 
+			// Compute the LSB of each coefficient. Minimum value is:
+			LSB = floor(log2(targetAccuracy));
+			REPORT(DEBUG, "To obtain target accuracy " << targetAccuracy << " with a degree-"<<degree <<" polynomial, we compute coefficients accurate to " << targetAccuracy/degree
+						 << " (LSB="<<LSB<<")"); 
+			// It is pretty sure that adding intlog2(degree) bits is enough for FPMinimax. 
+			int lsbAttemptsMax = intlog2(degree);
+			int lsbAttempts=0; // a counter of attempts to move the LSB down, caped by lsbAttemptsMax
+			
+			
 			// Still have to do a while loop because we can't trust guessdegree, damn 
 			bool success=false;
 			while(!success) {
@@ -171,18 +180,6 @@ namespace flopoco{
 					MSB.push_back(INT_MIN);
 				}
 
-				// Compute the LSB of each coefficient.
-				// It should be at least floor(log2(targetAccuracy)); 
-#if 0
-				// However we can get a bit extra accuracy/slack because the evaluation will use log2(degree) guard bits.
-				// Adding these to the constants is almost for free: let's do it.  
-				LSB = floor(log2(targetAccuracy/degree));
-#else
-				// Actually it turns out to be useless to add guard bits
-				LSB = floor(log2(targetAccuracy));
-#endif
-				REPORT(DEBUG, "To obtain target accuracy " << targetAccuracy << " with a degree-"<<degree <<" polynomial, we compute coefficients accurate to " << targetAccuracy/degree
-							 << " (LSB="<<LSB<<")"); 
 		
 				for (int i=0; i<nbIntervals; i++) {
 					REPORT(DETAILED, " ... computing polynomial approx for interval " << i << " / "<< nbIntervals);
@@ -211,14 +208,23 @@ namespace flopoco{
 					success=true;
 				}
 				else {
-					REPORT(INFO, " guessDegree mislead us, measured approx error:" << approxErrorBound << " is larger than target accuracy: " << targetAccuracy << ". Now increasing alpha and starting over, thank you for your patience");
+						REPORT(INFO, "So far measured approx error:" << approxErrorBound << " is larger than target accuracy: " << targetAccuracy << ". Thank you for your patience");
 					//empty poly
 					for (int i=0; i<nbIntervals; i++) {
 						free(poly.back());
 						poly.pop_back();
 					}
-					alpha++;
-					nbIntervals=1<<alpha;
+					if(lsbAttempts<=lsbAttemptsMax) {
+						lsbAttempts++; 
+						LSB--;
+					}
+					else {
+						REPORT(INFO, "guessDegree mislead us, increasing alpha and starting over");
+						LSB+=lsbAttempts;
+						lsbAttempts=0;
+						alpha++;
+						nbIntervals=1<<alpha;
+					}
 				}
 			} // end while(!success)
 

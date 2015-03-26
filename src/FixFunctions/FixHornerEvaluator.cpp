@@ -119,7 +119,7 @@ namespace flopoco{
 
 
 		// there are degree multiplications, with 2ulp errors: faithful mult, and truncation of x; the additions are exact. Hence,
-		int g = intlog2(degree);
+		int g = 1+intlog2(degree); // TODO: replace the +1 with a formula involving the  margin approx error.
 		int lsbGlobal = lsbOut-2-g; // the shared internal lsb that will ensure epsilon_round < 2^(lsbOut-2)
 
 		int msbSigma[1000], lsbSigma[1000], msbP[1000], lsbP[1000], lsbXTrunc[1000]; 
@@ -160,7 +160,6 @@ namespace flopoco{
 			}
 
 			else { // using FixMultAdd
-#if 0
 				//REPORT(DEBUG, "*** iteration " << i << );
 				FixMultAdd::newComponentAndInstance(this,
 																						join("Step",i),     // instance name
@@ -168,9 +167,8 @@ namespace flopoco{
 																						join("Sigma", i+1), // y
 																						join("As", i),       // a
 																						join("Sigma", i),   // result 
-																						msbSigma, lsbSigma
+																						msbSigma[i], lsbSigma[i]
 																						);
-#endif
 			}
 			syncCycleFromSignal(join("Sigma", i));
 			nextCycle();				
