@@ -87,8 +87,9 @@ namespace flopoco{
 		else if (_logicTable==-1)
 			logicTable=false;
 		else { // the constructor should decide
-			logicTable=(wOut * (mpz_class(1) << wIn) < 0.5*target->sizeOfMemoryBlock()); 
-			REPORT(DETAILED, "This table will be implemented in memory blocks");
+			logicTable = (wIn <= target->lutInputs() )  ||  (wOut * (mpz_class(1) << wIn) < 0.5*target->sizeOfMemoryBlock()); 
+			if(!logicTable)
+				REPORT(DETAILED, "This table will be implemented in memory blocks");
 		}
 		
 

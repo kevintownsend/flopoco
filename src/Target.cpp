@@ -136,7 +136,7 @@ namespace flopoco{
 			getAdderParameters(init, carry, wX+wY);
 			cycles = (init + (wX+wY)*carry) *frequency_;
 		}
-		cout << "Warining: using generic Target::plainMultDepth(); pipelining a "<<wX<<"x"<<wY<< " multiplier in " << cycles << " cycles using a gross estimate of the target" << endl;
+		cout << "> Target: Warning: using generic Target::plainMultDepth(); pipelining a "<<wX<<"x"<<wY<< " multiplier in " << cycles << " cycles using a gross estimate of the target" << endl;
 		return cycles;
 	}
 
