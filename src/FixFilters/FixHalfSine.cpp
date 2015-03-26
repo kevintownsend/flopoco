@@ -19,7 +19,7 @@ namespace flopoco{
 		name << "FixHalfSine_" << -lsb_  << "_" << N << "_uid" << getNewUId();
 		setName(name.str());
 
-		setCopyrightString("Florent de Dinechin, Matei Istoan (2014)");
+		setCopyrightString("Louis Besème, Florent de Dinechin, Matei Istoan (2014)");
 
 		// define the coefficients
 		for (int i=1; i<2*N; i++) {

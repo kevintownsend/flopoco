@@ -1548,7 +1548,7 @@ bool parseCommandLine(int argc, char* argv[]){
 		}
 
 		else if (opname == "FixFunctionBySimplePoly") {
-			int nargs = 4;
+			int nargs = 5;
 			if (i+nargs > argc)
 				usage(argv[0],opname); // and exit
 			string func = argv[i++];

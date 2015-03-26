@@ -31,13 +31,13 @@ namespace flopoco{
   {
   public:
     /** The constructor with manual control of all options.
-     * @param    lsbIn input lsb weight, also -inputSize since X is in [-1,1)
+     * @param    lsbIn input lsb weight, 
 			 @param    msbOut  output MSB weight, used to determine wOut
 			 @param    lsbOut  output LSB weight
 			 @param    degree  degree of the polynomial
-			 @param    coeffMSB vector (of size degree+1) holding the MSB of the polynomial coefficients
-			 @param    coeffLSB vector (of size degree+1) holding the LSB of the polynomial coefficients
-			 @param    signedCoeff  true if the coefficients are signed numbers (usually true)
+			 @param    msbCoeff vector (of size degree+1) holding the MSB of the polynomial coefficients
+			 @param    lsbCoeff vector (of size degree+1) holding the LSB of the polynomial coefficients
+			 @param    signedXandCoeffs  true if the coefficients are signed numbers (usually true)
 			 @param   finalRounding: if false, the operator outputs its guard bits as well, saving the half-ulp rounding error. 
 			                 This makes sense in situations that further process the result with further guard bits.
 
@@ -48,9 +48,9 @@ namespace flopoco{
 											 int msbOut,
 											 int lsbOut,
 											 int degree, 
-											 vector<int> coeffMSB, 
-											 int coeffLSB, 
-											 bool signedCoeffs=true, 
+											 vector<int> msbCoeff, 
+											 int lsbCoeff, 
+											 bool signedXandCoeffs=true, 
 											 bool finalRounding=true,
 											 map<string, double> inputDelays = emptyDelayMap);
 
@@ -62,9 +62,9 @@ namespace flopoco{
 		int lsbIn;                        /** LSB of input. Input is assumed in [0,1], so unsigned and MSB=-1 */
 		int msbOut;                        /** MSB of output  */
 		int lsbOut;                        /** LSB of output */
-    vector<int> coeffMSB;             /**< vector of MSB weights for each coefficient */
-    int coeffLSB;                     /**< LSB weight shared by each coefficient */
-    bool signedCoeffs;                /**< if false, all the coeffs are unsigned and the operator may use unsigned arithmetc. 
+    vector<int> msbCoeff;             /**< vector of MSB weights for each coefficient */
+    int lsbCoeff;                     /**< LSB weight shared by each coefficient */
+    bool signedXandCoeffs;                /**< if false, all the coeffs are unsigned and the operator may use unsigned arithmetc. 
 																				 Usually true unless known Taylor etc */
 		bool finalRounding;               /** If true, the operator returns a rounded result (i.e. add the half-ulp then truncate)
 																					If false, the operator returns the full, unrounded results including guard bits */

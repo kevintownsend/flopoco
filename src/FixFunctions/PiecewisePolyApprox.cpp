@@ -189,7 +189,7 @@ namespace flopoco{
 					// Recompute the substitution. No big deal.
 					sollya_obj_t giS = buildSubIntervalFunction(fS, alpha, i);
 
-					p = new BasicPolyApprox(giS, degree, LSB);
+					p = new BasicPolyApprox(giS, degree, LSB, true);
 					poly.push_back(p);
 					if (approxErrorBound < p->approxErrorBound){ 
 						REPORT(DEBUG, "   new approxErrorBound=" << p->approxErrorBound );

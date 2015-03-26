@@ -137,6 +137,7 @@ namespace flopoco{
 
 			vhdl << tab << declare("A", alpha)  << " <= X" << range(wX-1, wX-alpha) << ";" << endl;
 			vhdl << tab << declare("Z", wX-alpha)  << " <= X" << range(wX-alpha-1, 0) << ";" << endl;
+			vhdl << tab << declare("Zs", wX-alpha)  << " <= (not Z(" << wX-alpha-1 << ")) & Z" << range(wX-alpha-2, 0) << "; -- centering the interval" << endl;
 
 			inPortMap(coeffTable, "X", "A");
 			outPortMap(coeffTable, "Y", "Coeffs");
@@ -150,10 +151,11 @@ namespace flopoco{
 				currentShift +=  polyApprox->MSB[i] - polyApprox->LSB +1;
 			}
 
-			FixHornerEvaluator* horner = new FixHornerEvaluator(target, lsbIn+alpha, msbOut, lsbOut, degree, polyApprox->MSB, polyApprox->LSB, true, true);		
+			// This builds an architecture such as eps_finalround < 2^(lsbOut-1) and eps_round<2^(lsbOut-2)
+			FixHornerEvaluator* horner = new FixHornerEvaluator(target, lsbIn+alpha+1, msbOut, lsbOut, degree, polyApprox->MSB, polyApprox->LSB, true, true);		
 			addSubComponent(horner);
 
-			inPortMap(horner, "X", "Z");
+			inPortMap(horner, "X", "Zs");
 			outPortMap(horner, "R", "Ys");
 			for(int i=0; i<=polyApprox->degree; i++) {
 				inPortMap(horner,  join("A",i),  join("A",i));
