@@ -45,7 +45,7 @@ namespace flopoco {
 		 * 									2 = based on an order 2 Taylor approximating polynomial
 		 * 									3 = based on rotating using a table (for sine and cosine) and then using the Taylor series for (1/x)
 		 **/
-		FixAtan2(Target* target, int wIn, int wOut, int architectureType = 0, double ratio = 0.95, bool plainVHDL = false, map<string, double> inputDelays = emptyDelayMap);
+		FixAtan2(Target* target, int wIn, int wOut, int architectureType = 0, double ratio = 0.95,  map<string, double> inputDelays = emptyDelayMap);
 
 
 		/**
@@ -108,7 +108,6 @@ namespace flopoco {
 		double maxValD, maxValE, maxValF;				/**< the maximum values of the parameters D, E and F, as determined by checkArchitecture()*/
 		int kSize;
 
-		bool plainVHDL;									/**< whether to use the straightforward way of generating the VHDL code (+, *), or using a Bitheap */
 
 		double tempCriticalPath, tempCriticalPath2;		/**< temporarily store the critical path*/
 	};

@@ -31,9 +31,9 @@ namespace flopoco {
 
 
 	// The constructor for a stand-alone operator
-	FixAtan2::FixAtan2(Target* target_, int wIn_, int wOut_, int architectureType_, double ratio_, bool plainVHDL_, map<string, double> inputDelays_):
+	FixAtan2::FixAtan2(Target* target_, int wIn_, int wOut_, int architectureType_, double ratio_, map<string, double> inputDelays_):
 		Operator(target_, inputDelays_),
-		target(target_), wIn(wIn_), wOut(wOut_), architectureType(architectureType_), ratio(ratio_), plainVHDL(plainVHDL_)
+		target(target_), wIn(wIn_), wOut(wOut_), architectureType(architectureType_), ratio(ratio_)
 	{
 
 		srcFileName = "FixAtan2";
@@ -259,7 +259,7 @@ namespace flopoco {
 			int msbC = intlog2(maxValC)+1;
 			int maxMSB = maxInt(3, msbA, msbB, msbC);
 
-			if(plainVHDL)
+			if(target->plainVHDL())
 			{
 				//split the input signals, and create the address signal for the table
 
@@ -490,7 +490,7 @@ namespace flopoco {
 			int msbF = intlog2(maxValF)+1;
 			int maxMSB = maxInt(6, msbA, msbB, msbC, msbD, msbE, msbF);
 
-			if(plainVHDL)
+			if(target->plainVHDL())
 			{
 				//manage the pipeline
 				manageCriticalPath(target->localWireDelay());

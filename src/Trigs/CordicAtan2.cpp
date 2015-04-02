@@ -62,8 +62,12 @@ namespace flopoco{
 		setCopyrightString ( "Matei Istoan, Florent de Dinechin (2012-...)" );
 		useNumericStd_Unsigned();
 
+		int degree=method & 7;
+		method=method & 0xF8;
+		REPORT(DEBUG, "method=" << method << "  degree=" << degree);
+	
 		ostringstream name;
-		name << "CordicAtan2_"<< w_ << "_uid" << getNewUId();
+		name << (method<=7?"InvMultAtan_":"CordicAtan2_")<< w_ << "_uid" << getNewUId();
 		setNameWithFreq( name.str() );
 	
 		// everybody needs many digits of Pi (used by emulate etc)
@@ -84,10 +88,6 @@ namespace flopoco{
 	
 		setCriticalPath(getMaxInputDelays(inputDelays));
 		//		manageCriticalPath( target->lutDelay());
-	
-		int degree=method & 7;
-		method=method & 0xF8;
-		REPORT(DEBUG, "method=" << method << "  degree=" << degree);
 	
 		//Defining the various parameters according to method
 
@@ -129,25 +129,30 @@ namespace flopoco{
 
 		vhdl << tab << declare("sgnX") << " <= X" << of(w-1) << ";" << endl;
 		vhdl << tab << declare("sgnY") << " <= Y" << of(w-1) << ";" << endl;
-	
+
+		if(doScaling){
+			vhdl << tab << "-- First saturate x and y in case they touch -1" <<endl;
+			vhdl << tab << declare("Xsat", w) << " <= \"1" << zg(w-2,-2) << "1\" when X=\"1" <<zg (w-1,-2) << "\" else X ;" <<endl;
+			vhdl << tab << declare("Ysat", w) << " <= \"1" << zg(w-2,-2) << "1\" when Y=\"1" <<zg (w-1,-2) << "\" else Y ;" <<endl;
+		}
 
 		manageCriticalPath( target->adderDelay(w));
 		if (negateByComplement)	{
-			vhdl << tab << declare("pX", sizeXYInRR) << " <=      X  & " << zg(gXY)<< ";" << endl;
-			vhdl << tab << declare("pY", sizeXYInRR) << " <=      Y  & " << zg(gXY)<< ";" << endl;
-			vhdl << tab << declare("mX", sizeXYInRR) << " <= (not X) & " << og(gXY)<< ";  -- negation by not, implies one ulp error." << endl;
-			vhdl << tab << declare("mY", sizeXYInRR) << " <= (not Y) & " << og(gXY)<< ";  -- negation by not, implies one ulp error. " << endl;
+			vhdl << tab << declare("pX", sizeXYInRR) << " <=      Xsat  & " << zg(gXY)<< ";" << endl;
+			vhdl << tab << declare("pY", sizeXYInRR) << " <=      Ysat  & " << zg(gXY)<< ";" << endl;
+			vhdl << tab << declare("mX", sizeXYInRR) << " <= (not Xsat) & " << og(gXY)<< ";  -- negation by not, implies one ulp error." << endl;
+			vhdl << tab << declare("mY", sizeXYInRR) << " <= (not Ysat) & " << og(gXY)<< ";  -- negation by not, implies one ulp error. " << endl;
 		}else {
-			vhdl << tab << declare("pX", sizeXYInRR) << " <= X;" << endl;
-			vhdl << tab << declare("pY", sizeXYInRR) << " <= Y;" << endl;
-			vhdl << tab << declare("mX", sizeXYInRR) << " <= (" << zg(w) << " - X);" << endl;
-			vhdl << tab << declare("mY", sizeXYInRR) << " <= (" << zg(w) << " - Y);" << endl;
+			vhdl << tab << declare("pX", sizeXYInRR) << " <= Xsat;" << endl;
+			vhdl << tab << declare("pY", sizeXYInRR) << " <= Ysat;" << endl;
+			vhdl << tab << declare("mX", sizeXYInRR) << " <= (" << zg(w) << " - Xsat);" << endl;
+			vhdl << tab << declare("mY", sizeXYInRR) << " <= (" << zg(w) << " - Ysat);" << endl;
 		}
 
 		// TODO: replace the following with LUT-based comparators
 		// and first maybe experiment with synthesis tools
-		vhdl << tab << declare("XmY", w+1) << " <= (sgnX & X)-(sgnY & Y);" << endl;
-		vhdl << tab << declare("XpY", w+1) << " <= (sgnX & X)+(sgnY & Y);" << endl;
+		vhdl << tab << declare("XmY", w+1) << " <= (sgnX & Xsat)-(sgnY & Ysat);" << endl;
+		vhdl << tab << declare("XpY", w+1) << " <= (sgnX & Xsat)+(sgnY & Ysat);" << endl;
 		vhdl << tab << declare("XltY") << " <= XmY" << of(w) <<";" << endl;
 		vhdl << tab << declare("mYltX") << " <= not XpY" << of(w) <<";" << endl;
 		// Range reduction: we define 4 quadrants, each centered on one axis (these are not just the sign quadrants)
@@ -362,7 +367,7 @@ namespace flopoco{
 			int msbRecip, lsbRecip, msbProduct, lsbProduct, msbAtan, lsbAtan;
 			msbAtan = -2; // bits 0 and -1 come from the range reduction
 			lsbAtan = -w+1;
-			msbRecip = 1; // 1/x <= 2
+			msbRecip = 0; // 2/(1+x) in 0..1 for x in 0..1 
 			msbProduct = -1 ; // y/x between 0 and 1 but the faithful product may overflow a bit. 
 			if(degree==0){ // both tables are correctly rounded
 				lsbRecip = -w+1; // see error analysis in the paper
@@ -405,7 +410,7 @@ namespace flopoco{
 			if(target->plainVHDL()) { // generate a "*"
 				vhdl << tab << declareFixPoint("P", false, msbRecip -1 +1, lsbRecip-w+1) << " <= R*YRU;" << endl;
 				resizeFixPoint("PtruncU", "P", msbProduct, lsbProduct);
-				vhdl << tab << declare("P_slv", msbProduct-lsbProduct+1)  << " <=  std_logic_vector(PTruncU);" << endl;
+				vhdl << tab << declare("P_slv", msbProduct-lsbProduct+1)  << " <=  std_logic_vector(PtruncU);" << endl;
 			}
 			else{ // generate an IntMultiplier
 				IntMultiplier::newComponentAndInstance(this,
