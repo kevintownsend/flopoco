@@ -370,8 +370,8 @@ namespace flopoco{
 			msbRecip = 0; // 2/(1+x) in 0..1 for x in 0..1 
 			msbProduct = -1 ; // y/x between 0 and 1 but the faithful product may overflow a bit. 
 			if(degree==0){ // both tables are correctly rounded
-				lsbRecip = -w+1; // see error analysis in the paper
-				lsbProduct = -w+1;
+				lsbRecip = -w+1; // see error analysis in the Arith2015 paper. It says we should have -w, but exhaustive test show that -w+1 work :)
+				lsbProduct = -w+1; // It says we should have -w, but exhaustive test show that -w+1 work :)
 			}
 			else{ // both tables are faithful
 				lsbRecip = -w; // see error analysis in the paper
@@ -404,15 +404,20 @@ namespace flopoco{
 			inPortMap(recipTable, "X", "XRm1");
 			outPortMap(recipTable, "Y", "R0"); 
 			vhdl << instance(recipTable, "recipTable");
+
+			syncCycleFromSignal("R0");
+
 			vhdl << tab << declareFixPoint("R", false, msbRecip, lsbRecip) << " <= unsigned(R0" << range(msbRecip-lsbRecip  , 0) << "); -- removing the sign  bit" << endl;
 			vhdl << tab << declareFixPoint("YRU", false, -1, -w+1) << " <= unsigned(YRS);" << endl;
 
 			if(target->plainVHDL()) { // generate a "*"
+				manageCriticalPath(target->DSPMultiplierDelay());
 				vhdl << tab << declareFixPoint("P", false, msbRecip -1 +1, lsbRecip-w+1) << " <= R*YRU;" << endl;
 				resizeFixPoint("PtruncU", "P", msbProduct, lsbProduct);
 				vhdl << tab << declare("P_slv", msbProduct-lsbProduct+1)  << " <=  std_logic_vector(PtruncU);" << endl;
 			}
 			else{ // generate an IntMultiplier
+				manageCriticalPath(target->DSPMultiplierDelay()); // This should be replaced with a method of IntMultiplier or something
 				IntMultiplier::newComponentAndInstance(this,
 																							 "divMult",     // instance name
 																							 "R",  // x
@@ -447,6 +452,7 @@ namespace flopoco{
 			inPortMap(atanTable, "X", "P_slv");
 			outPortMap(atanTable, "Y", "atanTableOut"); 
 			vhdl << instance(atanTable, "atanTable");
+			syncCycleFromSignal("atanTableOut");
 
 			vhdl << tab << declare("finalZ", w) << " <= \"00\" & atanTableOut;" << endl;
 			

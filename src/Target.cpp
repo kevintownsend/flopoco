@@ -24,9 +24,33 @@ namespace flopoco{
 
 	extern int verbose;
 
+	Target::Target()   {
+			generateFigures_=false;
+			lutInputs_         = 4;
+			hasHardMultipliers_= true;
+			hasFastLogicTernaryAdders_ = false;
+			id_                = "generic";
+
+			pipeline_          = true;
+			useClockEnable_       = false;
+			frequency_         = 400000000.;
+			useHardMultipliers_= true;
+			unusedHardMultThreshold_=0.5;
+		}
+	
+
+	vector<Operator*> *  Target::getGlobalOpListRef(){
+		return & globalOpList;
+	}
+
 	string Target::getID(){
 		return id_;
 	}
+
+	string Target::getVendor(){
+			return vendor_;
+		}
+
 
 	void Target::setPipelined() {
 		pipeline_=true;
@@ -80,6 +104,15 @@ namespace flopoco{
 		return plainVHDL_;  
 	}
 	
+	bool  Target::generateFigures(){
+		return generateFigures_;
+	}
+	
+	void  Target::setGenerateFigures(bool b)
+	{
+	  generateFigures_ = b;
+	}
+
 	bool Target::hasHardMultipliers(){
 		return hasHardMultipliers_ ;
 	}

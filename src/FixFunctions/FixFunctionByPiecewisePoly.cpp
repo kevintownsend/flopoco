@@ -104,6 +104,7 @@ namespace flopoco{
 			inPortMap(table, "X", "X");
 			outPortMap(table, "Y", "YR");
 			vhdl << instance(table, "simpleTable") << endl;
+			syncCycleFromSignal("YR");
 			vhdl << tab << "Y <= YR;" << endl; 
 		}
 		else{

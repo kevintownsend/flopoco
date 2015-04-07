@@ -119,7 +119,7 @@ namespace flopoco{
 
 
 		// there are degree multiplications, with 2ulp errors: faithful mult, and truncation of x; the additions are exact. Hence,
-		int g = 1+intlog2(degree); // TODO: replace the +1 with a formula involving the  margin approx error.
+		int g = intlog2(degree); // TODO: replace the +1 with a formula involving the  margin approx error.
 		int lsbGlobal = lsbOut-2-g; // the shared internal lsb that will ensure epsilon_round < 2^(lsbOut-2)
 
 		int msbSigma[1000], lsbSigma[1000], msbP[1000], lsbP[1000], lsbXTrunc[1000]; 
@@ -144,6 +144,7 @@ namespace flopoco{
 		
 		for(int i=degree-1; i>=0; i--) {
 			resizeFixPoint(join("XsTrunc", i), "Xs", 0, lsbXTrunc[i]);			
+
 			//  assemble faithful operators (either FixMultAdd, or truncated mult)
 			if(target->plainVHDL()) {	// stupid pipelining here
 				vhdl << tab << declareFixPoint(join("P", i), true, msbP[i],  lsbP[i]) 

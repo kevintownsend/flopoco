@@ -43,27 +43,13 @@ namespace flopoco{
 		/** The default constructor. Creates a pipelined target, with 4 inputs/LUT, 
 		 * with a desired frequency of 400MHz and which is allowed to use hardware multipliers
 		 */ 
-		Target()   {
-			lutInputs_         = 4;
-			hasHardMultipliers_= true;
-			hasFastLogicTernaryAdders_ = false;
-			id_                = "generic";
+		Target();
 
-			pipeline_          = true;
-			useClockEnable_       = false;
-			frequency_         = 400000000.;
-			useHardMultipliers_= true;
-			unusedHardMultThreshold_=0.5;
-		}
-	
 		/** The destructor */
 		virtual ~Target() {}
 
 
-
-		vector<Operator*> * getGlobalOpListRef(){
-			return & globalOpList;
-		}
+		vector<Operator*> * getGlobalOpListRef();
 
 		/** Returns ID of instantiated target. This ID is represented by the name
 		 * @return the ID
@@ -73,9 +59,76 @@ namespace flopoco{
 		/** Returns ID of the vendor, currently "Altera" or "Xilinx". 
 		 * @return the ID
 		 */
-		string getVendor(){
-			return vendor_;
-		}
+		string getVendor();
+
+
+		// Methods related to target behaviour and performance
+		/** Sets the target to pipelined */
+		void setPipelined();                
+	
+		/**< Sets the target to combinatorial */    
+		void setNotPipelined();                 
+	
+		/** Returns true if the target is to have pipelined design, otherwise false
+		 * @return if the target is pipelined
+		 */
+		bool isPipelined();
+	
+		/** Returns true if the target is to have clock enable signals
+		 */
+		bool useClockEnable();
+
+		void setClockEnable(bool val);
+	
+		/** Returns the desired frequency for this target in Hz
+		 * @return the frequency
+		 */
+		double frequency();
+
+		/** Returns the desired frequency for this target in MHz
+		 * @return the frequency
+		 */
+		double frequencyMHz();
+
+
+		/** Returns the target frequency, normalized between 0 and 1 in a target-independent way.
+			 1 means maximum practical frequency (400MHz on Virtex4, 500MHz on Virtex-5, etc)
+			 This method is intended to make it easier to write target-independent frequency-directed operators
+		 */
+		double normalizedFrequency();
+
+	
+		/** Sets the desired frequency for this target
+		 * @param f the desired frequency
+		 */	
+		void setFrequency(double f);
+
+		/** Returns true if the hardware target has hardware multipliers
+		 */
+		bool hasHardMultipliers();
+
+
+		/** Returns true if the hardware target has hardware multipliers, and flopoco should use them
+		 */
+		bool useHardMultipliers();
+
+
+		/** defines if flopoco should use hardware multipliers
+		 */
+		void setUseHardMultipliers(bool v);
+
+		/** defines if flopoco should produce plain stupid VHDL
+		 */
+		void setPlainVHDL(bool v);
+
+		/** should flopoco produce plain stupid VHDL */
+		bool plainVHDL();
+
+		/** should flopoco generate SVG figures */
+		bool generateFigures();
+
+		/** should flopoco generate SVG figures */
+		void setGenerateFigures(bool b);
 
 		// Architecture-related methods
 		/** Returns the number of inputs that the LUTs have on the specific device
@@ -303,68 +356,6 @@ namespace flopoco{
 
 
 
-
-		// Methods related to target behaviour and performance
-		/** Sets the target to pipelined */
-		void setPipelined();                
-	
-		/**< Sets the target to combinatorial */    
-		void setNotPipelined();                 
-	
-		/** Returns true if the target is to have pipelined design, otherwise false
-		 * @return if the target is pipelined
-		 */
-		bool isPipelined();
-	
-		/** Returns true if the target is to have clock enable signals
-		 */
-		bool useClockEnable();
-
-		void setClockEnable(bool val);
-	
-		/** Returns the desired frequency for this target in Hz
-		 * @return the frequency
-		 */
-		double frequency();
-
-		/** Returns the desired frequency for this target in MHz
-		 * @return the frequency
-		 */
-		double frequencyMHz();
-
-
-		/** Returns the target frequency, normalized between 0 and 1 in a target-independent way.
-			 1 means maximum practical frequency (400MHz on Virtex4, 500MHz on Virtex-5, etc)
-			 This method is intended to make it easier to write target-independent frequency-directed operators
-		 */
-		double normalizedFrequency();
-
-	
-		/** Sets the desired frequency for this target
-		 * @param f the desired frequency
-		 */	
-		void setFrequency(double f);
-
-		/** Returns true if the hardware target has hardware multipliers
-		 */
-		bool hasHardMultipliers();
-
-
-		/** Returns true if the hardware target has hardware multipliers, and flopoco should use them
-		 */
-		bool useHardMultipliers();
-
-
-		/** defines if flopoco should use hardware multipliers
-		 */
-		void setUseHardMultipliers(bool v);
-
-		/** defines if flopoco should produce plain stupid VHDL
-		 */
-		void setPlainVHDL(bool v);
-
-		/** should flopoco produce plain stupid VHDL */
-		bool plainVHDL();
 
 		/** defines the unused hard mult threshold, see the the corresponding attribute for its meaning 
 		 */
@@ -683,6 +674,7 @@ namespace flopoco{
 																		So: 0 means: any sub-multiplier that does not fully fill a DSP goes to logic
 																		1 means: any sub-multiplier, even very small ones, go to DSP*/  
 		bool   plainVHDL_;     /**< True if we want the VHDL code to be concise and readable, with + and * instead of optimized FloPoCo operators. */
+		bool   generateFigures_;  /**< If true, some operators may generate some figures in SVG format */
 		vector<Operator*>  globalOpList;  /**< A list of sub-operators that should be shared with most operators. Semantically it shouldn't be here but it makes code simpler */
 
 	};
