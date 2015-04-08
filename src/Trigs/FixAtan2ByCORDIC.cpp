@@ -218,10 +218,13 @@ namespace flopoco{
 				shift *=0.5;
 			}
 			// guard bits depend only on the number of iterations
-			gXY = (int) ceil(log2(eps));  
+			gXY = (int) ceil(log2(eps));
+			//gXY+=2; // experimental
+
 			//error analysis for the A datapath
 			eps = maxIterations*0.5; // only the rounding error in the atan constant
 			gA = 1 + (int) ceil(log2(eps)); // +1 for the final rounding 
+			//gA+=2; // experimental
 			REPORT(DEBUG, "Error analysis computes eps=" << eps << " ulps on the XY datapath, hence  gXY=" << gXY);
 			REPORT(DEBUG, "Error analysis computes eps=" << eps <<  " ulps on the A datapath, hence  gA=" << gA );
 	} 
