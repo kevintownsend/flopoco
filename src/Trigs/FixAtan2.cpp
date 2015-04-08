@@ -60,10 +60,14 @@ namespace flopoco {
 		vhdl << tab << declare("sgnX") << " <= X" << of(wIn-1) << ";" << endl;
 		vhdl << tab << declare("sgnY") << " <= Y" << of(wIn-1) << ";" << endl;
 
+		string xname="X";
+		string yname="Y";
 		if(doScalingRR){
 			vhdl << tab << "-- First saturate x and y in case they touch -1" <<endl;
 			vhdl << tab << declare("Xsat", wIn) << " <= \"1" << zg(wIn-2,-2) << "1\" when X=\"1" <<zg (wIn-1,-2) << "\" else X ;" <<endl;
 			vhdl << tab << declare("Ysat", wIn) << " <= \"1" << zg(wIn-2,-2) << "1\" when Y=\"1" <<zg (wIn-1,-2) << "\" else Y ;" <<endl;
+			xname="Xsat";
+			yname="Ysat";
 		}
 
 		// When pipelining I noticed that we perform a subtraction for the comparison X<Y in parallel to the negation anyway
@@ -72,22 +76,22 @@ namespace flopoco {
 
 		if (negateByComplement)	{
 			manageCriticalPath( getTarget()->lutDelay());
-			vhdl << tab << declare("pX", wIn) << " <=      Xsat  " << endl;
-			vhdl << tab << declare("pY", wIn) << " <=			 Ysat	 " << endl;
-			vhdl << tab << declare("mX", wIn) << " <= (not Xsat)	 -- negation by not, implies one ulp error." << endl;
-			vhdl << tab << declare("mY", wIn) << " <= (not Ysat)	 -- negation by not, implies one ulp error. " << endl;
+			vhdl << tab << declare("pX", wIn) << " <=      " << xname <<";" << endl;
+			vhdl << tab << declare("pY", wIn) << " <=			 " << yname <<";" << endl;
+			vhdl << tab << declare("mX", wIn) << " <= (not " << xname <<");	 -- negation by not, implies one ulp error." << endl;
+			vhdl << tab << declare("mY", wIn) << " <= (not " << yname <<");	 -- negation by not, implies one ulp error. " << endl;
 		}else {
 			manageCriticalPath( getTarget()->adderDelay(wIn));
-			vhdl << tab << declare("pX", wIn) << " <= Xsat;" << endl;
-			vhdl << tab << declare("pY", wIn) << " <= Ysat;" << endl;
-			vhdl << tab << declare("mX", wIn) << " <= (" << zg(wIn) << " - Xsat);" << endl;
-			vhdl << tab << declare("mY", wIn) << " <= (" << zg(wIn) << " - Ysat);" << endl;
+			vhdl << tab << declare("pX", wIn) << " <= " << xname <<";" << endl;
+			vhdl << tab << declare("pY", wIn) << " <= " << yname <<";" << endl;
+			vhdl << tab << declare("mX", wIn) << " <= (" << zg(wIn) << " - " << xname <<");" << endl;
+			vhdl << tab << declare("mY", wIn) << " <= (" << zg(wIn) << " - " << yname <<");" << endl;
 		}
 
 		// TODO: replace the following with LUT-based comparators
 		// and first maybe experiment with synthesis tools
-		vhdl << tab << declare("XmY", wIn+1) << " <= (sgnX & Xsat)-(sgnY & Ysat);" << endl;
-		vhdl << tab << declare("XpY", wIn+1) << " <= (sgnX & Xsat)+(sgnY & Ysat);" << endl;
+		vhdl << tab << declare("XmY", wIn+1) << " <= (sgnX & " << xname <<")-(sgnY & " << yname <<");" << endl;
+		vhdl << tab << declare("XpY", wIn+1) << " <= (sgnX & " << xname <<")+(sgnY & " << yname <<");" << endl;
 		vhdl << tab << declare("XltY") << " <= XmY" << of(wIn) <<";" << endl;
 		vhdl << tab << declare("mYltX") << " <= not XpY" << of(wIn) <<";" << endl;
 		// Range reduction: we define 4 quadrants, each centered on one axis (these are not just the sign quadrants)
@@ -125,6 +129,10 @@ namespace flopoco {
 		vhdl << tab << tab << "'1' when (quadrant=\"00\" and sgnY='0') or(quadrant=\"01\" and sgnX='1') or (quadrant=\"10\" and sgnY='1') or (quadrant=\"11\" and sgnX='0')" << endl;
 		vhdl << tab << tab << " else '0';  -- this information is sent to the end of the pipeline, better compute it here as one bit"    << endl; 
 	}
+
+
+
+
 
 	void FixAtan2::emulate(TestCase * tc)
 	{
