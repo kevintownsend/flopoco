@@ -4,6 +4,7 @@ Release-critical:
 - FPPipeline
 - clean up Target
 
+
 - get rid of use() in Operator
 - Clean up DualTable
 - Get rid of the useBitHeap arg in KCMs
@@ -21,6 +22,7 @@ Release-critical:
 - interface: simple and expert versions of IntMultiplier
 
 
+
 ** Bit heap and multipliers
 - rewrite BitHeap with fixed-point support and better compression (see Kumm papers and uni_kassel branch)
 - pipeline virtual IntMult
@@ -32,12 +34,9 @@ Release-critical:
 - get rid of bitHeap::setSignedIO(signedIO);
 
 
-./flopoco -pipeline=no FixAtan2 16 2 0 0  TestBenchFile 1000
-mostly works but fails trivial cornercase tests, which the following passes 
-./flopoco -pipeline=no FixAtan2 16 2 1 0  TestBenchFile 1000
-
-
-
+Janitoring:
+- There is one target declared in Operator, and one in virtually all the Operators. The latter should be removed.
+- uniformize name construction using setName(), getuid,
 
 
 - Check all these registered etc nonsense in Signal. Is it really used?
