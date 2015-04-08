@@ -1636,7 +1636,7 @@ bool parseCommandLine(int argc, char* argv[]){
 				tg = new CordicAtan2(target, w, method);
 			}else
 			{
-				tg = new FixAtan2(target, w, w, method-10);
+				tg = new FixAtan2ByBivariateApprox(target, w, w, method-10);
 			}
 
 			addOperator(tg);

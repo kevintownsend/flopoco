@@ -343,6 +343,7 @@ src/Trigs/CordicSinCos
 # src/Trigs/CordicSinOrCos
 src/Trigs/CordicAtan2
 src/Trigs/FixAtan2
+src/Trigs/FixAtan2ByBivariateApprox
 src/Trigs/Atan2Table
 src/Tools/Plane
 src/Tools/Point
