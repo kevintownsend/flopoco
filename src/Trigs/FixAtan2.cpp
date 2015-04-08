@@ -32,20 +32,99 @@ namespace flopoco {
 
 	// The constructor for a stand-alone operator
 	FixAtan2::FixAtan2(Target* target_, int wIn_, int wOut_,  map<string, double> inputDelays_):
-		Operator(target_, inputDelays_),
-		target(target_), wIn(wIn_), wOut(wOut_)
+		Operator(target_, inputDelays_), wIn(wIn_), wOut(wOut_)
 	{
+		// Some code that is present in all the variants of FixAtan2
+		//manage the pipeline
+		setCriticalPath(getMaxInputDelays(inputDelays_));
+		//declare the inputs and the outputs
+		// man atan2 says "atan2(y,x) is atan(y/x)" so we will provide the inputs in the same order...
+		addInput ("X",  wIn);
+		addInput ("Y",  wIn);
+		addOutput("R",  wOut, 2 /*number of possible output values*/);
+
+		// everybody needs many digits of Pi (used by emulate etc)
+		mpfr_init2(constPi, 10*(wIn+wOut));
+		mpfr_const_pi( constPi, GMP_RNDN);
 	}
 
 
 	FixAtan2::~FixAtan2()
 	{
-
+		mpfr_clears (constPi, NULL);		
 	}
 
 
+
+	void FixAtan2::buildQuadrantRangeReduction(){
+		vhdl << tab << declare("sgnX") << " <= X" << of(wIn-1) << ";" << endl;
+		vhdl << tab << declare("sgnY") << " <= Y" << of(wIn-1) << ";" << endl;
+
+		if(doScalingRR){
+			vhdl << tab << "-- First saturate x and y in case they touch -1" <<endl;
+			vhdl << tab << declare("Xsat", wIn) << " <= \"1" << zg(wIn-2,-2) << "1\" when X=\"1" <<zg (wIn-1,-2) << "\" else X ;" <<endl;
+			vhdl << tab << declare("Ysat", wIn) << " <= \"1" << zg(wIn-2,-2) << "1\" when Y=\"1" <<zg (wIn-1,-2) << "\" else Y ;" <<endl;
+		}
+
+		if (negateByComplement)	{
+			manageCriticalPath( getTarget()->lutDelay());
+			vhdl << tab << declare("pX", wIn) << " <=      Xsat  " << endl;
+			vhdl << tab << declare("pY", wIn) << " <=			 Ysat	 " << endl;
+			vhdl << tab << declare("mX", wIn) << " <= (not Xsat)	 -- negation by not, implies one ulp error." << endl;
+			vhdl << tab << declare("mY", wIn) << " <= (not Ysat)	 -- negation by not, implies one ulp error. " << endl;
+		}else {
+			manageCriticalPath( getTarget()->adderDelay(wIn));
+			vhdl << tab << declare("pX", wIn) << " <= Xsat;" << endl;
+			vhdl << tab << declare("pY", wIn) << " <= Ysat;" << endl;
+			vhdl << tab << declare("mX", wIn) << " <= (" << zg(wIn) << " - Xsat);" << endl;
+			vhdl << tab << declare("mY", wIn) << " <= (" << zg(wIn) << " - Ysat);" << endl;
+		}
+
+		// TODO: replace the following with LUT-based comparators
+		// and first maybe experiment with synthesis tools
+		vhdl << tab << declare("XmY", wIn+1) << " <= (sgnX & Xsat)-(sgnY & Ysat);" << endl;
+		vhdl << tab << declare("XpY", wIn+1) << " <= (sgnX & Xsat)+(sgnY & Ysat);" << endl;
+		vhdl << tab << declare("XltY") << " <= XmY" << of(wIn) <<";" << endl;
+		vhdl << tab << declare("mYltX") << " <= not XpY" << of(wIn) <<";" << endl;
+		// Range reduction: we define 4 quadrants, each centered on one axis (these are not just the sign quadrants)
+		// Then each quadrant is decomposed in its positive and its negative octant.
+
+		manageCriticalPath( getTarget()->lutDelay() + getTarget()->localWireDelay());
+
+		vhdl << tab << "-- quadrant will also be the angle to add at the end" <<endl;
+		vhdl << tab << declare("quadrant", 2) << " <= " << endl;
+		vhdl << tab << tab << "\"00\"  when (not sgnX and not XltY and     mYltX)='1' else"    << endl;
+		vhdl << tab << tab << "\"01\"  when (not sgnY and     XltY and     mYltX)='1' else"    << endl;
+		vhdl << tab << tab << "\"10\"  when (    sgnX and     XltY and not mYltX)='1' else"    << endl;
+		vhdl << tab << tab << "\"11\";"    << endl;
+	
+
+
+		int sizeXYR = wIn-1; // no need for sign bit any longer
+		vhdl << tab << declare("XR", sizeXYR) << " <= " << endl;
+		vhdl << tab << tab << "pX" << range(sizeXYR-1, 0) << " when quadrant=\"00\"   else " << endl;
+		vhdl << tab << tab << "pY" << range(sizeXYR-1, 0) << " when quadrant=\"01\"   else " << endl;
+		vhdl << tab << tab << "mX" << range(sizeXYR-1, 0) << " when quadrant=\"10\"   else " << endl;
+		vhdl << tab << tab << "mY" << range(sizeXYR-1, 0) << ";"    << endl;
+	
+		vhdl << tab << declare("YR", sizeXYR) << " <= " << endl;
+		vhdl << tab << tab << "pY" << range(sizeXYR-1, 0) << " when quadrant=\"00\" and sgnY='0'  else " << endl;
+		vhdl << tab << tab << "mY" << range(sizeXYR-1, 0) << " when quadrant=\"00\" and sgnY='1'  else " << endl;
+		vhdl << tab << tab << "pX" << range(sizeXYR-1, 0) << " when quadrant=\"01\" and sgnX='0'  else " << endl;
+		vhdl << tab << tab << "mX" << range(sizeXYR-1, 0) << " when quadrant=\"01\" and sgnX='1'  else " << endl;
+		vhdl << tab << tab << "pY" << range(sizeXYR-1, 0) << " when quadrant=\"10\" and sgnY='0'  else " << endl;
+		vhdl << tab << tab << "mY" << range(sizeXYR-1, 0) << " when quadrant=\"10\" and sgnY='1'  else " << endl;
+		vhdl << tab << tab << "pX" << range(sizeXYR-1, 0) << " when quadrant=\"11\" and sgnX='0'  else "    << endl;
+		vhdl << tab << tab << "mX" << range(sizeXYR-1, 0) << " ;"    << endl;
+
+		vhdl << tab << declare("finalAdd") << " <= " << endl;
+		vhdl << tab << tab << "'1' when (quadrant=\"00\" and sgnY='0') or(quadrant=\"01\" and sgnX='1') or (quadrant=\"10\" and sgnY='1') or (quadrant=\"11\" and sgnX='0')" << endl;
+		vhdl << tab << tab << " else '0';  -- this information is sent to the end of the pipeline, better compute it here as one bit"    << endl; 
+	}
+
 	void FixAtan2::emulate(TestCase * tc)
 	{
+#if 0
 		mpfr_t x,y,a, constPi;
 		mpfr_init2(x, 10*wIn);
 		mpfr_init2(y, 10*wIn);
@@ -91,7 +170,94 @@ namespace flopoco {
 
 		// clean up
 		mpfr_clears (x,y,a, constPi, NULL);
+#else
+		mpfr_t x,y,a;
+		mpfr_init2(x, 10*wIn);
+		mpfr_init2(y, 10*wIn);
+		mpfr_init2(a, 10*wOut);
+
+		mpz_class az;
+
+		/* Get I/O values */
+		mpz_class svX = tc->getInputValue("X");
+		mpz_class svY = tc->getInputValue("Y");
+
+		// interpret as signed two'ss complement
+		if (1==(svX >> (wIn-1))) // sign bit
+			svX -= (mpz_class(1)<<wIn);
+		if (1==(svY >> (wIn-1))) // sign bit
+			svY -= (mpz_class(1)<<wIn);
+		/* Compute correct value */
+		
+		mpfr_set_z (x, svX.get_mpz_t(), GMP_RNDN); //  exact
+		mpfr_set_z (y, svY.get_mpz_t(), GMP_RNDN); //  exact
+	
+		mpfr_atan2(a, y, x, GMP_RNDN); // a between -pi and pi
+		mpfr_div(a, a, constPi, GMP_RNDN); // a between -1 and 1
+
+		// Now convert a to fix point
+		// Align to fix point by adding 6 -- if we just add 4 there is a 1-bit shift in case a<0
+		mpfr_add_d(a, a, 6.0, GMP_RNDN);
+		mpfr_mul_2si (a, a, wOut-1, GMP_RNDN); // exact scaling 
+
+		mpz_class mask = (mpz_class(1)<<wOut) -1; 
+
+		mpfr_get_z (az.get_mpz_t(), a, GMP_RNDD); // there can be a real rounding here
+		az -= mpz_class(6)<<(wOut-1);
+		az &= mask; 
+ 		tc->addExpectedOutput ("A", az);
+
+		mpfr_get_z (az.get_mpz_t(), a, GMP_RNDU); // there can be a real rounding here
+		az -= mpz_class(6)<<(wOut-1);
+		az &= mask; 
+ 		tc->addExpectedOutput ("A", az);
+		
+		// clean up
+		mpfr_clears (x,y,a, NULL);		
+#endif
 	}
+
+
+
+	void FixAtan2::buildStandardTestCases(TestCaseList * tcl) 
+	{
+		mpfr_t z;
+		mpz_class zz;
+		TestCase* tc;
+
+		// 0
+		tc = new TestCase (this);
+		tc -> addInput ("X", mpz_class(1)<< (wIn-2));
+		tc -> addInput ("Y", mpz_class(0));
+		emulate(tc);
+		tcl->add(tc);
+
+
+		//pi/4
+		tc = new TestCase (this);
+		tc -> addInput ("X", mpz_class(1)<< (wIn-2));
+		tc -> addInput ("Y", mpz_class(1)<< (wIn-2));
+		emulate(tc);
+		tcl->add(tc);
+
+		// pi/2
+		tc = new TestCase (this);
+		tc -> addInput ("X", mpz_class(0));
+		tc -> addInput ("Y", mpz_class(1)<< (wIn-2));
+		emulate(tc);
+		tcl->add(tc);
+
+
+		// 3pi/4
+		tc = new TestCase (this);
+		tc -> addInput ("X", (mpz_class(1)<< (wIn)) -  (mpz_class(1)<< (wIn-2)) );
+		tc -> addInput ("Y", mpz_class(1)<< (wIn-2));
+		emulate(tc);
+		tcl->add(tc);
+
+
+	}
+	
 
 
 

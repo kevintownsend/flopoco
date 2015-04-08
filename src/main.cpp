@@ -1633,7 +1633,7 @@ bool parseCommandLine(int argc, char* argv[]){
 			Operator* tg;
 			if(method < 10)
 			{
-				tg = new CordicAtan2(target, w, method);
+				tg = new CordicAtan2(target, w,w, method);
 			}else
 			{
 				tg = new FixAtan2ByBivariateApprox(target, w, w, method-10);

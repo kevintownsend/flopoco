@@ -8,6 +8,7 @@ VHDLLexer.cpp
 bin2fp
 cmake_install.cmake
 flopoco
+flopoco.o
 flopoco.vhdl
 flopoco_soaktest
 fp2bin

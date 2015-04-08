@@ -53,8 +53,8 @@ namespace flopoco{
 
 
 
-	CordicAtan2::CordicAtan2(Target* target, int w_, int method, map<string, double> inputDelays) 
-		: Operator(target), w(w_)
+	CordicAtan2::CordicAtan2(Target* target, int wIn_, int wOut_, int method, map<string, double> inputDelays_) 
+		: 		FixAtan2(target_, wIn_, wOut_, inputDelays_)
 	{
 	
 		int stage;
@@ -67,19 +67,15 @@ namespace flopoco{
 		REPORT(DEBUG, "method=" << method << "  degree=" << degree);
 	
 		ostringstream name;
-		name << (method<=7?"InvMultAtan_":"CordicAtan2_")<< w_ << "_uid" << getNewUId();
+		name << (method<=7?"InvMultAtan_":"CordicAtan2_") << wIn_ << "_" << wOut_ << "_uid" << getNewUId();
 		setNameWithFreq( name.str() );
-	
-		// everybody needs many digits of Pi (used by emulate etc)
-		mpfr_init2(constPi, 10*w);
-		mpfr_const_pi( constPi, GMP_RNDN);
 	
 		mpfr_t  zatan;	// used only by CORDIC but who cares
 		mpfr_init2(zatan, 10*w);
 	
-	
+
+#if 0	// in FixAtan2
 		// declaring inputs. 
-		// man atan2 says "atan2(y,x) is atan(y/x)" so we will provide the inputs in the same order...
 		addInput  ( "Y"  , w, true );
 		addInput  ( "X"  , w, true );
 	
@@ -88,33 +84,30 @@ namespace flopoco{
 	
 		setCriticalPath(getMaxInputDelays(inputDelays));
 		//		manageCriticalPath( target->lutDelay());
-	
+#endif	
+
 		//Defining the various parameters according to method
 
 		// When pipelining I noticed that we perform a subtraction for the comparison X<Y in parallel to the negation anyway
 		// so negateByComplement should always be false, 
 		//except if some day we do an ASIC target where it will cost less hardware.
 		int sizeXYInRR;
-		bool doScaling;
 		switch(method) {
 		case CORDIC:
 			negateByComplement=false;
-			sizeXYInRR = w;
 			computeGuardBitsForCORDIC();
-			doScaling=false;
+			doScalingRR=false;
 			break;
 		case CORDIC_SCALING:
 			negateByComplement=false; // it would entail a larger LZC and larger shifter.
 			computeGuardBitsForCORDIC();
-			sizeXYInRR = w;
-			doScaling=true;
+			doScalingRR=true;
 			break;
 		case INVMULTATAN:
 			negateByComplement=false;
 			gXY=0;
 			gA=0;
-			sizeXYInRR = w;
-			doScaling=true;
+			doScalingRR=true;
 			break;
 		}
 
@@ -125,79 +118,17 @@ namespace flopoco{
 		//    First range reduction
 		//
 		/////////////////////////////////////////////////////////////////////////////
-		setCriticalPath(getMaxInputDelays(inputDelays));
 
-		vhdl << tab << declare("sgnX") << " <= X" << of(w-1) << ";" << endl;
-		vhdl << tab << declare("sgnY") << " <= Y" << of(w-1) << ";" << endl;
-
-		if(doScaling){
-			vhdl << tab << "-- First saturate x and y in case they touch -1" <<endl;
-			vhdl << tab << declare("Xsat", w) << " <= \"1" << zg(w-2,-2) << "1\" when X=\"1" <<zg (w-1,-2) << "\" else X ;" <<endl;
-			vhdl << tab << declare("Ysat", w) << " <= \"1" << zg(w-2,-2) << "1\" when Y=\"1" <<zg (w-1,-2) << "\" else Y ;" <<endl;
-		}
-
-		manageCriticalPath( target->adderDelay(w));
-		if (negateByComplement)	{
-			vhdl << tab << declare("pX", sizeXYInRR) << " <=      Xsat  & " << zg(gXY)<< ";" << endl;
-			vhdl << tab << declare("pY", sizeXYInRR) << " <=      Ysat  & " << zg(gXY)<< ";" << endl;
-			vhdl << tab << declare("mX", sizeXYInRR) << " <= (not Xsat) & " << og(gXY)<< ";  -- negation by not, implies one ulp error." << endl;
-			vhdl << tab << declare("mY", sizeXYInRR) << " <= (not Ysat) & " << og(gXY)<< ";  -- negation by not, implies one ulp error. " << endl;
-		}else {
-			vhdl << tab << declare("pX", sizeXYInRR) << " <= Xsat;" << endl;
-			vhdl << tab << declare("pY", sizeXYInRR) << " <= Ysat;" << endl;
-			vhdl << tab << declare("mX", sizeXYInRR) << " <= (" << zg(w) << " - Xsat);" << endl;
-			vhdl << tab << declare("mY", sizeXYInRR) << " <= (" << zg(w) << " - Ysat);" << endl;
-		}
-
-		// TODO: replace the following with LUT-based comparators
-		// and first maybe experiment with synthesis tools
-		vhdl << tab << declare("XmY", w+1) << " <= (sgnX & Xsat)-(sgnY & Ysat);" << endl;
-		vhdl << tab << declare("XpY", w+1) << " <= (sgnX & Xsat)+(sgnY & Ysat);" << endl;
-		vhdl << tab << declare("XltY") << " <= XmY" << of(w) <<";" << endl;
-		vhdl << tab << declare("mYltX") << " <= not XpY" << of(w) <<";" << endl;
-		// Range reduction: we define 4 quadrants, each centered on one axis (these are not just the sign quadrants)
-		// Then each quadrant is decomposed in its positive and its negative octant.
-
-		manageCriticalPath( target->lutDelay() + target->localWireDelay());
-
-		vhdl << tab << "-- quadrant will also be the angle to add at the end" <<endl;
-		vhdl << tab << declare("quadrant", 2) << " <= " << endl;
-		vhdl << tab << tab << "\"00\"  when (not sgnX and not XltY and     mYltX)='1' else"    << endl;
-		vhdl << tab << tab << "\"01\"  when (not sgnY and     XltY and     mYltX)='1' else"    << endl;
-		vhdl << tab << tab << "\"10\"  when (    sgnX and     XltY and not mYltX)='1' else"    << endl;
-		vhdl << tab << tab << "\"11\";"    << endl;
-	
-
-
-		int sizeXYR = sizeXYInRR-1; // no need for sign bit any longer
-		vhdl << tab << declare("XR", sizeXYR) << " <= " << endl;
-		vhdl << tab << tab << "pX" << range(sizeXYR-1, 0) << " when quadrant=\"00\"   else " << endl;
-		vhdl << tab << tab << "pY" << range(sizeXYR-1, 0) << " when quadrant=\"01\"   else " << endl;
-		vhdl << tab << tab << "mX" << range(sizeXYR-1, 0) << " when quadrant=\"10\"   else " << endl;
-		vhdl << tab << tab << "mY" << range(sizeXYR-1, 0) << ";"    << endl;
-	
-		vhdl << tab << declare("YR", sizeXYR) << " <= " << endl;
-		vhdl << tab << tab << "pY" << range(sizeXYR-1, 0) << " when quadrant=\"00\" and sgnY='0'  else " << endl;
-		vhdl << tab << tab << "mY" << range(sizeXYR-1, 0) << " when quadrant=\"00\" and sgnY='1'  else " << endl;
-		vhdl << tab << tab << "pX" << range(sizeXYR-1, 0) << " when quadrant=\"01\" and sgnX='0'  else " << endl;
-		vhdl << tab << tab << "mX" << range(sizeXYR-1, 0) << " when quadrant=\"01\" and sgnX='1'  else " << endl;
-		vhdl << tab << tab << "pY" << range(sizeXYR-1, 0) << " when quadrant=\"10\" and sgnY='0'  else " << endl;
-		vhdl << tab << tab << "mY" << range(sizeXYR-1, 0) << " when quadrant=\"10\" and sgnY='1'  else " << endl;
-		vhdl << tab << tab << "pX" << range(sizeXYR-1, 0) << " when quadrant=\"11\" and sgnX='0'  else "    << endl;
-		vhdl << tab << tab << "mX" << range(sizeXYR-1, 0) << " ;"    << endl;
-
-		vhdl << tab << declare("finalAdd") << " <= " << endl;
-		vhdl << tab << tab << "'1' when (quadrant=\"00\" and sgnY='0') or(quadrant=\"01\" and sgnX='1') or (quadrant=\"10\" and sgnY='1') or (quadrant=\"11\" and sgnX='0')" << endl;
-		vhdl << tab << tab << " else '0';  -- this information is sent to the end of the pipeline, better compute it here as one bit"    << endl; 
-
-
+		buildQuadrantRangeReduction();
 		////////////////////////////////////////////////////////////////////////////
 		// 
 		//    Second range reduction, scaling 
 		//
 		////////////////////////////////////////////////////////////////////////////
 
-		if(doScaling) {
+		int sizeXYR = wIn-1; // no need for sign bit any longer
+		if(doScalingRR) {
+
 			manageCriticalPath( target->lutDelay() + target->localWireDelay());
 			vhdl << tab << declare("XorY", sizeXYR-1) << " <= XR" << range(sizeXYR-1,1) << " or YR" << range(sizeXYR-1,1) << ";" << endl;
 			// The LZC
@@ -477,7 +408,6 @@ namespace flopoco{
 
 
 	CordicAtan2::~CordicAtan2(){
-		mpfr_clears (kfactor, constPi, NULL);		
 	};
 
 
@@ -523,101 +453,6 @@ namespace flopoco{
 
 
 
-
-
-
-
-	void CordicAtan2::emulate(TestCase * tc) 
-	{
-		mpfr_t x,y,a;
-		mpfr_init2(x, 10*w);
-		mpfr_init2(y, 10*w);
-		mpfr_init2(a, 10*w);
-
-		mpz_class az;
-
-		/* Get I/O values */
-		mpz_class svX = tc->getInputValue("X");
-		mpz_class svY = tc->getInputValue("Y");
-
-		// interpret as signed two'ss complement
-		if (1==(svX >> (w-1))) // sign bit
-			svX -= (mpz_class(1)<<w);
-		if (1==(svY >> (w-1))) // sign bit
-			svY -= (mpz_class(1)<<w);
-		/* Compute correct value */
-		
-		mpfr_set_z (x, svX.get_mpz_t(), GMP_RNDN); //  exact
-		mpfr_set_z (y, svY.get_mpz_t(), GMP_RNDN); //  exact
-	
-		mpfr_atan2(a, y, x, GMP_RNDN); // a between -pi and pi
-		mpfr_div(a, a, constPi, GMP_RNDN); // a between -1 and 1
-
-		// Now convert a to fix point
-		// Align to fix point by adding 6 -- if we just add 4 there is a 1-bit shift in case a<0
-		mpfr_add_d(a, a, 6.0, GMP_RNDN);
-		mpfr_mul_2si (a, a, w-1, GMP_RNDN); // exact scaling 
-
-		mpz_class mask = (mpz_class(1)<<w) -1; 
-
-		mpfr_get_z (az.get_mpz_t(), a, GMP_RNDD); // there can be a real rounding here
-		az -= mpz_class(6)<<(w-1);
-		az &= mask; 
- 		tc->addExpectedOutput ("A", az);
-
-		mpfr_get_z (az.get_mpz_t(), a, GMP_RNDU); // there can be a real rounding here
-		az -= mpz_class(6)<<(w-1);
-		az &= mask; 
- 		tc->addExpectedOutput ("A", az);
-		
-		// clean up
-		mpfr_clears (x,y,a, NULL);		
-	}
-
-
-
-
-
-
-	void CordicAtan2::buildStandardTestCases(TestCaseList * tcl) 
-	{
-		mpfr_t z;
-		mpz_class zz;
-		TestCase* tc;
-
-		// 0
-		tc = new TestCase (this);
-		tc -> addInput ("X", mpz_class(1)<< (w-2));
-		tc -> addInput ("Y", mpz_class(0));
-		emulate(tc);
-		tcl->add(tc);
-
-
-		//pi/4
-		tc = new TestCase (this);
-		tc -> addInput ("X", mpz_class(1)<< (w-2));
-		tc -> addInput ("Y", mpz_class(1)<< (w-2));
-		emulate(tc);
-		tcl->add(tc);
-
-		// pi/2
-		tc = new TestCase (this);
-		tc -> addInput ("X", mpz_class(0));
-		tc -> addInput ("Y", mpz_class(1)<< (w-2));
-		emulate(tc);
-		tcl->add(tc);
-
-
-		// 3pi/4
-		tc = new TestCase (this);
-		tc -> addInput ("X", (mpz_class(1)<< (w)) -  (mpz_class(1)<< (w-2)) );
-		tc -> addInput ("Y", mpz_class(1)<< (w-2));
-		emulate(tc);
-		tcl->add(tc);
-
-
-	}
-	
 
 }
 

@@ -86,11 +86,6 @@ namespace flopoco {
 		 */
 		int checkArchitecture(int archType);
 
-		Target* target;
-
-		int wIn;                     					/**< input width */
-		int wOut;                    					/**< output width */
-
 		int architectureType;							/**< the possible types of architectures
 		  														0 = the one based on the equation of the plane
 		  														1 = the Taylor of order 1 approximating polynomial

@@ -1,7 +1,7 @@
 #ifndef CORDICATAN2_HPP
 #define CORDICATAN2_HPP
 
-#include "Operator.hpp"
+#include "FixAtan2.hpp"
 #include "utils.hpp"
 
 
@@ -10,7 +10,7 @@
 namespace flopoco{ 
 
 	
-	class CordicAtan2 : public Operator {
+	class CordicAtan2 : public FixAtan2 {
 	  
 	  public:
 
@@ -22,19 +22,11 @@ namespace flopoco{
 		Actual position of the fixed point in the inputs doesn't matter as long as it is the same for x and y
 
 		*/
-		CordicAtan2(Target* target, int w, int method=0, map<string, double> inputDelays = emptyDelayMap);
+		CordicAtan2(Target* target, int wIn, int wOut, int method=0, map<string, double> inputDelays = emptyDelayMap);
 
 		// destructor
 		~CordicAtan2();
 		
-
-		// Below all the functions needed to test the operator
-		/* the emulate function is used to simulate in software the operator
-		  in order to compare this result with those outputed by the vhdl opertator */
-		void emulate(TestCase * tc);
-
-		/* function used to create Standard testCase defined by the developper */
-		void buildStandardTestCases(TestCaseList* tcl);
 
 
 	private:
@@ -43,9 +35,6 @@ namespace flopoco{
 		int gXY;                   /**< number of guard bits on the (X,Y) datapath */
 		int gA;                    /**< number of guard bits on the Angle datapath */
 		bool negateByComplement;   /**< An architecture parameter: we negate negative values to obtain the first octant */
-		mpfr_t scale;              /**< 1-2^(wOut-1)*/
-		mpfr_t constPi;
-		mpfr_t kfactor;            /**< */
 		vector<mpfr_t> atani;      /**< */
 
 		void computeGuardBitsForCORDIC();

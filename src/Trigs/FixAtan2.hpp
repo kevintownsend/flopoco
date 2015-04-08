@@ -9,17 +9,6 @@
 
 #include "../utils.hpp"
 #include "../Operator.hpp"
-#include "../BitHeap/BitHeap.hpp"
-#include "../IntMult/IntMultiplier.hpp"
-#include "../ShiftersEtc/LZOC.hpp"
-#include "../ShiftersEtc/Shifters.hpp"
-
-#include "../Tools/Point.hpp"
-#include "../Tools/Plane.hpp"
-
-#include "./Atan2Table.hpp"
-
-#include "../FixFunctions/BipartiteTable.hpp"
 
 #define PLANE_BASED				0
 #define TAYLOR_ORDER1_BASED		1
@@ -54,19 +43,29 @@ namespace flopoco {
 		 */
 		~FixAtan2();
 
+		/** The code generation for (first) quadrant range reduction */
+		void buildQuadrantRangeReduction();
+
+		/** The code generation for (last) quadrant reconstruction */
+		void buildQuadrantReconstruction();
+
 		/**
-		 * The emulate function.
-		 * @param[in] tc               a test-case
+		 * The emulate function from Operator
 		 */
 		void emulate(TestCase* tc);
+		/**
+		 * The buildStandardTestCases function from Operator
+		 */
+		void buildStandardTestCases(TestCaseList * tcl) ;
 
-	private:
-
-		Target* target;
+	protected:
 
 		int wIn;                     					/**< input width */
 		int wOut;                    					/**< output width */
 
+		bool negateByComplement;   /**< An architecture parameter: we negate negative values to obtain the first octant */
+		bool doScalingRR;          /**< An architecture parameter: should we have a scaling range reduction */
+		mpfr_t constPi;
 	};
 
 }

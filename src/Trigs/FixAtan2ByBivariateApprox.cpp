@@ -37,20 +37,16 @@ namespace flopoco {
 
 		srcFileName = "FixAtan2ByBivariateApprox";
 		setCopyrightString("Florent de Dinechin, Matei Istoan, 2014");
-
 		// build the name
 		ostringstream name;
-		name <<"FixAtan2ByBivariateApprox_" << vhdlize(wIn) << "_" << vhdlize(wOut) << "_archType_" << vhdlize(architectureType_);
-		if(target->isPipelined())
+		name <<"FixAtan2ByBivariateApprox_" << vhdlize(wIn) << "_" << vhdlize(wOut) << "_archType_" << vhdlize(architectureType);
+		if(getTarget()->isPipelined())
 		{
-			name << "_f" << vhdlize(target->frequencyMHz());
+			name << "_f" << vhdlize(getTarget()->frequencyMHz());
 		}
 		setName(name.str());
 
-		double ratio = target->unusedHardMultThreshold(); // TODO this should be automatic/default: check
-		//set the libraries to use
-		//useNumericStd();
-		useNumericStd_Unsigned();
+		double ratio = getTarget()->unusedHardMultThreshold(); // TODO this should be automatic/default: check
 
 		//initialize global variables
 		maxValA = -1;		//this is the absolute value, so should be always non-negative, once used
@@ -60,14 +56,10 @@ namespace flopoco {
 		maxValE = -1;
 		maxValF = -1;
 
-		//declare the inputs and the outputs
-		addInput ("X",  wIn);
-		addInput ("Y",  wIn);
-		addOutput("R",  wOut, 2 /*number of possible output values*/);
+		useNumericStd_Unsigned();
 
-		//manage the pipeline
-		setCriticalPath(getMaxInputDelays(inputDelays_));
-
+		doScalingRR=true;
+#if 0
 		//arguments for the range reduction
 		bool negateByComplement = true;
 
@@ -82,7 +74,7 @@ namespace flopoco {
 		// TODO: replace the following with LUT-based comparators
 		// and first maybe experiment with synthesis tools
 		//manage the pipeline
-		manageCriticalPath(target->adderDelay(wIn+1) + target->lutDelay());
+		manageCriticalPath(getTarget()->adderDelay(wIn+1) + getTarget()->lutDelay());
 
 		vhdl << tab << declare("XmY", wIn+1) << " <= std_logic_vector(signed(sgnX & X) - signed(sgnY & Y));" << endl;
 		vhdl << tab << declare("XpY", wIn+1) << " <= std_logic_vector(signed(sgnX & X) + signed(sgnY & Y));" << endl;
@@ -91,7 +83,7 @@ namespace flopoco {
 		// Range reduction: we define 4 quadrants, each centered on one axis (these are not just the sign quadrants)
 		// Then each quadrant is decomposed in its positive and its negative octant.
 		//manage the pipeline
-		manageCriticalPath(target->lutDelay() + target->lutDelay());
+		manageCriticalPath(getTarget()->lutDelay() + getTarget()->lutDelay());
 		//save the critical path
 		tempCriticalPath = getCriticalPath();
 
@@ -113,7 +105,7 @@ namespace flopoco {
 			vhdl << tab << declare("pY", wIn) << " <=      Y;" << endl;
 
 			//manage the pipeline
-			manageCriticalPath(target->lutDelay());
+			manageCriticalPath(getTarget()->lutDelay());
 
 			vhdl << tab << declare("mX", wIn) << " <= (not X);  -- negation by not, implies one ulp error." << endl;
 			vhdl << tab << declare("mY", wIn) << " <= (not Y);  -- negation by not, implies one ulp error. " << endl;
@@ -128,7 +120,7 @@ namespace flopoco {
 			vhdl << tab << declare("pY", wIn) << " <= Y;" << endl;
 
 			//manage the pipeline
-			manageCriticalPath(target->adderDelay(wIn));
+			manageCriticalPath(getTarget()->adderDelay(wIn));
 
 			vhdl << tab << declare("mX", wIn) << " <= (" << zg(wIn) << " - X);" << endl;
 			vhdl << tab << declare("mY", wIn) << " <= (" << zg(wIn) << " - Y);" << endl;
@@ -139,7 +131,7 @@ namespace flopoco {
 		syncCycleFromSignal("mX");
 		syncCycleFromSignal("mY");
 		setCriticalPath(tempCriticalPath);
-		manageCriticalPath(target->lutDelay());
+		manageCriticalPath(getTarget()->lutDelay());
 		//save the critical path
 		tempCriticalPath = getCriticalPath();
 
@@ -165,7 +157,7 @@ namespace flopoco {
 		setCycleFromSignal("sgnX");
 		syncCycleFromSignal("sgnY");
 		syncCycleFromSignal("quadrant");
-		manageCriticalPath(target->lutDelay());
+		manageCriticalPath(getTarget()->lutDelay());
 
 		vhdl << tab << declare("finalAdd") << " <= " << endl;
 		vhdl << tab << tab << "'1' when (quadrant=\"00\" and sgnY='0') or(quadrant=\"01\" and sgnX='1') or (quadrant=\"10\" and sgnY='1') or (quadrant=\"11\" and sgnX='0')" << endl;
@@ -175,7 +167,9 @@ namespace flopoco {
 		//    End of first range reduction
 		//
 		/////////////////////////////////////////////////////////////////////////////
-
+#else
+		buildQuadrantRangeReduction();
+#endif
 
 		////////////////////////////////////////////////////////////////////////////
 		//
@@ -186,12 +180,12 @@ namespace flopoco {
 		setCycleFromSignal("XR");
 		syncCycleFromSignal("YR");
 		setCriticalPath(tempCriticalPath);
-		manageCriticalPath(target->lutDelay());
+		manageCriticalPath(getTarget()->lutDelay());
 
 		vhdl << tab << declare("XorY", wIn-2) << " <= XR" << range(wIn-2,1) << " or YR" << range(wIn-2,1) << ";" << endl;
 
 		// The LZC
-		LZOC* lzc = new	LZOC(target, wIn-2, inDelayMap("XorY", getCriticalPath()));
+		LZOC* lzc = new	LZOC(getTarget(), wIn-2, inDelayMap("XorY", getCriticalPath()));
 		addSubComponent(lzc);
 
 		inPortMap(lzc, "I", "XorY");
@@ -206,7 +200,7 @@ namespace flopoco {
 		setCriticalPath(lzc->getOutputDelay("O"));
 
 		// The two shifters are two instance of the same component
-		Shifter* lshift = new Shifter(target, wIn-1, wIn-2, Shifter::Left, inDelayMap("S", getCriticalPath()));
+		Shifter* lshift = new Shifter(getTarget(), wIn-1, wIn-2, Shifter::Left, inDelayMap("S", getCriticalPath()));
 		addSubComponent(lshift);
 
 		inPortMap(lshift, "S", "S");
@@ -259,12 +253,12 @@ namespace flopoco {
 			int msbC = intlog2(maxValC)+1;
 			int maxMSB = maxInt(3, msbA, msbB, msbC);
 
-			if(target->plainVHDL())
+			if(getTarget()->plainVHDL())
 			{
 				//split the input signals, and create the address signal for the table
 
 				//manage the pipeline
-				manageCriticalPath(target->localWireDelay());
+				manageCriticalPath(getTarget()->localWireDelay());
 
 				//save the critical path
 				tempCriticalPath2 = getCriticalPath();
@@ -279,7 +273,7 @@ namespace flopoco {
 				*/
 
 				//create the table for atan(y/x)
-				Atan2Table *table = new Atan2Table(target, 2*k-1, msbA+msbB+msbC+3*(wOut-1+g),
+				Atan2Table *table = new Atan2Table(getTarget(), 2*k-1, msbA+msbB+msbC+3*(wOut-1+g),
 													architectureType,
 													msbA, msbB, msbC,
 													0, 0, 0, 			//place-holders for msbD, msbE, msbF
@@ -315,7 +309,7 @@ namespace flopoco {
 				setCycleFromSignal("XRS");
 				syncCycleFromSignal("YRS");
 				setCriticalPath(tempCriticalPath2);
-				manageCriticalPath(target->localWireDelay());
+				manageCriticalPath(getTarget()->localWireDelay());
 
 				vhdl << tab << declareFixPoint("XLow", true, -k, -wIn+1) << " <= signed('0' & XRS" << range(wIn-1-k-1, 0) << ");" << endl;
 				vhdl << tab << declareFixPoint("YLow", true, -k, -wIn+1) << " <= signed('0' & YRS" << range(wIn-1-k-1, 0) << ");" << endl;
@@ -328,7 +322,7 @@ namespace flopoco {
 				setCycleFromSignal("A");
 				syncCycleFromSignal("B");
 				setCriticalPath(tempCriticalPath);
-				manageCriticalPath(target->DSPMultiplierDelay());
+				manageCriticalPath(getTarget()->DSPMultiplierDelay());
 
 				//create A*X_low and B*Y_low
 				vhdl << tab << declareFixPoint("AXLow", true, msbA-k, -wOut+1-g-wIn+1) << " <= A * XLow;" << endl;
@@ -338,19 +332,19 @@ namespace flopoco {
 				resizeFixPoint("BYLow_sgnExtended", "BYLow", maxMSB-1, -wOut+1-g);
 
 				//manage the pipeline
-				manageCriticalPath(target->adderDelay(maxMSB+wOut+g+1));
+				manageCriticalPath(getTarget()->adderDelay(maxMSB+wOut+g+1));
 
 				//add everything up
 				vhdl << tab << declareFixPoint("AXLowAddBYLow", true, maxMSB, -wOut+1-g)
 						<< " <= (AXLow_sgnExtended(AXLow_sgnExtended'HIGH) & AXLow_sgnExtended) + (BYLow_sgnExtended(BYLow_sgnExtended'HIGH) & BYLow_sgnExtended);" << endl;
 
 				//manage the pipeline
-				manageCriticalPath(target->adderDelay(maxMSB+wOut+g+2));
+				manageCriticalPath(getTarget()->adderDelay(maxMSB+wOut+g+2));
 
 				vhdl << tab << declareFixPoint("AXLowAddBYLowAddC", true, maxMSB+1, -wOut+1-g) << " <= (AXLowAddBYLow(AXLowAddBYLow'HIGH) & AXLowAddBYLow) + C_sgnExtended;" << endl;
 
 				//manage the pipeline
-				manageCriticalPath(target->adderDelay(wOut+1));
+				manageCriticalPath(getTarget()->adderDelay(wOut+1));
 
 				//extract the final result
 				resizeFixPoint("Rtmp", "AXLowAddBYLowAddC", 1, -wOut);
@@ -358,7 +352,7 @@ namespace flopoco {
 				vhdl << tab << declareFixPoint("Rtmp_rnd", true, 1, -wOut) << " <= Rtmp + Rtmp_rndCst;" << endl;
 
 				//manage the pipeline
-				manageCriticalPath(target->localWireDelay());
+				manageCriticalPath(getTarget()->localWireDelay());
 
 				//return the result
 				/*
@@ -378,7 +372,7 @@ namespace flopoco {
 				//manage the pipeline
 				setCycleFromSignal("XRS");
 				syncCycleFromSignal("YRS");
-				manageCriticalPath(target->localWireDelay());
+				manageCriticalPath(getTarget()->localWireDelay());
 
 				//create the input signals for the table
 				vhdl << tab << declare("XHigh", k-1) << " <= std_logic_vector(XRS" << range(wIn-3, wIn-1-k) << ");" << endl;
@@ -391,7 +385,7 @@ namespace flopoco {
 				vhdl << tab << declare("atan2TableInput", 2*k-1) << " <= std_logic_vector(XHigh) & std_logic_vector(YHigh);" << endl;
 
 				//create the table for atan(y/x)
-				Atan2Table *table = new Atan2Table(target, 2*k-1, msbA+msbB+msbC+3*(wOut-1+g),
+				Atan2Table *table = new Atan2Table(getTarget(), 2*k-1, msbA+msbB+msbC+3*(wOut-1+g),
 													architectureType,
 													msbA, msbB, msbC,
 													0, 0, 0, 			//place-holders for msbD, msbE, msbF
@@ -408,7 +402,7 @@ namespace flopoco {
 				//manage the pipeline
 				syncCycleFromSignal("atan2TableOutput");
 				setCriticalPath(lshift->getOutputDelay("Y"));
-				manageCriticalPath(target->localWireDelay());
+				manageCriticalPath(getTarget()->localWireDelay());
 
 				//extract signals A, B and C
 				vhdl << tab << declare("C", msbC+wOut-1+g) << " <= atan2TableOutput"
@@ -490,10 +484,10 @@ namespace flopoco {
 			int msbF = intlog2(maxValF)+1;
 			int maxMSB = maxInt(6, msbA, msbB, msbC, msbD, msbE, msbF);
 
-			if(target->plainVHDL())
+			if(getTarget()->plainVHDL())
 			{
 				//manage the pipeline
-				manageCriticalPath(target->localWireDelay());
+				manageCriticalPath(getTarget()->localWireDelay());
 				//save the critical path
 				tempCriticalPath = getCriticalPath();
 
@@ -510,7 +504,7 @@ namespace flopoco {
 				vhdl << endl;
 
 				//create the table for atan(y/x)
-				Atan2Table *table = new Atan2Table(target, 2*k-1, msbA+msbB+msbC+msbD+msbE+msbF+6*(wOut-1+g),
+				Atan2Table *table = new Atan2Table(getTarget(), 2*k-1, msbA+msbB+msbC+msbD+msbE+msbF+6*(wOut-1+g),
 													architectureType,
 													msbA, msbB, msbC, msbD, msbE, msbF,
 													inDelayMap("atan2TableInput", getCriticalPath()) );
@@ -527,7 +521,7 @@ namespace flopoco {
 				//manage the pipeline
 				syncCycleFromSignal("atan2TableOutput");
 				setCriticalPath(table->getOutputDelay("Y"));
-				manageCriticalPath(target->localWireDelay());
+				manageCriticalPath(getTarget()->localWireDelay());
 
 				//split the output of the table to the corresponding parts A, B, C, D, E and F
 				vhdl << tab << declareFixPoint("F", true, msbF-1,  -wOut+1-g) << " <= signed(atan2TableOutput"
@@ -554,7 +548,7 @@ namespace flopoco {
 				setCycleFromSignal("XRS");
 				syncCycleFromSignal("YRS");
 				setCriticalPath(tempCriticalPath);
-				manageCriticalPath(target->lutDelay() + target->localWireDelay());
+				manageCriticalPath(getTarget()->lutDelay() + getTarget()->localWireDelay());
 
 				vhdl << tab << declareFixPoint("DeltaX", true, -k-1,  -wIn+1) << " <= signed(not(XRS(" << of(wIn-k-2) << ")) & XRS" << range(wIn-k-3, 0) << ");" << endl;
 				vhdl << tab << declareFixPoint("DeltaY", true, -k-1,  -wIn+1) << " <= signed(not(YRS(" << of(wIn-k-2) << ")) & YRS" << range(wIn-k-3, 0) << ");" << endl;
@@ -573,7 +567,7 @@ namespace flopoco {
 				setCycleFromSignal("A");
 				syncCycleFromSignal("DeltaX");
 				setCriticalPath(tempCriticalPath2);
-				manageCriticalPath(target->DSPMultiplierDelay());
+				manageCriticalPath(getTarget()->DSPMultiplierDelay());
 
 				//create A*DeltaX and B*DeltaY
 				vhdl << tab << declareFixPoint("A_DeltaX", true, msbA-k-1,  -wOut+1-g-wIn+1) << " <= A * DeltaX;" << endl;
@@ -591,7 +585,7 @@ namespace flopoco {
 				setCycleFromSignal("DeltaX");
 				syncCycleFromSignal("DeltaY");
 				setCriticalPath(tempCriticalPath);
-				manageCriticalPath(target->DSPMultiplierDelay());
+				manageCriticalPath(getTarget()->DSPMultiplierDelay());
 
 				//create DeltaX^2, DeltaY^2 and DeltaX*DeltaY
 				/*
@@ -606,9 +600,9 @@ namespace flopoco {
 				//manage the pipeline
 				setCycleFromSignal("DeltaX");
 				setCriticalPath(tempCriticalPath);
-				manageCriticalPath(target->DSPMultiplierDelay());
+				manageCriticalPath(getTarget()->DSPMultiplierDelay());
 
-				BipartiteTable *deltaX2Table = new BipartiteTable(target,
+				BipartiteTable *deltaX2Table = new BipartiteTable(getTarget(),
 																	join("(2^(-", k, "))*(x^2)"),
 																	//-wIn+k+1, -1, -2*wIn+2*k+2,
 																	-wIn+k+1, -1, -wOut+1-g+2*k);
@@ -625,9 +619,9 @@ namespace flopoco {
 				//manage the pipeline
 				setCycleFromSignal("DeltaY");
 				setCriticalPath(tempCriticalPath);
-				manageCriticalPath(target->DSPMultiplierDelay());
+				manageCriticalPath(getTarget()->DSPMultiplierDelay());
 
-				BipartiteTable *deltaY2Table = new BipartiteTable(target,
+				BipartiteTable *deltaY2Table = new BipartiteTable(getTarget(),
 																	join("(2^(-", k, "))*(x^2)"),
 																	//-wIn+k+1, -1, -2*wIn+2*k+2,
 																	-wIn+k+1, -1, -wOut+1-g+2*k);
@@ -642,7 +636,7 @@ namespace flopoco {
 				vhdl << endl;
 
 				//manage the pipeline
-				manageCriticalPath(target->localWireDelay());
+				manageCriticalPath(getTarget()->localWireDelay());
 
 				//convert to fixed point in VHDL
 				//vhdl << tab << declareFixPoint("DeltaX2", true, -2*k-1,  -2*wIn+2) << " <= signed(DeltaX2_stdlv);" << endl;
@@ -651,7 +645,7 @@ namespace flopoco {
 				vhdl << tab << declareFixPoint("DeltaY2", true, -2*k-1,  -wOut+1-g) << " <= signed(DeltaY2_stdlv);" << endl;
 
 				//manage the pipeline
-				manageCriticalPath(target->localWireDelay());
+				manageCriticalPath(getTarget()->localWireDelay());
 
 				//align the products, discard the extra lsb-s
 				resizeFixPoint("DeltaX2_short", "DeltaX2", -2*k-1, -wOut+1-g);
@@ -669,7 +663,7 @@ namespace flopoco {
 				syncCycleFromSignal("DeltaX2_short");
 				syncCycleFromSignal("DeltaY2_short");
 				syncCycleFromSignal("DeltaX_DeltaY_short");
-				manageCriticalPath(target->DSPMultiplierDelay());
+				manageCriticalPath(getTarget()->DSPMultiplierDelay());
 
 				//create D*DeltaX^2, E*DeltaY^2 and F*DeltaX*DeltaY
 				/*
@@ -685,7 +679,7 @@ namespace flopoco {
 					setCriticalPath(tempCriticalPath2);
 				else
 					setCriticalPath(criticalPathDeltaX2);
-				manageCriticalPath(target->DSPMultiplierDelay());
+				manageCriticalPath(getTarget()->DSPMultiplierDelay());
 
 				vhdl << tab << declareFixPoint("D_DeltaX2", true, msbD-2*k-1,  -2*(wOut-1+g)) << " <= D * DeltaX2_short;" << endl;
 
@@ -699,7 +693,7 @@ namespace flopoco {
 					setCriticalPath(tempCriticalPath2);
 				else
 					setCriticalPath(criticalPathDeltaX2);
-				manageCriticalPath(target->DSPMultiplierDelay());
+				manageCriticalPath(getTarget()->DSPMultiplierDelay());
 
 				vhdl << tab << declareFixPoint("E_DeltaY2", true, msbE-2*k-1,  -2*(wOut-1+g)) << " <= E * DeltaY2_short;" << endl;
 
@@ -713,7 +707,7 @@ namespace flopoco {
 					setCriticalPath(tempCriticalPath2);
 				else
 					setCriticalPath(criticalPathDeltaX_DeltaY);
-				manageCriticalPath(target->DSPMultiplierDelay());
+				manageCriticalPath(getTarget()->DSPMultiplierDelay());
 
 				vhdl << tab << declareFixPoint("F_DeltaX_DeltaY", true, msbF-2*k-1,  -2*(wOut-1+g)) << " <= F * DeltaX_DeltaY_short;" << endl;
 				vhdl << endl;
@@ -731,7 +725,7 @@ namespace flopoco {
 				setCycleFromSignal("A_DeltaX_sgnExt");
 				syncCycleFromSignal("B_DeltaY_sgnExt");
 				setCriticalPath(criticalPathA_DeltaX);
-				manageCriticalPath(target->adderDelay(wOut+g+1));
+				manageCriticalPath(getTarget()->adderDelay(wOut+g+1));
 
 				//add everything up
 				vhdl << tab << declareFixPoint("Sum1", true, maxMSB, -wOut+1-g)
@@ -743,7 +737,7 @@ namespace flopoco {
 				//manage the pipeline
 				setCycleFromSignal("D_DeltaX2_sgnExt");
 				setCriticalPath(criticalPathD_DeltaX2);
-				manageCriticalPath(target->adderDelay(wOut+g+1));
+				manageCriticalPath(getTarget()->adderDelay(wOut+g+1));
 
 				vhdl << tab << declareFixPoint("Sum2", true, maxMSB, -wOut+1-g)
 						<< " <= (C_sgnExt(C_sgnExt'HIGH) & C_sgnExt) + (D_DeltaX2_sgnExt(D_DeltaX2_sgnExt'HIGH) & D_DeltaX2_sgnExt);" << endl;
@@ -758,7 +752,7 @@ namespace flopoco {
 					setCriticalPath(criticalPathE_DeltaY2);
 				else
 					setCriticalPath(criticalPathF_DeltaX_DeltaY);
-				manageCriticalPath(target->adderDelay(wOut+g+1));
+				manageCriticalPath(getTarget()->adderDelay(wOut+g+1));
 
 				vhdl << tab << declareFixPoint("Sum3", true, maxMSB, -wOut+1-g)
 						<< " <= (E_DeltaY2_sgnExt(E_DeltaY2_sgnExt'HIGH) & E_DeltaY2_sgnExt) + (F_DeltaX_DeltaY_sgnExt(F_DeltaX_DeltaY_sgnExt'HIGH) & F_DeltaX_DeltaY_sgnExt);" << endl;
@@ -773,7 +767,7 @@ namespace flopoco {
 					setCriticalPath(criticalPathSum1);
 				else
 					setCriticalPath(criticalPathSum2);
-				manageCriticalPath(target->adderDelay(wOut+g+1));
+				manageCriticalPath(getTarget()->adderDelay(wOut+g+1));
 
 				vhdl << tab << declareFixPoint("Sum4", true, maxMSB+1, -wOut+1-g)
 						<< " <= (Sum1(Sum1'HIGH) & Sum1) + (Sum2(Sum2'HIGH) & Sum2);" << endl;
@@ -788,14 +782,14 @@ namespace flopoco {
 					setCriticalPath(criticalPathSum3);
 				else
 					setCriticalPath(criticalPathSum4);
-				manageCriticalPath(target->adderDelay(wOut+g+1));
+				manageCriticalPath(getTarget()->adderDelay(wOut+g+1));
 
 				vhdl << tab << declareFixPoint("Sum5", true, maxMSB+2, -wOut+1-g)
 						<< " <= (Sum4(Sum4'HIGH) & Sum4) + (Sum3(Sum3'HIGH) & Sum3(Sum3'HIGH) & Sum3);" << endl;
 				vhdl << endl;
 
 				//manage the pipeline
-				manageCriticalPath(target->adderDelay(wOut+2));
+				manageCriticalPath(getTarget()->adderDelay(wOut+2));
 
 				//extract the final result
 				resizeFixPoint("Rtmp", "Sum5", 1, -wOut);
@@ -803,7 +797,7 @@ namespace flopoco {
 				vhdl << tab << declareFixPoint("Rtmp_rnd", true, 1, -wOut) << " <= Rtmp + Rtmp_rndCst;" << endl;
 
 				//manage the pipeline
-				manageCriticalPath(target->localWireDelay());
+				manageCriticalPath(getTarget()->localWireDelay());
 
 				//return the result
 				resizeFixPoint("Rtmp_stdlv", "Rtmp_rnd", -1, -wOut+2);
@@ -813,7 +807,7 @@ namespace flopoco {
 				//manage the pipeline
 				setCycleFromSignal("XRS");
 				syncCycleFromSignal("YRS");
-				manageCriticalPath(target->localWireDelay());
+				manageCriticalPath(getTarget()->localWireDelay());
 
 				//create the bitheap
 				bitHeap = new BitHeap(this, (maxMSB+2)+wOut+g);
@@ -830,7 +824,7 @@ namespace flopoco {
 				vhdl << endl;
 
 				//create the table for atan(y/x)
-				Atan2Table *table = new Atan2Table(target, 2*k-1, msbA+msbB+msbC+msbD+msbE+msbF+6*(wOut-1+g),
+				Atan2Table *table = new Atan2Table(getTarget(), 2*k-1, msbA+msbB+msbC+msbD+msbE+msbF+6*(wOut-1+g),
 													architectureType,
 													msbA, msbB, msbC, msbD, msbE, msbF,
 													inDelayMap("atan2TableInput", getCriticalPath()) );
@@ -847,7 +841,7 @@ namespace flopoco {
 				//manage the pipeline
 				syncCycleFromSignal("atan2TableOutput");
 				setCriticalPath(table->getOutputDelay("Y"));
-				manageCriticalPath(target->localWireDelay());
+				manageCriticalPath(getTarget()->localWireDelay());
 
 				//split the output of the table to the corresponding parts A, B, C, D, E and F
 				vhdl << tab << declareFixPoint("F", true, msbF-1,  -wOut+1-g) << " <= signed(atan2TableOutput"
@@ -922,7 +916,7 @@ namespace flopoco {
 				setCycleFromSignal("DeltaX");
 				syncCycleFromSignal("DeltaY");
 				setCriticalPath(tempCriticalPath);
-				manageCriticalPath(target->DSPMultiplierDelay());
+				manageCriticalPath(getTarget()->DSPMultiplierDelay());
 
 				//create DeltaX^2, DeltaY^2 and DeltaX*DeltaY
 				//vhdl << tab << declareFixPoint("DeltaX2", true, -2*k-1,  -2*wIn+2) << " <= DeltaX * DeltaX;" << endl;
@@ -930,7 +924,7 @@ namespace flopoco {
 				vhdl << tab << declareFixPoint("DeltaX_DeltaY", true, -2*k-1,  -2*wIn+2) << " <= DeltaX * DeltaY;" << endl;
 				vhdl << endl;
 
-				BipartiteTable *deltaX2Table = new BipartiteTable(target,
+				BipartiteTable *deltaX2Table = new BipartiteTable(getTarget(),
 																	join("(2^(-", k, "))*(x^2)"),
 																	//-wIn+k+1, -1, -2*wIn+2*k+2,
 																	-wIn+k+1, -1, -wOut+1-g+2*k,
@@ -944,7 +938,7 @@ namespace flopoco {
 				vhdl << instance(deltaX2Table , "DeltaX2Table");
 				vhdl << endl;
 
-				BipartiteTable *deltaY2Table = new BipartiteTable(target,
+				BipartiteTable *deltaY2Table = new BipartiteTable(getTarget(),
 																	join("(2^(-", k, "))*(x^2)"),
 																	//-wIn+k+1, -1, -2*wIn+2*k+2,
 																	-wIn+k+1, -1, -wOut+1-g+2*k,
@@ -965,7 +959,7 @@ namespace flopoco {
 				vhdl << tab << declareFixPoint("DeltaY2", true, -2*k-1,  -wOut+1-g) << " <= signed(DeltaY2_stdlv);" << endl;
 
 				//manage the pipeline
-				manageCriticalPath(target->localWireDelay());
+				manageCriticalPath(getTarget()->localWireDelay());
 
 				//align the products, discard the extra lsb-s
 				resizeFixPoint("DeltaX2_short", "DeltaX2", -2*k-1, -wOut+1-g);
@@ -1048,7 +1042,7 @@ namespace flopoco {
 		////////////////////////////////////////////////////////////////////////////
 
 		//manage the pipeline
-		manageCriticalPath(target->lutDelay() + target->adderDelay(wOut));
+		manageCriticalPath(getTarget()->lutDelay() + getTarget()->adderDelay(wOut));
 
 		vhdl << tab << declare("qangle", wOut) << " <= (quadrant & " << zg(wOut-2) << ");" << endl;
 		vhdl << tab << declare("Rfinal", wOut) << " <= \"00\" & R_int; -- sign-extended and rounded" << endl;
