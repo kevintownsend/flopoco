@@ -292,14 +292,14 @@ namespace flopoco {
 				setCriticalPath(lshift->getOutputDelay("Y"));
 
 				//split the output of the table to the corresponding parts A, B and C
-				vhdl << tab << declareFixPoint("C", true, msbC-1,  -wOut+1-g) << " <= signed(atan2TableOutput"
+				vhdl << tab << declareFixPoint("coeffC", true, msbC-1,  -wOut+1-g) << " <= signed(atan2TableOutput"
 						<< range(msbC+(wOut-1+g)-1, 0) << ");" << endl;
-				vhdl << tab << declareFixPoint("B", true, msbB-1,  -wOut+1-g) << " <= signed(atan2TableOutput"
+				vhdl << tab << declareFixPoint("coeffB", true, msbB-1,  -wOut+1-g) << " <= signed(atan2TableOutput"
 						<< range(msbB+msbC+2*(wOut-1+g)-1, msbC+(wOut-1+g)) << ");" << endl;
-				vhdl << tab << declareFixPoint("A", true, msbA-1,  -wOut+1-g) << " <= signed(atan2TableOutput"
+				vhdl << tab << declareFixPoint("coeffA", true, msbA-1,  -wOut+1-g) << " <= signed(atan2TableOutput"
 						<< range(msbA+msbB+msbC+3*(wOut-1+g)-1, msbB+msbC+2*(wOut-1+g)) << ");" << endl;
 
-				resizeFixPoint("C_sgnExtended", "C", maxMSB+1, -wOut+1-g);
+				resizeFixPoint("C_sgnExtended", "coeffC", maxMSB+1, -wOut+1-g);
 
 				//manage the pipeline
 				//	save the critical path
@@ -319,8 +319,8 @@ namespace flopoco {
 				*/
 
 				//manage the pipeline
-				setCycleFromSignal("A");
-				syncCycleFromSignal("B");
+				setCycleFromSignal("coeffA");
+				syncCycleFromSignal("coeffB");
 				setCriticalPath(tempCriticalPath);
 				manageCriticalPath(getTarget()->DSPMultiplierDelay());
 
@@ -405,11 +405,11 @@ namespace flopoco {
 				manageCriticalPath(getTarget()->localWireDelay());
 
 				//extract signals A, B and C
-				vhdl << tab << declare("C", msbC+wOut-1+g) << " <= atan2TableOutput"
+				vhdl << tab << declare("coeffC", msbC+wOut-1+g) << " <= atan2TableOutput"
 						<< range(msbC+(wOut-1+g)-1, 0) << ";" << endl;
-				vhdl << tab << declare("B", msbB+wOut-1+g) << " <= atan2TableOutput"
+				vhdl << tab << declare("coeffB", msbB+wOut-1+g) << " <= atan2TableOutput"
 						<< range(msbB+msbC+2*(wOut-1+g)-1, msbC+(wOut-1+g)) << ";" << endl;
-				vhdl << tab << declare("A", msbA+wOut-1+g) << " <= atan2TableOutput"
+				vhdl << tab << declare("coeffA", msbA+wOut-1+g) << " <= atan2TableOutput"
 						<< range(msbA+msbB+msbC+3*(wOut-1+g)-1, msbB+msbC+2*(wOut-1+g)) << ";" << endl;
 
 				//create Ax and By
@@ -424,7 +424,7 @@ namespace flopoco {
 				multAx = new IntMultiplier(this,								//parent operator
 											 bitHeap,							//the bit heap that performs the compression
 											 getSignalByName("XLow"),			//first input to the multiplier (a signal)
-											 getSignalByName("A"),				//second input to the multiplier (a signal)
+											 getSignalByName("coeffA"),				//second input to the multiplier (a signal)
 											 -wIn+1,							//offset of the LSB of the multiplier in the bit heap
 											 false /*negate*/,					//whether to subtract the result of the multiplication from the bit heap
 											 true,								//signed/unsigned operator
@@ -434,14 +434,14 @@ namespace flopoco {
 				multBy = new IntMultiplier(this,								//parent operator
 											 bitHeap,							//the bit heap that performs the compression
 											 getSignalByName("YLow"),			//first input to the multiplier (a signal)
-											 getSignalByName("B"),				//second input to the multiplier (a signal)
+											 getSignalByName("coeffB"),				//second input to the multiplier (a signal)
 											 -wIn+1,							//offset of the LSB of the multiplier in the bit heap
 											 false /*negate*/,					//whether to subtract the result of the multiplication from the bit heap
 											 true,								//signed/unsigned operator
 											 ratio);							//DSP ratio
 
 				bitHeap->addSignedBitVector(0,									//weight of signal in the bit heap
-											"C",								//name of the signal
+											"coeffC",								//name of the signal
 											msbC+wOut-1+g,						//size of the signal added
 											0,									//index of the lsb in the bit vector from which to add the bits of the addend
 											false);								//if we are correcting the index in the bit vector with a negative weight
@@ -524,22 +524,22 @@ namespace flopoco {
 				manageCriticalPath(getTarget()->localWireDelay());
 
 				//split the output of the table to the corresponding parts A, B, C, D, E and F
-				vhdl << tab << declareFixPoint("F", true, msbF-1,  -wOut+1-g) << " <= signed(atan2TableOutput"
+				vhdl << tab << declareFixPoint("coeffF", true, msbF-1,  -wOut+1-g) << " <= signed(atan2TableOutput"
 						<< range(msbF+1*(wOut-1+g)-1, 0) << ");" << endl;
-				vhdl << tab << declareFixPoint("E", true, msbE-1,  -wOut+1-g) << " <= signed(atan2TableOutput"
+				vhdl << tab << declareFixPoint("coeffE", true, msbE-1,  -wOut+1-g) << " <= signed(atan2TableOutput"
 						<< range(msbE+msbF+2*(wOut-1+g)-1, msbF+1*(wOut-1+g)) << ");" << endl;
-				vhdl << tab << declareFixPoint("D", true, msbD-1,  -wOut+1-g) << " <= signed(atan2TableOutput"
+				vhdl << tab << declareFixPoint("coeffD", true, msbD-1,  -wOut+1-g) << " <= signed(atan2TableOutput"
 						<< range(msbD+msbE+msbF+3*(wOut-1+g)-1, msbE+msbF+2*(wOut-1+g)) << ");" << endl;
-				vhdl << tab << declareFixPoint("C", true, msbC-1,  -wOut+1-g) << " <= signed(atan2TableOutput"
+				vhdl << tab << declareFixPoint("coeffC", true, msbC-1,  -wOut+1-g) << " <= signed(atan2TableOutput"
 						<< range(msbC+msbD+msbE+msbF+4*(wOut-1+g)-1, msbD+msbE+msbF+3*(wOut-1+g)) << ");" << endl;
-				vhdl << tab << declareFixPoint("B", true, msbB-1,  -wOut+1-g) << " <= signed(atan2TableOutput"
+				vhdl << tab << declareFixPoint("coeffB", true, msbB-1,  -wOut+1-g) << " <= signed(atan2TableOutput"
 						<< range(msbB+msbC+msbD+msbE+msbF+5*(wOut-1+g)-1, msbC+msbD+msbE+msbF+4*(wOut-1+g)) << ");" << endl;
-				vhdl << tab << declareFixPoint("A", true, msbA-1,  -wOut+1-g) << " <= signed(atan2TableOutput"
+				vhdl << tab << declareFixPoint("coeffA", true, msbA-1,  -wOut+1-g) << " <= signed(atan2TableOutput"
 						<< range(msbA+msbB+msbC+msbD+msbE+msbF+6*(wOut-1+g)-1, msbB+msbC+msbD+msbE+msbF+5*(wOut-1+g)) << ");" << endl;
 				vhdl << endl;
 
 				//align the signals to the output format to the output format
-				resizeFixPoint("C_sgnExt", "C", maxMSB-1, -wOut+1-g);
+				resizeFixPoint("C_sgnExt", "coeffC", maxMSB-1, -wOut+1-g);
 
 				//save the critical path
 				tempCriticalPath2 = getCriticalPath();
@@ -564,7 +564,7 @@ namespace flopoco {
 				tempCriticalPath = getCriticalPath();
 
 				//manage the pipeline
-				setCycleFromSignal("A");
+				setCycleFromSignal("coeffA");
 				syncCycleFromSignal("DeltaX");
 				setCriticalPath(tempCriticalPath2);
 				manageCriticalPath(getTarget()->DSPMultiplierDelay());
@@ -657,9 +657,9 @@ namespace flopoco {
 				double criticalPathDeltaX2 = getCriticalPath();
 
 				//manage the pipeline
-				setCycleFromSignal("D");
-				syncCycleFromSignal("E");
-				syncCycleFromSignal("F");
+				setCycleFromSignal("coeffD");
+				syncCycleFromSignal("coeffE");
+				syncCycleFromSignal("coeffF");
 				syncCycleFromSignal("DeltaX2_short");
 				syncCycleFromSignal("DeltaY2_short");
 				syncCycleFromSignal("DeltaX_DeltaY_short");
@@ -673,9 +673,9 @@ namespace flopoco {
 				*/
 
 				//manage the pipeline
-				setCycleFromSignal("D");
+				setCycleFromSignal("coeffD");
 				syncCycleFromSignal("DeltaX2_short");
-				if(getCycleFromSignal("D") > getCycleFromSignal("DeltaX2_short"))
+				if(getCycleFromSignal("coeffD") > getCycleFromSignal("DeltaX2_short"))
 					setCriticalPath(tempCriticalPath2);
 				else
 					setCriticalPath(criticalPathDeltaX2);
@@ -687,9 +687,9 @@ namespace flopoco {
 				double criticalPathD_DeltaX2 = getCriticalPath();
 
 				//manage the pipeline
-				setCycleFromSignal("E");
+				setCycleFromSignal("coeffE");
 				syncCycleFromSignal("DeltaY2_short");
-				if(getCycleFromSignal("E") > getCycleFromSignal("DeltaY2_short"))
+				if(getCycleFromSignal("coeffE") > getCycleFromSignal("DeltaY2_short"))
 					setCriticalPath(tempCriticalPath2);
 				else
 					setCriticalPath(criticalPathDeltaX2);
@@ -701,9 +701,9 @@ namespace flopoco {
 				double criticalPathE_DeltaY2 = getCriticalPath();
 
 				//manage the pipeline
-				setCycleFromSignal("F");
+				setCycleFromSignal("coeffF");
 				syncCycleFromSignal("DeltaX_DeltaY_short");
-				if(getCycleFromSignal("F") > getCycleFromSignal("DeltaX_DeltaY_short"))
+				if(getCycleFromSignal("coeffF") > getCycleFromSignal("DeltaX_DeltaY_short"))
 					setCriticalPath(tempCriticalPath2);
 				else
 					setCriticalPath(criticalPathDeltaX_DeltaY);
@@ -844,26 +844,26 @@ namespace flopoco {
 				manageCriticalPath(getTarget()->localWireDelay());
 
 				//split the output of the table to the corresponding parts A, B, C, D, E and F
-				vhdl << tab << declareFixPoint("F", true, msbF-1,  -wOut+1-g) << " <= signed(atan2TableOutput"
+				vhdl << tab << declareFixPoint("coeffF", true, msbF-1,  -wOut+1-g) << " <= signed(atan2TableOutput"
 						<< range(msbF+1*(wOut-1+g)-1, 0) << ");" << endl;
-				vhdl << tab << declareFixPoint("E", true, msbE-1,  -wOut+1-g) << " <= signed(atan2TableOutput"
+				vhdl << tab << declareFixPoint("coeffE", true, msbE-1,  -wOut+1-g) << " <= signed(atan2TableOutput"
 						<< range(msbE+msbF+2*(wOut-1+g)-1, msbF+1*(wOut-1+g)) << ");" << endl;
-				vhdl << tab << declareFixPoint("D", true, msbD-1,  -wOut+1-g) << " <= signed(atan2TableOutput"
+				vhdl << tab << declareFixPoint("coeffD", true, msbD-1,  -wOut+1-g) << " <= signed(atan2TableOutput"
 						<< range(msbD+msbE+msbF+3*(wOut-1+g)-1, msbE+msbF+2*(wOut-1+g)) << ");" << endl;
-				vhdl << tab << declareFixPoint("C", true, msbC-1,  -wOut+1-g) << " <= signed(atan2TableOutput"
+				vhdl << tab << declareFixPoint("coeffC", true, msbC-1,  -wOut+1-g) << " <= signed(atan2TableOutput"
 						<< range(msbC+msbD+msbE+msbF+4*(wOut-1+g)-1, msbD+msbE+msbF+3*(wOut-1+g)) << ");" << endl;
-				vhdl << tab << declareFixPoint("B", true, msbB-1,  -wOut+1-g) << " <= signed(atan2TableOutput"
+				vhdl << tab << declareFixPoint("coeffB", true, msbB-1,  -wOut+1-g) << " <= signed(atan2TableOutput"
 						<< range(msbB+msbC+msbD+msbE+msbF+5*(wOut-1+g)-1, msbC+msbD+msbE+msbF+4*(wOut-1+g)) << ");" << endl;
-				vhdl << tab << declareFixPoint("A", true, msbA-1,  -wOut+1-g) << " <= signed(atan2TableOutput"
+				vhdl << tab << declareFixPoint("coeffA", true, msbA-1,  -wOut+1-g) << " <= signed(atan2TableOutput"
 						<< range(msbA+msbB+msbC+msbD+msbE+msbF+6*(wOut-1+g)-1, msbB+msbC+msbD+msbE+msbF+5*(wOut-1+g)) << ");" << endl;
 				vhdl << endl;
 
 				//create A, B, C, D, E, F as logic vectors
-				vhdl << tab << declare("A_stdlv", msbA+wOut-1+g) << " <= std_logic_vector(A);" << endl;
-				vhdl << tab << declare("B_stdlv", msbB+wOut-1+g) << " <= std_logic_vector(B);" << endl;
-				vhdl << tab << declare("D_stdlv", msbD+wOut-1+g) << " <= std_logic_vector(D);" << endl;
-				vhdl << tab << declare("E_stdlv", msbE+wOut-1+g) << " <= std_logic_vector(E);" << endl;
-				vhdl << tab << declare("F_stdlv", msbF+wOut-1+g) << " <= std_logic_vector(F);" << endl;
+				vhdl << tab << declare("A_stdlv", msbA+wOut-1+g) << " <= std_logic_vector(coeffA);" << endl;
+				vhdl << tab << declare("B_stdlv", msbB+wOut-1+g) << " <= std_logic_vector(coeffB);" << endl;
+				vhdl << tab << declare("D_stdlv", msbD+wOut-1+g) << " <= std_logic_vector(coeffD);" << endl;
+				vhdl << tab << declare("E_stdlv", msbE+wOut-1+g) << " <= std_logic_vector(coeffE);" << endl;
+				vhdl << tab << declare("F_stdlv", msbF+wOut-1+g) << " <= std_logic_vector(coeffF);" << endl;
 
 				//create DeltaX and DeltaY
 				/*
@@ -906,7 +906,7 @@ namespace flopoco {
 
 				//Add C
 				bitHeap->addSignedBitVector(0,									//weight of signal in the bit heap
-											"C",								//name of the signal
+											"coeffC",								//name of the signal
 											msbC+wOut-1+g,						//size of the signal added
 											0,									//index of the lsb in the bit vector from which to add the bits of the addend
 											false);								//if we are correcting the index in the bit vector with a negative weight
@@ -1046,11 +1046,11 @@ namespace flopoco {
 
 		vhdl << tab << declare("qangle", wOut) << " <= (quadrant & " << zg(wOut-2) << ");" << endl;
 		vhdl << tab << declare("Rfinal", wOut) << " <= \"00\" & R_int; -- sign-extended and rounded" << endl;
-		vhdl << tab << "R <= "
+		vhdl << tab << "A <= "
 				<< tab << tab << "     std_logic_vector(signed(qangle) + signed(Rfinal))  when finalAdd='1'" << endl
 				<< tab << tab << "else std_logic_vector(signed(qangle) - signed(Rfinal));" << endl;
 
-		outDelayMap["R"] = getCriticalPath();
+		outDelayMap["A"] = getCriticalPath();
 	}
 
 

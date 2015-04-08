@@ -5,7 +5,7 @@
 #include "gmp.h"
 #include "mpfr.h"
 
-#include "CordicAtan2.hpp"
+#include "FixAtan2ByRecipMultAtan.hpp"
 #include "IntMult/IntMultiplier.hpp"
 #include "IntAddSubCmp/IntAdder.hpp"
 #include "ConstMult/FixRealKCM.hpp"
@@ -21,7 +21,7 @@ using namespace std;
 
 /* TODO Debugging:
 There are still a few last-bit errors with the current setup in
-./flopoco -verbose=3 -pipeline=no CordicAtan2 8 TestBenchFile -2
+./flopoco -verbose=3 -pipeline=no FixAtan2ByRecipMultAtan 8 TestBenchFile -2
 
 
 They are all for vectors of small norm 
@@ -53,25 +53,26 @@ namespace flopoco{
 
 
 
-	CordicAtan2::CordicAtan2(Target* target, int wIn_, int wOut_, int method, map<string, double> inputDelays_) 
-		: 		FixAtan2(target_, wIn_, wOut_, inputDelays_)
+	FixAtan2ByRecipMultAtan::FixAtan2ByRecipMultAtan(Target* target_, int wIn_, int wOut_, int method, map<string, double> inputDelays_) :
+ 		FixAtan2(target_, wIn_, wOut_, inputDelays_)
 	{
-	
 		int stage;
-		srcFileName="CordicAtan2";
+		srcFileName="FixAtan2ByRecipMultAtan";
 		setCopyrightString ( "Matei Istoan, Florent de Dinechin (2012-...)" );
 		useNumericStd_Unsigned();
+
+#if 0
 
 		int degree=method & 7;
 		method=method & 0xF8;
 		REPORT(DEBUG, "method=" << method << "  degree=" << degree);
 	
 		ostringstream name;
-		name << (method<=7?"InvMultAtan_":"CordicAtan2_") << wIn_ << "_" << wOut_ << "_uid" << getNewUId();
+		name << (method<=7?"InvMultAtan_":"FixAtan2ByRecipMultAtan_") << wIn_ << "_" << wOut_ << "_uid" << getNewUId();
 		setNameWithFreq( name.str() );
 	
 		mpfr_t  zatan;	// used only by CORDIC but who cares
-		mpfr_init2(zatan, 10*w);
+		mpfr_init2(zatan, 10*wOut);
 	
 
 #if 0	// in FixAtan2
@@ -83,7 +84,7 @@ namespace flopoco{
 		addOutput  ( "A"  , w, 2 );
 	
 		setCriticalPath(getMaxInputDelays(inputDelays));
-		//		manageCriticalPath( target->lutDelay());
+		//		manageCriticalPath( getTarget()->lutDelay());
 #endif	
 
 		//Defining the various parameters according to method
@@ -129,10 +130,10 @@ namespace flopoco{
 		int sizeXYR = wIn-1; // no need for sign bit any longer
 		if(doScalingRR) {
 
-			manageCriticalPath( target->lutDelay() + target->localWireDelay());
+			manageCriticalPath( getTarget()->lutDelay() + getTarget()->localWireDelay());
 			vhdl << tab << declare("XorY", sizeXYR-1) << " <= XR" << range(sizeXYR-1,1) << " or YR" << range(sizeXYR-1,1) << ";" << endl;
 			// The LZC
-			LZOC* lzc = new	LZOC(target, sizeXYR-1);
+			LZOC* lzc = new	LZOC(getTarget(), sizeXYR-1);
 			addSubComponent(lzc);
 			
 			inPortMap(lzc, "I", "XorY");
@@ -146,7 +147,7 @@ namespace flopoco{
 			//		setCriticalPath( lzc->getOutputDelay("O") );
 			
 			// The two shifters are two instance of the same component
-			Shifter* lshift = new Shifter(target, sizeXYR, sizeXYR-1, Shifter::Left);   
+			Shifter* lshift = new Shifter(getTarget(), sizeXYR, sizeXYR-1, Shifter::Left);   
 			addSubComponent(lshift);
 			
 			inPortMap(lshift, "S", "S");
@@ -209,7 +210,7 @@ namespace flopoco{
 			vhdl << tab << declare("Y1", sizeY) << " <= '0' & YRS & " << zg(sizeY-sizeXYR-1) << ";" <<endl;			
 			stage=1; 
  
-			manageCriticalPath( target->adderDelay(sizeX));
+			manageCriticalPath( getTarget()->adderDelay(sizeX));
 			vhdl << tab << "--- Iteration " << stage << " : sign is known positive ---" << endl;
 			vhdl << tab << declare(join("YShift", stage), sizeX) << " <= " << rangeAssign(sizeX-1, sizeX-stage, "'0'") << " & Y" << stage << range(sizeX-1, stage) << ";" << endl;
 			vhdl << tab << declare(join("X", stage+1), sizeX) << " <= " 
@@ -240,7 +241,7 @@ namespace flopoco{
 				// Invariant: sizeX-sizeY = stage-2
 				vhdl << tab << "--- Iteration " << stage << " ---" << endl;
 
-				manageCriticalPath( target->localWireDelay(sizeX+1) + target->adderDelay(max(sizeX,sizeZ)) );
+				manageCriticalPath( getTarget()->localWireDelay(sizeX+1) + getTarget()->adderDelay(max(sizeX,sizeZ)) );
 				vhdl << tab << declare(join("sgnY", stage))  << " <= " <<  join("Y", stage)  <<  of(sizeY-1) << ";" << endl;
 			
 				if(-2*stage+1 >= -w+1-gXY) { 
@@ -278,10 +279,10 @@ namespace flopoco{
 			} //end for loop
 		
 			// Give the time to finish the last rotation
-			// manageCriticalPath( target->localWireDelay(w+1) + target->adderDelay(w+1) // actual CP delay
-			//                     - (target->localWireDelay(sizeZ+1) + target->adderDelay(sizeZ+1))); // CP delay that was already added
+			// manageCriticalPath( getTarget()->localWireDelay(w+1) + getTarget()->adderDelay(w+1) // actual CP delay
+			//                     - (getTarget()->localWireDelay(sizeZ+1) + getTarget()->adderDelay(sizeZ+1))); // CP delay that was already added
 
-			manageCriticalPath( target->localWireDelay(w+1) + target->adderDelay(2) );
+			manageCriticalPath( getTarget()->localWireDelay(w+1) + getTarget()->adderDelay(2) );
 
 			vhdl << tab << declare("finalZ", w) << " <= Z" << stage << of(sizeZ-1) << " & Z" << stage << range(sizeZ-1, sizeZ-w+1) << "; -- sign-extended and rounded" << endl;
 		}
@@ -314,14 +315,14 @@ namespace flopoco{
 			invfun << "2/(1+x)-1b"<<lsbRecip;
 			if(degree==1) {
 				//BipartiteTable *deltaX2Table
-				recipTable = new BipartiteTable(target,
+				recipTable = new BipartiteTable(getTarget(),
 													invfun.str(),
 													-w+2,  // XRS was between 1/2 and 1. XRm1 is between 0 and 1/2
 													msbRecip + 1, // +1 because internally uses signed arithmetic and we want an unsigned result
 													lsbRecip);
 			}
 			else {
-				recipTable = new FixFunctionByPiecewisePoly(target, 
+				recipTable = new FixFunctionByPiecewisePoly(getTarget(), 
 																invfun.str(),
 																-w+2,  // XRS was between 1/2 and 1. XRm1 is between 0 and 1/2
 																msbRecip + 1, // +1 because internally uses signed arithmetic and we want an unsigned result
@@ -341,14 +342,14 @@ namespace flopoco{
 			vhdl << tab << declareFixPoint("R", false, msbRecip, lsbRecip) << " <= unsigned(R0" << range(msbRecip-lsbRecip  , 0) << "); -- removing the sign  bit" << endl;
 			vhdl << tab << declareFixPoint("YRU", false, -1, -w+1) << " <= unsigned(YRS);" << endl;
 
-			if(target->plainVHDL()) { // generate a "*"
-				manageCriticalPath(target->DSPMultiplierDelay());
+			if(getTarget()->plainVHDL()) { // generate a "*"
+				manageCriticalPath(getTarget()->DSPMultiplierDelay());
 				vhdl << tab << declareFixPoint("P", false, msbRecip -1 +1, lsbRecip-w+1) << " <= R*YRU;" << endl;
 				resizeFixPoint("PtruncU", "P", msbProduct, lsbProduct);
 				vhdl << tab << declare("P_slv", msbProduct-lsbProduct+1)  << " <=  std_logic_vector(PtruncU);" << endl;
 			}
 			else{ // generate an IntMultiplier
-				manageCriticalPath(target->DSPMultiplierDelay()); // This should be replaced with a method of IntMultiplier or something
+				manageCriticalPath(getTarget()->DSPMultiplierDelay()); // This should be replaced with a method of IntMultiplier or something
 				IntMultiplier::newComponentAndInstance(this,
 																							 "divMult",     // instance name
 																							 "R",  // x
@@ -362,14 +363,14 @@ namespace flopoco{
 			ostringstream atanfun;
 			atanfun << "atan(x)/pi";
 			if(degree==1) {
-				atanTable = new BipartiteTable(target,
+				atanTable = new BipartiteTable(getTarget(),
 													atanfun.str(),
 													lsbProduct,
 													msbAtan,
 													lsbAtan);
 			}
 			else {
-				atanTable  = new FixFunctionByPiecewisePoly(target,
+				atanTable  = new FixFunctionByPiecewisePoly(getTarget(),
 																atanfun.str(),
 																lsbProduct,
 																msbAtan,
@@ -404,51 +405,14 @@ namespace flopoco{
 		vhdl << tab << "A <= "
 				 << tab << tab << "     qangle + finalZ  when finalAdd='1'" << endl
 				 << tab << tab << "else qangle - finalZ;" << endl;
+
+#endif
 	};
 
 
-	CordicAtan2::~CordicAtan2(){
+	FixAtan2ByRecipMultAtan::~FixAtan2ByRecipMultAtan(){
 	};
 
-
-
-
-	void CordicAtan2::computeGuardBitsForCORDIC(){	
-#define ROUNDED_ROTATION 0 // 0:trunc 
-	
-#if ROUNDED_ROTATION
-			REPORT(DEBUG, "Using rounded rotation trick");
-#endif
-
-			// ulp = weight of the LSB of the result is 2^(-w+1)
-			// half-ulp is 2^-w
-			// 1/pi atan(2^-w) < 1/2. 2^-w therefore after w-1 interations,  method error will be bounded by 2^-w 
-			maxIterations = w-1;
-			//error analysis for the (x,y) datapath
-			double eps;  //error in ulp
-
-			if(negateByComplement)
-				eps=1; // initial neg-by-not
-			else
-				eps=0;
-
-			double shift=0.5;
-			for(int stage=1; stage<=maxIterations; stage++){
-#if ROUNDED_ROTATION
-				eps = eps + eps*shift + 0.5; // 0.5 assume rounding in the rotation.
-#else
-				eps = eps + eps*shift + 1.0; // 1.0 assume truncation in the rotation.
-#endif
-				shift *=0.5;
-			}
-			// guard bits depend only on the number of iterations
-			gXY = (int) ceil(log2(eps));  
-			//error analysis for the A datapath
-			eps = maxIterations*0.5; // only the rounding error in the atan constant
-			gA = 1 + (int) ceil(log2(eps)); // +1 for the final rounding 
-			REPORT(DEBUG, "Error analysis computes eps=" << eps << " ulps on the XY datapath, hence  gXY=" << gXY);
-			REPORT(DEBUG, "Error analysis computes eps=" << eps <<  " ulps on the A datapath, hence  gA=" << gA );
-	} 
 
 
 

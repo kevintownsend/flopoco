@@ -63,8 +63,8 @@ namespace flopoco {
 		int wIn;                     					/**< input width */
 		int wOut;                    					/**< output width */
 
-		bool negateByComplement;   /**< An architecture parameter: we negate negative values to obtain the first octant */
-		bool doScalingRR;          /**< An architecture parameter: should we have a scaling range reduction */
+		bool negateByComplement=false; /**< An architecture parameter: we negate negative values to obtain the first octant */
+		bool doScalingRR;              /**< An architecture parameter: should we have a scaling range reduction */
 		mpfr_t constPi;
 	};
 

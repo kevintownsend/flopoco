@@ -346,7 +346,7 @@ namespace flopoco{
 
 					if (slack<0)
 					{
-						slack = 1/target->frequency() - target_->ffDelay();
+						slack = 1/target->frequency() - getTarget()->ffDelay();
 						pipeinit = true;
 					}
 					else
@@ -355,7 +355,7 @@ namespace flopoco{
 					slack -=  target->localWireDelay(ppiSize[0]) + target->lutDelay();
 					if (slack<0)
 					{
-						slack = 1/target->frequency() - target_->ffDelay();
+						slack = 1/target->frequency() - getTarget()->ffDelay();
 						pipe[0] = true;
 					}
 					else
@@ -365,7 +365,7 @@ namespace flopoco{
 					slack -= target->localWireDelay(ppiSize[1]) + target->adderDelay(ppiSize[1]);
 					if (slack<0)
 					{
-						slack = 1/target->frequency()- target_->ffDelay();
+						slack = 1/target->frequency()- getTarget()->ffDelay();
 						pipe[1] = true;
 					}
 					else
@@ -377,7 +377,7 @@ namespace flopoco{
 						slack -= target->adderDelay(target->lutInputs()-1) + target->localWireDelay(ppiSize[i]);
 						if (slack<0)
 						{
-							slack = 1/target->frequency()- target_->ffDelay();
+							slack = 1/target->frequency()- getTarget()->ffDelay();
 							pipe[i] = true;
 						}
 						else
@@ -411,7 +411,7 @@ namespace flopoco{
 							 << " <= " << join("pp",i) << " + " << join("sum", i-1) << ";" << endl;
 					}
 					vhdl << declare("OutRes", ppiSize[nbOfTables-1]) << " <= " << join("sum", nbOfTables-1) << ";" << endl;
-					setCriticalPath( 1.0/target_->frequency() - target_->ffDelay() - slack );
+					setCriticalPath( 1.0/getTarget()->frequency() - getTarget()->ffDelay() - slack );
 				}
 			}
 			else 

@@ -64,11 +64,11 @@ namespace flopoco{
 				//determine chunk size
 				int cs;
 				setCriticalPath(getMaxInputDelays(inputDelays));
-				if (!target->suggestSlackSubcomparatorSize(cs, wIn_, getCriticalPath() + target->localWireDelay() + target_->ffDelay(), constant)){
+				if (!target->suggestSlackSubcomparatorSize(cs, wIn_, getCriticalPath() + target->localWireDelay() + getTarget()->ffDelay(), constant)){
 					REPORT(INFO, "Extra reg level inserted here!");
 					nextCycle();
 					setCriticalPath(0.0);
-					target->suggestSlackSubcomparatorSize(cs, wIn, target->localWireDelay() + target_->ffDelay(), constant);
+					target->suggestSlackSubcomparatorSize(cs, wIn, target->localWireDelay() + getTarget()->ffDelay(), constant);
 				}	
 				REPORT(INFO, "The suggested chunk size for the first splitting was:"<<cs);
 				//number of chunks
@@ -91,10 +91,10 @@ namespace flopoco{
 					int l = 0;
 					int ibits = k;
 					//determine number of chunks needed for this comparisson. In most cases this will be 1
-					if (!target->suggestSlackSubcomparatorSize(cs, ibits, getCriticalPath() + target->localWireDelay() + target_->ffDelay(), true)){
+					if (!target->suggestSlackSubcomparatorSize(cs, ibits, getCriticalPath() + target->localWireDelay() + getTarget()->ffDelay(), true)){
 						nextCycle();
 						setCriticalPath(0.0);
-						target->suggestSlackSubcomparatorSize(cs, ibits, target->localWireDelay() + target_->ffDelay(), true);
+						target->suggestSlackSubcomparatorSize(cs, ibits, target->localWireDelay() + getTarget()->ffDelay(), true);
 					}	
 					REPORT(INFO, "The number of ibits is "<<ibits<<" cs="<<cs);
 					k = ( ibits % cs ==0? ibits/cs : ibits/cs + 1);
@@ -114,10 +114,10 @@ namespace flopoco{
 							<<"="<< og(  min((i+1)*cs-1,ibits-1)+1 -i*cs ,0 )<<" else '0';"<<endl;
 						}
 						
-						if (!target->suggestSlackSubcomparatorSize(cs, k, getCriticalPath() + target->localWireDelay() + target_->ffDelay() , true)){
+						if (!target->suggestSlackSubcomparatorSize(cs, k, getCriticalPath() + target->localWireDelay() + getTarget()->ffDelay() , true)){
 							nextCycle();
 							setCriticalPath(0.0);
-							target->suggestSlackSubcomparatorSize(cs, k, 0.0 + target->localWireDelay() + target_->ffDelay(), true);
+							target->suggestSlackSubcomparatorSize(cs, k, 0.0 + target->localWireDelay() + getTarget()->ffDelay(), true);
 						}
 						ibits = k;
 						k = ( ibits % cs ==0? ibits/cs : ibits/cs + 1);

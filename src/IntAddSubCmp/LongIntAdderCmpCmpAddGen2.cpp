@@ -314,16 +314,16 @@ exit(-1);
 		o << "use ieee.std_logic_1164.all;" << endl;
 		o << "use ieee.std_logic_arith.all;" << endl;
 		o << "library work;" << endl;
-		if (target_->getVendor() == "Xilinx"){
+		if (getTarget()->getVendor() == "Xilinx"){
 			o << "library UNISIM;"<<endl;
 			o << "use UNISIM.VComponents.all;"<<endl;
-		}else if(target_->getVendor() == "Altera"){
+		}else if(getTarget()->getVendor() == "Altera"){
 			o << "LIBRARY lpm;"<<endl;
 			o << "USE lpm.all;"<<endl;
 		}
 		outputVHDLEntity(o);
 		newArchitecture(o,name);
-		if (target_->getVendor() == "Altera"){
+		if (getTarget()->getVendor() == "Altera"){
 			o << "	COMPONENT lpm_add_sub "<<endl;
 			o << "	GENERIC ("<<endl;
 			o << "		lpm_direction		: STRING;"<<endl;

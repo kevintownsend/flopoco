@@ -41,7 +41,7 @@ namespace flopoco {
 		// man atan2 says "atan2(y,x) is atan(y/x)" so we will provide the inputs in the same order...
 		addInput ("X",  wIn);
 		addInput ("Y",  wIn);
-		addOutput("R",  wOut, 2 /*number of possible output values*/);
+		addOutput("A",  wOut, 2 /*number of possible output values*/);
 
 		// everybody needs many digits of Pi (used by emulate etc)
 		mpfr_init2(constPi, 10*(wIn+wOut));
@@ -65,6 +65,10 @@ namespace flopoco {
 			vhdl << tab << declare("Xsat", wIn) << " <= \"1" << zg(wIn-2,-2) << "1\" when X=\"1" <<zg (wIn-1,-2) << "\" else X ;" <<endl;
 			vhdl << tab << declare("Ysat", wIn) << " <= \"1" << zg(wIn-2,-2) << "1\" when Y=\"1" <<zg (wIn-1,-2) << "\" else Y ;" <<endl;
 		}
+
+		// When pipelining I noticed that we perform a subtraction for the comparison X<Y in parallel to the negation anyway
+		// so negateByComplement should always be false, 
+		//except if some day we do an ASIC target where it will cost less hardware.
 
 		if (negateByComplement)	{
 			manageCriticalPath( getTarget()->lutDelay());
@@ -258,8 +262,6 @@ namespace flopoco {
 
 	}
 	
-
-
 
 
 

@@ -247,7 +247,7 @@ namespace flopoco{
 
 
 	int DualTable::size_in_LUTs() {
-		return wOut*(1<<(wIn-target_->lutInputs()));
+		return wOut*(1<<(wIn-getTarget()->lutInputs()));
 	}
 
 

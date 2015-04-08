@@ -370,7 +370,7 @@ void usage(char *name, string opName = ""){
 	if ( full || opName == "FixAtan2"){
 		OP( "FixAtan2","w method");
 		cerr << "Computes atan(x/y) as a=(angle in radian)/pi so a in [-1,1[;\n";
-		cerr << "method is: 0..7 InvMultAtan with approximations of the corresponding degree; 8 plain CORDIC, 9 CORDIC with scaling\n";
+		cerr << "method is: 0..7 InvMultAtan with approximations of the corresponding degree; 8 plain CORDIC, \n";
 		cerr << tab << tab << tab << tab << "10 based on surface approximation, 11 Taylor order 1, 12 Taylor order 2\n";
 		cerr << "w is the size of both inputs and outputs, all being two's complement signals\n";
 	}
@@ -1631,11 +1631,13 @@ bool parseCommandLine(int argc, char* argv[]){
 			int method = atoi(argv[i++]);
 			//select the method
 			Operator* tg;
-			if(method < 10)
-			{
-				tg = new CordicAtan2(target, w,w, method);
-			}else
-			{
+			if(method < 8){	
+				tg = new FixAtan2ByRecipMultAtan(target, w,w, method);
+			}
+			else if(method<10) {
+				tg = new FixAtan2ByCORDIC(target, w,w);
+			}
+			else {
 				tg = new FixAtan2ByBivariateApprox(target, w, w, method-10);
 			}
 

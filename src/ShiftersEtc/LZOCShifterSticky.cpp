@@ -173,21 +173,21 @@ namespace flopoco{
 	
 	double LZOCShifterSticky::compDelay(int n){
 		if ( countType_ == -1 )
-			return target_->localWireDelay() + target_->adderDelay(n/2); 
+			return getTarget()->localWireDelay() + getTarget()->adderDelay(n/2); 
 		else{
-			if (n <= target_->lutInputs())
-					return target_->localWireDelay() + target_->lutDelay();
-			else if ( n<= target_->lutInputs()*target_->lutInputs() )
-				return 2*target_->localWireDelay() + 2*target_->lutDelay();
-			else if ( n< target_->lutInputs()*target_->lutInputs()*target_->lutInputs() )
-				return 3*target_->localWireDelay() + 3*target_->lutDelay();
+			if (n <= getTarget()->lutInputs())
+					return getTarget()->localWireDelay() + getTarget()->lutDelay();
+			else if ( n<= getTarget()->lutInputs()*getTarget()->lutInputs() )
+				return 2*getTarget()->localWireDelay() + 2*getTarget()->lutDelay();
+			else if ( n< getTarget()->lutInputs()*getTarget()->lutInputs()*getTarget()->lutInputs() )
+				return 3*getTarget()->localWireDelay() + 3*getTarget()->lutDelay();
 				else					
-					return target_->localWireDelay() + target_->adderDelay(n/4); 
+					return getTarget()->localWireDelay() + getTarget()->adderDelay(n/4); 
 		}
 	}
 
 	double LZOCShifterSticky::muxDelay(int selFanout){
-		return target_->localWireDelay(selFanout) + target_->lutDelay(); 
+		return getTarget()->localWireDelay(selFanout) + getTarget()->lutDelay(); 
 	}
 	
 	
