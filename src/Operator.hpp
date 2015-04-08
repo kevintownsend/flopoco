@@ -145,13 +145,9 @@ public:
 	 * Adds a signal of type Signal::out to the the I/O signal list.
 	 * @param name  the name of the signal
 	 */	
-	void addOutput(const std::string name) {
-		addOutput (name, 1, 1, false);
-	}
+	void addOutput(const std::string name);
 
-	void addOutput(const char* name) {
-		addOutput (name, 1, 1, false);
-	}
+	void addOutput(const char* name);
 
 #if 1
 	// Test:
@@ -225,42 +221,28 @@ public:
 
 	/** use the Synopsys de-facto standard ieee.std_logic_unsigned for this entity
 	 */
-	void useStdLogicUnsigned() {
-		stdLibType_ = 0;
-	};
+	void useStdLogicUnsigned();
 
 	/** use the Synopsys de-facto standard ieee.std_logic_unsigned for this entity
 	 */
-	void useStdLogicSigned() {
-		stdLibType_ = -1;
-	};
-
+	void useStdLogicSigned();
 
 	/** use the real IEEE standard ieee.numeric_std for this entity
 	 */
-	void useNumericStd() {
-		stdLibType_ = 1;
-	};
-	
+	void useNumericStd();
 	/** 
 	 * use the real IEEE standard ieee.numeric_std for this entity, also 
 	 * with support for signed operations on bit vectors
 	 */
-	void useNumericStd_Signed() {
-		stdLibType_ = 2;
-	};
+	void useNumericStd_Signed();
 	
 	/** 
 	 * use the real IEEE standard ieee.numeric_std for this entity, also 
 	 * with support for unsigned operations on bit vectors
 	 */
-	void useNumericStd_Unsigned() {
-		stdLibType_ = 3;
-	};
+	void useNumericStd_Unsigned();
 
-	int getStdLibType() {
-		return stdLibType_; 
-	};
+	int getStdLibType();
 
 	/** Sets Operator name to given name, with either the frequency appended, or "comb" for combinatorial.
 	 * @param operatorName new name of the operator
@@ -299,10 +281,7 @@ public:
 	string getName() const;
 
 	/** produces a new unique identifier */
-	static int getNewUId(){
-		Operator::uid++;
-		return Operator::uid;
-	}
+	static int getNewUId();
 
 
 
@@ -419,9 +398,8 @@ public:
 	 * @param regType: the registring type of this signal. See also the Signal Class for mor info
 	 * @return name
 	 */
-	string declare(string name, Signal::SignalType regType = Signal::wire ) {
-		return declare(name, 1, false, regType);
-	}
+	string declare(string name, Signal::SignalType regType = Signal::wire );
+
 
 	/** Declares a fixed-point signal on the Left Hand Side of a VHDL assignment
 	 * @param name is the name of the signal
@@ -494,35 +472,26 @@ public:
 	/** define architecture name for this operator (by default : arch)
 	 *	@param[in] 	architectureName		- new name for the operator architecture
 	 **/
-	void setArchitectureName(string architectureName) {
-		architectureName_ = architectureName;
-	};	
-
+	void setArchitectureName(string architectureName);
 
 	/**
 	 * A new architecture inline function
 	 * @param[in,out] o 	- the stream to which the new architecture line will be added
 	 * @param[in]     name	- the name of the entity corresponding to this architecture
 	 **/
-	inline void newArchitecture(std::ostream& o, std::string name){
-		o << "architecture " << architectureName_ << " of " << name  << " is" << endl;
-	}
+	void newArchitecture(std::ostream& o, std::string name);
 	
 	/**
 	 * A begin architecture inline function 
 	 * @param[in,out] o 	- the stream to which the begin line will be added
 	 **/
-	inline void beginArchitecture(std::ostream& o){
-		o << "begin" << endl;
-	}
+	void beginArchitecture(std::ostream& o);
 
 	/**
 	 * A end architecture inline function 
 	 * @param[in,out] o 	- the stream to which the begin line will be added
 	 **/
-	inline void endArchitecture(std::ostream& o){
-		o << "end architecture;" << endl << endl;
-	}
+	void endArchitecture(std::ostream& o);
 
 
 
@@ -661,23 +630,21 @@ public:
 
 
 
-        /** Set the operator to need a recirculation signal in order to 
-                  trigger the pipeline work
-         */
-        void setRecirculationSignal();
+	/** Set the operator to need a recirculation signal in order to 
+			trigger the pipeline work
+	*/
+	void setRecirculationSignal();
 	
 	/** Indicates that it is not a warning if there is feedback of one cycle, but it
 		is an error if a feedback of more than one cycle happens.
 		*/
-	void setHasDelay1Feedbacks()
-	{
-		hasDelay1Feedbacks_=true;
-	}
+	void setHasDelay1Feedbacks();
 
 
-	bool hasDelay1Feedbacks(){
-		return hasDelay1Feedbacks_;
-	}
+	/** Indicates that it is not a warning if there is feedback of one cycle, but it
+		is an error if a feedback of more than one cycle happens.
+		*/
+	bool hasDelay1Feedbacks();
 	
 
 

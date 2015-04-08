@@ -145,6 +145,15 @@ namespace flopoco{
 		//		declareTable[name] = s->getCycle();
 	}
 	
+	void Operator::addOutput(const std::string name) {
+		addOutput (name, 1, 1, false);
+	}
+
+	void Operator::addOutput(const char* name) {
+		addOutput (name, 1, 1, false);
+	}
+
+
 #if 1
 	void Operator::addFixInput(const std::string name, const bool isSigned, const int msb, const int lsb) {
 		if (signalMap_.find(name) != signalMap_.end()) {
@@ -334,6 +343,11 @@ namespace flopoco{
 		return uniqueName_;
 	}
 	
+	int Operator::getNewUId(){
+		Operator::uid++;
+		return Operator::uid;
+	}
+
 	int Operator::getIOListSize() const{
 		return ioList_.size();
 	}
@@ -426,7 +440,32 @@ namespace flopoco{
 		copyrightString_ = authorsYears;
 	}
 	
+	void Operator::useStdLogicUnsigned() {
+		stdLibType_ = 0;
+	};
 	
+	/** use the Synopsys de-facto standard ieee.std_logic_unsigned for this entity
+	 */
+	void Operator::useStdLogicSigned() {
+		stdLibType_ = -1;
+	};
+	
+	void Operator::useNumericStd() {
+		stdLibType_ = 1;
+	};
+	
+	void Operator::useNumericStd_Signed() {
+		stdLibType_ = 2;
+	};
+	
+	void Operator::useNumericStd_Unsigned() {
+		stdLibType_ = 3;
+	};
+
+	int Operator::getStdLibType() {
+		return stdLibType_; 
+	};
+
 	void Operator::licence(std::ostream& o){
 		licence(o, copyrightString_);
 	}
@@ -854,6 +893,12 @@ namespace flopoco{
 		return name;
 	}
 
+
+	string Operator::declare(string name, Signal::SignalType regType ) {
+		return declare(name, 1, false, regType);
+	}
+
+
 	// TODO: factor code between next and previous methods
 	string Operator::declareFixPoint(string name, const bool isSigned, const int MSB, const int LSB, Signal::SignalType regType){
 		Signal* s;
@@ -1262,7 +1307,26 @@ namespace flopoco{
 			addAttribute("altera_attribute", "string", t->getName()+": component", "-name ALLOW_ANY_ROM_SIZE_FOR_RECOGNITION OFF");
 	}
 	
+
+	void Operator::setArchitectureName(string architectureName) {
+		architectureName_ = architectureName;
+	};	
+
+
+	void Operator::newArchitecture(std::ostream& o, std::string name){
+		o << "architecture " << architectureName_ << " of " << name  << " is" << endl;
+	}
+
 	
+	void Operator::beginArchitecture(std::ostream& o){
+		o << "begin" << endl;
+	}
+
+
+	void Operator::endArchitecture(std::ostream& o){
+		o << "end architecture;" << endl << endl;
+	}
+
 	
 	string Operator::buildVHDLComponentDeclarations() {
 		ostringstream o;
@@ -2161,6 +2225,17 @@ namespace flopoco{
 		return false;
 	}
 	
+	void Operator::setHasDelay1Feedbacks()
+	{
+		hasDelay1Feedbacks_=true;
+	}
+
+
+	bool Operator::hasDelay1Feedbacks(){
+		return hasDelay1Feedbacks_;
+	}
+
+
 }
 
 
