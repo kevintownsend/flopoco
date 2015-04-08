@@ -527,6 +527,7 @@ void usage(char *name, string opName = ""){
 		cerr << "   -clockenable=<yes|no>                                  (default is no)\n";
 		cerr << "   -plainVHDL=<yes|no>                                    (default=no)\n";
 		cerr << "   -useHardMult=<yes|no>                                  (default=yes)\n";
+		cerr << "   -generateFigures=<yes|no>                              (default=no)\n";
 		cerr << "   -unusedHardMultThreshold=<float between 0 and 1>       (default=0.5)\n";
 		cerr << "   -resourceEstimation=<0..3> (experimental)              (default=0) \n";
 		cerr << "   -floorplanning=<yes|no> (experimental, Xilinx only)    (default=no)\n";
@@ -699,7 +700,15 @@ bool parseCommandLine(int argc, char* argv[]){
 						target->setUnusedHardMultThreshold(t);
 					}
 					else {
-						cerr<<"ERROR: unusedHardMultThreshold out of range [0,1], got "<<t<<endl; 
+						cerr<<"ERROR: unusedHardMultThreshold out of range [0,1],    got "<<t<<endl; 
+						usage(argv[0],"options");
+					}
+				}
+				else if (o == "generateFigures") {
+					if(v=="yes") target->setGenerateFigures(true);
+					else if(v=="no")  target->setGenerateFigures(false);
+					else {
+						cerr<<"ERROR: generateFigures option should be yes or no,    got "<<v<<"."<<endl; 
 						usage(argv[0],"options");
 					}
 				}

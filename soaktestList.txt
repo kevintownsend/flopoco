@@ -1,5 +1,0 @@
-FPConstDiv
-FPMult
-IntMultiplier
-IntConstDiv
-FPSquare

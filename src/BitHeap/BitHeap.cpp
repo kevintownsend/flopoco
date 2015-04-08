@@ -13,8 +13,6 @@
 
 */
 
-// To enable SVG plotting, #define BITHEAP_GENERATE_SVG in BitHeap.hpp
-
 
 #include "BitHeap.hpp"
 #include "Plotter.hpp"
@@ -1426,10 +1424,9 @@ namespace flopoco
 					generateFinalAddVHDL(true);
 			}
 				
-#if BITHEAP_GENERATE_SVG
-			plotter->plotBitHeap();
-#endif
-
+			if(op->getTarget()->generateFigures()){
+				plotter->plotBitHeap();
+			}
 		}
 
 		for(int i=0; i<(sizeof(usedCompressors)/sizeof(bool)); i++)
@@ -1441,7 +1438,7 @@ namespace flopoco
 						possibleCompressors[i]->addToGlobalOpList();
 					}
 					else
-					        usedCompressors[i] = false;
+						usedCompressors[i] = false;
 			}
 		}
 

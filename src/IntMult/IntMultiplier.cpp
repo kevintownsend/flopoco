@@ -14,7 +14,6 @@
   All rights reserved.
 */
 
-// To enable SVG plotting, #define BITHEAP_GENERATE_SVG in BitHeap.hpp
 
 
 // TODO 
@@ -784,15 +783,13 @@ namespace flopoco {
 		}
 
 
-#if GENERATE_SVG
-		{
+		if(parentOp->getTarget()->generateFigures()) {
 			// before update plotter->plotMultiplierConfiguration(getName(), localSplitVector, wX, wY, wOut, g);
 			int guardBits = (lsbWeightInBitHeap>0) ? lsbWeightInBitHeap-lsbFullMultWeightInBitheap : wX+wY+lsbWeightInBitHeap-wOut;
 
 			plotter->plotMultiplierConfiguration(getName(), localSplitVector,
 					wX, wY, /*wOut*/ wX+wY+lsbWeightInBitHeap-guardBits, /*g*/ guardBits);
 		}
-#endif
 	}
 	
 

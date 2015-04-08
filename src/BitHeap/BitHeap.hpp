@@ -24,8 +24,6 @@
 #include "IntAddSubCmp/BasicCompressor.hpp"
 #include "IntMult//MultiplierBlock.hpp"
 
-// To enable SVG plotting, uncomment the following line
- #define BITHEAP_GENERATE_SVG 1
  
  #define COMPRESSION_TYPE 0
 
