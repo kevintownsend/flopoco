@@ -123,7 +123,6 @@ namespace flopoco {
 
 				//manage the pipeline
 				syncCycleFromSignal("atan2TableOutput");
-				setCriticalPath(lshift->getOutputDelay("Y"));
 
 				//split the output of the table to the corresponding parts A, B and C
 				vhdl << tab << declareFixPoint("coeffC", true, msbC-1,  -wOut+1-g) << " <= signed(atan2TableOutput"
@@ -235,7 +234,6 @@ namespace flopoco {
 
 				//manage the pipeline
 				syncCycleFromSignal("atan2TableOutput");
-				setCriticalPath(lshift->getOutputDelay("Y"));
 				manageCriticalPath(getTarget()->localWireDelay());
 
 				//extract signals A, B and C
@@ -869,6 +867,7 @@ namespace flopoco {
 			THROWERROR("in FixAtan2ByBivariateApprox constructor: invalid value for the requested architecture type");
 		}
 
+		vhdl << tab << declare("finalZ", wOut) << " <= \"00\" & R_int;" << endl;
 
 		// Reconstruction code is shared, defined in FixAtan2
 		buildQuadrantReconstruction();

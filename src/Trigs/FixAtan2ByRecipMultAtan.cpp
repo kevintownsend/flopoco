@@ -156,8 +156,6 @@ namespace flopoco{
 
 		vhdl << tab << declare("finalZ", wOut) << " <= \"00\" & atanTableOut;" << endl;
 			
-		//			vhdl << tab << declare(finalZ, sizeZ) << " <= '0' & finalZu; -- adding back a sign  bit for the reconstruction" << endl;
-
 		// Reconstruction code is shared, defined in FixAtan2
 		buildQuadrantReconstruction();
 

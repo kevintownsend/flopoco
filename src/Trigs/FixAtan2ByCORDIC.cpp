@@ -52,8 +52,6 @@ namespace flopoco{
 	
 		computeGuardBits();
 
-		doScalingRR=false;
-
 		//Defining the various parameters according to method
 
 
