@@ -175,7 +175,7 @@ namespace flopoco{
 
 
 	int Table::size_in_LUTs() {
-		return wOut*int(intpow2(wIn-target_->lutInputs()));
+		return wOut*int(intpow2(wIn-getTarget()->lutInputs()));
 	}
 
 }

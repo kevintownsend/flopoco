@@ -1028,7 +1028,7 @@ namespace flopoco{
 		vhdl << tab << "-- mantissa will be either Y0-z^2/2  or  -Y0+z^2/2,  depending on sR  " << endl;
 		vhdl << tab << declare("Z_small", wF+gLog+2) << " <= small_absZ0_normd & " << rangeAssign((wF+gLog+2)-small_absZ0_normd_size-1, 0, "'0'") << ";" << endl;
 
-		manageCriticalPath( target_->localWireDelay() + target_->lutDelay() );
+		manageCriticalPath( getTarget()->localWireDelay() + getTarget()->lutDelay() );
 		vhdl << tab << declare("Log_smallY", wF+gLog+2) << " <= Z2o2_small when sR='1' else not(Z2o2_small);" << endl; 
 		vhdl << tab << declare("nsRCin",1, false) << " <= not ( sR );" << endl;
 
@@ -1091,7 +1091,7 @@ namespace flopoco{
 		
 		int E_normalSize = getSignalByName("E_normal")->width(); 
 
-		manageCriticalPath(target_->lutDelay() + target_->adderDelay(wE));
+		manageCriticalPath(getTarget()->lutDelay() + getTarget()->adderDelay(wE));
 		double cpER = getCriticalPath();
 
 		vhdl << tab << declare("E0offset", wE) << " <= \"" << unsignedBinary((mpz_class(1)<<(wE-1)) -2 + wE , wE) << "\"; -- E0 + wE "<<endl;
@@ -1134,7 +1134,7 @@ namespace flopoco{
 	
 		setCriticalPath(finalRoundAdder->getOutputDelay("R"));
 
-		manageCriticalPath(target_->lutDelay() );
+		manageCriticalPath(getTarget()->lutDelay() );
 		vhdl << tab << "R(wE+wF+2 downto wE+wF) <= \"110\" when ((XExnSgn(2) and (XExnSgn(1) or XExnSgn(0))) or (XExnSgn(1) and XExnSgn(0))) = '1' else" << endl
 			  << "                              \"101\" when XExnSgn(2 downto 1) = \"00\"  else" << endl
 			  << "                              \"100\" when XExnSgn(2 downto 1) = \"10\"  else" << endl

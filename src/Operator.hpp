@@ -1385,9 +1385,7 @@ public:
 	/////////////////////////////////////////////////////////////////////////////////////////////////
 	
 	static multimap < string, TestState > testMemory;			/**< multimap which will be used to test if the selected operator already had been tested */
-
 protected:    
-	Target*             target_;          					/**< The target on which the operator will be deployed */
 	string              uniqueName_;      					/**< By default, a name derived from the operator class and the parameters */
 	string 				architectureName_;					/**< Name of the operator architecture */
 	vector<Signal*>     testCaseSignals_; 					/**< The list of pointers to the signals in a test case entry. Its size also gives the dimension of a test case */
@@ -1402,7 +1400,8 @@ protected:
 	vector<Operator*>   oplist;                     /**< A list of all the sub-operators */
 	
 
-private:
+private:    
+	Target*             target_;          					/**< The target on which the operator will be deployed */
 	int                    stdLibType_;                 	/**< 0 will use the Synopsys ieee.std_logic_unsigned, -1 uses std_logic_signed, 1 uses ieee numeric_std  (preferred) */
 	int                    numberOfInputs_;             	/**< The number of inputs of the operator */
 	int                    numberOfOutputs_;            	/**< The number of outputs of the operator */

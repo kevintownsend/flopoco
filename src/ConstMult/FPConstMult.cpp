@@ -575,7 +575,7 @@ namespace flopoco{
 			setSignalDelay("norm", getCriticalPath()); // save the delay for later
 			
 			// one mux controlled by the diffusion of the "norm" bit
-			manageCriticalPath(target_->localWireDelay(wF_out+1) + target_->lutDelay());
+			manageCriticalPath(getTarget()->localWireDelay(wF_out+1) + getTarget()->lutDelay());
 			
 			vhdl << tab << declare("shifted_frac",    wF_out+1) << " <= sig_prod("<<icm->rsize -2<<" downto "<<icm->rsize - wF_out-2 <<")  when norm = '1'"<<endl
 			     << tab << "           else sig_prod("<<icm->rsize -3<<" downto "<<icm->rsize - wF_out - 3<<");"<<endl;  
@@ -584,7 +584,7 @@ namespace flopoco{
 		// Here if mantissa was 1 critical path is 0. Otherwise we want to reset critical path to the norm bit
 		setCycleFromSignal("norm", getSignalDelay("norm"));
 		
-		manageCriticalPath(target_->localWireDelay() + target_->adderDelay(wE_sum+1));
+		manageCriticalPath(getTarget()->localWireDelay() + getTarget()->adderDelay(wE_sum+1));
 		vhdl <<endl << tab << "-- exponent processing"<<endl;
 		
 		vhdl << tab << declare("abs_unbiased_cst_exp",wE_sum+1) << " <= \""

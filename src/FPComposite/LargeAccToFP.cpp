@@ -223,7 +223,7 @@ namespace flopoco{
 		C=mpz_class(0);
 		int chunkSize, k;
 		
-		target_->suggestSubaddSize(chunkSize, MSBA_-LSBA_+1);
+		getTarget()->suggestSubaddSize(chunkSize, MSBA_-LSBA_+1);
 		if (chunkSize >= MSBA_-LSBA_+1)
 			k=1;
 		else

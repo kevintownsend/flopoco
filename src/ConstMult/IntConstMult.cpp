@@ -163,7 +163,7 @@ namespace flopoco{
 	 * Depth-first traversal of the DAG to build the pipeline.
 	 * @param partial_delay accumulates the delays of several stages
 
-	 Starting from the leaves, we accumulate partial delays until target_period is reached.
+	 Starting from the leaves, we accumulate partial delays until getTarget()period is reached.
 	 Then pipeline level will be inserted.
 
 */
@@ -226,8 +226,8 @@ namespace flopoco{
 					use_pipelined_adder=false;
 					if (isSequential()) {
 						// First case: using a plain adder fits within the current pipeline level
-						double tentative_delay = max_children_delay + target_->adderDelay(adder_size) + target_->localWireDelay();
-						if(tentative_delay <= 1./target_->frequency()) {
+						double tentative_delay = max_children_delay + getTarget()->adderDelay(adder_size) + getTarget()->localWireDelay();
+						if(tentative_delay <= 1./getTarget()->frequency()) {
 							use_pipelined_adder=false;
 							partial_delay = tentative_delay;					
 						}
@@ -235,18 +235,18 @@ namespace flopoco{
 							// register the children 
 							nextCycle();
 							// Is a standard adder OK ?
-							tentative_delay = target_->ffDelay() + target_->localWireDelay() + target_->adderDelay(adder_size);
-							if(tentative_delay <= 1./target_->frequency()) {
+							tentative_delay = getTarget()->ffDelay() + getTarget()->localWireDelay() + getTarget()->adderDelay(adder_size);
+							if(tentative_delay <= 1./getTarget()->frequency()) {
 								use_pipelined_adder=false;
 								partial_delay = tentative_delay;					
 							}
 							else { // Need to instantiate an IntAdder
 								use_pipelined_adder=true;
-								adder = new IntAdder(target_, adder_size);
+								adder = new IntAdder(getTarget(), adder_size);
 								adder->changeName(getName() + "_" + sao->name + "_adder");
 								oplist.push_back(adder);
 
-								partial_delay =  (adder->getOutDelayMap())["R"]; //  target_->adderDelay(adder->getLastChunkSize());
+								partial_delay =  (adder->getOutDelayMap())["R"]; //  getTarget()->adderDelay(adder->getLastChunkSize());
 							}
 						}
 					}
@@ -421,7 +421,7 @@ namespace flopoco{
 
 					double local_delay;
 					if(op == Neg){   
-						local_delay = target_->adderDelay(sao->cost_in_full_adders);
+						local_delay = getTarget()->adderDelay(sao->cost_in_full_adders);
 					}
 					else 
 						local_delay=0;
@@ -432,14 +432,14 @@ namespace flopoco{
 					setCycleFromSignal(iname, false);
 
 					if(isSequential() 
-							&& idelay +  target_->localWireDelay() + local_delay > 1./target_->frequency()
+							&& idelay +  getTarget()->localWireDelay() + local_delay > 1./getTarget()->frequency()
 							&& sao->i->op != X) {
 						// This resets the partial delay to that of this ShiftAddOp
 						nextCycle();
-						partial_delay =  target_->ffDelay() + target_->adderDelay(sao->cost_in_full_adders);
+						partial_delay =  getTarget()->ffDelay() + getTarget()->adderDelay(sao->cost_in_full_adders);
 					}
 					else{ // this ShiftAddOp and its child will be in the same pipeline level
-						partial_delay = idelay + target_->localWireDelay() + local_delay;
+						partial_delay = idelay + getTarget()->localWireDelay() + local_delay;
 					}
 					vhdl << tab << declare(sao->name, size) << " <= " ;
 					// TODO use a pipelined IntAdder when necessary

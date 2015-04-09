@@ -133,8 +133,10 @@
 /*  Various elementary functions in fixed or floating point*/
 #include "Trigs/FixSinCos.hpp"
 #include "Trigs/CordicSinCos.hpp"
-#include "Trigs/CordicAtan2.hpp"
 #include "Trigs/FixAtan2.hpp"
+#include "Trigs/FixAtan2ByCORDIC.hpp"
+#include "Trigs/FixAtan2ByRecipMultAtan.hpp"
+#include "Trigs/FixAtan2ByBivariateApprox.hpp"
 // #include "Trigs/FixSinOrCos.hpp"  Replug when poly eval fixed
 #include "ExpLog/IterativeLog.hpp"
 #include "ExpLog/FPExp.hpp"
