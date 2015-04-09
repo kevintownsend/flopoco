@@ -58,6 +58,16 @@ namespace flopoco{
 		Operator(target),
 		wIn(_wIn), wOut(_wOut), minIn(_minIn), maxIn(_maxIn)
 	{
+		if(wIn<0){
+			stringstream err;
+			err<<"wIn="<<wIn<<"; Input size cannot be negative"<<endl;
+			THROWERROR(err);
+		}
+		if(wOut<0){
+			stringstream err;
+			err<<"wOut="<<wOut<<"; Output size cannot be negative"<<endl;
+			THROWERROR(err);
+		}
 		srcFileName="Table";
 		setCopyrightString("Florent de Dinechin (2007-2012)");
 
