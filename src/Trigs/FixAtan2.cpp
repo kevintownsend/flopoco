@@ -24,6 +24,8 @@
 #include "../utils.hpp"
 #include "Operator.hpp"
 #include "FixAtan2.hpp"
+#include "ShiftersEtc/LZOC.hpp"
+#include "ShiftersEtc/Shifters.hpp"
 
 using namespace std;
 
@@ -53,6 +55,7 @@ namespace flopoco {
 	{
 		mpfr_clears (constPi, NULL);		
 	}
+
 
 
 
@@ -124,7 +127,55 @@ namespace flopoco {
 		vhdl << tab << tab << " else '0';  -- this information is sent to the end of the pipeline, better compute it here as one bit"    << endl; 
 	}
 
+	void FixAtan2::buildQuadrantReconstruction(){
+		manageCriticalPath(getTarget()->lutDelay() + getTarget()->adderDelay(wOut));
+		vhdl << tab << declare("qangle", wOut) << " <= (quadrant & " << zg(wOut-2) << ");" << endl;
+		vhdl << tab << "A <= "
+				 << tab << tab << "     qangle + finalZ  when finalAdd='1'" << endl
+				 << tab << tab << "else qangle - finalZ;" << endl;
+		outDelayMap["A"] = getCriticalPath();
+	}
 
+
+
+
+	void FixAtan2::buildScalingRangeReduction(){
+		int sizeXYR = wIn-1; // no need for sign bit any longer
+		manageCriticalPath( getTarget()->lutDelay() + getTarget()->localWireDelay());
+		vhdl << tab << declare("XorY", sizeXYR-1) << " <= XR" << range(sizeXYR-1,1) << " or YR" << range(sizeXYR-1,1) << ";" << endl;
+		// The LZC
+		LZOC* lzc = new	LZOC(getTarget(), sizeXYR-1, inDelayMap("XorY", getCriticalPath()));
+		addSubComponent(lzc);
+			
+		inPortMap(lzc, "I", "XorY");
+		inPortMapCst(lzc, "OZB", "'0'");
+		outPortMap(lzc, "O", "S"); 
+		vhdl << instance(lzc, "lzc");
+		syncCycleFromSignal("S");
+		setCriticalPath(lzc->getOutputDelay("O"));
+	
+		//setCycleFromSignal("lzo");
+		//		setCriticalPath( lzc->getOutputDelay("O") );
+		
+		// The two shifters are two instance of the same component
+		Shifter* lshift = new Shifter(getTarget(), sizeXYR, sizeXYR-1, Shifter::Left, inDelayMap("S", getCriticalPath()));   
+		addSubComponent(lshift);
+		
+		inPortMap(lshift, "S", "S");
+		
+		inPortMap(lshift, "X", "XR");
+		outPortMap(lshift, "R", "XRSfull");
+		vhdl << instance(lshift, "Xshift");
+		vhdl << tab << declare("XRS", sizeXYR) << " <=  XRSfull " << range(sizeXYR-1,0) << ";" << endl;
+		
+		inPortMap(lshift, "X", "YR");
+		outPortMap(lshift, "R", "YRSfull");
+		vhdl << instance(lshift, "Yshift");
+		vhdl << tab << declare("YRS", sizeXYR) << " <=  YRSfull " << range(sizeXYR-1,0) << ";" << endl;
+		
+		syncCycleFromSignal("YRSfull");
+		setCriticalPath(lshift->getOutputDelay("R"));
+}
 
 
 

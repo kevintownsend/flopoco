@@ -169,17 +169,7 @@ namespace flopoco{
 
 		vhdl << tab << declare("finalZ", wOut) << " <= Z" << stage << of(sizeZ-1) << " & Z" << stage << range(sizeZ-1, sizeZ-wOut+1) << "; -- sign-extended and rounded" << endl;
 
-
-		////////////////////////////////////////////////////////////////////////////
-		// 
-		//                            reconstruction
-		//
-		////////////////////////////////////////////////////////////////////////////
-
-		vhdl << tab << declare("qangle", wOut) << " <= (quadrant & " << zg(wOut-2) << ");" << endl;
-		vhdl << tab << "A <= "
-				 << tab << tab << "     qangle + finalZ  when finalAdd='1'" << endl
-				 << tab << tab << "else qangle - finalZ;" << endl;
+		buildQuadrantReconstruction();
 	};
 
 

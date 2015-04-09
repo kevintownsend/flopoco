@@ -40,11 +40,7 @@ namespace flopoco {
 		// build the name
 		ostringstream name;
 		name <<"FixAtan2ByBivariateApprox_" << vhdlize(wIn) << "_" << vhdlize(wOut) << "_archType_" << vhdlize(architectureType);
-		if(getTarget()->isPipelined())
-		{
-			name << "_f" << vhdlize(getTarget()->frequencyMHz());
-		}
-		setName(name.str());
+		setNameWithFreq( name.str() );
 
 		double ratio = getTarget()->unusedHardMultThreshold(); // TODO this should be automatic/default: check
 
@@ -58,173 +54,11 @@ namespace flopoco {
 
 		useNumericStd_Unsigned();
 
-		doScalingRR=true;
-#if 0
-		//arguments for the range reduction
-		bool negateByComplement = true;
+		///////////// VHDL GENERATION
 
-		/////////////////////////////////////////////////////////////////////////////
-		//
-		//    First range reduction
-		//
-		/////////////////////////////////////////////////////////////////////////////
-		vhdl << tab << declare("sgnX") << " <= X" << of(wIn-1) << ";" << endl;
-		vhdl << tab << declare("sgnY") << " <= Y" << of(wIn-1) << ";" << endl;
-
-		// TODO: replace the following with LUT-based comparators
-		// and first maybe experiment with synthesis tools
-		//manage the pipeline
-		manageCriticalPath(getTarget()->adderDelay(wIn+1) + getTarget()->lutDelay());
-
-		vhdl << tab << declare("XmY", wIn+1) << " <= std_logic_vector(signed(sgnX & X) - signed(sgnY & Y));" << endl;
-		vhdl << tab << declare("XpY", wIn+1) << " <= std_logic_vector(signed(sgnX & X) + signed(sgnY & Y));" << endl;
-		vhdl << tab << declare("XltY") << " <= XmY" << of(wIn) << ";" << endl;
-		vhdl << tab << declare("mYltX") << " <= not XpY" << of(wIn) <<";" << endl;
-		// Range reduction: we define 4 quadrants, each centered on one axis (these are not just the sign quadrants)
-		// Then each quadrant is decomposed in its positive and its negative octant.
-		//manage the pipeline
-		manageCriticalPath(getTarget()->lutDelay() + getTarget()->lutDelay());
-		//save the critical path
-		tempCriticalPath = getCriticalPath();
-
-		vhdl << tab << "-- quadrant will also be the angle to add at the end" << endl;
-		vhdl << tab << declare("quadrant", 2) << " <= " << endl;
-		vhdl << tab << tab << "\"00\"  when (not sgnX and not XltY and     mYltX)='1' else"    << endl;
-		vhdl << tab << tab << "\"01\"  when (not sgnY and     XltY and     mYltX)='1' else"    << endl;
-		vhdl << tab << tab << "\"10\"  when (    sgnX and     XltY and not mYltX)='1' else"    << endl;
-		vhdl << tab << tab << "\"11\";"    << endl;
-
-		if(negateByComplement)
-		{
-			//manage the pipeline
-			setCycleFromSignal("X");
-			syncCycleFromSignal("Y");
-			setCriticalPath(getMaxInputDelays(inputDelays_));
-
-			vhdl << tab << declare("pX", wIn) << " <=      X;" << endl;
-			vhdl << tab << declare("pY", wIn) << " <=      Y;" << endl;
-
-			//manage the pipeline
-			manageCriticalPath(getTarget()->lutDelay());
-
-			vhdl << tab << declare("mX", wIn) << " <= (not X);  -- negation by not, implies one ulp error." << endl;
-			vhdl << tab << declare("mY", wIn) << " <= (not Y);  -- negation by not, implies one ulp error. " << endl;
-		}else
-		{
-			//manage the pipeline
-			setCycleFromSignal("X");
-			syncCycleFromSignal("Y");
-			setCriticalPath(getMaxInputDelays(inputDelays_));
-
-			vhdl << tab << declare("pX", wIn) << " <= X;" << endl;
-			vhdl << tab << declare("pY", wIn) << " <= Y;" << endl;
-
-			//manage the pipeline
-			manageCriticalPath(getTarget()->adderDelay(wIn));
-
-			vhdl << tab << declare("mX", wIn) << " <= (" << zg(wIn) << " - X);" << endl;
-			vhdl << tab << declare("mY", wIn) << " <= (" << zg(wIn) << " - Y);" << endl;
-		}
-
-		//manage the pipeline
-		setCycleFromSignal("quadrant");
-		syncCycleFromSignal("mX");
-		syncCycleFromSignal("mY");
-		setCriticalPath(tempCriticalPath);
-		manageCriticalPath(getTarget()->lutDelay());
-		//save the critical path
-		tempCriticalPath = getCriticalPath();
-
-		//no need for sign bit any longer
-		vhdl << tab << declare("XR", wIn-1) << " <= " << endl;
-		vhdl << tab << tab << "pX" << range(wIn-2, 0) << " when quadrant=\"00\"   else " << endl;
-		vhdl << tab << tab << "pY" << range(wIn-2, 0) << " when quadrant=\"01\"   else " << endl;
-		vhdl << tab << tab << "mX" << range(wIn-2, 0) << " when quadrant=\"10\"   else " << endl;
-		vhdl << tab << tab << "mY" << range(wIn-2, 0) << ";"    << endl;
-
-		//no need for sign bit any longer
-		vhdl << tab << declare("YR", wIn-1) << " <= " << endl;
-		vhdl << tab << tab << "pY" << range(wIn-2, 0) << " when quadrant=\"00\" and sgnY='0'  else " << endl;
-		vhdl << tab << tab << "mY" << range(wIn-2, 0) << " when quadrant=\"00\" and sgnY='1'  else " << endl;
-		vhdl << tab << tab << "pX" << range(wIn-2, 0) << " when quadrant=\"01\" and sgnX='0'  else " << endl;
-		vhdl << tab << tab << "mX" << range(wIn-2, 0) << " when quadrant=\"01\" and sgnX='1'  else " << endl;
-		vhdl << tab << tab << "pY" << range(wIn-2, 0) << " when quadrant=\"10\" and sgnY='0'  else " << endl;
-		vhdl << tab << tab << "mY" << range(wIn-2, 0) << " when quadrant=\"10\" and sgnY='1'  else " << endl;
-		vhdl << tab << tab << "pX" << range(wIn-2, 0) << " when quadrant=\"11\" and sgnX='0'  else "    << endl;
-		vhdl << tab << tab << "mX" << range(wIn-2, 0) << " ;" << endl;
-
-		//manage the pipeline
-		setCycleFromSignal("sgnX");
-		syncCycleFromSignal("sgnY");
-		syncCycleFromSignal("quadrant");
-		manageCriticalPath(getTarget()->lutDelay());
-
-		vhdl << tab << declare("finalAdd") << " <= " << endl;
-		vhdl << tab << tab << "'1' when (quadrant=\"00\" and sgnY='0') or(quadrant=\"01\" and sgnX='1') or (quadrant=\"10\" and sgnY='1') or (quadrant=\"11\" and sgnX='0')" << endl;
-		vhdl << tab << tab << " else '0';  -- this information is sent to the end of the pipeline, better compute it here as one bit" << endl;
-		/////////////////////////////////////////////////////////////////////////////
-		//
-		//    End of first range reduction
-		//
-		/////////////////////////////////////////////////////////////////////////////
-#else
+		// Range reduction code is shared, defined in FixAtan2
 		buildQuadrantRangeReduction();
-#endif
-
-		////////////////////////////////////////////////////////////////////////////
-		//
-		//    Second range reduction, scaling
-		//
-		////////////////////////////////////////////////////////////////////////////
-		//manage the pipeline
-		setCycleFromSignal("XR");
-		syncCycleFromSignal("YR");
-		setCriticalPath(tempCriticalPath);
-		manageCriticalPath(getTarget()->lutDelay());
-
-		vhdl << tab << declare("XorY", wIn-2) << " <= XR" << range(wIn-2,1) << " or YR" << range(wIn-2,1) << ";" << endl;
-
-		// The LZC
-		LZOC* lzc = new	LZOC(getTarget(), wIn-2, inDelayMap("XorY", getCriticalPath()));
-		addSubComponent(lzc);
-
-		inPortMap(lzc, "I", "XorY");
-		inPortMapCst(lzc, "OZB", "'0'");
-		outPortMap(lzc, "O", "S");
-		vhdl << instance(lzc, "lzc");
-		//setCycleFromSignal("lzo");
-		//		setCriticalPath( lzc->getOutputDelay("O") );
-
-		//manage the pipeline
-		syncCycleFromSignal("S");
-		setCriticalPath(lzc->getOutputDelay("O"));
-
-		// The two shifters are two instance of the same component
-		Shifter* lshift = new Shifter(getTarget(), wIn-1, wIn-2, Shifter::Left, inDelayMap("S", getCriticalPath()));
-		addSubComponent(lshift);
-
-		inPortMap(lshift, "S", "S");
-
-		inPortMap(lshift, "X", "XR");
-		outPortMap(lshift, "R", "XRSfull");
-		vhdl << instance(lshift, "Xshift");
-		vhdl << tab << declare("XRS", wIn-1) << " <=  XRSfull " << range(wIn-2,0) << ";" << endl;
-
-		inPortMap(lshift, "X", "YR");
-		outPortMap(lshift, "R", "YRSfull");
-		vhdl << instance(lshift, "Yshift");
-		vhdl << tab << declare("YRS", wIn-1) << " <=  YRSfull " << range(wIn-2,0) << ";" << endl;
-
-		//manage the pipeline
-		syncCycleFromSignal("XRSfull");
-		syncCycleFromSignal("YRSfull");
-		setCriticalPath(lshift->getOutputDelay("R"));
-
-		////////////////////////////////////////////////////////////////////////////
-		//
-		//    End of second range reduction, scaling
-		//
-		////////////////////////////////////////////////////////////////////////////
+		buildScalingRangeReduction();
 
 
 		//build the architecture
@@ -325,8 +159,8 @@ namespace flopoco {
 				manageCriticalPath(getTarget()->DSPMultiplierDelay());
 
 				//create A*X_low and B*Y_low
-				vhdl << tab << declareFixPoint("AXLow", true, msbA-k, -wOut+1-g-wIn+1) << " <= A * XLow;" << endl;
-				vhdl << tab << declareFixPoint("BYLow", true, msbB-k, -wOut+1-g-wIn+1) << " <= B * YLow;" << endl;
+				vhdl << tab << declareFixPoint("AXLow", true, msbA-k, -wOut+1-g-wIn+1) << " <= coeffA * XLow;" << endl;
+				vhdl << tab << declareFixPoint("BYLow", true, msbB-k, -wOut+1-g-wIn+1) << " <= coeffB * YLow;" << endl;
 				//align A*X_low and B*Y_low to the output format
 				resizeFixPoint("AXLow_sgnExtended", "AXLow", maxMSB-1, -wOut+1-g);
 				resizeFixPoint("BYLow_sgnExtended", "BYLow", maxMSB-1, -wOut+1-g);
@@ -570,8 +404,8 @@ namespace flopoco {
 				manageCriticalPath(getTarget()->DSPMultiplierDelay());
 
 				//create A*DeltaX and B*DeltaY
-				vhdl << tab << declareFixPoint("A_DeltaX", true, msbA-k-1,  -wOut+1-g-wIn+1) << " <= A * DeltaX;" << endl;
-				vhdl << tab << declareFixPoint("B_DeltaY", true, msbB-k-1,  -wOut+1-g-wIn+1) << " <= B * DeltaY;" << endl;
+				vhdl << tab << declareFixPoint("A_DeltaX", true, msbA-k-1,  -wOut+1-g-wIn+1) << " <= coeffA * DeltaX;" << endl;
+				vhdl << tab << declareFixPoint("B_DeltaY", true, msbB-k-1,  -wOut+1-g-wIn+1) << " <= coeffB * DeltaY;" << endl;
 				vhdl << endl;
 
 				//align the signals to the output format to the output format
@@ -681,7 +515,7 @@ namespace flopoco {
 					setCriticalPath(criticalPathDeltaX2);
 				manageCriticalPath(getTarget()->DSPMultiplierDelay());
 
-				vhdl << tab << declareFixPoint("D_DeltaX2", true, msbD-2*k-1,  -2*(wOut-1+g)) << " <= D * DeltaX2_short;" << endl;
+				vhdl << tab << declareFixPoint("D_DeltaX2", true, msbD-2*k-1,  -2*(wOut-1+g)) << " <= coeffD * DeltaX2_short;" << endl;
 
 				//save the critical path
 				double criticalPathD_DeltaX2 = getCriticalPath();
@@ -695,7 +529,7 @@ namespace flopoco {
 					setCriticalPath(criticalPathDeltaX2);
 				manageCriticalPath(getTarget()->DSPMultiplierDelay());
 
-				vhdl << tab << declareFixPoint("E_DeltaY2", true, msbE-2*k-1,  -2*(wOut-1+g)) << " <= E * DeltaY2_short;" << endl;
+				vhdl << tab << declareFixPoint("E_DeltaY2", true, msbE-2*k-1,  -2*(wOut-1+g)) << " <= coeffE * DeltaY2_short;" << endl;
 
 				//save the critical path
 				double criticalPathE_DeltaY2 = getCriticalPath();
@@ -709,7 +543,7 @@ namespace flopoco {
 					setCriticalPath(criticalPathDeltaX_DeltaY);
 				manageCriticalPath(getTarget()->DSPMultiplierDelay());
 
-				vhdl << tab << declareFixPoint("F_DeltaX_DeltaY", true, msbF-2*k-1,  -2*(wOut-1+g)) << " <= F * DeltaX_DeltaY_short;" << endl;
+				vhdl << tab << declareFixPoint("F_DeltaX_DeltaY", true, msbF-2*k-1,  -2*(wOut-1+g)) << " <= coeffF * DeltaX_DeltaY_short;" << endl;
 				vhdl << endl;
 
 				//save the critical path
@@ -1035,22 +869,10 @@ namespace flopoco {
 			THROWERROR("in FixAtan2ByBivariateApprox constructor: invalid value for the requested architecture type");
 		}
 
-		////////////////////////////////////////////////////////////////////////////
-		//
-		//                            reconstruction
-		//
-		////////////////////////////////////////////////////////////////////////////
 
-		//manage the pipeline
-		manageCriticalPath(getTarget()->lutDelay() + getTarget()->adderDelay(wOut));
+		// Reconstruction code is shared, defined in FixAtan2
+		buildQuadrantReconstruction();
 
-		vhdl << tab << declare("qangle", wOut) << " <= (quadrant & " << zg(wOut-2) << ");" << endl;
-		vhdl << tab << declare("Rfinal", wOut) << " <= \"00\" & R_int; -- sign-extended and rounded" << endl;
-		vhdl << tab << "A <= "
-				<< tab << tab << "     std_logic_vector(signed(qangle) + signed(Rfinal))  when finalAdd='1'" << endl
-				<< tab << tab << "else std_logic_vector(signed(qangle) - signed(Rfinal));" << endl;
-
-		outDelayMap["A"] = getCriticalPath();
 	}
 
 

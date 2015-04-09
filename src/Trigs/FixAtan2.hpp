@@ -43,8 +43,13 @@ namespace flopoco {
 		 */
 		~FixAtan2();
 
-		/** The code generation for (first) quadrant range reduction */
+		/** The code generation for first/quadrant range reduction.
+		 */
 		void buildQuadrantRangeReduction();
+
+		/** The code generation for second/scaling range reduction.
+		 */
+		void buildScalingRangeReduction();
 
 		/** The code generation for (last) quadrant reconstruction */
 		void buildQuadrantReconstruction();
@@ -64,7 +69,6 @@ namespace flopoco {
 		int wOut;                    					/**< output width */
 
 		bool negateByComplement=false; /**< An architecture parameter: we negate negative values to obtain the first octant */
-		bool doScalingRR;              /**< An architecture parameter: should we have a scaling range reduction */
 		mpfr_t constPi;
 	};
 
