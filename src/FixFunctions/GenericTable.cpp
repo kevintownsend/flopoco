@@ -20,7 +20,7 @@ namespace flopoco{
 	// A table for the KCM Multiplication
 	// the size of the input to the table will be the number of inputs of a LUT
 	GenericTable::GenericTable(Target* target_, int wIn_, int wOut_, vector<mpz_class> values_, map<string, double> inputDelays) :
-			Table(target_, wIn_, wOut_, 0, -1, true, inputDelays), wIn(wIn_), wOut(wOut_), values(values_)
+			Table(target_, wIn_, wOut_, 0, -1, false, inputDelays), wIn(wIn_), wOut(wOut_), values(values_)
 	{
 		ostringstream name;
 

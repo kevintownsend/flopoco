@@ -87,6 +87,8 @@ namespace flopoco{
 		name<<"FixFunctionByPiecewisePoly_"<<getNewUId(); 
 		setName(name.str()); 
 
+		setCriticalPath(getMaxInputDelays(inputDelays));
+
 		setCopyrightString("Florent de Dinechin (2014)");
 		addHeaderComment("-- Evaluator for " +  f-> getDescription() + "\n"); 
 		REPORT(DETAILED, "Entering: FixFunctionByPiecewisePoly \"" << func << "\" " << lsbIn << " " << msbOut << " " << lsbOut << " " << degree);
@@ -131,8 +133,8 @@ namespace flopoco{
 			REPORT(DETAILED, "Poly table output size = " << polyTableOutputSize);
 
 			// This is where we add the final rounding bit
-			FixFunctionByPiecewisePoly::CoeffTable* coeffTable = new CoeffTable(target, alpha, polyTableOutputSize, polyApprox, 
-																																					finalRounding, lsbOut-1 /*position of the round bit*/) ;
+			FixFunctionByPiecewisePoly::CoeffTable* coeffTable = new CoeffTable(target, alpha, polyTableOutputSize, polyApprox,
+																					finalRounding, lsbOut-1 /*position of the round bit*/) ;
 			addSubComponent(coeffTable);
 
 			vhdl << tab << declare("A", alpha)  << " <= X" << range(wX-1, wX-alpha) << ";" << endl;
@@ -147,7 +149,8 @@ namespace flopoco{
 
 			int currentShift=0;
 			for(int i=polyApprox->degree; i>=0; i--) {
-				vhdl << tab << declare(join("A",i), polyApprox->MSB[i] - polyApprox->LSB +1)  << " <= Coeffs" << range(currentShift + (polyApprox->MSB[i] - polyApprox->LSB), currentShift) << ";" << endl;
+				vhdl << tab << declare(join("A",i), polyApprox->MSB[i] - polyApprox->LSB +1)
+						<< " <= Coeffs" << range(currentShift + (polyApprox->MSB[i] - polyApprox->LSB), currentShift) << ";" << endl;
 				currentShift +=  polyApprox->MSB[i] - polyApprox->LSB +1;
 			}
 

@@ -130,13 +130,13 @@ namespace flopoco{
 		vhdl << tab << declare("sgnX") << " <= X" << of(w-1) << ";" << endl;
 		vhdl << tab << declare("sgnY") << " <= Y" << of(w-1) << ";" << endl;
 
-		if(doScaling){
+		//if(doScaling){
 			vhdl << tab << "-- First saturate x and y in case they touch -1" <<endl;
 			vhdl << tab << declare("Xsat", w) << " <= \"1" << zg(w-2,-2) << "1\" when X=\"1" <<zg (w-1,-2) << "\" else X ;" <<endl;
 			vhdl << tab << declare("Ysat", w) << " <= \"1" << zg(w-2,-2) << "1\" when Y=\"1" <<zg (w-1,-2) << "\" else Y ;" <<endl;
-		}
+		//}
 
-		manageCriticalPath( target->adderDelay(w));
+		manageCriticalPath( target->adderDelay(w+1));
 		if (negateByComplement)	{
 			vhdl << tab << declare("pX", sizeXYInRR) << " <=      Xsat  & " << zg(gXY)<< ";" << endl;
 			vhdl << tab << declare("pY", sizeXYInRR) << " <=      Ysat  & " << zg(gXY)<< ";" << endl;
@@ -240,6 +240,8 @@ namespace flopoco{
 			//int  = getSignalByName("small_absZ0_normd_full")->width() - (wF-pfinal+2);
 		}
 		else{ //scalingRR
+			manageCriticalPath(target->localWireDelay());
+
 			vhdl << tab << declare("XRS", sizeXYR) << " <=  XR;" << endl;
 			vhdl << tab << declare("YRS", sizeXYR) << " <=  YR;" << endl;
 		}
@@ -360,6 +362,8 @@ namespace flopoco{
 
 
 		else if (method==INVMULTATAN) {
+			syncCycleFromSignal("XRS");
+
 			//FixFunctionByPiecewisePoly* recipTable;
 			Operator* recipTable;
 			//FixFunctionByPiecewisePoly* atanTable;
@@ -382,6 +386,8 @@ namespace flopoco{
 			ostringstream invfun;
 			invfun << "2/(1+x)-1b"<<lsbRecip;
 			if(degree==1) {
+				manageCriticalPath(target->RAMDelay() + target->localWireDelay() + target->adderDelay(w));
+
 				//BipartiteTable *deltaX2Table
 				recipTable = new BipartiteTable(target,
 													invfun.str(),
@@ -396,7 +402,8 @@ namespace flopoco{
 																msbRecip + 1, // +1 because internally uses signed arithmetic and we want an unsigned result
 																lsbRecip,
 																degree,
-																true /*finalRounding*/
+																true /*finalRounding*/,
+																inDelayMap("XRm1", getCriticalPath())
 																);
 			}
 			recipTable->changeName(join("reciprocal_uid", getNewUId()));
@@ -404,28 +411,40 @@ namespace flopoco{
 			inPortMap(recipTable, "X", "XRm1");
 			outPortMap(recipTable, "Y", "R0"); 
 			vhdl << instance(recipTable, "recipTable");
+
+			syncCycleFromSignal("R0");
+			manageCriticalPath(target->localWireDelay());
+
 			vhdl << tab << declareFixPoint("R", false, msbRecip, lsbRecip) << " <= unsigned(R0" << range(msbRecip-lsbRecip  , 0) << "); -- removing the sign  bit" << endl;
 			vhdl << tab << declareFixPoint("YRU", false, -1, -w+1) << " <= unsigned(YRS);" << endl;
 
+			syncCycleFromSignal("R");
+
 			if(target->plainVHDL()) { // generate a "*"
+				manageCriticalPath(target->DSPMultiplierDelay() + target->localWireDelay());
+
 				vhdl << tab << declareFixPoint("P", false, msbRecip -1 +1, lsbRecip-w+1) << " <= R*YRU;" << endl;
 				resizeFixPoint("PtruncU", "P", msbProduct, lsbProduct);
 				vhdl << tab << declare("P_slv", msbProduct-lsbProduct+1)  << " <=  std_logic_vector(PtruncU);" << endl;
+
+				syncCycleFromSignal("P_slv");
 			}
 			else{ // generate an IntMultiplier
 				IntMultiplier::newComponentAndInstance(this,
-																							 "divMult",     // instance name
-																							 "R",  // x
-																							 "YRU", // y
-																							 "P",       // p
-																							 msbProduct, lsbProduct
-																							 );
+														 "divMult",     // instance name
+														 "R",  // x
+														 "YRU", // y
+														 "P",       // p
+														 msbProduct, lsbProduct
+														 );
 			}
 
 
 			ostringstream atanfun;
 			atanfun << "atan(x)/pi";
 			if(degree==1) {
+				manageCriticalPath(target->RAMDelay() + target->localWireDelay() + target->adderDelay(w));
+
 				atanTable = new BipartiteTable(target,
 													atanfun.str(),
 													lsbProduct,
@@ -439,17 +458,24 @@ namespace flopoco{
 																msbAtan,
 																lsbAtan,
 																degree,
-																true /*finalRounding*/
+																true /*finalRounding*/,
+																inDelayMap("P_slv", getCriticalPath())
 																);
 			}
+
 			atanTable->changeName(join("atan_uid", getNewUId()));
 			addSubComponent(atanTable);			
 			inPortMap(atanTable, "X", "P_slv");
 			outPortMap(atanTable, "Y", "atanTableOut"); 
 			vhdl << instance(atanTable, "atanTable");
 
+			syncCycleFromSignal("atanTableOut");
+			manageCriticalPath(target->localWireDelay());
+
 			vhdl << tab << declare("finalZ", w) << " <= \"00\" & atanTableOut;" << endl;
 			
+			syncCycleFromSignal("finalZ");
+
 			//			vhdl << tab << declare(finalZ, sizeZ) << " <= '0' & finalZu; -- adding back a sign  bit for the reconstruction" << endl;
 			 
 		}
@@ -462,6 +488,8 @@ namespace flopoco{
 		//                            reconstruction
 		//
 		////////////////////////////////////////////////////////////////////////////
+
+		manageCriticalPath(target->adderDelay(w));
 
 		vhdl << tab << declare("qangle", w) << " <= (quadrant & " << zg(w-2) << ");" << endl;
 		vhdl << tab << "A <= "

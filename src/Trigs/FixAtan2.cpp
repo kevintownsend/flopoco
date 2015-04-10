@@ -506,6 +506,8 @@ namespace flopoco {
 				vhdl << tab << declare("YHigh", k)   << " <= std_logic_vector(YRS" << range(wIn-2, wIn-1-k) << ");" << endl;
 
 				vhdl << endl;
+				//manage the pipeline
+				manageCriticalPath(target->localWireDelay());
 				vhdl << tab << declare("atan2TableInput", 2*k-1) << " <= std_logic_vector(XHigh) & std_logic_vector(YHigh);" << endl;
 				vhdl << endl;
 
@@ -606,7 +608,7 @@ namespace flopoco {
 				//manage the pipeline
 				setCycleFromSignal("DeltaX");
 				setCriticalPath(tempCriticalPath);
-				manageCriticalPath(target->DSPMultiplierDelay());
+				manageCriticalPath(target->DSPMultiplierDelay() + target->adderDelay(2*wIn-2-2*k-1) + target->localWireDelay());
 
 				BipartiteTable *deltaX2Table = new BipartiteTable(target,
 																	join("(2^(-", k, "))*(x^2)"),
@@ -625,7 +627,7 @@ namespace flopoco {
 				//manage the pipeline
 				setCycleFromSignal("DeltaY");
 				setCriticalPath(tempCriticalPath);
-				manageCriticalPath(target->DSPMultiplierDelay());
+				manageCriticalPath(target->DSPMultiplierDelay() + target->adderDelay(2*wIn-2-2*k-1) + target->localWireDelay());
 
 				BipartiteTable *deltaY2Table = new BipartiteTable(target,
 																	join("(2^(-", k, "))*(x^2)"),

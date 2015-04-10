@@ -88,8 +88,8 @@ namespace flopoco{
 
 		//	add the table to the operator
 		addSubComponent(tivTable);
-		useSoftRAM(tivTable);
-		//useHardRAM(tivTable);
+		//useSoftRAM(tivTable);
+		useHardRAM(tivTable);
 		inPortMap (tivTable , "X", "tableTIVaddr");
 		outPortMap(tivTable , "Y", "tableTIVout");
 		vhdl << instance(tivTable , "TIVtable");
@@ -100,8 +100,8 @@ namespace flopoco{
 
 		//add the table to the operator
 		addSubComponent(toTable);
-		useSoftRAM(toTable);
-		//useHardRAM(toTable);
+		//useSoftRAM(toTable);
+		useHardRAM(toTable);
 		inPortMap (toTable , "X", "tableTOaddr");
 		outPortMap(toTable , "Y", "tableTOout");
 		vhdl << instance(toTable , "TOtable");

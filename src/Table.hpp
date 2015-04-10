@@ -123,6 +123,7 @@ namespace flopoco{
 	private:
 		bool full; /**< true if there is no "don't care" inputs, i.e. minIn=0 and maxIn=2^wIn-1 */
 		bool logicTable; /**<  true: LUT-based table; false: BRAM-based */
+		Target* target;
 	};
 
 }
