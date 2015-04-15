@@ -1,3 +1,7 @@
+src/random/CMakeFiles/
+src/random/Makefile
+src/random/cmake_install.cmake
+doc/web/bib/*.html
 *.a
 CMakeCache.txt
 CMakeFiles/
@@ -13,9 +17,6 @@ flopoco.vhdl
 flopoco_soaktest
 fp2bin
 longacc2fp
-src/random/CMakeFiles/
-src/random/Makefile
-src/random/cmake_install.cmake
 BitHeap*.svg
 tiling*.svg
 PiecewisePoly*.cache
