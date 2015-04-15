@@ -12,3 +12,6 @@ The html bibliography pages are generated using bibtex2html
 
 bibtex2html -t "Publications about FloPoCo" --header "<p><em>If some of your works belong there, please drop a mail to F. de Dinechin with the corresponding bibtex entries</em></p><hr>" -d -r -revkeys flopoco.bib
 bibtex2html -t "Publications using FloPoCo" --header "<p><em>If some of your works belong there, please drop a mail to F. de Dinechin with the corresponding bibtex entries</em></p><hr>" -d -r -revkeys flopoco-users.bib
+
+3/ transfer the full bib directory with (from doc/web)
+scp -r bib/ scm.gforge.inria.fr:/home/groups/flopoco/htdocs/
