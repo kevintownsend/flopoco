@@ -1518,9 +1518,9 @@ bool parseCommandLine(int argc, char* argv[]){
 			string func = argv[i++];
 			double targetAcc = atof(argv[i++]);
 			int g =  atof(argv[i++]);
-			BasicPolyApprox *toto = new BasicPolyApprox(func, targetAcc, g);
-			cout << "Computed degree is " << toto->degree;
-			cout << "Accuracy is " << toto->approxErrorBound << " ("<< log2(toto->approxErrorBound) << " bits)";
+			BasicPolyApprox *bpa = new BasicPolyApprox(func, targetAcc, g);
+			cout << "Computed degree is " << bpa->degree;
+			cout << "Accuracy is " << bpa->approxErrorBound << " ("<< log2(bpa->approxErrorBound) << " bits)";
 		}
 		else if (opname == "PiecewisePolyApprox") {
 			int nargs = 3;
@@ -1529,7 +1529,7 @@ bool parseCommandLine(int argc, char* argv[]){
 			string func = argv[i++];
 			double targetAcc = atof(argv[i++]);
 			int degree =  atof(argv[i++]);
-			PiecewisePolyApprox *toto = new PiecewisePolyApprox(func, targetAcc, degree);
+			new PiecewisePolyApprox(func, targetAcc, degree);
 		}
 
 
@@ -1758,6 +1758,34 @@ bool parseCommandLine(int argc, char* argv[]){
 				addOperator(op);
 			}
 		}
+		else if (opname == "InputIEEE")
+		{
+			int nargs = 4;
+			if (i+nargs > argc)
+				usage(argv[0],opname); // and exit
+			int wEI = checkStrictlyPositive(argv[i++], argv[0]);
+			int wFI = checkStrictlyPositive(argv[i++], argv[0]);
+			int wEO = checkStrictlyPositive(argv[i++], argv[0]);
+			int wFO = checkStrictlyPositive(argv[i++], argv[0]);
+			cerr << "> InputIEEE: wEI=" << wEI << " wFI=" << wFI << " wEO=" << wEO << " wFO=" << wFO << endl;
+			op = new InputIEEE(target, wEI, wFI, wEO, wFO);
+			addOperator(op);
+		}
+
+		else if (opname == "OutputIEEE")
+		{
+			int nargs = 4;
+			if (i+nargs > argc)
+				usage(argv[0],opname); // and exit
+			int wEI = checkStrictlyPositive(argv[i++], argv[0]);
+			int wFI = checkStrictlyPositive(argv[i++], argv[0]);
+			int wEO = checkStrictlyPositive(argv[i++], argv[0]);
+			int wFO = checkStrictlyPositive(argv[i++], argv[0]);
+			cerr << "> OutputIEEE: wEI=" << wEI << " wFI=" << wFI << " wEO=" << wEO << " wFO=" << wFO << endl;
+			op = new OutputIEEE(target, wEI, wFI, wEO, wFO);
+			addOperator(op);
+		}
+
 
 #if 0 // TODO, won't compile, bits of CMakeList to bring from toSollya4.0
 		// hidden and undocumented for now
