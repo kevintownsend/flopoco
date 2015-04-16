@@ -2,7 +2,7 @@
 Version 3.0
 Shifts to Sollya 4.0 library. Polynomial evaluator rewritten in the process.
 Reorganisation of the source code, better naming consistency.
-plainStupidVHDL and unusedHardMultThreshold become framework-wide target options.
+plainVHDL and unusedHardMultThreshold become framework-wide target options.
 More fixed-point filters.
 Added FixAtan2
 First steps towards fixed-point support in the framework.
