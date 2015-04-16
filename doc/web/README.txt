@@ -1,3 +1,13 @@
+To produce the tgz of a version:
+first edit VERSION,
+then in bash:
+git archive --prefix=flopoco-$(cat VERSION)/ -o flopoco-$(cat VERSION).tgz HEAD
+Then edit, commit and push index.html, and scp it as below.
+Finally do a 
+git tag -a flopoco-$(cat VERSION)
+
+
+
 To update the web site from an admin account:
 
 scp   index.html   scm.gforge.inria.fr:/home/groups/flopoco/htdocs/
