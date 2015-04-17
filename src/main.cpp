@@ -449,6 +449,12 @@ void usage(char *name, string opName = ""){
 		cerr << "A faithful sum-of-products-by-constants, inputting signed numbers in [-1,1]. Inputs and outputs have lsb precision\n";
 		cerr << "  [coeff list] is a space-separated list of real numbers in Sollya syntax, e.g. \"sin(3*pi/8)\" \n";
 	}
+#if 1
+	if ( full || opName == "FixSOPCExpert") {
+		OP("FixSOPCExpert","msbOut lsbOut N  msbIn1 lsbIn1 coeff1   msbIn2 lsbIn2 coeff2  ...   msbInN lsbInN coeffN");
+		cerr << "A faithful sum-of-N-products-by-constants. lsb and msb are provided for all ins and outs.\n";
+	}
+#endif
 	if ( full || opName == "FixIIR") {
 		OP("FixIIR","msbOut lsbOut H tapsB [coeffb list] tapsA [coeffa list]");
 		cerr << "A faithful IIR, inputting signed numbers in [-1,1]. Inputs and outputs have lsbOut precision\n";
@@ -870,16 +876,41 @@ bool parseCommandLine(int argc, char* argv[]){
 				usage(argv[0],opname);
 			else {
 				int lsb = atoi(argv[i++]);
-				int taps = checkStrictlyPositive(argv[i++], argv[0]);
-				if (i+taps > argc)
+				int N = checkStrictlyPositive(argv[i++], argv[0]);
+				if (i+N > argc)
 					usage(argv[0],opname);
 				else {
 					std::vector<string> coeff;
-					for (int j = 0; j < taps; j++) 
+					for (int j = 0; j < N; j++) 
 						{
 							coeff.push_back(argv[i++]);
 						}
 					op = new FixSOPC(target, lsb, lsb, coeff);
+					addOperator(op);
+				}
+			}
+		}
+
+		else if(opname=="FixSOPCExpert")
+		{
+			if (i+6 > argc)
+				usage(argv[0],opname);
+			else {
+				int msbOut = atoi(argv[i++]);
+				int lsbOut = atoi(argv[i++]);
+				int N = checkStrictlyPositive(argv[i++], argv[0]);
+				if (i+3*N > argc)
+					usage(argv[0],opname);
+				else {
+					std::vector<int> msbIn;
+					std::vector<int> lsbIn;
+					std::vector<string> coeff;
+					for (int j = 0; j < N; j++) {
+						msbIn.push_back(atoi(argv[i++]));
+						lsbIn.push_back(atoi(argv[i++]));
+						coeff.push_back(argv[i++]);
+					}
+					op = new FixSOPC(target, msbIn, lsbIn, msbOut, lsbOut, coeff);
 					addOperator(op);
 				}
 			}
