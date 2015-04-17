@@ -1,6 +1,8 @@
 # flopoco completion 
-# put this file in /etc/bash_completion.d/ 
+# put this file in /etc/bash_completion.d/ , for instance by
+#    ln -s FULLPATHTOBashCompletion/flopoco /etc/bash_completion.d/
 
+# Should be kept in the order of the parser in main.cpp
 _flopoco()
 {
         local cur prev opts
@@ -11,25 +13,18 @@ _flopoco()
 	opts="-outputfile -target -pipeline -frequency \ 
 			-clockenable -DSP_blocks -name -resourceEstimationLevel -floorplanning \ 
 			-verbose -reDebugging -flpDebugging"
-	opers="UserDefinedOperator LeftShifter RightShifter LZOC LZOCShifter LZCShifte LOCShifter LZOCShifterSticky LZCShifterSticky LOCShifterSticky \ 
-			IntAdder IntAdderExpert LongIntAdderAddAddMux LongIntAdderCmpAddInc LongIntAdderCmpCmpAdd \ 
+	opers="UserDefinedOperator LeftShifter RightShifter LZOC LZOCShifter LZCShifter LOCShifter LZOCShifterSticky LZCShifterSticky LOCShifterSticky \ 
+      ShiftReg FixSOPC FixSOPCExpert FixFIR FixIIR FixHalfSine \
+			IntAdder IntAdderExpert IntComparator \ 
 			IntDualSub \ 
-			IntNAdder IntMultiAdder IntCompressorTree NewCompressorTree PopCount BasicCompressor \ 
-			IntMultiplier FixSinPoly FixXPow3Div6 IntConstDiv3 IntMultAdd IntKaratsuba IntSquarer IntPower IntConstMult IntIntKCM \ 
-			FixRealKCM FixedPointFIR FixedPointDCT \ 
-			IntConstDiv IntConstRem FPConstDiv \ 
-			FPPipeline Fix2FP FP2Fix FPAdd FPAddDualPath FPAdd3Input FPAddSub \ 
-			FPMult FPMultFaithful FPMultKaratsuba FPMultExpert FPSquare \ 
-			FPDiv FPSqrt FP2DNorm FPSqrtPoly \ 
-			FPConstMult CRFPConstMult FPConstMultRational FPConstMultExpert FPRealKCM \ 
-			FPLargeAcc LargeAccToFP DotProduct \ 
-			FPExp FPExpExpert FPLog FPPowr FPPow FPPower FPPowerExpert \ 
-			OutputIEEE InputIEEE \ 
-			FixSinCos FixSinOrCos SinCos CordicSinCos \ 
-			BasicPolyApprox PiecewisePolyApprox FixFunctionByTable FixFunctionBySimplePoly HOTBM HOTBMFX HOTBMRange \ 
-			Complex FixComplexAdder FixComplexMultiplier \ 
-			LNSAddSub LNSMul LNSDiv LNSSqrt LNSAddSub LNSMul LNSDiv LNSSqrt AtanPow \ 
-			Collision FPSumOf3Squares \ 
+			IntMultiplier IntSquarer FixMultAdd \ 
+			FPAdd FPSub FPAddDualPath FPAdd3Input FPAddSub \ 
+    	FPMult FPMultFaithful FPMultExpert FPSquare \					
+			FPDiv FPSqrt \ 
+      IntIntKCM IntConstMult IntConstDiv IntConstRem FPConstMultRational FPConstMultExpert FPConstDiv FPConstDivExpert FixRealKCM FixRealKCMExpert FPRealKCM CRFPConstMult FPConstMult \
+      FPLargeAcc LargeAccToFP FPDotProduct \
+      BasicPolyApprox PiecewisePolyApprox FixFunctionByTable FixFunctionBySimplePoly FixFunctionByPiecewisePoly FixSinCos CordicSinCos FixAtan2 FPLog FPExp FPExpExpert FPPowerExpert FPPow FPPowr \
+			Fix2FP FP2Fix InputIEEE OutputIEEE \ 
 			TestBench TestBenchFile \ 
 			Wrapper \ 
 			options"
