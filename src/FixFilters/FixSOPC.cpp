@@ -16,7 +16,7 @@ namespace flopoco{
 
 
 	FixSOPC::FixSOPC(Target* target_, int lsbIn_, int lsbOut_, vector<string> coeff_) : 
-		Operator(target_),  lsbOut(lsbOut_), coeff(coeff_), g(-1), computeGuardBits(true), addFinalRoundBit(true), computeMSBOut(true)
+		Operator(target_),  lsbOut(lsbOut_), coeff(coeff_), g(-1), computeMSBOut(true), computeGuardBits(true), addFinalRoundBit(true)
 	{
 		n = coeff.size();
 		for (int i=0; i<n; i++) {
@@ -108,7 +108,7 @@ namespace flopoco{
 				mpfr_add(sumAbsCoeff, sumAbsCoeff, absCoeff, GMP_RNDU);
 			}
 
-			// now sumAbsCoeff is the max value that the filter can take.
+			// now sumAbsCoeff is the max value that the SOPC can take.
 			double sumAbs = mpfr_get_d(sumAbsCoeff, GMP_RNDU); // just to make the following loop easier
 			REPORT(INFO, "sumAbs=" << sumAbs);
 			msbOut=1; 
@@ -150,16 +150,16 @@ namespace flopoco{
 			
 			for (int i=0; i<n; i++)	{
 				// Multiplication: instantiating a KCM object. It will add bits also to the right of lsbOutKCM
-				FixRealKCM* mult = new FixRealKCM(this,				// the envelopping operator
-																					getTarget(), 	// the target FPGA
-																					getSignalByName(join("X",i)),
-																					true, 		// signed
-																					msbIn[i]-1, 		// input MSB ?? TODO one sign bit will be added by KCM because it has a non-standard interface. To be fixed someday
-																					lsbIn[i], 		// input LSB weight
-																					lsbOutKCM, 		// output LSB weight -- the output MSB is computed out of the constant
-																					coeff[i], 	// pass the string unmodified
-																					bitHeap		// pass the reference to the bitheap that will accumulate the intermediary products
-																					);
+				new FixRealKCM(this,				// the envelopping operator
+											 getTarget(), 	// the target FPGA
+											 getSignalByName(join("X",i)),
+											 true, 		// signed
+											 msbIn[i]-1, 		// input MSB ?? TODO one sign bit will be added by KCM because it has a non-standard interface. To be fixed someday
+											 lsbIn[i], 		// input LSB weight
+											 lsbOutKCM, 		// output LSB weight -- the output MSB is computed out of the constant
+											 coeff[i], 	// pass the string unmodified
+											 bitHeap		// pass the reference to the bitheap that will accumulate the intermediary products
+											 );
 			}
 			
 			//rounding - add 1/2 ulps
@@ -171,7 +171,7 @@ namespace flopoco{
 			vhdl << tab << "R" << " <= " << bitHeap-> getSumName() << range(sumSize-1, g+guardBitsKCM) << ";" << endl;
 		}
 
-		else 
+		else
 
 		{
 			 THROWERROR("Sorry, plainVHDL doesn't work at the moment for FixSOPC. Somebody has to fix it and remove this message" );
@@ -285,9 +285,9 @@ namespace flopoco{
 
 	// please fill me with regression tests or corner case tests
 	void FixSOPC::buildStandardTestCases(TestCaseList * tcl) {
-		TestCase *tc;
 
 #if 0
+		TestCase *tc;
 		// first few cases to check emulate()
 		// All zeroes
 		tc = new TestCase(this);
