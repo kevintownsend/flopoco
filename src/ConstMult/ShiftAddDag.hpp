@@ -19,7 +19,12 @@ namespace flopoco{
 		IntConstMult* icm;
 		vector<ShiftAddOp*> saolist;  // the shift-and-add operators computed so far
 		ShiftAddOp* PX;
-	
+		ShiftAddOp* result;
+
+		//support for DAGs with multiple heads
+		vector<ShiftAddOp*> saoHeadlist;  // the shift-and-add operators computed so far which are heads of the DAG
+		vector<int> saoHeadShift;		  // the shift of the heads of the DAG, relative to the weight of the lsb
+
 		ShiftAddDag(IntConstMult* icm) : icm(icm) {
 			//initialize with  the  ShiftAddOp that computes X
 			PX = new ShiftAddOp(this, X);  
@@ -40,8 +45,6 @@ namespace flopoco{
 		
 		//This method appends saolist with patch.saolist and returns patch.result.
 		ShiftAddOp* sadAppend(ShiftAddDag* patch);
-
-		ShiftAddOp* result; 
 
 	};
 }

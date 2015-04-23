@@ -61,7 +61,6 @@ namespace flopoco{
 
 
 	// No longer used
-
 	int compute_tree_depth(ShiftAddOp* sao) {
 		int ipd, jpd;
 		if (sao==NULL)
@@ -136,24 +135,32 @@ namespace flopoco{
 
 	/**
 	 * Finds and returns the index of the best ShiftAddDag in an array considering the priority flag. 
-	 *If the flag is not set, we consider both latency and surface.
-	 *If the flag is 1, we only consider the surface
-	 *If the flag is -1, w consider only the latency
+	 * If the flag is not set, we consider both latency and surface.
+	 * If the flag is 1, we only consider the surface
+	 * If the flag is -1, w consider only the latency
 	//WARNING: if two ShiftAddDags have the same characteristics, the returned one will be the ShiftAddDag with the smallest index.
-	//WARNING: if the flag was bad set, it returns 0;
+	//WARNING: if the flag was badly set, it returns 0;
 	//
-*/
+	 */
 	unsigned int find_best_implementation( ShiftAddDag **implemTries, const unsigned int numberOfTries, const int priorityFlag=0) {
 		unsigned int bestShiftAddDag=0;
 		int tryCost, bestCost;
-		for (unsigned int i=0; i<numberOfTries; i++) {
+
+		bestCost=costF(implemTries[0],priorityFlag);
+		for (unsigned int i=1; i<numberOfTries; i++) {
 			tryCost=costF(implemTries[i],priorityFlag);
-			bestCost=costF(implemTries[bestShiftAddDag],priorityFlag);
+
 			if ( tryCost < bestCost )
+			{
 				bestShiftAddDag=i;
+				bestCost=costF(implemTries[bestShiftAddDag],priorityFlag);
+			}
 			else if ( tryCost == bestCost )
 				if ( costF(implemTries[i],0) < costF(implemTries[bestShiftAddDag],0) )
+				{
 					bestShiftAddDag=i;
+					bestCost=costF(implemTries[bestShiftAddDag],priorityFlag);
+				}
 		}
 
 		return bestShiftAddDag;
@@ -162,12 +169,10 @@ namespace flopoco{
 	/**
 	 * Depth-first traversal of the DAG to build the pipeline.
 	 * @param partial_delay accumulates the delays of several stages
-
-	 Starting from the leaves, we accumulate partial delays until getTarget()period is reached.
-	 Then pipeline level will be inserted.
-
-*/
-
+	 *
+	 * Starting from the leaves, we accumulate partial delays until target_period is reached.
+	 * Then pipeline level will be inserted.
+	 */
 	void IntConstMult::build_pipeline(ShiftAddOp* sao, double &partial_delay) {
 		string iname, jname, isignal, jsignal;
 		double idelay=0,jdelay=0, max_children_delay;
@@ -178,9 +183,7 @@ namespace flopoco{
 		if (sao==NULL)
 			return;
 		else {
-
 			// First check that the sub-DAG has not been already visited
-
 			bool already_visited=true;
 			try { 
 				getSignalByName(sao->name);
@@ -250,9 +253,9 @@ namespace flopoco{
 							}
 						}
 					}
-					// Now generate VHDL
 
-					if(shift==0) { // Add with no shift -- this shouldn't happen with current DAGs so te following code is mostly untested
+					// Now generate the VHDL
+					if(shift==0) { // Add with no shift -- this shouldn't happen with current DAGs so the following code is mostly untested
 						if(op==Sub || op==RSub)
 							throw string("In IntConstMult::build_pipeline, Sub and RSub with zero shift currently unimplemented"); // TODO
 						isignal = sao->name + "_High_L";  
@@ -433,7 +436,8 @@ namespace flopoco{
 
 					if(isSequential() 
 							&& idelay +  getTarget()->localWireDelay() + local_delay > 1./getTarget()->frequency()
-							&& sao->i->op != X) {
+							&& sao->i->op != X)
+					{
 						// This resets the partial delay to that of this ShiftAddOp
 						nextCycle();
 						partial_delay =  getTarget()->ffDelay() + getTarget()->adderDelay(sao->cost_in_full_adders);
@@ -468,8 +472,8 @@ namespace flopoco{
 
 
 	IntConstMult::IntConstMult(Target* _target, int _xsize, mpz_class n) :
-		Operator(_target), n(n), xsize(_xsize){
-
+		Operator(_target), n(n), xsize(_xsize)
+	{
 			ostringstream name; 
 
 			srcFileName="IntConstMult";
@@ -482,7 +486,8 @@ namespace flopoco{
 
 			if (!mpz_cmp_ui(n.get_mpz_t(),0)){
 				REPORT(LIST, "Here I am, brain the size of a planet and they ask me to multiply by zero. Call that job satisfaction? 'Cos I don't.");
-				// TODO: replace with a REPORT (keep the HGG quotation), and build a multiplier by 0: this constructor will be called by automatic generators, and should perform the required operation in all cases.
+				// TODO: replace with a REPORT (keep the HGG quotation), and build a multiplier by 0:
+				//			this constructor will be called by automatic generators, and should perform the required operation in all cases.
 				addInput("X", xsize);
 				addOutput("R", 1); // multiplier by zero is always zero
 				vhdl << tab << "R <= \"0\";" <<endl;	
@@ -494,9 +499,9 @@ namespace flopoco{
 				addInput("X", xsize);
 				addOutput("R", rsize);
 
-
-
-				// Build in implementation a tree constant multiplier 
+				//commented out while experimenting with bitheaps
+				/*
+				// Build the implementation trees for the constant multiplier
 				ShiftAddDag* implem_try_right = buildMultBoothTreeFromRight(n);
 				ShiftAddDag* implem_try_left = buildMultBoothTreeFromLeft(n);
 				ShiftAddDag* implem_try_balanced = buildMultBoothTreeToMiddle(n);
@@ -506,7 +511,7 @@ namespace flopoco{
 				REPORT (DETAILED,"Building from the left: cost="<<costF(implem_try_left)<<" surface="<<costF(implem_try_left,1)<<" latency="<<costF(implem_try_left,-1) );
 				REPORT (DETAILED,"Building from the right: cost="<<costF(implem_try_right)<<" surface="<<costF(implem_try_right,1)<<" latency="<<costF(implem_try_right,-1) );
 				REPORT (DETAILED,"Building balanced: cost="<<costF(implem_try_balanced)<<" surface="<<costF(implem_try_balanced,1)<<" latency="<<costF(implem_try_balanced,-1) );
-				REPORT (DETAILED,"Building with euclide 0: cost="<<costF(implem_try_euclidean0)<<" surface="<<costF(implem_try_euclidean0,1)<<" latency="<<costF(implem_try_euclidean0,-1) );
+				REPORT (DETAILED,"Building with Euclid 0: cost="<<costF(implem_try_euclidean0)<<" surface="<<costF(implem_try_euclidean0,1)<<" latency="<<costF(implem_try_euclidean0,-1) );
 				REPORT (DETAILED,"Building using shifts: cost="<<costF(implem_try_Shifts)<<" surface="<<costF(implem_try_Shifts,1)<<" latency="<<costF(implem_try_Shifts,-1) );
 
 				ShiftAddDag* tries[4];
@@ -516,6 +521,7 @@ namespace flopoco{
 				tries[3]=implem_try_euclidean0;
 				tries[4]=implem_try_Shifts;
 
+				// Build in implementation a tree for the constant multiplier
 				unsigned int position=find_best_implementation( tries, 4);
 				switch (position) {
 					case 1: implementation=implem_try_left;
@@ -573,12 +579,58 @@ namespace flopoco{
 				// copy the top of the DAG into variable R
 				vhdl << endl << tab << "R <= " << implementation->result->name << "("<< rsize-1 <<" downto 0);"<<endl;
 				outDelayMap["R"] = delay;
+				*/
+
+
+				//experimenting with bitheaps
+				double delay;
+				delete implementation;
+				implementation = buildMultBoothTreeBitheap(n, 2);
+
+				//create the bitheap that computes the sum
+				bitheap = new BitHeap(this, rsize+1);
+
+				for(int i=0; (unsigned)i<implementation->saoHeadlist.size(); i++)
+				{
+					delay = 0.0;
+					build_pipeline(implementation->saoHeadlist[i], delay);
+
+					//add the bits to the bitheap
+					vhdl << endl << tab << "-- adding " << implementation->saoHeadlist[i]->name
+							<< " shifted by " << implementation->saoHeadShift[i] << " to the bitheap" << endl;
+					for(int j=0; j<implementation->saoHeadlist[i]->size-1; j++)
+					{
+						bitheap->addBit(implementation->saoHeadShift[i]+j,
+								join(implementation->saoHeadlist[i]->name, of(j)));
+					}
+					//sign extend if necessary
+					if(implementation->saoHeadlist[i]->n < 0)
+					{
+						ostringstream tmpStr;
+
+						tmpStr << "not(" << implementation->saoHeadlist[i]->name << of(implementation->saoHeadlist[i]->size-1) << ")";
+						bitheap->addBit(implementation->saoHeadShift[i]+implementation->saoHeadlist[i]->size-1,
+									tmpStr.str());
+						for(int j=implementation->saoHeadlist[i]->size-1; j<(rsize+1); j++)
+						{
+							bitheap->addConstantOneBit(implementation->saoHeadShift[i]+j);
+						}
+					}
+					else
+					{
+						bitheap->addBit(implementation->saoHeadShift[i]+implementation->saoHeadlist[i]->size-1,
+								join(implementation->saoHeadlist[i]->name, of(implementation->saoHeadlist[i]->size-1)));
+					}
+				}
+
+				//compress the bitheap
+				bitheap->generateCompressorVHDL();
+
+				// copy the top of the DAG into variable R
+				vhdl << endl << tab << "R <= " << bitheap->getSumName() << range(rsize-1, 0) << ";" << endl;
+				outDelayMap["R"] = getCriticalPath();
 			}
 		}
-
-
-
-
 
 
 
@@ -608,7 +660,7 @@ namespace flopoco{
 			addInput("X", xsize);
 			addOutput("R", rsize);
 
-			// Build in implementation a tree constant multiplier 
+			// Build in implementation a tree for the constant multiplier
 
 			ShiftAddOp* powerOfTwo[1000]; // Should be enough for anybody
 
@@ -667,6 +719,13 @@ namespace flopoco{
 			outDelayMap["R"] = delay;
 
 		}
+
+
+	IntConstMult::IntConstMult(Target* _target, int _xsize) :
+			Operator(_target), xsize(_xsize)
+	{
+
+	}
 
 
 
@@ -760,8 +819,13 @@ namespace flopoco{
 		return false;
 	}
 
-	/** This function initializes divider, quotient and remainder, and returns them choosing the divider that minimizes the size of quotient plus the size of remainder */
-	// FIXME: this should look at the boothcode of the quotient and remainder and make them minimal. The improvement is started but does not work it is set in the #define USE_EXPERIMENTAL_HEURISTIC_1.
+	/**
+	 * This function initializes divider, quotient and remainder,
+	 * and returns them choosing the divider that minimizes
+	 * the size of quotient plus the size of remainder
+	 */
+	// FIXME: this should look at the boothcode of the quotient and remainder and make them minimal.
+	//			The improvement is started but does not work it is set in the #define USE_EXPERIMENTAL_HEURISTIC_1.
 	bool IntConstMult::findBestDivider(mpz_class n, mpz_t & divider, mpz_t & quotient, mpz_t & remainder) {
 
 		REPORT(FULL,"Entering findBestDivider()");
@@ -769,12 +833,16 @@ namespace flopoco{
 		mpz_t sizeTest;
 		mpz_init(sizeTest);
 
-		size_t sizeOfmaxDivider=mpz_sizeinbase(n.get_mpz_t(),2); //check the size of the constant. if it is a power of two, we have to check if constant-1 is a good divider too or not.
+		//check the size of the constant. if it is a power of two,
+		//	we have to check if constant-1 is a good divider too or not.
+		size_t sizeOfmaxDivider=mpz_sizeinbase(n.get_mpz_t(),2);
 
 		mpz_ui_pow_ui(sizeTest,2,sizeOfmaxDivider-1);
 		mpz_sub_ui(sizeTest,sizeTest,1); //computing the test
 
-		if ( mpz_cmp(n.get_mpz_t(), sizeTest) < 0 ) // if the constant is smaller than the power of two minus one, then we are allowed to check directly the smaller dividers. Else we have to check the divider which size maches the size of the constant.
+		// if the constant is smaller than the power of two minus one, then we are allowed to check
+		//		directly the smaller dividers. Else we have to check the divider which size matches the size of the constant.
+		if ( mpz_cmp(n.get_mpz_t(), sizeTest) < 0 )
 			sizeOfmaxDivider--;
 		mpz_clear(sizeTest);
 
@@ -785,7 +853,8 @@ namespace flopoco{
 		mpz_init(q);
 		mpz_init(r);
 
-		mpz_init_set(divider,n.get_mpz_t()); //we initialize the three outputs to the constant because we want them to be smaller (in bits) than it.
+		//we initialize the three outputs to the constant because we want them to be smaller (in bits) than it.
+		mpz_init_set(divider,n.get_mpz_t());
 		mpz_init_set(quotient,n.get_mpz_t());
 		mpz_init_set(remainder,n.get_mpz_t());
 
@@ -816,20 +885,21 @@ namespace flopoco{
 			int sizeOfCurrentOperands, sizeOfNewOperands;
 #endif
 
-			for (unsigned int i=0; i<2*(sizeOfmaxDivider-1);i++)
+		for (unsigned int i=0; i<2*(sizeOfmaxDivider-1);i++)
 		{
 			//computing euclidean division
 			mpz_tdiv_qr(q,r,n.get_mpz_t(),potentialDividers[i]);
 			//			REPORT(DEBUG,"q="<<q<<" r="<<r);
 
 #if defined USE_EXPERIMENTAL_HEURISTIC_1
-			//FIXME: this does not work and finish with an infinite loop state
+			//FIXME: this does not work and finishes with an infinite loop state
 			mpz_class quot(q);
 			mpz_class rem(r);
 			mpz_class fquot(quotient);
 			mpz_class frem(remainder);
 
-			if (!mpz_cmp(q, n.get_mpz_t()) || !mpz_cmp(r, n.get_mpz_t())){ //avoid infinite loop taking the following try when it's possible, and taking the precedent if we are at the end.
+			//avoid infinite loop taking the following try when it's possible, and taking the precedent if we are at the end.
+			if (!mpz_cmp(q, n.get_mpz_t()) || !mpz_cmp(r, n.get_mpz_t())){
 				i++;
 				if (i==2*(sizeOfmaxDivider-1)){
 					i--;
@@ -854,7 +924,8 @@ namespace flopoco{
 
 #if !defined USE_EXPERIMENTAL_HEURISTIC_1
 			if ( (mpz_sizeinbase(q,2)+mpz_sizeinbase(r,2)) < (mpz_sizeinbase(quotient,2)+mpz_sizeinbase(remainder,2)) )
-			{	//if the result is smaller than the current result, then set the current result to the result and carry on
+			{
+				//if the result is smaller than the current result, then set the current result to the result and carry on
 				mpz_set(divider,potentialDividers[i]);
 				mpz_set(quotient,q);
 				mpz_set(remainder,r);
@@ -883,7 +954,9 @@ namespace flopoco{
 		int nonZeroInBoothCode = 0;
 		int nsize = intlog2(n);
 
-		// Build the binary representation -- I'm sure there is a mpz method for it. Search around mpz_array_init(), mpz_export(), or mpz_get_ui() (this last one should be useless because of the too restricted size)
+		// Build the binary representation -- I'm sure there is a mpz method for it.
+		//		Search around mpz_array_init(), mpz_export(), or mpz_get_ui()
+		//		(this last one should be useless because of the too restricted size)
 		mpz_class nn = n;
 		int l = 0;
 		int nonZero=0;
@@ -1006,7 +1079,7 @@ namespace flopoco{
 	}
 
 
-	/**this builds a ShiftAddDag builded following the decomposition of a constant C as C=AQ+R, with A=(2^i +/- 1) and R<A */
+	/**this builds a ShiftAddDag built following the decomposition of a constant C as C=AQ+R, with A=(2^i +/- 1) and R<A */
 	//FIXME: The end of the recursion is not optimally set. Find the right stop
 	// to try: compute the cost at each level for several ways to build the DAG and chose the best (warning: it could be tricky)
 	ShiftAddOp* IntConstMult::buildEuclideanDag(const mpz_class n, ShiftAddDag* constant){
@@ -1026,19 +1099,24 @@ namespace flopoco{
 		bool too_small = !findBestDivider(n, d, q, r);
 
 		if (too_small){
-			throw string("ERROR in IntConstMult::buildEuclideanDag: Tried to divide a constant lower than 3: this will make no sense. Aborting DAG construction\n"); //would have to  stay here untill we find no more errors in this method... 
+			//would have to  stay here until we find no more errors in this method...
+			throw string("ERROR in IntConstMult::buildEuclideanDag: Tried to divide a constant lower than 3: this will make no sense. Aborting DAG construction\n");
 			return NULL;
 		};
 
 		mpz_class R=mpz_class(r);
 		mpz_class Q=mpz_class(q);
 
-		mpz_init_set(test, d); //this variable is here to know in a relatively easy way if d is 2^i+1 or 2^i-1. What we do is this: we add 1 to test, which was previously initialized as the same value as d, the best divider for n. So, if d is 2^i-1, adding 1 increases the size of test. Otherwise, test's size is not modified. Then we check if it has changed and apply the appropriate case.
+		//this variable is here to know in a relatively easy way if d is 2^i+1 or 2^i-1.
+		//	What we do is this: we add 1 to test, which was previously initialized as the same value as d,
+		//	the best divider for n. So, if d is 2^i-1, adding 1 increases the size of test.
+		//	Otherwise, test's size is not modified. Then we check if it has changed and apply the appropriate case.
+		mpz_init_set(test, d);
 		mpz_add_ui(test, test, 1);
 
 		// compute Q
 		if (mpz_cmp_ui(q,3)<0){ //if q<3
-			computeQ = buildMultBoothTreeFromRight(Q); //end of recursion consruct the right operator
+			computeQ = buildMultBoothTreeFromRight(Q); //end of recursion construct the right operator
 			finalQ = constant->sadAppend(computeQ);
 		}
 		else {
@@ -1083,7 +1161,8 @@ namespace flopoco{
 
 
 	/** prepares all the features needed for all the methods building a ShiftAddDag */
-	int  IntConstMult::prepareBoothTree(mpz_class &n, ShiftAddDag* &tree_try, ShiftAddOp** &level, ShiftAddOp* &result, ShiftAddOp* &MX, int* &shifts, int &nonZeroInBoothCode, int &globalshift){
+	int  IntConstMult::prepareBoothTree(mpz_class &n, ShiftAddDag* &tree_try, ShiftAddOp** &level, ShiftAddOp* &result,
+			ShiftAddOp* &MX, int* &shifts, int &nonZeroInBoothCode, int &globalshift){
 		int i,j;
 
 		int nsize = intlog2(n);
@@ -1091,6 +1170,7 @@ namespace flopoco{
 		if((mpz_class(1) << (nsize-1)) == n) { // n is a power of two
 			REPORT(INFO, "Power of two");
 			result= tree_try->provideShiftAddOp(Shift, tree_try->PX, intlog2(n)-1);
+			globalshift = nsize-1;
 			return 1;
 		}
 		else {
@@ -1105,7 +1185,7 @@ namespace flopoco{
 				if(i==0) // no need to add a variable, because BoothCode=1
 					result = tree_try->PX;
 				else {
-					result = new ShiftAddOp(tree_try, Shift,   tree_try->PX, i);
+					result = new ShiftAddOp(tree_try, Shift, tree_try->PX, i);
 				}
 				delete [] BoothCode;
 				return 2;
@@ -1113,9 +1193,6 @@ namespace flopoco{
 			else { // at least two non-zero bits
 
 				// build the opposite of the input
-
-
-
 				if(needsMinusX(BoothCode, nsize))
 					MX = new ShiftAddOp(tree_try, Neg, tree_try->PX);
 
@@ -1131,8 +1208,11 @@ namespace flopoco{
 					i++;
 					while(0==BoothCode[i]) i++; // set the shift to the right value
 				}
+				// BoothCode's MSB is always positive, because we perform unsigned multiplication.
+				//		For signed multiplication, we just need to negate or not the result.
+				// Check this: deduction propagation could increase cost.
 				level[j] = tree_try->PX; 
-				shifts[j] = i-globalshift; // BoothCode's MSB is always positive, because we perform unsigned multiplication. For signed multiplication, we just need to negate or not the result. Check this: deduction propagation could increase cost.
+				shifts[j] = i-globalshift;
 				delete [] BoothCode;
 				return 0;
 
@@ -1140,7 +1220,9 @@ namespace flopoco{
 		}
 	}
 
-	/** Builds a balanced tree. */
+	/**
+	 * Builds a balanced tree.
+	 */
 	// Assumes: implementation is initialized
 	ShiftAddDag*  IntConstMult::buildMultBoothTreeFromRight(mpz_class n){
 		ShiftAddDag* tree_try= new ShiftAddDag(this);
@@ -1187,7 +1269,11 @@ namespace flopoco{
 		return tree_try;
 	}
 
-	/** builds a DAG using the same method than buildMultBoothTreeFromRight but starting from the left (MSB) */
+	/**
+	 * Builds a DAG using the same method as buildMultBoothTreeFromRight,
+	 * but starting from the left (MSB)
+	 */
+	// Assumes: implementation is initialized
 	ShiftAddDag*  IntConstMult::buildMultBoothTreeFromLeft(mpz_class n){
 		ShiftAddDag* tree_try= new ShiftAddDag(this);
 		int k,i,j,nk,nonZeroInBoothCode,globalshift;
@@ -1197,7 +1283,7 @@ namespace flopoco{
 		int*     shifts;
 
 
-		REPORT(DEBUG, "Entering buildMultBoothTreeFromRight for "<< n);		
+		REPORT(DEBUG, "Entering buildMultBoothTreeFromLeft for "<< n);
 
 		if ( !prepareBoothTree(n,tree_try, level, result, MX, shifts, nonZeroInBoothCode, globalshift) ){
 			k=nonZeroInBoothCode;
@@ -1234,7 +1320,9 @@ namespace flopoco{
 		return tree_try;
 	}
 
-	/** Builds a DAG starting from both extremities */
+	/**
+	 * Builds a DAG starting from both extremities
+	 */
 	// Assumes: implementation is initialized
 	ShiftAddDag*  IntConstMult::buildMultBoothTreeToMiddle(mpz_class n){
 		ShiftAddDag* tree_try= new ShiftAddDag(this);
@@ -1245,7 +1333,7 @@ namespace flopoco{
 		int*     shifts;
 
 
-		REPORT(DEBUG, "Entering buildMultBoothTreeFromRight for "<< n);		
+		REPORT(DEBUG, "Entering buildMultBoothTreeToMiddle for "<< n);
 
 		if ( !prepareBoothTree(n,tree_try, level, result, MX, shifts, nonZeroInBoothCode, globalshift) ){
 			ShiftAddOp **fillLevel;
@@ -1320,7 +1408,9 @@ namespace flopoco{
 		return tree_try;
 	}
 
-	/** searches the smallest shift in an array of integers */
+	/**
+	 * searches the smallest shift in an array of integers
+	 */
 	unsigned int searchSmallestShift( int* shifts, unsigned int size ) {
 		if ( size<2 )
 			return 0;
@@ -1333,7 +1423,9 @@ namespace flopoco{
 		return smallestShift;
 	};
 
-	/** computes the number of buildable ShiftAddOps in an array (there are token in pairs) */
+	/**
+	 * computes the number of buildable ShiftAddOps in an array (there are token in pairs)
+	 */
 	unsigned int computeFillLevelSize( int* shifts, unsigned int size, unsigned int shift ) {
 		unsigned int sizeOfFillLevel=size;
 		if (size>=2) {
@@ -1349,7 +1441,9 @@ namespace flopoco{
 
 
 
-	/** Builds a balanced tree, starts building the smallest shifts, leave the others and then iterate */
+	/**
+	 * Builds a balanced tree, starts building the smallest shifts, leave the others and then iterate
+	 */
 	// Assumes: implementation is initialized
 	ShiftAddDag* IntConstMult::buildMultBoothTreeSmallestShifts(mpz_class n){
 		ShiftAddDag* tree_try= new ShiftAddDag(this);
@@ -1360,8 +1454,9 @@ namespace flopoco{
 		int*     shifts;
 
 
-		REPORT(DEBUG, "Entering buildMultBoothTreeFromRight for "<< n);		
-		//each iteration we search the smallest shift between two non-zero bits and compute all the operator including this shift, leaving the others for the next step
+		REPORT(DEBUG, "Entering buildMultBoothTreeSmallestShifts for "<< n);
+		//each iteration we search the smallest shift between two non-zero bits
+		//	and compute all the operator including this shift, leaving the others for the next step
 		if ( !prepareBoothTree(n,tree_try, level, result, MX, shifts, nonZeroInBoothCode, globalshift) ){
 			ShiftAddOp **fillLevel;
 			int* shiftsLevel;
@@ -1422,6 +1517,112 @@ namespace flopoco{
 			REPORT(DETAILED, "  "<<*(implementation->saolist[i]));
 		}
 	};
+
+
+
+
+	/**
+	 * Builds an implementation tree, using bitheaps
+	 */
+	// Assumes: implementation is initialized
+	ShiftAddDag* IntConstMult::buildMultBoothTreeBitheap(mpz_class n, int levels)
+	{
+		ShiftAddDag* tree_try= new ShiftAddDag(this);
+		int k,i,j,nk,nonZeroInBoothCode;
+		int globalshift = 0;
+		ShiftAddOp *result = NULL;
+		ShiftAddOp *MX=0;
+		ShiftAddOp**  level;
+		int*     shifts;
+		vector<int> tempHeadShifts;
+
+		REPORT(DEBUG, "Entering buildMultBoothTreeBitheap for "<< n);
+
+		if ( !prepareBoothTree(n,tree_try, level, result, MX, shifts, nonZeroInBoothCode, globalshift) )
+		{
+			REPORT(DEBUG, "nonZeroInBoothCode=" <<nonZeroInBoothCode<<" globalshift=" << globalshift);
+			k=nonZeroInBoothCode;
+
+			//if there is no reutilization
+			if(levels == 0)
+			{
+				for(int count=0; count<k; count++)
+					tree_try->saoHeadlist.push_back(level[count]);
+				for(int count=0; count<k; count++)
+					tree_try->saoHeadShift.push_back(shifts[count]+globalshift);
+				return tree_try;
+			}
+
+			//initialize the shifts of the heads of the DAG
+			for(int count=0; count<k; count++)
+				tempHeadShifts.push_back(shifts[count]+globalshift);
+			if(k == 1)
+			{
+				tree_try->saoHeadShift = tempHeadShifts;
+			}
+
+			while((k!=1) && (levels>0))
+			{
+				//reset the delays for the heads of the DAG
+				tree_try->saoHeadShift.clear();
+
+				nk=k>>1;
+				for(j=0; j<nk; j++)
+				{
+					if (  ( level[2*j+1]==tree_try->PX ) && ( level[2*j]==MX ) && ( (shifts[2*j+1]-shifts[2*j])==2 )  )
+						// the multiplier is three: implementation cost is lower when we do it as ++ than when we do as +0-.
+						level[j] = tree_try->provideShiftAddOp(Add, tree_try->PX, 1,  tree_try->PX);
+					else
+						// construct the addition tree with right weight
+						level[j] = tree_try->provideShiftAddOp(Add, level[2*j+1], (shifts[2*j+1]-shifts[2*j]),  level[2*j]);
+
+					level[2*j]->parentList.clear();
+					level[2*j]->parentList.push_back(level[j]);
+					level[2*j+1]->parentList.clear();
+					level[2*j+1]->parentList.push_back(level[j]);
+
+					shifts[j] = shifts[2*j];
+
+					tree_try->saoHeadShift.push_back(tempHeadShifts[2*j]);
+				}
+				if(nk<<1 != k)
+				{
+					// if k_LSB=1
+					level[j] = level[2*j];
+					shifts[j] = shifts[2*j];
+					k=nk+1;
+
+					tree_try->saoHeadShift.push_back(tempHeadShifts[2*j]);
+				}
+				else
+					k=nk;
+
+				levels--;
+				tempHeadShifts = tree_try->saoHeadShift;
+			}
+
+			//update the DAG head list
+			tree_try->saoHeadlist.clear();
+			for(j=0; j<k; j++)
+			{
+				tree_try->saoHeadlist.push_back(level[j]);
+			}
+
+			delete level;
+			delete shifts;
+		}
+		else
+		{
+			tree_try->saoHeadlist.push_back(result);
+			tree_try->saoHeadShift.push_back(globalshift);
+		}
+		REPORT(DETAILED, "Number of adders: " << tree_try->saolist.size());
+
+		//there's no need for the result, as there might several heads for the DAG (stored in saoHeadlist)
+		tree_try->result = NULL;
+
+		return tree_try;
+	}
 
 
 

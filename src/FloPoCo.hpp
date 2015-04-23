@@ -103,6 +103,7 @@
 
 /* Constant multipliers and dividers ------------------------ */
 #include "ConstMult/IntConstMult.hpp"
+#include "ConstMult/IntConstMCM.hpp"
 #include "ConstMult/IntIntKCM.hpp"
 #include "ConstMult/FixRealKCM.hpp"
 #include "ConstMult/FPConstMult.hpp"

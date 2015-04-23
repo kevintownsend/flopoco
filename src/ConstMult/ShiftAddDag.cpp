@@ -77,11 +77,11 @@ namespace flopoco{
 
 
 
-	// This method looks up in the current Dag if the requireed op
+	// This method looks up in the current Dag if the required op
 	// exists, and either returns a pointer to it, or creates the
 	// corresponding node.
 	ShiftAddOp* ShiftAddDag::provideShiftAddOp(ShiftAddOpType op, ShiftAddOp* i, int s, ShiftAddOp* j){
-		mpz_class n=this->computeConstant(op, i, s, j);
+		mpz_class n = this->computeConstant(op, i, s, j);
 		if(n==1)
 			return PX;
 		else {

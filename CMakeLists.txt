@@ -274,7 +274,8 @@ src/Conversions/Fix2FP
 # Constant multiplications and divisions
  src/ConstMult/ShiftAddOp 
  src/ConstMult/ShiftAddDag 
- src/ConstMult/IntConstMult 
+ src/ConstMult/IntConstMult
+ src/ConstMult/IntConstMCM  
  src/ConstMult/KCMTable
  src/ConstMult/IntIntKCM 
  src/ConstMult/FPConstMult 

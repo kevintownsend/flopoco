@@ -39,6 +39,7 @@ namespace flopoco{
 		ShiftAddOpType op;
 		ShiftAddOp* i;
 		ShiftAddOp* j;
+		vector<ShiftAddOp*> parentList;
 
 		/**  The shift on i*/
 		int s; 
@@ -73,7 +74,7 @@ namespace flopoco{
 			case X:        o << " X"; break;
 			case Add:      o << sao.i->name << "<<" << sao.s << "  + " << sao.j->name;   break;
 			case Sub:      o << sao.i->name << "<<" << sao.s << "  - " << sao.j->name;   break;
-			case RSub:      o << sao.j->name << "  - " << sao.i->name << "<<" << sao.s ;   break;
+			case RSub:     o << sao.j->name << "  - " << sao.i->name << "<<" << sao.s ;   break;
 			case Shift:    o << " " << sao.i->name << "<<" << sao.s;                     break;
 			case Neg:      o << "-" << sao.i->name;   break;
 			}   

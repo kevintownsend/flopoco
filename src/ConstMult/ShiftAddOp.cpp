@@ -30,7 +30,8 @@ namespace flopoco{
 
 
 	ShiftAddOp::ShiftAddOp(ShiftAddDag* impl, ShiftAddOpType op, ShiftAddOp* i, int s, ShiftAddOp* j) :
-		impl(impl), op(op), i(i), j(j), s(s) {
+		impl(impl), op(op), i(i), j(j), s(s)
+	{
 		n=impl->computeConstant(op, i, s, j);
 		// now compute the size according to this constant, as the log2 of the max value the result can take
 		if (n >= 0)

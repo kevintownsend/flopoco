@@ -12,6 +12,8 @@
 #include "ShiftAddDag.hpp"
 #include "IntAddSubCmp/IntAdder.hpp"
 
+#include "BitHeap/BitHeap.hpp"
+
 /**
 	Integer constant multiplication.
 
@@ -44,6 +46,9 @@ namespace flopoco{
 		             mpz_class header, int headerSize, 
 		             int i, int j);
 
+		/** The bare-bones constructor, used by inheriting classes */
+		IntConstMult(Target* target, int xsize);
+
 		~IntConstMult();
 
 		mpz_class n;  /**< The constant */ 
@@ -70,11 +75,19 @@ namespace flopoco{
 
 		/** A wrapper that tests the various build*Tree and picks up the best */ 
 		ShiftAddDag* buildMultBoothTreeSmallestShifts(mpz_class n);
+
+		/**
+		 * Build a tree implementation using a bitheap for the compression
+		 * @param n the constant
+		 * @param levels the number of stages of re-utilization
+		 */
+		ShiftAddDag* buildMultBoothTreeBitheap(mpz_class n, int levels);
+
 		/** Build an optimal tree for rational constants
 		 Parameters are such that n = headerSize + (2^i + 2^j)periodSize */ 
-		void buildTreeForRational(mpz_class header, mpz_class period, int headerSize, int periodSize, int i, int j);  
+		void buildTreeForRational(mpz_class header, mpz_class period, int headerSize, int periodSize, int i, int j);
 
-	private:
+	protected:
 		bool findBestDivider(const mpz_class n, mpz_t & divider, mpz_t & quotient, mpz_t & remainder);
 		void build_pipeline(ShiftAddOp* sao, double& delay);
 		string printBoothCode(int* BoothCode, int size);
@@ -82,6 +95,8 @@ namespace flopoco{
 		void optimizeLefevre(const vector<mpz_class>& constants);
 		ShiftAddOp* buildEuclideanDag(const mpz_class n, ShiftAddDag* constant);
 		int prepareBoothTree(mpz_class &n, ShiftAddDag* &tree_try, ShiftAddOp** &level, ShiftAddOp* &result, ShiftAddOp* &MX, int* &shifts, int& nonZeroInBoothCode, int& globalshift);
+
+		BitHeap* bitheap;
 	};
 }
 #endif

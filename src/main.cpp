@@ -245,6 +245,10 @@ void usage(char *name, string opName = ""){
 		OP( "IntConstMult","w c");
 		cerr << "Multiplier of an integer of w bits by the constant c, using shift-and-add\n";
 	}
+	if ( full || opName == "IntMultiplier" || opName == "IntConstMCM"){
+		OP( "IntConstMCM","w nbConst c0 c1...");
+		cerr << "Multiple constant multiplier of an integer of w bits by the nbConst constants c0, c1,... using shift-and-add\n";
+	}
 	if ( full || opName == "IntMultiplier" || opName == "IntIntKCM"){					
 		OP( "IntIntKCM","w c signedInput");
 		cerr << "Integer constant multiplier using KCM: w - input size, c - the constant\n";
@@ -1309,6 +1313,26 @@ bool parseCommandLine(int argc, char* argv[]){
 				op = new IntConstMult(target, w, mpc);
 				addOperator(op);
 			}        
+		}
+
+		else if(opname=="IntConstMCM"){
+			int nargs = 2;
+			if (i+nargs > argc)
+				usage(argv[0],opname);
+			else {
+				int w 			= atoi(argv[i++]);
+				int nbConst 	= atoi(argv[i++]);
+				vector<mpz_class> constants;
+				if (i+nbConst > argc)
+					usage(argv[0],opname);
+				for(int count=0; count<nbConst; count++)
+				{
+					mpz_class mpc(argv[i++]);
+					constants.push_back(mpc);
+				}
+				op = new IntConstMCM(target, w, nbConst, constants);
+				addOperator(op);
+			}
 		}
 
 		else if(opname=="IntConstDiv"){
