@@ -499,8 +499,9 @@ namespace flopoco{
 				addInput("X", xsize);
 				addOutput("R", rsize);
 
-				//commented out while experimenting with bitheaps
-				/*
+#if 1
+				// adder tree, no bitheaps
+			 
 				// Build the implementation trees for the constant multiplier
 				ShiftAddDag* implem_try_right = buildMultBoothTreeFromRight(n);
 				ShiftAddDag* implem_try_left = buildMultBoothTreeFromLeft(n);
@@ -579,13 +580,11 @@ namespace flopoco{
 				// copy the top of the DAG into variable R
 				vhdl << endl << tab << "R <= " << implementation->result->name << "("<< rsize-1 <<" downto 0);"<<endl;
 				outDelayMap["R"] = delay;
-				*/
-
-
+#else
 				//experimenting with bitheaps
 				double delay;
 				delete implementation;
-				implementation = buildMultBoothTreeBitheap(n, 2);
+				implementation = buildMultBoothTreeBitheap(n, 1);
 
 				//create the bitheap that computes the sum
 				bitheap = new BitHeap(this, rsize+1);
@@ -629,6 +628,7 @@ namespace flopoco{
 				// copy the top of the DAG into variable R
 				vhdl << endl << tab << "R <= " << bitheap->getSumName() << range(rsize-1, 0) << ";" << endl;
 				outDelayMap["R"] = getCriticalPath();
+#endif // bitheap or not
 			}
 		}
 
