@@ -31,6 +31,7 @@ TODO file for FloPoCo
 ** move to C++11 and get rid of all warnings
 ** add more  newComponentAndInstance() on the model of FixMultAdd
 ** systematic remove of code from the .hpp
+** Doxygen
 ** systematic check of the doc
 
 
