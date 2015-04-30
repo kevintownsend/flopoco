@@ -19,7 +19,7 @@ using namespace std;
 namespace flopoco {
 
 	FixIIR::FixIIR(Target* target, int msbOut_, int lsbOut_, double H_, vector<string> coeffb_, vector<string> coeffa_, map<string, double> inputDelays) : 
-		Operator(target), p(-lsbOut_),msbOut(msbOut_), H(H_), coeffb(coeffb_), coeffa(coeffa_)
+		Operator(target), msbOut(msbOut_), lsbOut(lsbOut_), H(H_), coeffb(coeffb_), coeffa(coeffa_)
 	{
 		srcFileName="FixIIR";
 		setCopyrightString ( "Louis Beseme, Florent de Dinechin (2014)" );
@@ -27,7 +27,7 @@ namespace flopoco {
 
 
 		ostringstream name;
-		name << "FixIIR_"<< p << "_uid" << getNewUId();
+		name << "FixIIR_"<< msbOut << "_"<< lsbOut << "_uid" << getNewUId();
 		setNameWithFreq( name.str() );
 
 		n = coeffb.size();
@@ -38,14 +38,14 @@ namespace flopoco {
 		//manage the critical path
 		setCriticalPath(getMaxInputDelays(inputDelays));
 
-		addInput("X", 1+p, true);
+		addInput("X", 1+-lsbOut, true);
 
 
 		// guard bits for a faithful result
 		g= intlog2(2*H*(n+m)); 
 		REPORT(INFO, "g=" << g);
 
-		hugePrec = 10*(1+msbOut+p+g);
+		hugePrec = 10*(1+msbOut+-lsbOut+g);
 		currentIndexA=0;
 		currentIndexB=0;
 		for (int i = 0; i<m; i++)
@@ -110,23 +110,21 @@ namespace flopoco {
 		}
 		
 
-		REPORT(INFO, "Worst-case weight of MSB of the result is " << msbOut);
-
-		wO = 1+ (msbOut - (-p)) + 1; //1 + sign  ; 
+		wO = (msbOut - lsbOut) + 1; //1 + sign  ; 
 
 		
 
-		int size = 1+ (msbOut - (-p) +1) + g ; // sign + overflow  bits on the left, guard bits on the right
+		int size = wO + g ; 
 		REPORT(INFO, "Sum size is: "<< size );
 
 		
 		//compute the guard bits from the KCM mulipliers
-		int wInKCM_B = 1 + p;	//1 sign bit + p bit 
-		int lsbOutKCM = -p-g;
+		int wInKCM_B = 1 -lsbOut;	//1 sign bit + p bit 
+		int lsbOutKCM = lsbOut-g;
 		double targetUlpError = 1.0;
 		int guardBitsKCM_B = FixRealKCM::neededGuardBits(target, wInKCM_B, lsbOutKCM, targetUlpError);
 
-		int wInKCM_A = 1+1+msbOut+p+g;
+		int wInKCM_A = 1+1+msbOut-lsbOut+g;
 		int guardBitsKCM_A = FixRealKCM::neededGuardBits(target, wInKCM_A, lsbOutKCM, targetUlpError);
 
 		int guardBitsKCM = max(guardBitsKCM_A, guardBitsKCM_B);
@@ -139,8 +137,8 @@ namespace flopoco {
 		REPORT(INFO, "guardBitsKCM part B = "<< guardBitsKCM_B);
 		REPORT(INFO, "guardBitsKCM part A = "<< guardBitsKCM_A);
 
-		//Shift register for the left part
-		ShiftReg *shiftRegB = new ShiftReg(target, 1+p, n, inputDelays);
+		//Shift register for the left part // TODO size
+		ShiftReg *shiftRegB = new ShiftReg(target, 1-lsbOut , n, inputDelays);
 
 
 		addSubComponent(shiftRegB);
@@ -183,13 +181,14 @@ namespace flopoco {
 
 			for (int i=0; i<n; i++) 
 			{
+				// TODO possible mem leak here? The pointer is lost, do we keep pointers to the subtables?
 				// Multiplication: instantiating a KCM object. It will add bits also to the right of lsbOutKCM
-				FixRealKCM* mult = new FixRealKCM(this,				// the envelopping operator
+				new FixRealKCM(this,				// the envelopping operator
 														target, 	// the target FPGA
 														getSignalByName(join("Yb",i)),
 														true, 		// signed
 														-1, 		// input MSB, but one sign bit will be added
-														-p, 		// input LSB weight
+														lsbOut, 		// input LSB weight
 														lsbOutKCM, 		// output LSB weight -- the output MSB is computed out of the constant
 														coeffb[i], 	// pass the string unmodified
 														bitHeapB		// pass the reference to the bitheap that will accumulate the intermediary products
@@ -200,12 +199,12 @@ namespace flopoco {
 			for (int i=0; i<m; i++) 
 			{
 				// Multiplication: instantiating a KCM object. It will add bits also to the right of lsbOutKCM
-				FixRealKCM* mult = new FixRealKCM(this,				// the envelopping operator
+				new FixRealKCM(this,				// the envelopping operator
 														target, 	// the target FPGA
 														getSignalByName(join("Ya",i)),
 														true, 		// signed
 														msbOut, 		// input MSB, but one sign bit will be added
-														-p-g, 		// input LSB weight
+														lsbOut-g, 		// input LSB weight
 														lsbOutKCM, 		// output LSB weight -- the output MSB is computed out of the constant
 														coeffa[i], 	// pass the string unmodified
 														bitHeapA		// pass the reference to the bitheap that will accumulate the intermediary products
@@ -245,7 +244,7 @@ namespace flopoco {
 				FixRealKCM* mult = new FixRealKCM(target, 
 												  true, // signed
 												  -1, // input MSB, but one sign bit will be added
-												  -p, // input LSB weight
+												  lsbOut, // input LSB weight
 												  lsbOutKCM, // output LSB weight -- the output MSB is computed out of the constant
 												  coeffb[i] // pass the string unmodified
 												  );
@@ -282,7 +281,7 @@ namespace flopoco {
 				FixRealKCM* mult = new FixRealKCM(target, 
 												  true, // signed
 												  msbOut, // input MSB, but one sign bit will be added
-												  -p-g, // input LSB weight
+												  lsbOut-g, // input LSB weight
 												  lsbOutKCM, // output LSB weight -- the output MSB is computed out of the constant
 												  coeffa[i] // pass the string unmodified
 												  );
@@ -349,7 +348,7 @@ namespace flopoco {
 		xHistory[currentIndexB] = sx;
 
 		mpfr_t x, t, u, s;
-		mpfr_init2 (x, 1+p);
+		mpfr_init2 (x, 1-lsbOut);
 		mpfr_init2 (t, hugePrec);
 		mpfr_init2 (u, hugePrec);
 		mpfr_init2 (s, hugePrec);	
@@ -359,9 +358,9 @@ namespace flopoco {
 		for (int i=0; i< n; i++)
 		{
 			sx = xHistory[(currentIndexB+n-i)%n];		// get the input bit vector as an integer		
-			sx = bitVectorToSigned(sx, 1+p); 						// convert it to a signed mpz_class		
+			sx = bitVectorToSigned(sx, 1-lsbOut); 						// convert it to a signed mpz_class		
 			mpfr_set_z (x, sx.get_mpz_t(), GMP_RNDD); 				// convert this integer to an MPFR; this rounding is exact
-			mpfr_div_2si (x, x, p, GMP_RNDD); 						// multiply this integer by 2^-p to obtain a fixed-point value; this rounding is again exact
+			mpfr_div_2si (x, x, -lsbOut, GMP_RNDD); 						// multiply this integer by 2^-p to obtain a fixed-point value; this rounding is again exact
 
 			mpfr_mul(t, x, mpcoeffb[i], GMP_RNDN); 					// Here rounding possible, but precision used is ridiculously high so it won't matter
 
@@ -391,7 +390,7 @@ namespace flopoco {
 		// round it up and down
 
 		// make s an integer -- no rounding here 
-		mpfr_mul_2si (s, s, p, GMP_RNDN);
+		mpfr_mul_2si (s, s, -lsbOut, GMP_RNDN);
 
 		
 		// We are waiting until the first meaningful value comes out of the IIR

@@ -25,19 +25,19 @@ namespace flopoco{
 		void buildStandardTestCases(TestCaseList* tcl);
 
   	private:
-		int p;							/**< The precision of inputs and outputs */ 
-		int n;							/**< number of taps */
-		int m;							/**< number of taps */
-		vector<string> coeffa;			/**< the coefficients as strings */
-		vector<string> coeffb;			/**< the coefficients as strings */
+		int msbOut;					/**< weight of the MSB in the result */
+		int lsbOut;					/**< weight of the LSB in the result */ 
+		double H;						/**< Worst case peak gain */
+		vector<string> coeffb;			/**< the b_i coefficients as strings */
+		vector<string> coeffa;			/**< the a_i coefficients as strings */
+		int n;							/**< number of taps on the numerator */
+		int m;							/**< number of taps on the denominator */
 
-		BitHeap* bitHeapA;    			/**< The heap of weighted bits that will be used to do the additions */
-		BitHeap* bitHeapB;    			/**< The heap of weighted bits that will be used to do the additions */
+		BitHeap* bitHeapB;    			/**< The bit heap for the FIR part */
+		BitHeap* bitHeapA;    			/**< The bit heap for the recursive part */
 
 		int g;							/**< number of guard bits */
 		int wO;							/**< width of the result */
-		int msbOut;					/**< weight of the MSB in the result */
-		double H;						/**< Worst case peak gain */
 
 	private:
 		int hugePrec;
