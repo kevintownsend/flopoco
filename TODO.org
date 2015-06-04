@@ -233,3 +233,6 @@ Hopefully a static method, or a # trick,  that is used to parse the generate the
 
 All main does is register all the Operators in some list, autogenerate the html manual, and prepares the parser loop. This is the part that is tricky in C++.
 Maybe it should be done in Python. 
+
+Problems: 
+ - before building a subcomponent (new) we need to build the map.
