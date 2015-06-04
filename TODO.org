@@ -208,3 +208,28 @@ Good reason for yes: it is the way forward
 Bad reasons for no:  it requires minor editing of all existing operators 
 Winner: YES, but after the transition to sollya4 is complete and we have a satisfiying regression test framework.
 
+* If we could redo the CLI from scratch
+Big problem with current implementation:
+ The CLI arguments and online help are not defined within the class of the operator, but in main.cpp
+ The HTML user documentation is yet another document, which is not auto-generated
+
+Proposal (WIP):
+CLI is changed so that 
+flopoco FPExp 8 23  FPAdd 8 23 FPAdd 11 52 
+becomes 
+flopoco --io=float:8:23 FPExp FPAdd --io=float:11:52 FPAdd
+All options affect the following operators (just like current -pipeline )
+
+The constructor of any operator takes only a Target, and a parameter map (key, value) where both key and value are strings 
+There is a default map (including the default target etc)
+All main.cpp does is parse the command line to build the parameter map (possibly overriding default) before calling each constructor in turn.
+
+An Operator, e.g. FPExp defines another static possibleParametersMap (key, (type, default value, help string)).
+It may inherit the default Operator map, and add any key it needs for FPExp-specific parameters, for example the k currnently passed to FPExpert.
+ 
+The FPExp constructor does the match between its specification map (built by main) and its possibleParametersMap, and sets all the required attribute from there (including defaults)
+
+Hopefully a static method, or a # trick,  that is used to parse the generate the help for this operator.
+
+All main does is register all the Operators in some list, autogenerate the html manual, and prepares the parser loop. This is the part that is tricky in C++.
+Maybe it should be done in Python. 
