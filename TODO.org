@@ -26,14 +26,19 @@ TODO file for FloPoCo
 ** clean up Target
 
 * Janitoring
-** There is one target declared in Operator, and one in virtually all the Operators. The latter should be removed.
-** uniformize name construction using setName(), getuid, etc. Model: ??
-** move to C++11 and get rid of all warnings
-** add more  newComponentAndInstance() on the model of FixMultAdd
-** systematic remove of code from the .hpp
-** Doxygen
-** systematic check of the doc
-
+*** Deduplication of Target object
+There is a Target declared in Operator, and one redeclared in many of the Operators. 
+The latter should be removed as it can be inherited from Operator::target_
+Example: see src/Table.hpp
+*** uniformize name construction 
+using setName(), getuid(), etc. Model: src/FPAddSub/FPAdderSinglePath.cpp 
+*** get rid of all C++11 warnings
+*** systematic remove all code from the .hpp
+Very small functions, typically getters and setters, have their code in the .hpp
+This code should be moved to the corresponding cpp.
+*** add more  newComponentAndInstance() on the model of FixMultAdd
+*** Doxygen
+*** systematic check of the consistency between user manual and online help
 
 * Bit heap and multipliers
 ** rewrite BitHeap with fixed-point support and better compression (see Kumm papers and uni_kassel branch)
@@ -139,7 +144,7 @@ Version ???   Interval operators
 (insert your wishlist here)
 
 
-* If we could start from scratch
+* If we could start pipeline from scratch
 If we were to redo the pipeline framework from scratch, here is the proper way to do it.
 
 The current situation has a history: we first added cycle management, then, as a refinement, critical-path based subcycle timing.
@@ -174,6 +179,7 @@ The question is: don't we loose some control on the circuit with this approach, 
 
 Note that all this is so much closer to textbook literature, with simple DAGs labelled by delay...
 
+
 * Options for signed/unsigned
 Option 0: Do nothing radical. It seems when the options
  --ieee=standard --ieee=synopsys
@@ -207,6 +213,7 @@ Should the default lib be standard (currently synopsys)?
 Good reason for yes: it is the way forward
 Bad reasons for no:  it requires minor editing of all existing operators 
 Winner: YES, but after the transition to sollya4 is complete and we have a satisfiying regression test framework.
+
 
 * If we could redo the CLI from scratch
 Big problem with current implementation:
