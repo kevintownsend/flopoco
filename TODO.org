@@ -212,6 +212,11 @@ Winner: YES, but after the transition to sollya4 is complete and we have a satis
 Big problem with current implementation:
  The CLI arguments and online help are not defined within the class of the operator, but in main.cpp
  The HTML user documentation is yet another document, which is not auto-generated
+ The match between CLI parameters and operator constructor parameters is not guaranteed.
+   Issue for instance to implement soaktesting/regression testing:
+   we want a static method of each operator that walks its parameter space and produce testbenches.
+	 the current implem. by Jean Marchal produces the parameters in C++, but they are consumed by apython script that calls the CLI.
+   This is uselessly complex, and unsafe.
 
 Proposal (WIP):
 CLI is changed so that 
@@ -231,5 +236,12 @@ The FPExp constructor does the match between its specification map (built by mai
 
 Hopefully a static method, or a # trick,  that is used to parse the generate the help for this operator.
 
-All main does is register all the Operators in some list, autogenerate the html manual, and prepares the parser loop. This is the part that is tricky in C++.
-Maybe it should be done in Python. 
+All main does is register all the Operators in some list, autogenerate the html manual, and prepares the parser loop. 
+This is the part that is tricky in C++, but David Thomas managed it, see random/utils/*factory* in the random branch.
+Or maybe it should be done in Python. 
+
+Discussion
+The factories of David kind of sort out the problem.
+
+Problems: 
+ - before building a subcomponent (new) we need to build the map.
