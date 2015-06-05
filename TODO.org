@@ -240,8 +240,6 @@ All main does is register all the Operators in some list, autogenerate the html 
 This is the part that is tricky in C++, but David Thomas managed it, see random/utils/*factory* in the random branch.
 Or maybe it should be done in Python. 
 
-Discussion
-The factories of David kind of sort out the problem.
 
 Problems: 
- - before building a subcomponent (new) we need to build the map.
+ - before building a subcomponent (new) we would need to build the map.
