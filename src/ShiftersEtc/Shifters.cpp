@@ -164,12 +164,12 @@ namespace flopoco{
 
 	
 
-	Operator * Shifter::parseCommandLine(Target *target ,const std::vector<std::string> &args,int &consumed) {
+	OperatorPtr Shifter::parseCommandLine(Target *target ,const std::vector<std::string> &args,int &consumed) {
 		consumed=3;
 		int wIn=8;
 		int maxShift=8;
 		ShiftDirection direction = Shifter::Left;		
-		return new Shifter(target, wIn, maxShift, direction);
+		return std::make_shared<Shifter>(target, wIn, maxShift, direction);
 	}
 
 

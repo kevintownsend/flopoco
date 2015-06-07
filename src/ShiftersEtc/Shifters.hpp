@@ -61,7 +61,7 @@ namespace flopoco{
 		static void usage(std::ostream &dst);
 
 		/** Factory method */
-		static Operator * parseCommandLine(Target *target ,const std::vector<std::string> &args,int &consumed);
+		static OperatorPtr parseCommandLine(Target *target ,const std::vector<std::string> &args,int &consumed);
 
 		/** Adding this operator to the big factory */
 		static void registerFactory();

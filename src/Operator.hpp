@@ -7,6 +7,7 @@
 
 #include <vector>
 #include <map>
+#include <memory>
 #include <gmpxx.h>
 #include "Target.hpp"
 #include "Signal.hpp"
@@ -27,6 +28,9 @@ using namespace std;
 
 namespace flopoco {
 
+	class Operator;
+	typedef std::shared_ptr<Operator> OperatorPtr;
+	
 	// global const variables
 	static const map<string, double> emptyDelayMap;
 	const std::string tab = "   ";

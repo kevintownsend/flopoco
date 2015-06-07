@@ -13,7 +13,7 @@ Copyright © INSA-Lyon, ENS-Lyon, INRIA, CNRS, UCBL,
 #define flopoco_operator_factory_hpp
 
 #include "Operator.hpp"
-#include <boost/smart_ptr.hpp>
+#include <memory>
 
 // Operator Factory, based on the one by David Thomas, with a bit of clean up.
 // For typical use, see src/ShiftersEtc/Shifter.*
@@ -23,9 +23,9 @@ namespace flopoco
 	
 		// Note: not using boost::function here, as it's likely to scare people, and also drags in quite a few header dependencies
 	typedef void (*usage_func_t)(std::ostream &);
-	typedef Operator * (*parser_func_t)(Target *,const std::vector<std::string> &,int &);	
+	typedef OperatorPtr (*parser_func_t)(Target *,const std::vector<std::string> &,int &);	
 	class OperatorFactory;
-	typedef boost::shared_ptr<OperatorFactory> OperatorFactoryPtr;
+	typedef std::shared_ptr<OperatorFactory> OperatorFactoryPtr;
 
 
 
@@ -100,11 +100,8 @@ namespace flopoco
 			\param args The offered arguments start at index 0 of the vector, and it is up to the
 			factory to check the types and whether there are enough.
 			\param consumed On exit, the factory indicates how many of the arguments are used up.
-			\note I would prefer this to be shared_ptr<Operator>, but this is more in the
-			flopoco style. If desired, the creator can immediately wrap it in shared_ptr, as it would
-			be a unique reference.
 		*/
-		virtual Operator *parseCommandLine(
+		virtual OperatorPtr parseCommandLine(
 																			 Target *target,
 																			 const std::vector<std::string> &args,
 																			 int &consumed

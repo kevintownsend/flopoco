@@ -1993,10 +1993,14 @@ int main(int argc, char* argv[] )
 	//	OperatorFactory::registerFactory(new ShifterFactory());
 	Shifter::registerFactory();
 
-
+	// The following is test code
 	cout << OperatorFactoryHolding::getFactoryCount() <<endl ;
 	OperatorFactoryHolding::getFactoryByIndex(0)->usage(cout);
-	
+	std::vector<std::string> params;
+	int c;
+	OperatorPtr test = OperatorFactoryHolding::getFactoryByIndex(0)->parseCommandLine(target, params, c);
+	addOperator(test.get());
+																																										
 #if 0
 
 	try {
@@ -2012,8 +2016,8 @@ int main(int argc, char* argv[] )
 
 #endif
 	
-	 vector<Operator*>* oplist=target->getGlobalOpListRef();
 
+	 vector<Operator*>* oplist=target->getGlobalOpListRef();
 
 
 
