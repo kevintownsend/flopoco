@@ -10,6 +10,7 @@
 #endif
 
 #include "Operator.hpp"
+#include "OperatorFactory.hpp"
 #include "FlopocoStream.hpp"
 
 /* operator pipeline work* ------------------------------------ */

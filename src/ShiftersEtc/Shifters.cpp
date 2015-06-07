@@ -157,5 +157,31 @@ namespace flopoco{
 	}
 
 
+	void Shifter::usage(std::ostream &dst)
+	{
+		dst << "TEST"<<endl;
+	}
+
+	
+
+	Operator * Shifter::parseCommandLine(Target *target ,const std::vector<std::string> &args,int &consumed) {
+		consumed=3;
+		int wIn=8;
+		int maxShift=8;
+		ShiftDirection direction = Shifter::Left;		
+		return new Shifter(target, wIn, maxShift, direction);
+	}
+
+
+	
+	void Shifter::registerFactory(){
+		DefaultOperatorFactory::add("Shifter",
+																"operator",
+																Shifter::usage,
+																Shifter::parseCommandLine
+																) ;
+
+	}
+
 
 }

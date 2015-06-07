@@ -177,6 +177,7 @@ ADD_LIBRARY(FloPoCoLib STATIC
 
  src/FloPoCo.hpp
  src/Operator
+ src/OperatorFactory
  src/Signal
  src/utils
  src/FlopocoStream

@@ -1989,7 +1989,15 @@ int main(int argc, char* argv[] )
 
 	target = new Virtex5(); // this also creates a global operator list
 
-	// for historical reasons, to get rid of some day
+
+	//	OperatorFactory::registerFactory(new ShifterFactory());
+	Shifter::registerFactory();
+
+
+	cout << OperatorFactory::getFactoryCount() <<endl ;
+	OperatorFactory::getFactoryByIndex(0)->usage(cout);
+	
+#if 0
 
 	try {
 		parseCommandLine(argc, argv);
@@ -2001,6 +2009,9 @@ int main(int argc, char* argv[] )
 		return 1;
 	}
 
+
+#endif
+	
 	 vector<Operator*>* oplist=target->getGlobalOpListRef();
 
 
