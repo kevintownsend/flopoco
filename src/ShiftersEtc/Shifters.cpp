@@ -175,7 +175,7 @@ namespace flopoco{
 
 	
 	void Shifter::registerFactory(){
-		DefaultOperatorFactory::add("Shifter",
+		OperatorFactoryHolding::add("Shifter",
 																"operator",
 																Shifter::usage,
 																Shifter::parseCommandLine

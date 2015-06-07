@@ -1994,8 +1994,8 @@ int main(int argc, char* argv[] )
 	Shifter::registerFactory();
 
 
-	cout << OperatorFactory::getFactoryCount() <<endl ;
-	OperatorFactory::getFactoryByIndex(0)->usage(cout);
+	cout << OperatorFactoryHolding::getFactoryCount() <<endl ;
+	OperatorFactoryHolding::getFactoryByIndex(0)->usage(cout);
 	
 #if 0
 

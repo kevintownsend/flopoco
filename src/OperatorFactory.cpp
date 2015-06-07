@@ -4,11 +4,11 @@ void addOperator(flopoco::Operator *op);
 
 namespace flopoco
 {	
+	// Global factory list
+	std::vector<OperatorFactoryPtr> OperatorFactoryHolding::sm_factoriesByIndex;
+	std::map<std::string,OperatorFactoryPtr> OperatorFactoryHolding::sm_factoriesByName;
 
-std::vector<OperatorFactoryPtr> OperatorFactory::sm_factoriesByIndex;
-std::map<std::string,OperatorFactoryPtr> OperatorFactory:: sm_factoriesByName;
-
-void OperatorFactory::registerFactory(OperatorFactoryPtr factory)
+void OperatorFactoryHolding::registerFactory(OperatorFactoryPtr factory)
 {
 	if(sm_factoriesByName.find(factory->name())!=sm_factoriesByName.end())
 		throw std::string("OperatorFactory - Factory with name '"+factory->name()+" has already been registered.");
@@ -17,17 +17,17 @@ void OperatorFactory::registerFactory(OperatorFactoryPtr factory)
 	sm_factoriesByName.insert(std::make_pair(factory->name(), factory));
 }
 
-unsigned OperatorFactory::getFactoryCount()
+unsigned OperatorFactoryHolding::getFactoryCount()
 {
 	return sm_factoriesByIndex.size();
 }
 
-OperatorFactoryPtr OperatorFactory::getFactoryByIndex(unsigned i)
+OperatorFactoryPtr OperatorFactoryHolding::getFactoryByIndex(unsigned i)
 {
 	return sm_factoriesByIndex.at(i);
 }
 
-OperatorFactoryPtr OperatorFactory::findFactory(std::string operatorName)
+OperatorFactoryPtr OperatorFactoryHolding::findFactory(std::string operatorName)
 {
 	return sm_factoriesByName[operatorName];
 }
@@ -35,7 +35,7 @@ OperatorFactoryPtr OperatorFactory::findFactory(std::string operatorName)
 
 
 
-	DefaultOperatorFactory::SimpleOperatorFactory::SimpleOperatorFactory(
+	OperatorFactory::OperatorFactory(
 		std::string name,			
 		std::string categories,
 		usage_func_t usage,
@@ -62,14 +62,14 @@ OperatorFactoryPtr OperatorFactory::findFactory(std::string operatorName)
 }
 
 			
-void DefaultOperatorFactory::add(
+void OperatorFactoryHolding::add(
 	std::string name,			
 	std::string categories,	// semi-colon seperated list of categories
 	usage_func_t usage,
 	parser_func_t parser
 ){
-	OperatorFactoryPtr factory(new SimpleOperatorFactory(name, categories, usage, parser));
-	OperatorFactory::registerFactory(factory);
+	OperatorFactoryPtr factory(new OperatorFactory(name, categories, usage, parser));
+	OperatorFactoryHolding::registerFactory(factory);
 }
 
 
