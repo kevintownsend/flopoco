@@ -3056,6 +3056,21 @@ namespace flopoco
 
 	}
 
+	unsigned BitHeap::getMaxWeight() {return maxWeight; }
+
+	unsigned BitHeap::getMinWeight() {return minWeight; }
+
+	int BitHeap::getStagesPerCycle() {return stagesPerCycle;}
+
+	double BitHeap::getElementaryTime() {return elementaryTime;}
+
+	Operator* BitHeap::getOp() {return op;}
+
+	string BitHeap::getName() {return uniqueName_;}
+
+	void BitHeap::setSignedIO(bool s){this->signedIO=s;}
+
+	bool BitHeap::getSignedIO() {return signedIO;}
 
 }
 
