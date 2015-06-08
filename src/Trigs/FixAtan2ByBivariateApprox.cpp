@@ -42,7 +42,7 @@ namespace flopoco {
 		name <<"FixAtan2ByBivariateApprox_" << vhdlize(wIn) << "_" << vhdlize(wOut) << "_archType_" << vhdlize(architectureType);
 		setNameWithFreq( name.str() );
 
-		double ratio = getTarget()->unusedHardMultThreshold(); // TODO this should be automatic/default: check
+		//double ratio = getTarget()->unusedHardMultThreshold(); // TODO this should be automatic/default: check
 
 		//initialize global variables
 		maxValA = -1;		//this is the absolute value, so should be always non-negative, once used
@@ -252,25 +252,26 @@ namespace flopoco {
 				vhdl << tab << declare("YLow", wIn-k) << " <= '0' & Y" << range(wIn-1-k-1, 0) << ";" << endl;
 				*/
 
-				IntMultiplier* multAx;
+				/*IntMultiplier* multAx;
 				multAx = new IntMultiplier(this,								//parent operator
 											 bitHeap,							//the bit heap that performs the compression
 											 getSignalByName("XLow"),			//first input to the multiplier (a signal)
 											 getSignalByName("coeffA"),				//second input to the multiplier (a signal)
 											 -wIn+1,							//offset of the LSB of the multiplier in the bit heap
-											 false /*negate*/,					//whether to subtract the result of the multiplication from the bit heap
+											 false, //negate,					//whether to subtract the result of the multiplication from the bit heap
 											 true,								//signed/unsigned operator
 											 ratio);							//DSP ratio
+											 */
 
-				IntMultiplier* multBy;
+				/*IntMultiplier* multBy;
 				multBy = new IntMultiplier(this,								//parent operator
 											 bitHeap,							//the bit heap that performs the compression
 											 getSignalByName("YLow"),			//first input to the multiplier (a signal)
 											 getSignalByName("coeffB"),				//second input to the multiplier (a signal)
 											 -wIn+1,							//offset of the LSB of the multiplier in the bit heap
-											 false /*negate*/,					//whether to subtract the result of the multiplication from the bit heap
+											 false, //negate,					//whether to subtract the result of the multiplication from the bit heap
 											 true,								//signed/unsigned operator
-											 ratio);							//DSP ratio
+											 ratio);	*/						//DSP ratio
 
 				bitHeap->addSignedBitVector(0,									//weight of signal in the bit heap
 											"coeffC",								//name of the signal
@@ -713,27 +714,29 @@ namespace flopoco {
 				tempCriticalPath = getCriticalPath();
 
 				//create A*DeltaX
-				IntMultiplier* multADeltaX;
+				/*IntMultiplier* multADeltaX;
 				multADeltaX = new IntMultiplier(this,							//parent operator
 											 bitHeap,							//the bit heap that performs the compression
 											 getSignalByName("DeltaX_stdlv"),	//first input to the multiplier (a signal)
 											 getSignalByName("A_stdlv"),		//second input to the multiplier (a signal)
 											 -wIn+1,							//offset of the LSB of the multiplier in the bit heap
-											 false /*negate*/,					//whether to subtract the result of the multiplication from the bit heap
+											 false, //negate,					//whether to subtract the result of the multiplication from the bit heap
 											 true,								//signed/unsigned operator
 											 ratio);							//DSP ratio
+											 */
 				vhdl << endl;
 
 				//create B*DeltaY
-				IntMultiplier* multBDeltaY;
+				/*IntMultiplier* multBDeltaY;
 				multBDeltaY = new IntMultiplier(this,								//parent operator
 												 bitHeap,							//the bit heap that performs the compression
 												 getSignalByName("DeltaY_stdlv"),	//first input to the multiplier (a signal)
 												 getSignalByName("B_stdlv"),		//second input to the multiplier (a signal)
 												 -wIn+1,							//offset of the LSB of the multiplier in the bit heap
-												 false /*negate*/,					//whether to subtract the result of the multiplication from the bit heap
+												 false, //negate,					//whether to subtract the result of the multiplication from the bit heap
 												 true,								//signed/unsigned operator
 												 ratio);							//DSP ratio
+												 */
 				vhdl << endl;
 
 				//Add C
@@ -805,45 +808,48 @@ namespace flopoco {
 				//	convert the terms to std_logic_vector
 				vhdl << tab << declare("DeltaX2_short_stdlv", wOut-1+g-2*k) << " <= std_logic_vector(DeltaX2_short);" << endl;
 				//	multiply
-				IntMultiplier* multDDeltaX2;
+				/*IntMultiplier* multDDeltaX2;
 				multDDeltaX2 = new IntMultiplier(this,								//parent operator
 												 bitHeap,							//the bit heap that performs the compression
 												 getSignalByName("DeltaX2_short_stdlv"),	//first input to the multiplier (a signal)
 												 getSignalByName("D_stdlv"),		//second input to the multiplier (a signal)
 												 -wOut+1-g,							//offset of the LSB of the multiplier in the bit heap
-												 false /*negate*/,					//whether to subtract the result of the multiplication from the bit heap
+												 false, //negate,					//whether to subtract the result of the multiplication from the bit heap
 												 true,								//signed/unsigned operator
 												 ratio);							//DSP ratio
+												 */
 				vhdl << endl;
 
 				//	create E*DeltaY^2
 				//	convert the terms to std_logic_vector
 				vhdl << tab << declare("DeltaY2_short_stdlv", wOut-1+g-2*k) << " <= std_logic_vector(DeltaY2_short);" << endl;
 				//	multiply
-				IntMultiplier* multEDeltaY2;
+				/*IntMultiplier* multEDeltaY2;
 				multEDeltaY2 = new IntMultiplier(this,								//parent operator
 												 bitHeap,							//the bit heap that performs the compression
 												 getSignalByName("DeltaY2_short_stdlv"),	//first input to the multiplier (a signal)
 												 getSignalByName("E_stdlv"),		//second input to the multiplier (a signal)
 												 -wOut+1-g,							//offset of the LSB of the multiplier in the bit heap
-												 false /*negate*/,					//whether to subtract the result of the multiplication from the bit heap
+												 false, //negate,					//whether to subtract the result of the multiplication from the bit heap
 												 true,								//signed/unsigned operator
 												 ratio);							//DSP ratio
+												 */
 				vhdl << endl;
 
 				//	create F*DeltaX_DeltaY
 				//	convert the terms to std_logic_vector
 				vhdl << tab << declare("DeltaX_DeltaY_short_stdlv", wOut-1+g-2*k) << " <= std_logic_vector(DeltaX_DeltaY_short);" << endl;
 				//	multiply
-				IntMultiplier* multFDeltaXDeltaY;
+				/*IntMultiplier* multFDeltaXDeltaY;
 				multFDeltaXDeltaY = new IntMultiplier(this,								//parent operator
 													 bitHeap,							//the bit heap that performs the compression
 													 getSignalByName("DeltaX_DeltaY_short_stdlv"),	//first input to the multiplier (a signal)
 													 getSignalByName("F_stdlv"),		//second input to the multiplier (a signal)
 													 -wOut+1-g,							//offset of the LSB of the multiplier in the bit heap
-													 false /*negate*/,					//whether to subtract the result of the multiplication from the bit heap
+													 false, //negate,					//whether to subtract the result of the multiplication from the bit heap
 													 true,								//signed/unsigned operator
 													 ratio);							//DSP ratio
+													 */
 				vhdl << endl;
 
 				//add the rounding bit - take into consideration the final alignment
@@ -892,7 +898,7 @@ namespace flopoco {
 	{
 		int k = (wIn/4);
 
-		double error, errorMax, errorMin;
+		double /*error,*/ errorMax, errorMin;
 		bool errorSatisfied;
 		double errorLimit = 1.0/(1 << (wOut-1));
 

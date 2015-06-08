@@ -6,10 +6,10 @@
 using namespace std;
 
 namespace flopoco{
-#define THROWERROR(stream) {{ostringstream o; o << " ERROR in FixConstant: " << stream << endl; throw o.str();}} 
+#define THROWERROR(stream) {{ostringstream o; o << " ERROR in FixConstant: " << stream << endl; throw o.str();}}
 
-	FixConstant::FixConstant(const int MSB_, const int LSB_, const bool isSigned_, const mpfr_t val_) : 
-		MSB(MSB_), LSB(LSB_), width(MSB_-LSB_+1), isSigned(isSigned_) {
+	FixConstant::FixConstant(const int MSB_, const int LSB_, const bool isSigned_, const mpfr_t val_) :
+		isSigned(isSigned_), MSB(MSB_), LSB(LSB_), width(MSB_-LSB_+1) {
 		mpfr_init2(fpValue, width);
 		mpfr_set(fpValue, val_, GMP_RNDN); // TODO check no error?
 		isZeroP = mpfr_zero_p(val_);
@@ -19,7 +19,7 @@ namespace flopoco{
 
 
 	FixConstant::FixConstant(const int MSB_, int LSB_, const bool isSigned_, const mpz_class zval):
-		MSB(MSB_), LSB(LSB_), width(MSB_-LSB_+1), isSigned(isSigned_) 
+		isSigned(isSigned_), MSB(MSB_), LSB(LSB_), width(MSB_-LSB_+1)
 	{
 		// cout <<  "Entering FixConstant "<< zval  <<endl;
 		mpfr_init2(fpValue, width);
@@ -33,7 +33,7 @@ namespace flopoco{
 
 
 #if 0 // Warning the following code is unfinished and untested
-	FixConstant::FixConstant(const bool signed_, const mpfr_t val_) : 
+	FixConstant::FixConstant(const bool signed_, const mpfr_t val_) :
 		isSigned(signed_) {
 
 		bool sign;
@@ -43,10 +43,10 @@ namespace flopoco{
 		// conversion to (sign, absval)
 		if(isSigned) {
 			if(zval<0) {
-				sign=true; 
+				sign=true;
 				zval=-zval;
 			}
-			else 
+			else
 				sign=false;
 		}
 		else {// unsigned
@@ -66,7 +66,7 @@ namespace flopoco{
 		while(zval!=0) {
 			cout << "*";
 			zval = zval>>1;
-			MSB++;			
+			MSB++;
 		}
 
 		if(isSigned)
@@ -82,14 +82,14 @@ namespace flopoco{
 	FixConstant::~FixConstant(){
 		mpfr_clear(fpValue);
 	}
-	
+
 	mpz_class FixConstant::getBitVectorAsMPZ() {
 		mpz_class h;
 		mpfr_t x;
 		mpfr_init2(x, mpfr_get_prec(fpValue));
 		mpfr_set(x,fpValue,GMP_RNDN);
 		mpfr_mul_2si(x, x, -LSB, GMP_RNDN); // exact
-		mpfr_get_z(h.get_mpz_t(), x,  GMP_RNDN); // rounding could take place here, but should not      
+		mpfr_get_z(h.get_mpz_t(), x,  GMP_RNDN); // rounding could take place here, but should not
 		if(h<0){
 			if(isSigned) {
 				h += (mpz_class(1)) << (width+1);
@@ -118,12 +118,12 @@ namespace flopoco{
 
 	void FixConstant::changeMSB(int newMSB){
 		MSB=newMSB;
-		width = (MSB-LSB+1); 
+		width = (MSB-LSB+1);
 		if(newMSB>=MSB){
 			// Nothing to do! the new size includes the old one
 		}
 		else{
-			// TODO: check that the number fits its new size, and bork otherwise. 
+			// TODO: check that the number fits its new size, and bork otherwise.
 			throw("FixConstant::changeMSB: TODO");
 		}
 	}
@@ -171,5 +171,5 @@ namespace flopoco{
 		return s.str();
 	}
 
-	
+
 }
