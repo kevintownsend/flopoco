@@ -56,7 +56,7 @@ namespace flopoco{
 
 	Table::Table(Target* target_, int _wIn, int _wOut, int _minIn, int _maxIn, int _logicTable, map<string, double> inputDelays) :
 		Operator(target_),
-		target(target_), wIn(_wIn), wOut(_wOut), minIn(_minIn), maxIn(_maxIn)
+		wIn(_wIn), wOut(_wOut), minIn(_minIn), maxIn(_maxIn),target(target_)
 	{
 		srcFileName = "Table";
 		if(wIn<0){
