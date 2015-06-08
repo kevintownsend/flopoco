@@ -8,21 +8,21 @@ namespace flopoco{
 
 
 	// plain logic vector, or wire
-	Signal::Signal(const string name, const Signal::SignalType type, const int width, const bool isBus) : 
-		name_(name), type_(type), width_(width), numberOfPossibleValues_(1), lifeSpan_(0),  cycle_(0),	
+	Signal::Signal(const string name, const Signal::SignalType type, const int width, const bool isBus) :
+		name_(name), type_(type), width_(width), numberOfPossibleValues_(1), lifeSpan_(0),  cycle_(0),
 		isFP_(false), isFix_(false), isIEEE_(false), wE_(0), wF_(0), isBus_(isBus), delay_(0.0) {
 	}
 
 	// fixed point constructor
-	Signal::Signal(const string name, const Signal::SignalType type, const bool isSigned, const int MSB, const int LSB) : 
-		name_(name), type_(type), width_(MSB-LSB+1), numberOfPossibleValues_(1), 
+	Signal::Signal(const string name, const Signal::SignalType type, const bool isSigned, const int MSB, const int LSB) :
+		name_(name), type_(type), width_(MSB-LSB+1), numberOfPossibleValues_(1),
 		lifeSpan_(0), cycle_(0),
-		isFP_(false), isFix_(true), isSigned_(isSigned),  MSB_(MSB), LSB_(LSB), isBus_(true), delay_(0.0)
+		isFP_(false), isFix_(true), MSB_(MSB), LSB_(LSB), isSigned_(isSigned), isBus_(true), delay_(0.0)
 	{
 	}
 
-	Signal::Signal(const string name, const Signal::SignalType type, const int wE, const int wF, const bool ieeeFormat) : 
-		name_(name), type_(type), width_(wE+wF+3), numberOfPossibleValues_(1), 
+	Signal::Signal(const string name, const Signal::SignalType type, const int wE, const int wF, const bool ieeeFormat) :
+		name_(name), type_(type), width_(wE+wF+3), numberOfPossibleValues_(1),
 		lifeSpan_(0), cycle_(0),
 		isFP_(true), isFix_(false), isIEEE_(false), wE_(wE), wF_(wF), isBus_(false), delay_(0.0)
 	{
@@ -40,7 +40,7 @@ namespace flopoco{
 			std::ostringstream o;
 			o << "Error in Signal::promoteToFix(" <<  getName() << "): width doesn't match";
 			throw o.str();
-		}	
+		}
 		isFix_ = true;
 		MSB_   = MSB;
 		LSB_   = LSB;
@@ -48,21 +48,21 @@ namespace flopoco{
 	}
 
 
-	const string& Signal::getName() const { 
-		return name_; 
+	const string& Signal::getName() const {
+		return name_;
 	}
 
 
 	int Signal::width() const{return width_;}
-	
+
 	int Signal::wE() const {return(wE_);}
 
 	int Signal::wF() const {return(wF_);}
-	
+
 	int Signal::MSB() const {return(MSB_);}
-	
+
 	int Signal::LSB() const {return(LSB_);}
-	
+
 	bool Signal::isFP() const {return isFP_;}
 
 	bool Signal::isFix() const {return isFix_;}
@@ -76,13 +76,13 @@ namespace flopoco{
 	bool Signal::isBus() const {return isBus_;}
 
 	Signal::SignalType Signal::type() const {return type_;}
-	
+
 	string Signal::toVHDLType() {
-		ostringstream o; 
-		if ((1==width())&&(!isBus_)) 
+		ostringstream o;
+		if ((1==width())&&(!isBus_))
 			o << " std_logic" ;
-		else 
-			if(isFP_) 
+		else
+			if(isFP_)
 				o << " std_logic_vector(" << wE() <<"+"<<wF() << "+2 downto 0)";
 			else if(isFix_){
 				o << (isSigned_?" signed":" unsigned") << "(" << MSB_;
@@ -91,17 +91,17 @@ namespace flopoco{
 				else
 					o << "-" << LSB_;
 				o << " downto 0)";
-			} 
+			}
 			else
 				o << " std_logic_vector(" << width()-1 << " downto 0)";
 		return o.str();
 	}
 
 
-	
+
 	string Signal::toVHDL() {
-		ostringstream o; 
-		if(type()==Signal::wire || type()==Signal::registeredWithoutReset || type()==Signal::registeredWithAsyncReset || type()==Signal::registeredWithSyncReset || type()==Signal::registeredWithZeroInitialiser) 
+		ostringstream o;
+		if(type()==Signal::wire || type()==Signal::registeredWithoutReset || type()==Signal::registeredWithAsyncReset || type()==Signal::registeredWithSyncReset || type()==Signal::registeredWithZeroInitialiser)
 			o << "signal ";
 		o << getName();
 		o << " : ";
@@ -109,7 +109,7 @@ namespace flopoco{
 			o << "in ";
 		if(type()==Signal::out)
 			o << "out ";
-	
+
 		o << toVHDLType();
 		return o.str();
 	}
@@ -127,7 +127,7 @@ namespace flopoco{
 		}
 #else // someday we need to civilize pipe signal names
 		o << getName();
-		if(delay>0) 
+		if(delay>0)
 			o << "_d" << delay;
 #endif
 		return o.str();
@@ -135,7 +135,7 @@ namespace flopoco{
 
 
 	string Signal::toVHDLDeclaration() {
-		ostringstream o; 
+		ostringstream o;
 		o << "signal ";
 		if (type_!=Signal::in)
 			o << getName() << (lifeSpan_ > 0 ? ", ": "");
@@ -145,7 +145,7 @@ namespace flopoco{
 			o << ", " << getName() << "_d" << i;
 		}
 		o << " : ";
-		
+
 		o << toVHDLType();
 
 		if (type()==Signal::registeredWithZeroInitialiser) {
@@ -178,9 +178,9 @@ namespace flopoco{
 	double Signal::getDelay(){
 		return delay_;
 	}
-	
+
 	void Signal::setDelay(double delay){
-		delay_ = delay;	
+		delay_ = delay;
 	}
 
 	void  Signal::setNumberOfPossibleValues(int n){
