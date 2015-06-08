@@ -3,11 +3,11 @@
 
   This file is part of the FloPoCo project
   developed by the Arenaire team at Ecole Normale Superieure de Lyon
-  
+
   Author : Florent de Dinechin, Florent.de.Dinechin@ens-lyon.fr
 
   Initial software.
-  Copyright © ENS-Lyon, INRIA, CNRS, UCBL,  
+  Copyright © ENS-Lyon, INRIA, CNRS, UCBL,
   2008-2011.
   All rights reserved.
 
@@ -29,7 +29,7 @@ namespace flopoco{
 
 	IntConstDiv::EuclideanDivTable::EuclideanDivTable(Target* target, int d_, int alpha_, int gamma_) :
 		Table(target, alpha_+gamma_, alpha_+gamma_, 0, -1, 1), d(d_), alpha(alpha_), gamma(gamma_) {
-				ostringstream name; 
+				ostringstream name;
 				srcFileName="IntConstDiv::EuclideanDivTable";
 				name <<"EuclideanDivTable_" << d << "_" << alpha ;
 				setName(name.str());
@@ -43,7 +43,7 @@ namespace flopoco{
 			e << "ERROR in IntConstDiv::EuclideanDivTable::function, argument out of range" <<endl;
 			throw e.str();
 		}
-		
+
 		int q = x/d;
 		int r = x-q*d;
 		return mpz_class((q<<gamma) + r);
@@ -77,20 +77,20 @@ namespace flopoco{
 			REPORT(LIST, "WARNING, d=" << d << " is even, this is suspiscious. Might work nevertheless, but surely suboptimal.")
 
 		/* Generate unique name */
-		
+
 		std::ostringstream o;
 		if(remainderOnly)
 			o << "IntConstRem_";
 		else
 			o << "IntConstDiv_";
 		o << d << "_" << wIn << "_"  << alpha << "_" ;
-		if(target->isPipelined()) 
+		if(target->isPipelined())
 				o << target->frequencyMHz() ;
 		else
 			o << "comb";
 		uniqueName_ = o.str();
 
-		qSize = wIn - intlog2(d) +1;  
+		qSize = wIn - intlog2(d) +1;
 
 
 		addInput("X", wIn);
@@ -105,12 +105,12 @@ namespace flopoco{
 
 		REPORT(INFO, "Architecture consists of k=" << k  <<  " levels."   );
 		REPORT(DEBUG, "  d=" << d << "  wIn=" << wIn << "  alpha=" << alpha << "  gamma=" << gamma <<  "  k=" << k  <<  "  qSize=" << qSize );
-		
+
 		EuclideanDivTable* table;
 		table = new EuclideanDivTable(target, d, alpha, gamma);
 		useSoftRAM(table);
 		oplist.push_back(table);
-		double tableDelay=table->getOutputDelay("Y"); 
+		double tableDelay=table->getOutputDelay("Y");
 
 		string ri, xi, ini, outi, qi;
 		ri = join("r", k);
@@ -125,9 +125,9 @@ namespace flopoco{
 			//			cerr << i << endl;
 			xi = join("x", i);
 			if(i==k-1 && rem!=0) // at the MSB, pad with 0es
-				vhdl << tab << declare(xi, alpha, true) << " <= " << zg(alpha-rem, 0) <<  " & X" << range(wIn-1, i*alpha) << ";" << endl; 
+				vhdl << tab << declare(xi, alpha, true) << " <= " << zg(alpha-rem, 0) <<  " & X" << range(wIn-1, i*alpha) << ";" << endl;
 			else // normal case
-				vhdl << tab << declare(xi, alpha, true) << " <= " << "X" << range((i+1)*alpha-1, i*alpha) << ";" << endl; 
+				vhdl << tab << declare(xi, alpha, true) << " <= " << "X" << range((i+1)*alpha-1, i*alpha) << ";" << endl;
 			ini = join("in", i);
 			vhdl << tab << declare(ini, alpha+gamma) << " <= " << ri << " & " << xi << ";" << endl; // This ri is r_{i+1}
 			outi = join("out", i);
@@ -138,22 +138,22 @@ namespace flopoco{
 			vhdl << instance(table, join("table",i));
 			ri = join("r", i);
 			qi = join("q", i);
-			vhdl << tab << declare(qi, alpha, true) << " <= " << outi << range(alpha+gamma-1, gamma) << ";" << endl; 
-			vhdl << tab << declare(ri, gamma) << " <= " << outi << range(gamma-1, 0) << ";" << endl; 
+			vhdl << tab << declare(qi, alpha, true) << " <= " << outi << range(alpha+gamma-1, gamma) << ";" << endl;
+			vhdl << tab << declare(ri, gamma) << " <= " << outi << range(gamma-1, 0) << ";" << endl;
 		}
 
 
 		if(!remainderOnly) { // build the quotient output
 		vhdl << tab << declare("tempQ", k*alpha) << " <= " ;
-		for (unsigned int i=k-1; i>=1; i--) 
+		for (unsigned int i=k-1; i>=1; i--)
 			vhdl << "q" << i << " & ";
-		vhdl << "q0 ;" << endl; 
+		vhdl << "q0 ;" << endl;
 		vhdl << tab << "Q <= tempQ" << range(qSize-1, 0)  << ";" << endl;
-		}		
+		}
 
 		vhdl << tab << "R <= " << ri << ";" << endl; // This ri is r_0
-		
-	}	
+
+	}
 
 	IntConstDiv::~IntConstDiv()
 	{
@@ -172,7 +172,7 @@ namespace flopoco{
 			tc->addExpectedOutput("Q", Q);
 		tc->addExpectedOutput("R", R);
 	}
- 
+
 	/**
 	* Method returning a vector containing values of the valid TestState ts up-to-dated
 	* it also update the multimap testMemory and increase the counter for the treated operator
@@ -193,7 +193,7 @@ namespace flopoco{
 			do{
 				float df = pickRandomNum ( 3.0 * n );
 				d = ceil ( df );
-			}while ( d&1 == 0 );
+			}while ( (d&1) == 0 );
 			ts -> vectInt [ 1 ] = d;
 
 			int a = -1;
