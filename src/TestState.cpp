@@ -1,7 +1,7 @@
 #include "TestState.hpp"
 
 namespace flopoco {
-	
+
 	TestState::TestState ( string param ) : paramTypes ( param ) {
 		counter = 0; /**Initialize the counter of the instance*/
 
@@ -14,8 +14,8 @@ namespace flopoco {
 
 		// parsing the string containing type of parameters for the operator
 		// previous integers will then be updated
-		int strSize = 0;
-		int pos = 0;
+		unsigned int strSize = 0;
+		unsigned int pos = 0;
 		while ( strSize <  param.size () ){
 			string subParam = param.substr ( pos, 1 );
 			pos += 2;
@@ -44,7 +44,7 @@ namespace flopoco {
 		vectMpz.resize ( nbMpz );
 		vectBool.resize ( nbBool );
 	}
-	
+
 	/**
 	* Test if the TestState we are working on is equal to the TestState ts
 	* return a boolean
@@ -68,7 +68,7 @@ namespace flopoco {
 		ostringstream s;
 		while ( currentStrSize < strSize ){
 			string subParam = paramTypes.substr ( pos, 1 );
-		
+
 			if ( subParam.compare ( "i" ) == 0 ){
 				s << " " << vectInt [ counterInt ];
 				counterInt++;
@@ -89,7 +89,7 @@ namespace flopoco {
 				s << " " << vectBool [ counterBool ];
 				counterBool++;
 			}
-		
+
 			pos += 2;
 			currentStrSize = pos;
 		}

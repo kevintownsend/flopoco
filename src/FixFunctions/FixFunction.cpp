@@ -6,9 +6,9 @@
   This file is part of the FloPoCo project
   developed by the Aric team at Ecole Normale Superieure de Lyon
 	then by the Socrate team at INSA de Lyon
-  
+
   Initial software.
-  Copyright © ENS-Lyon, INRIA, CNRS, UCBL,  
+  Copyright © ENS-Lyon, INRIA, CNRS, UCBL,
 
   All rights reserved.
 
@@ -21,17 +21,17 @@ namespace flopoco{
 
 
 	FixFunction::FixFunction(string sollyaString_, bool signedIn_, int lsbIn_, int msbOut_, int lsbOut_):
-		signedIn(signedIn_), lsbIn(lsbIn_), msbOut(msbOut_), lsbOut(lsbOut_), wOut(msbOut_-lsbOut+1)
+		lsbIn(lsbIn_), msbOut(msbOut_), lsbOut(lsbOut_), wOut(msbOut_-lsbOut+1), signedIn(signedIn_)
 	{
 		if(signedIn)
-			wIn=-lsbIn+1; // add the sign bit at position 0 
+			wIn=-lsbIn+1; // add the sign bit at position 0
 		else
 			wIn=-lsbIn;
-		if(signedIn) 
+		if(signedIn)
 			rangeS = sollya_lib_parse_string("[-1;1]");
 		else
 			rangeS = sollya_lib_parse_string("[0;1]");
- 		ostringstream completeDescription;
+		ostringstream completeDescription;
 		completeDescription << sollyaString_;
 		if(signedIn)
 			completeDescription << " on [-1,1)";
@@ -53,10 +53,10 @@ namespace flopoco{
 
 
 
-	FixFunction::FixFunction(sollya_obj_t fS_, bool signedIn_): 
-		fS(fS_), signedIn(signedIn_)
+	FixFunction::FixFunction(sollya_obj_t fS_, bool signedIn_):
+		signedIn(signedIn_), fS(fS_)
 	{
-		if(signedIn) 
+		if(signedIn)
 			rangeS = sollya_lib_parse_string("[-1;1]");
 		else
 			rangeS = sollya_lib_parse_string("[0;1]");
@@ -64,7 +64,7 @@ namespace flopoco{
 
 
 
-		
+
 	FixFunction::~FixFunction()
 	{
 	  sollya_lib_clear_obj(fS);
@@ -87,7 +87,7 @@ namespace flopoco{
 		mpfr_t mpX, mpR;
 		double r;
 
- 		mpfr_inits(mpX, mpR, NULL);
+		mpfr_inits(mpX, mpR, NULL);
 		mpfr_set_d(mpX, x, GMP_RNDN);
 		sollya_lib_evaluate_function_at_point(mpR, fS, mpX, NULL);
 		r = mpfr_get_d(mpR, GMP_RNDN);
@@ -108,7 +108,7 @@ namespace flopoco{
 
 		if(signedIn) {
 			mpz_class negateBit = mpz_class(1) << (wIn);
-			if ((x >> (-lsbIn)) !=0) 
+			if ((x >> (-lsbIn)) !=0)
 				x -= negateBit;
 		}
 		/* Convert x to an mpfr_t in [0,1[ */
@@ -117,8 +117,8 @@ namespace flopoco{
 
 		/* Compute the function */
 		eval(mpR, mpX);
-		//		REPORT(FULL,"function() input is:"<<sPrintBinary(mpX)); 
-		//		REPORT(FULL,"function() output before rounding is:"<<sPrintBinary(mpR)); 
+		//		REPORT(FULL,"function() input is:"<<sPrintBinary(mpX));
+		//		REPORT(FULL,"function() output before rounding is:"<<sPrintBinary(mpR));
 		/* Compute the signal value */
 		mpfr_mul_2si(mpR, mpR, -lsbOut, GMP_RNDN);
 
@@ -132,7 +132,7 @@ namespace flopoco{
 			mpfr_get_z(ru.get_mpz_t(), mpR, GMP_RNDU);
 		}
 
-		//		REPORT(FULL,"function() output r = ["<<rd<<", " << ru << "]"); 
+		//		REPORT(FULL,"function() output r = ["<<rd<<", " << ru << "]");
 		mpfr_clear(mpX);
 		mpfr_clear(mpR);
 	}
@@ -140,7 +140,7 @@ namespace flopoco{
 
 
 
-	
+
 	void FixFunction::emulate(TestCase * tc, bool correctlyRounded){
 			mpz_class x = tc->getInputValue("X");
 			mpz_class rNorD,ru;

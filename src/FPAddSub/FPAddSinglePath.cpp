@@ -38,11 +38,11 @@ namespace flopoco{
 #define DEBUGVHDL 0
 
 
-FPAddSinglePath::FPAddSinglePath(Target* target, 
-																 int wE, int wF, 
-																 bool sub, map<string, double> inputDelays) :
-	Operator(target), wE(wE), wF(wF), sub(sub) {
-
+	FPAddSinglePath::FPAddSinglePath(Target* target, 
+																	 int wE, int wF, 
+																	 bool sub, map<string, double> inputDelays) :
+		Operator(target), wE(wE), wF(wF), sub(sub) {
+	
 		srcFileName="FPAddSinglePath";
 			
 		ostringstream name;
@@ -51,7 +51,7 @@ FPAddSinglePath::FPAddSinglePath(Target* target,
 		else
 			name<<"FPAdd_";
 
-				name <<wE<<"_"<<wF<<"_uid"<<getNewUId(); 
+		name <<wE<<"_"<<wF<<"_uid"<<getNewUId(); 
 		setName(name.str()); 
 
 		setCopyrightString("Bogdan Pasca, Florent de Dinechin (2010)");		
@@ -73,9 +73,9 @@ FPAddSinglePath::FPAddSinglePath(Target* target,
 		vhdl << tab << declare("excExpFracX",2+wE+wF) << " <= X"<<range(wE+wF+2, wE+wF+1) << " & X"<<range(wE+wF-1, 0)<<";"<<endl;
 		vhdl << tab << declare("excExpFracY",2+wE+wF) << " <= Y"<<range(wE+wF+2, wE+wF+1) << " & Y"<<range(wE+wF-1, 0)<<";"<<endl;
 
-/*		setCriticalPath(getMaxInputDelays(inputDelays));
-		manageCriticalPath(target->localWireDelay() + target->eqComparatorDelay(wE+wF+2)); 
-		vhdl<< tab << declare("eqdiffsign") << " <= '1' when excExpFracX = excExpFracY else '0';"<<endl; */
+		/*		setCriticalPath(getMaxInputDelays(inputDelays));
+					manageCriticalPath(target->localWireDelay() + target->eqComparatorDelay(wE+wF+2)); 
+					vhdl<< tab << declare("eqdiffsign") << " <= '1' when excExpFracX = excExpFracY else '0';"<<endl; */
 		
 		setCriticalPath(getMaxInputDelays(inputDelays));
 		manageCriticalPath(target->localWireDelay() + target->adderDelay(wE+1));
@@ -140,9 +140,9 @@ FPAddSinglePath::FPAddSinglePath(Target* target,
 		manageCriticalPath(target->localWireDelay()+2*target->lutDelay());
 		vhdl <<tab<<"with sXsYExnXY select "<<endl;
 		vhdl <<tab<<declare("excRt",2) << " <= \"00\" when \"000000\"|\"010000\"|\"100000\"|\"110000\","<<endl
-		<<tab<<tab<<"\"01\" when \"000101\"|\"010101\"|\"100101\"|\"110101\"|\"000100\"|\"010100\"|\"100100\"|\"110100\"|\"000001\"|\"010001\"|\"100001\"|\"110001\","<<endl
-		<<tab<<tab<<"\"10\" when \"111010\"|\"001010\"|\"001000\"|\"011000\"|\"101000\"|\"111000\"|\"000010\"|\"010010\"|\"100010\"|\"110010\"|\"001001\"|\"011001\"|\"101001\"|\"111001\"|\"000110\"|\"010110\"|\"100110\"|\"110110\", "<<endl
-		<<tab<<tab<<"\"11\" when others;"<<endl;
+				 <<tab<<tab<<"\"01\" when \"000101\"|\"010101\"|\"100101\"|\"110101\"|\"000100\"|\"010100\"|\"100100\"|\"110100\"|\"000001\"|\"010001\"|\"100001\"|\"110001\","<<endl
+				 <<tab<<tab<<"\"10\" when \"111010\"|\"001010\"|\"001000\"|\"011000\"|\"101000\"|\"111000\"|\"000010\"|\"010010\"|\"100010\"|\"110010\"|\"001001\"|\"011001\"|\"101001\"|\"111001\"|\"000110\"|\"010110\"|\"100110\"|\"110110\", "<<endl
+				 <<tab<<tab<<"\"11\" when others;"<<endl;
 		manageCriticalPath(target->localWireDelay() + target->lutDelay());
 		vhdl <<tab<<declare("signR") << "<= '0' when (sXsYExnXY=\"100000\" or sXsYExnXY=\"010000\") else signX;"<<endl;
 		
@@ -165,7 +165,7 @@ FPAddSinglePath::FPAddSinglePath(Target* target,
 		if (wE>sizeRightShift) {
 			manageCriticalPath(target->localWireDelay() + target->lutDelay());
 			vhdl<<tab<<declare("shiftVal",sizeRightShift) << " <= expDiff("<< sizeRightShift-1<<" downto 0)"
-			<< " when shiftedOut='0' else CONV_STD_LOGIC_VECTOR("<<wF+3<<","<<sizeRightShift<<") ;" << endl; 
+					<< " when shiftedOut='0' else CONV_STD_LOGIC_VECTOR("<<wF+3<<","<<sizeRightShift<<") ;" << endl; 
 		}		
 		else if (wE==sizeRightShift) {
 			vhdl<<tab<<declare("shiftVal", sizeRightShift) << " <= expDiff" << range(sizeRightShift-1,0) << ";" << endl ;
@@ -255,15 +255,15 @@ FPAddSinglePath::FPAddSinglePath(Target* target,
 		vhdl << instance(lzocs, "LZC_component");
 		syncCycleFromSignal("shiftedFrac");
 		setCriticalPath(lzocs->getOutputDelay("O"));
-// 		double cpnZerosNew = getCriticalPath();
+		// 		double cpnZerosNew = getCriticalPath();
 		double cpshiftedFrac = getCriticalPath();
 		
 		
 		
 		
 		//need to decide how much to add to the exponent
-/*		manageCriticalPath(target->localWireDelay() + target->adderDelay(wE+2));*/
-// 	vhdl << tab << declare("expPart",wE+2) << " <= (" << zg(wE+2-lzocs->getCountWidth(),0) <<" & nZerosNew) - 1;"<<endl;
+		/*		manageCriticalPath(target->localWireDelay() + target->adderDelay(wE+2));*/
+		// 	vhdl << tab << declare("expPart",wE+2) << " <= (" << zg(wE+2-lzocs->getCountWidth(),0) <<" & nZerosNew) - 1;"<<endl;
 		//update exponent
 		
 		manageCriticalPath(target->localWireDelay() + target->adderDelay(wE+2));
@@ -307,7 +307,7 @@ FPAddSinglePath::FPAddSinglePath(Target* target,
 		setCycleFromSignal("RoundedExpFrac");
 		setCriticalPath(ra->getOutputDelay("R"));
 		
-// 		vhdl<<tab<<declare("RoundedExpFrac",wE+2+wF+1)<<"<= expFrac + addToRoundBit;"<<endl;
+		// 		vhdl<<tab<<declare("RoundedExpFrac",wE+2+wF+1)<<"<= expFrac + addToRoundBit;"<<endl;
 
 		//possible update to exception bits
 		vhdl << tab << declare("upExc",2)<<" <= RoundedExpFrac"<<range(wE+wF+2,wE+wF+1)<<";"<<endl;
@@ -319,9 +319,9 @@ FPAddSinglePath::FPAddSinglePath(Target* target,
 		vhdl << tab << declare("exExpExc",4) << " <= upExc & excRt;"<<endl;
 		vhdl << tab << "with (exExpExc) select "<<endl;
 		vhdl << tab << declare("excRt2",2) << "<= \"00\" when \"0000\"|\"0100\"|\"1000\"|\"1100\"|\"1001\"|\"1101\","<<endl
-		<<tab<<tab<<"\"01\" when \"0001\","<<endl
-		<<tab<<tab<<"\"10\" when \"0010\"|\"0110\"|\"1010\"|\"1110\"|\"0101\","<<endl
-		<<tab<<tab<<"\"11\" when others;"<<endl;
+				 <<tab<<tab<<"\"01\" when \"0001\","<<endl
+				 <<tab<<tab<<"\"10\" when \"0010\"|\"0110\"|\"1010\"|\"1110\"|\"0101\","<<endl
+				 <<tab<<tab<<"\"11\" when others;"<<endl;
 		manageCriticalPath(target->localWireDelay() + target->lutDelay());
 		vhdl<<tab<<declare("excR",2) << " <= \"00\" when (eqdiffsign='1' and EffSub='1') else excRt2;"<<endl;
 		// IEEE standard says in 6.3: if exact sum is zero, it should be +zero in RN
@@ -333,8 +333,8 @@ FPAddSinglePath::FPAddSinglePath(Target* target,
 		vhdl << tab << "R <= computedR;"<<endl;
 		
 		/*		manageCriticalPath(target->localWireDelay() +  target->lutDelay());
-		vhdl<<tab<<"with sdExnXY select"<<endl;
-		vhdl<<tab<<"R <= newX when \"0100\"|\"1000\"|\"1001\", newY when \"0001\"|\"0010\"|\"0110\", computedR when others;"<<endl;*/
+					vhdl<<tab<<"with sdExnXY select"<<endl;
+					vhdl<<tab<<"R <= newX when \"0100\"|\"1000\"|\"1001\", newY when \"0001\"|\"0010\"|\"0110\", computedR when others;"<<endl;*/
 
 
 	}

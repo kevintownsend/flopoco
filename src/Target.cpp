@@ -1,14 +1,14 @@
 /*
-  The abstract class that models different target FGPAs for FloPoCo. 
+  The abstract class that models different target FGPAs for FloPoCo.
   Classes for real chips (in the Targets directory) inherit from this one.
- 
+
   Author : Florent de Dinechin
- 
+
   This file is part of the FloPoCo project
   developed by the Arenaire team at Ecole Normale Superieure de Lyon
-  
+
   Initial software.
-  Copyright © ENS-Lyon, INRIA, CNRS, UCBL,  
+  Copyright © ENS-Lyon, INRIA, CNRS, UCBL,
   2008-2011.
   All rights reserved.
 
@@ -37,7 +37,7 @@ namespace flopoco{
 			useHardMultipliers_= true;
 			unusedHardMultThreshold_=0.5;
 		}
-	
+
 
 	vector<Operator*> *  Target::getGlobalOpListRef(){
 		return & globalOpList;
@@ -63,7 +63,7 @@ namespace flopoco{
 	bool Target::isPipelined() {
 		return pipeline_;
 	}
-	
+
 	void Target::setClockEnable(bool val) {
 		useClockEnable_=val;
 	}
@@ -93,21 +93,21 @@ namespace flopoco{
 	}
 
 	void Target::setUseHardMultipliers(bool v){
-		unusedHardMultThreshold_ = v;  
+		unusedHardMultThreshold_ = v;
 	}
 
 	void Target::setPlainVHDL(bool v){
-		plainVHDL_ = v;  
+		plainVHDL_ = v;
 	}
 
 	bool Target::plainVHDL(){
-		return plainVHDL_;  
+		return plainVHDL_;
 	}
-	
+
 	bool  Target::generateFigures(){
 		return generateFigures_;
 	}
-	
+
 	void  Target::setGenerateFigures(bool b)
 	{
 	  generateFigures_ = b;
@@ -131,7 +131,7 @@ namespace flopoco{
 
 	bool Target::hasFastLogicTernaryAdders(){
 		return hasFastLogicTernaryAdders_ ;
-	}	
+	}
 
 	bool Target::worthUsingDSP(int wX, int wY){
 		// Default random setting, should be overloaded after a bit of experimenting
@@ -149,17 +149,17 @@ namespace flopoco{
 		int cycles;
 		if(hasHardMultipliers_) {
 			int nX1 = ceil( (double)wX/(double)multXInputs_ );
-			int nY1 = ceil( (double)wY/(double)multYInputs_ );
+			//int nY1 = ceil( (double)wY/(double)multYInputs_ );
 			int nX2 = ceil( (double)wY/(double)multXInputs_ );
-			int nY2 = ceil( (double)wX/(double)multYInputs_ );
-			int nX,nY;
+			//int nY2 = ceil( (double)wX/(double)multYInputs_ );
+			/*int nX,nY;
 			if(nX1*nY1>nX2*nY2) {
 				nX=nX2;
 				nY=nY2;
 			} else {
 				nX=nX1;
 				nY=nY1;
-			}
+			}*/
 			int adds=nX1+nX2;
 			cycles = ( DSPMultiplierDelay() + adds* DSPAdderDelay() ) * frequency_;
 		}
@@ -181,12 +181,12 @@ namespace flopoco{
 	}
 
 
-	
+
 	/*-------- Resource Estimation - target specific functions -------*/
 	/*----------------------------------------------------------------*/
 	bool Target::lutSplitInputs(int nrInputs){
 		bool fpgaDefault;
-		
+
 		if(vendor_ == "Xilinx"){
 			if(id_ == "Spartan3"){
 				fpgaDefault = false;
@@ -206,13 +206,13 @@ namespace flopoco{
 				fpgaDefault = true;
 			}
 		}
-		
+
 		return fpgaDefault && (nrInputs <= ceil(lutInputs()/2.0));
 	}
-	
-	
+
+
 	bool Target::dspSplitMult(){
-		
+
 		if(vendor_ == "Xilinx"){
 			if(id_ == "Spartan3"){
 				return false;
@@ -232,14 +232,14 @@ namespace flopoco{
 				return true;
 			}
 		}
-		
+
 		return false;
 	}
-	
-	
+
+
 	double Target::getMultPerDSP(int widthX, int widthY){
 		int defaultWidthX, defaultWidthY, maxWidth;
-		
+
 		getDSPWidths(defaultWidthX, defaultWidthY, true);
 		(defaultWidthX>defaultWidthY) ? maxWidth = defaultWidthX : maxWidth = defaultWidthY;
 		if(vendor_ == "Xilinx"){
@@ -289,18 +289,18 @@ namespace flopoco{
 				}
 			}
 		}
-		
+
 		return 0;
 	}
-	
+
 	double Target::getLUTPerMultiplier(int widthX, int widthY){
 		int maxWidth;
-		
+
 		(widthX>widthY) ? maxWidth=widthX : maxWidth=widthY;
 		if(vendor_ == "Xilinx"){
 			if(id_ == "Spartan3"){
 				if(maxWidth<=9){
-					return 12.555; 
+					return 12.555;
 				}else if(maxWidth<=12){
 					return 14.917;
 				}else if(maxWidth<=20){
@@ -322,7 +322,7 @@ namespace flopoco{
 				}
 			}else if(id_ == "Virtex4"){
 				if(maxWidth<=9){
-					return 12.555; 
+					return 12.555;
 				}else if(maxWidth<=12){
 					return 14.917;
 				}else if(maxWidth<=20){
@@ -344,7 +344,7 @@ namespace flopoco{
 				}
 			}else if(id_ == "Virtex5"){
 				if(maxWidth<=9){
-					return 12.111; 
+					return 12.111;
 				}else if(maxWidth<=12){
 					return 13.917;
 				}else if(maxWidth<=20){
@@ -406,13 +406,13 @@ namespace flopoco{
 					return 1.281;
 			}
 		}
-		
+
 		return 0;
 	}
-	
+
 	double Target::getFFPerMultiplier(int widthX, int widthY){
 		int maxWidth;
-		
+
 		(widthX>widthY) ? maxWidth=widthX : maxWidth=widthY;
 		if(vendor_ == "Xilinx"){
 			if(id_ == "Spartan3"){
@@ -522,16 +522,16 @@ namespace flopoco{
 					return 2.000;
 			}
 		}
-		
+
 		return 0;
 	}
-	
-	
+
+
 	//TODO: get statistics for Virtex6 (for now using Virtex5 data)
-	//		verify statistics for Altera families		
+	//		verify statistics for Altera families
 	double Target::getLUTPerAdderSubtracter(int widthX, int widthY){
 		int maxWidth;
-		
+
 		(widthX>widthY) ? maxWidth=widthX : maxWidth=widthY;
 		if(vendor_ == "Xilinx"){
 			if(id_ == "Spartan3"){
@@ -674,16 +674,16 @@ namespace flopoco{
 				}
 			}
 		}
-		
+
 		return 0;
 	}
-	
-	
+
+
 	//TODO: get statistics for Virtex6 (for now Virtex5 data)
 	//		verify statistics for Altera families
 	double Target::getFFPerAdderSubtracter(int widthX, int widthY){
 		int maxWidth;
-		
+
 		(widthX>widthY) ? maxWidth=widthX : maxWidth=widthY;
 		if(vendor_ == "Xilinx"){
 			if(id_ == "Spartan3"){
@@ -826,17 +826,17 @@ namespace flopoco{
 				}
 			}
 		}
-		
+
 		return 0;
 	}
-	
-	//TODO: give indication of the memory type being used, so as to get 
-	//		better results (for example, Altera has several types of  
+
+	//TODO: give indication of the memory type being used, so as to get
+	//		better results (for example, Altera has several types of
 	//		RAM memory, and depending on the type, the size varies)
-	//		for now, the function returns the best results, mixing 
+	//		for now, the function returns the best results, mixing
 	//		memory types
 	int Target::wordsPerBlock(int width){
-		
+
 		if(vendor_ == "Xilinx"){
 			if(id_ == "Spartan3"){
 				if(width<=1){
@@ -978,14 +978,14 @@ namespace flopoco{
 				}
 			}
 		}
-		
+
 		return 0;
 	}
-	
+
 	//TODO: check validity of the shift register widths for the Altera
 	//		families of devices
 	int Target::getSRLDepth(int depth){
-		
+
 		if(vendor_ == "Xilinx"){
 			if(id_ == "Spartan3"){
 				return ceil(depth/16.0);
@@ -1026,13 +1026,13 @@ namespace flopoco{
 					return ceil(depth/72.0);
 			}
 		}
-		
+
 		return 0;
 	}
-	
-	
+
+
 	double Target::getLUTPerSRL(int depth){
-		
+
 		if(vendor_ == "Xilinx"){
 			if(id_ == "Spartan3"){
 				return depth;
@@ -1052,13 +1052,13 @@ namespace flopoco{
 				return depth/2;
 			}
 		}
-		
+
 		return 0;
 	}
-	
-	
+
+
 	double Target::getFFPerSRL(int depth){
-		
+
 		if(vendor_ == "Xilinx"){
 			if(id_ == "Spartan3"){
 				return depth/4;
@@ -1078,13 +1078,13 @@ namespace flopoco{
 				return depth/4;
 			}
 		}
-		
+
 		return 0;
 	}
-	
-	
+
+
 	double Target::getRAMPerSRL(int depth){
-		
+
 		if(vendor_ == "Xilinx"){
 			if(id_ == "Spartan3"){
 				return 0;
@@ -1119,20 +1119,20 @@ namespace flopoco{
 					return ceil(depth/72.0);
 			}
 		}
-		
+
 		return 0;
 	}
-	
-	
+
+
 	double Target::getLUTFromMux(int nrInputs){
-		
+
 		if(vendor_ == "Xilinx"){
 			if(id_ == "Spartan3"){
 				if(nrInputs<=32)
 					return nrInputs/2;
 				else{
 					int totalMux = 0, levels = ceil(log2(nrInputs)), i;
-					
+
 					i = levels;
 					while(i>=0){
 						totalMux += nrInputs/32;
@@ -1148,7 +1148,7 @@ namespace flopoco{
 					return ceil(nrInputs/2.0);
 				else{
 					int totalMux = 0, levels = ceil(log2(nrInputs)), i;
-					
+
 					i = levels;
 					while(i>=0){
 						totalMux += nrInputs/32;
@@ -1164,7 +1164,7 @@ namespace flopoco{
 					return ceil(nrInputs/4.0);
 				}else{
 					int totalMux = 0, levels = ceil(log2(nrInputs)), i;
-					
+
 					i = levels;
 					while(i>=0){
 						totalMux += nrInputs/16;
@@ -1180,7 +1180,7 @@ namespace flopoco{
 					return ceil(nrInputs/4.0);
 				else{
 					int totalMux = 0, levels = ceil(log2(nrInputs)), i;
-					
+
 					i = levels;
 					while(i>=0){
 						totalMux += nrInputs/16;
@@ -1196,7 +1196,7 @@ namespace flopoco{
 					return ceil(nrInputs/4.0);
 				else{
 					int totalMux = 0, levels = ceil(log2(nrInputs)), i;
-					
+
 					i = levels;
 					while(i>=0){
 						totalMux += nrInputs/8;
@@ -1210,7 +1210,7 @@ namespace flopoco{
 					return ceil(nrInputs/4.0);
 				else{
 					int totalMux = 0, levels = ceil(log2(nrInputs)), i;
-					
+
 					i = levels;
 					while(i>=0){
 						totalMux += nrInputs/8;
@@ -1224,7 +1224,7 @@ namespace flopoco{
 					return ceil(nrInputs/4.0);
 				else{
 					int totalMux = 0, levels = ceil(log2(nrInputs)), i;
-					
+
 					i = levels;
 					while(i>=0){
 						totalMux += nrInputs/8;
@@ -1235,15 +1235,15 @@ namespace flopoco{
 				}
 			}
 		}
-		
+
 		cerr << "Warning: getLutFromMux(): unknown type of target" << endl;
 		return 0;
 	}
-	
-	
+
+
 	//TODO: get more precise estimations for Virtex4, Virtex6, StratixII
 	double Target::getLUTPerCounter(int width){
-		
+
 		if(vendor_ == "Xilinx"){
 			if(id_ == "Spartan3"){
 				if(width<=16)
@@ -1316,14 +1316,14 @@ namespace flopoco{
 					return 1.015;
 			}
 		}
-		
+
 		return 0;
 	}
-	
-	
+
+
 	//TODO: get more precise estimations for Virtex4, Virtex6, StratixII
 	double Target::getFFPerCounter(int width){
-		
+
 		if(vendor_ == "Xilinx"){
 			if(id_ == "Spartan3"){
 				if(width<=16)
@@ -1396,15 +1396,15 @@ namespace flopoco{
 					return 1.000;
 			}
 		}
-		
+
 		return 0;
 	}
-	
-	
+
+
 	//TODO: get more precise estimations for Virtex4, Virtex6, StratixII
 	//		get more specific estimates for Altera (several possibilities)
 	double Target::getLUTPerAccumulator(int width, bool useDSP){
-		
+
 		if(vendor_ == "Xilinx"){
 			if(id_ == "Spartan3"){
 				if(useDSP){
@@ -1505,15 +1505,15 @@ namespace flopoco{
 					return 3.953;
 			}
 		}
-		
+
 		return 0;
 	}
-	
-	
+
+
 	//TODO: get more precise estimations for Virtex4, Virtex6, StratixII
 	//		get more specific estimates for Altera (several possibilities)
 	double Target::getFFPerAccumulator(int width, bool useDSP){
-		
+
 		if(vendor_ == "Xilinx"){
 			if(id_ == "Spartan3"){
 				if(useDSP){
@@ -1614,61 +1614,61 @@ namespace flopoco{
 					return 3.593;
 			}
 		}
-		
+
 		return 0;
 	}
-	
-	
+
+
 	double Target::getDSPPerAccumulator(int width){
-		
+
 		if(vendor_ == "Xilinx"){
 			if(id_ == "Spartan3"){
 				if(width<=48)
 					return 1.000;
-				else 
+				else
 					return ceil(width/48.0);
 			}else if(id_ == "Virtex4"){
 				if(width<=48)
 					return 1.000;
-				else 
+				else
 					return ceil(width/48.0);
 			}else if(id_ == "Virtex5"){
 				if(width<=48)
 					return 1.000;
-				else 
+				else
 					return ceil(width/48.0);
 			}else if(id_ == "Virtex6"){
 				if(width<=48)
 					return 1.000;
-				else 
+				else
 					return ceil(width/48.0);
 			}
 		}else if(vendor_.compare("Altera") == 0){
 			if(id_ == "StratixII"){
 				if(width<=38)
 					return 1.000;
-				else 
+				else
 					return ceil(width/38.0);
 			}else if(id_ == "StratixIII"){
 				if(width<=38)
 					return 1.000;
-				else 
+				else
 					return ceil(width/38.0);
 			}else if(id_ == "StratixIV"){
 				if(width<=38)
 					return 1.000;
-				else 
+				else
 					return ceil(width/38.0);
 			}
 		}
-		
+
 		return 0;
 	}
-	
+
 	//TODO: get more precise data for Xilinx architectures and for
 	//		StratixII
 	double Target::getLUTPerDecoder(int width){
-		
+
 		if(vendor_ == "Xilinx"){
 			return 1.000;
 		}else if(vendor_.compare("Altera") == 0){
@@ -1701,15 +1701,15 @@ namespace flopoco{
 					return 1.218;
 			}
 		}
-		
+
 		return 0;
 	}
-	
-	
+
+
 	//TODO: get more precise data for Xilinx architectures and for
 	//		StratixII
 	double Target::getFFPerDecoder(int width){
-		
+
 		if(vendor_ == "Xilinx"){
 			return 1.000;
 		}else if(vendor_.compare("Altera") == 0){
@@ -1742,10 +1742,10 @@ namespace flopoco{
 					return 2.125;
 			}
 		}
-		
+
 		return 0;
 	}
-	
+
 	/*----------------------------------------------------------------*/
 	/*----------------------------------------------------------------*/
 }
