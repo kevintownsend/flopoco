@@ -28,9 +28,9 @@ namespace flopoco{
 
 
 	FixAtan2ByRecipMultAtan::FixAtan2ByRecipMultAtan(Target* target_, int wIn_, int wOut_, int degree, map<string, double> inputDelays_) :
- 		FixAtan2(target_, wIn_, wOut_, inputDelays_)
+		FixAtan2(target_, wIn_, wOut_, inputDelays_)
 	{
-		int stage;
+		//int stage;
 		srcFileName="FixAtan2ByRecipMultAtan";
 		setCopyrightString ( "Matei Istoan, Florent de Dinechin (2012-...)" );
 		useNumericStd_Unsigned();
@@ -47,18 +47,18 @@ namespace flopoco{
 		}
 #endif
 		REPORT(DEBUG, "  degree=" << degree);
-		
+
 		ostringstream name;
 		name << "FixAtan2ByRecipMultAtan_" << wIn_ << "_" << wOut_ << "_uid" << getNewUId();
 		setNameWithFreq( name.str() );
-	
+
 		///////////// VHDL GENERATION
-	
+
 		// Range reduction code is shared, defined in FixAtan2
 		buildQuadrantRangeReduction();
 		buildScalingRangeReduction();
 
-		int sizeZ=wOut-2; // w-2 because two bits come from arg red 
+		//int sizeZ=wOut-2; // w-2 because two bits come from arg red
 
 		//FixFunctionByPiecewisePoly* recipTable;
 		Operator* recipTable;
@@ -67,15 +67,15 @@ namespace flopoco{
 		int msbRecip, lsbRecip, msbProduct, lsbProduct, msbAtan, lsbAtan;
 		msbAtan = -2; // bits 0 and -1 come from the range reduction
 		lsbAtan = -wOut+1;
-		msbRecip = 0; // 2/(1+x) in 0..1 for x in 0..1 
-		msbProduct = -1 ; // y/x between 0 and 1 but the faithful product may overflow a bit. 
+		msbRecip = 0; // 2/(1+x) in 0..1 for x in 0..1
+		msbProduct = -1 ; // y/x between 0 and 1 but the faithful product may overflow a bit.
 		if(degree==0) { // both tables are correctly rounded
 			lsbRecip = -wOut+1; // see error analysis in the Arith2015 paper. It says we should have -w, but exhaustive test show that -w+1 work :)
 			lsbProduct = -wOut+1; // It says we should have -w, but exhaustive test show that -w+1 work :)
 		}
 		else{ // both tables are faithful
 			lsbRecip = -wOut; // see error analysis in the paper
-			lsbProduct = -wOut;				
+			lsbProduct = -wOut;
 		}
 		// recip table computes 2/(1+x) once we have killed the MSB of XRS, which is always 1.
 		vhdl << tab << declare("XRm1", wIn-2) << " <= XRS" << range(wIn-3,0)  << "; -- removing the MSB which is constantly 1" << endl;
@@ -90,7 +90,7 @@ namespace flopoco{
 			lsbRecip);
 	}
 		else {
-		recipTable = new FixFunctionByPiecewisePoly(getTarget(), 
+		recipTable = new FixFunctionByPiecewisePoly(getTarget(),
 			invfun.str(),
 			-wOut+2,  // XRS was between 1/2 and 1. XRm1 is between 0 and 1/2
 			msbRecip + 1, // +1 because internally uses signed arithmetic and we want an unsigned result
@@ -100,9 +100,9 @@ namespace flopoco{
 			);
 	}
 		recipTable->changeName(join("reciprocal_uid", getNewUId()));
-		addSubComponent(recipTable);			
+		addSubComponent(recipTable);
 		inPortMap(recipTable, "X", "XRm1");
-		outPortMap(recipTable, "Y", "R0"); 
+		outPortMap(recipTable, "Y", "R0");
 		vhdl << instance(recipTable, "recipTable");
 
 		syncCycleFromSignal("R0");
@@ -148,14 +148,14 @@ namespace flopoco{
 			);
 	}
 		atanTable->changeName(join("atan_uid", getNewUId()));
-		addSubComponent(atanTable);			
+		addSubComponent(atanTable);
 		inPortMap(atanTable, "X", "P_slv");
-		outPortMap(atanTable, "Y", "atanTableOut"); 
+		outPortMap(atanTable, "Y", "atanTableOut");
 		vhdl << instance(atanTable, "atanTable");
 		syncCycleFromSignal("atanTableOut");
 
 		vhdl << tab << declare("finalZ", wOut) << " <= \"00\" & atanTableOut;" << endl;
-			
+
 		// Reconstruction code is shared, defined in FixAtan2
 		buildQuadrantReconstruction();
 
