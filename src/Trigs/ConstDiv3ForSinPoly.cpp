@@ -1,16 +1,16 @@
 /*
   Euclidean division by 3
-   
+
   The input is given as x_{n}x_{n-1}...x_{0}, but the dividend is actually
   x_{n}00x_{n-1}00...x_{1}00x_{0}
 
   This file is part of the FloPoCo project
   developed by the Arenaire team at Ecole Normale Superieure de Lyon
-  
+
   Author : Florent de Dinechin, Matei Istoan
 
   Initial software.
-  Copyright © ENS-Lyon, INRIA, CNRS, UCBL,  
+  Copyright © ENS-Lyon, INRIA, CNRS, UCBL,
   2008-2013.
   All rights reserved.
 
@@ -39,9 +39,9 @@ namespace flopoco{
 				d(d_), alpha(alpha_), gamma(gamma_), delta(delta_), lastTable(lastTable_)
 	{
 		setCopyrightString("Florent de Dinechin, Matei Istoan (2013)");
-		
+
 		ostringstream name;
-		
+
 		srcFileName = "ConstDiv3ForSinPoly::EuclideanDiv3Table";
 		name << "EuclideanDiv3Table_" << d << "_" << alpha << "_" << delta << "zeros" << (lastTable ? "_lastTable" : "");
 		setName(name.str());
@@ -58,11 +58,11 @@ namespace flopoco{
 			e << "ERROR in ConstDiv3ForSinPoly::EuclideanDiv3Table::function, argument out of range" <<endl;
 			throw e.str();
 		}
-		
+
 		// the vector containing the digits of the number (MSB of number is on position 0)
 		list<char> digitVector;
 		int copyX, digit, trueX;
-		
+
 		copyX = x;
 		while(copyX > 0)
 		{
@@ -72,7 +72,7 @@ namespace flopoco{
 		}
 		for(int i=digitVector.size(); i<alpha+gamma; i++)
 			digitVector.push_front(0);
-		
+
 		// get the actual output
 		//	first, the two remainder bits
 		trueX = 0;
@@ -92,20 +92,20 @@ namespace flopoco{
 			trueX = (trueX<<1) + digitVector.front();
 			if(!(lastTable && digitVector.size()==1))
 				trueX = (trueX << delta);
-			
+
 			digitVector.pop_front();
 		}
-		
+
 		// perform the computations
 		int q = trueX / d;
 		int r = trueX - q*d;
-		
+
 		int result = (q<<gamma) + r;
-				
+
 		return mpz_class(result);
 	};
-		
-	
+
+
 
 	int ConstDiv3ForSinPoly::quotientSize()
 	{
@@ -127,12 +127,12 @@ namespace flopoco{
 
 		//set gamma to the size of the remainder
 		gamma = intlog2(d-1);
-		
+
 		//check alpha, and set it properly if necessary
 		if(alpha == -1)
 		{
 			alpha = target->lutInputs() - gamma;
-						
+
 			if (alpha<1)
 			{
 				REPORT(LIST, "WARNING: This value of d is too large for the LUTs of this FPGA (alpha=" << alpha << ").");
@@ -149,7 +149,7 @@ namespace flopoco{
 		else
 			o << "ConstDiv3ForSinPoly_";
 		o << d << "_" << vhdlize(wIn) << "_"  << vhdlize(alpha) << "_" << vhdlize(nbZeros) << "zeros_";
-		if(target->isPipelined()) 
+		if(target->isPipelined())
 			o << vhdlize(target->frequencyMHz());
 		else
 			o << "comb";
@@ -157,7 +157,7 @@ namespace flopoco{
 
 		//set the quotient size
 		qSize = (1+nbZeros)*(wIn-1) + 1;
-		
+
 		//manage the pipeline
 		setCriticalPath(getMaxInputDelays(inputDelays));
 
@@ -176,15 +176,15 @@ namespace flopoco{
 
 		REPORT(INFO, "Architecture consists of k=" << k  <<  " levels.");
 		REPORT(DEBUG, "  d=" << d << "  wIn=" << wIn << "  alpha=" << alpha << "  gamma=" << gamma <<  "  k=" << k  <<  "  qSize=" << qSize);
-		
+
 		EuclideanDiv3Table* table;
 		table = new EuclideanDiv3Table(target, d, alpha, gamma, nbZeros, false);
 		useSoftRAM(table);
 		oplist.push_back(table);
-		double tableDelay = table->getOutputDelay("Y");
+		//double tableDelay = table->getOutputDelay("Y");
 
 		string ri, xi, ini, outi, qi;
-		
+
 		ri = join("r", k);
 		vhdl << tab << declare(ri, gamma) << " <= " << zg(gamma, 0) << ";" << endl;
 
@@ -197,61 +197,61 @@ namespace flopoco{
 			xi = join("x", i);
 			if(i==k-1 && rem!=0)
 				// at the MSB, pad with 0es
-				vhdl << tab << declare(xi, alpha, true) << " <= " << zg(alpha-rem, 0) <<  " & X" << range(wIn-1, i*alpha) << ";" << endl; 
-			else 
+				vhdl << tab << declare(xi, alpha, true) << " <= " << zg(alpha-rem, 0) <<  " & X" << range(wIn-1, i*alpha) << ";" << endl;
+			else
 				// normal case
 				vhdl << tab << declare(xi, alpha, true) << " <= X" << range((i+1)*alpha-1, i*alpha) << ";" << endl;
-			
+
 			ini = join("in", i);
 			// This ri is r_{i+1}
 			vhdl << tab << declare(ini, alpha+gamma) << " <= " << ri << " & " << xi << ";" << endl;
-			
+
 			outi = join("out", i);
-			
+
 			inPortMap(table, "X", ini);
 			outPortMap(table, "Y", outi);
 			vhdl << instance(table, join("table",i));
-			
+
 			syncCycleFromSignal(outi);
-			
+
 			ri = join("r", i);
 			qi = join("q", i);
 			vhdl << tab << declare(qi, alpha*(1+nbZeros), true) << " <= " << outi << range(alpha*(1+nbZeros)+gamma-1, gamma) << ";" << endl;
 			vhdl << tab << declare(ri, gamma) << " <= " << outi << range(gamma-1, 0) << ";" << endl << endl;
-			
+
 			syncCycleFromSignal(qi);
 			syncCycleFromSignal(ri);
 		}
-		
+
 		//handle the last bit
 		{
 			table = new EuclideanDiv3Table(target, d, alpha, gamma, nbZeros, true);
 			useSoftRAM(table);
 			oplist.push_back(table);
-			tableDelay = table->getOutputDelay("Y");
-			
+			//tableDelay = table->getOutputDelay("Y");
+
 			//manageCriticalPath(tableDelay);
 			manageCriticalPath(target->lutDelay());
 
 			xi = join("x", 0);
 			vhdl << tab << declare(xi, alpha, true) << " <= X" << range(alpha-1, 0) << ";" << endl;
-			
+
 			ini = join("in", 0);
 			vhdl << tab << declare(ini, alpha+gamma) << " <= " << ri << " & " << xi << ";" << endl;
-			
+
 			outi = join("out", 0);
-			
+
 			inPortMap(table, "X", ini);
 			outPortMap(table, "Y", outi);
 			vhdl << instance(table, join("table", 0));
-			
+
 			syncCycleFromSignal(outi);
-			
+
 			ri = join("r", 0);
 			qi = join("q", 0);
 			vhdl << tab << declare(qi, (alpha-1)*(1+nbZeros)+1, true) << " <= " << outi << range((alpha-1)*(1+nbZeros)+1+gamma-1, gamma) << ";" << endl;
 			vhdl << tab << declare(ri, gamma) << " <= " << outi << range(gamma-1, 0) << ";" << endl << endl;
-			
+
 			syncCycleFromSignal(qi);
 			syncCycleFromSignal(ri);
 		}
@@ -264,19 +264,19 @@ namespace flopoco{
 			for (unsigned int i=k-1; i>=1; i--)
 				vhdl << "q" << i << " & ";
 			vhdl << "q0;" << endl;
-			
+
 			syncCycleFromSignal("tempQ");
-			
+
 			vhdl << tab << "Q <= tempQ" << range(qSize-1, 0)  << ";" << endl;
-			
+
 			outDelayMap["Q"] = getCriticalPath();
 		}
 
 		// This ri is r_0
 		vhdl << tab << "R <= " << ri << ";" << endl;
-		
+
 		outDelayMap["R"] = getCriticalPath();
-	}	
+	}
 
 	ConstDiv3ForSinPoly::~ConstDiv3ForSinPoly()
 	{
@@ -288,31 +288,31 @@ namespace flopoco{
 	{
 		// Get I/O values
 		mpz_class X = tc->getInputValue("X");
-		
+
 		// Recreate the true input value (x_{n}00x_{n-1}00...x_{1}00x_{0})
 		int shiftSize = 0;
 		mpz_class copyX, trueX, digit;
-		
+
 		copyX = X;
 		trueX = 0;
 		while(copyX > 0)
 		{
 			digit = copyX & 1;
 			trueX = trueX + (digit << (3*shiftSize));
-			
+
 			copyX = copyX >> 1;
 			shiftSize++;
 		}
-		
+
 		// Compute correct value
 		mpz_class Q = trueX / d;
-		mpz_class R = trueX - Q*d;		
-		
+		mpz_class R = trueX - Q*d;
+
 		// Add the output values
 		if(!remainderOnly)
 			tc->addExpectedOutput("Q", Q);
 		tc->addExpectedOutput("R", R);
 	}
- 
+
 
 }

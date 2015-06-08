@@ -7,7 +7,7 @@
 #include <cstdlib>
 #include <python2.7/Python.h>
 
-#include "FloPoCo.hpp" 
+#include "FloPoCo.hpp"
 
 // for REPORT and THROWERROR
 #define srcFileName "main_test"
@@ -57,17 +57,17 @@ void checkOperator ( string operatorName ){
 	// creation of the python cmd with correct arguments
 	string cmdPython = operatorName;
 	ostringstream pyOss;
-	
+
 	string params = cpyTestState -> toString();
 
 	cmdPython += params;
 	REPORT (LIST, "Testing Operator " << operatorName << " with command: " << cmdPython);
-	
-	// <<<<<<<<<< 
-	// Test of the operator with the Python script 
+
+	// <<<<<<<<<<
+	// Test of the operator with the Python script
 	// >>>>>>>>>>
 
-	PyObject *pName, *pModule, *pDict, *pFunc;
+	PyObject *pName, *pModule, /**pDict,*/ *pFunc;
 	PyObject *pArg, *pValue;
 
 	Py_Initialize ();
@@ -98,8 +98,8 @@ void checkOperator ( string operatorName ){
 				REPORT ( LIST, "Error when try to get back the pythonCMd" );
 			}
 			PyTuple_SetItem ( pArg, 0, pValue );
-		
-			// Call of the function with its arguments	
+
+			// Call of the function with its arguments
 			pValue = PyObject_CallObject ( pFunc, pArg );
 			Py_DECREF ( pArg );
 			if ( pValue != NULL ){
@@ -165,13 +165,13 @@ int main(int argc, char* argv[] )
 
 	if ( argc >= 2 ){
 		listOp = argv[1];
-	} 
- 
+	}
+
 	vector<string> opList;
 	opList = readOpList ( listOp );
 
 		while(true) {
-		for (int i=0; i<opList.size(); i++)
+		for (unsigned int i=0; i<opList.size(); i++)
 				checkOperator (opList[i]);
 		}
 	return 0;

@@ -53,7 +53,7 @@ namespace flopoco {
 
 	FixAtan2::~FixAtan2()
 	{
-		mpfr_clears (constPi, NULL);		
+		mpfr_clears (constPi, NULL);
 	}
 
 
@@ -68,7 +68,7 @@ namespace flopoco {
 		vhdl << tab << declare("Ysat", wIn) << " <= \"1" << zg(wIn-2,-2) << "1\" when Y=\"1" <<zg (wIn-1,-2) << "\" else Y ;" <<endl;
 
 		// When pipelining I noticed that we perform a subtraction for the comparison X<Y in parallel to the negation anyway
-		// so negateByComplement should always be false, 
+		// so negateByComplement should always be false,
 		//except if some day we do an ASIC target where it will cost less hardware.
 
 		if (negateByComplement)	{
@@ -102,7 +102,7 @@ namespace flopoco {
 		vhdl << tab << tab << "\"01\"  when (not sgnY and     XltY and     mYltX)='1' else"    << endl;
 		vhdl << tab << tab << "\"10\"  when (    sgnX and     XltY and not mYltX)='1' else"    << endl;
 		vhdl << tab << tab << "\"11\";"    << endl;
-	
+
 
 
 		int sizeXYR = wIn-1; // no need for sign bit any longer
@@ -111,7 +111,7 @@ namespace flopoco {
 		vhdl << tab << tab << "pY" << range(sizeXYR-1, 0) << " when quadrant=\"01\"   else " << endl;
 		vhdl << tab << tab << "mX" << range(sizeXYR-1, 0) << " when quadrant=\"10\"   else " << endl;
 		vhdl << tab << tab << "mY" << range(sizeXYR-1, 0) << ";"    << endl;
-	
+
 		vhdl << tab << declare("YR", sizeXYR) << " <= " << endl;
 		vhdl << tab << tab << "pY" << range(sizeXYR-1, 0) << " when quadrant=\"00\" and sgnY='0'  else " << endl;
 		vhdl << tab << tab << "mY" << range(sizeXYR-1, 0) << " when quadrant=\"00\" and sgnY='1'  else " << endl;
@@ -124,7 +124,7 @@ namespace flopoco {
 
 		vhdl << tab << declare("finalAdd") << " <= " << endl;
 		vhdl << tab << tab << "'1' when (quadrant=\"00\" and sgnY='0') or(quadrant=\"01\" and sgnX='1') or (quadrant=\"10\" and sgnY='1') or (quadrant=\"11\" and sgnX='0')" << endl;
-		vhdl << tab << tab << " else '0';  -- this information is sent to the end of the pipeline, better compute it here as one bit"    << endl; 
+		vhdl << tab << tab << " else '0';  -- this information is sent to the end of the pipeline, better compute it here as one bit"    << endl;
 	}
 
 	void FixAtan2::buildQuadrantReconstruction(){
@@ -146,33 +146,33 @@ namespace flopoco {
 		// The LZC
 		LZOC* lzc = new	LZOC(getTarget(), sizeXYR-1, inDelayMap("XorY", getCriticalPath()));
 		addSubComponent(lzc);
-			
+
 		inPortMap(lzc, "I", "XorY");
 		inPortMapCst(lzc, "OZB", "'0'");
-		outPortMap(lzc, "O", "S"); 
+		outPortMap(lzc, "O", "S");
 		vhdl << instance(lzc, "lzc");
 		syncCycleFromSignal("S");
 		setCriticalPath(lzc->getOutputDelay("O"));
-	
+
 		//setCycleFromSignal("lzo");
 		//		setCriticalPath( lzc->getOutputDelay("O") );
-		
+
 		// The two shifters are two instance of the same component
-		Shifter* lshift = new Shifter(getTarget(), sizeXYR, sizeXYR-1, Shifter::Left, inDelayMap("S", getCriticalPath()));   
+		Shifter* lshift = new Shifter(getTarget(), sizeXYR, sizeXYR-1, Shifter::Left, inDelayMap("S", getCriticalPath()));
 		addSubComponent(lshift);
-		
+
 		inPortMap(lshift, "S", "S");
-		
+
 		inPortMap(lshift, "X", "XR");
 		outPortMap(lshift, "R", "XRSfull");
 		vhdl << instance(lshift, "Xshift");
 		vhdl << tab << declare("XRS", sizeXYR) << " <=  XRSfull " << range(sizeXYR-1,0) << ";" << endl;
-		
+
 		inPortMap(lshift, "X", "YR");
 		outPortMap(lshift, "R", "YRSfull");
 		vhdl << instance(lshift, "Yshift");
 		vhdl << tab << declare("YRS", sizeXYR) << " <=  YRSfull " << range(sizeXYR-1,0) << ";" << endl;
-		
+
 		syncCycleFromSignal("YRSfull");
 		setCriticalPath(lshift->getOutputDelay("R"));
 }
@@ -245,41 +245,41 @@ namespace flopoco {
 		if (1==(svY >> (wIn-1))) // sign bit
 			svY -= (mpz_class(1)<<wIn);
 		/* Compute correct value */
-		
+
 		mpfr_set_z (x, svX.get_mpz_t(), GMP_RNDN); //  exact
 		mpfr_set_z (y, svY.get_mpz_t(), GMP_RNDN); //  exact
-	
+
 		mpfr_atan2(a, y, x, GMP_RNDN); // a between -pi and pi
 		mpfr_div(a, a, constPi, GMP_RNDN); // a between -1 and 1
 
 		// Now convert a to fix point
 		// Align to fix point by adding 6 -- if we just add 4 there is a 1-bit shift in case a<0
 		mpfr_add_d(a, a, 6.0, GMP_RNDN);
-		mpfr_mul_2si (a, a, wOut-1, GMP_RNDN); // exact scaling 
+		mpfr_mul_2si (a, a, wOut-1, GMP_RNDN); // exact scaling
 
-		mpz_class mask = (mpz_class(1)<<wOut) -1; 
+		mpz_class mask = (mpz_class(1)<<wOut) -1;
 
 		mpfr_get_z (az.get_mpz_t(), a, GMP_RNDD); // there can be a real rounding here
 		az -= mpz_class(6)<<(wOut-1);
-		az &= mask; 
- 		tc->addExpectedOutput ("A", az);
+		az &= mask;
+		tc->addExpectedOutput ("A", az);
 
 		mpfr_get_z (az.get_mpz_t(), a, GMP_RNDU); // there can be a real rounding here
 		az -= mpz_class(6)<<(wOut-1);
-		az &= mask; 
- 		tc->addExpectedOutput ("A", az);
-		
+		az &= mask;
+		tc->addExpectedOutput ("A", az);
+
 		// clean up
-		mpfr_clears (x,y,a, NULL);		
+		mpfr_clears (x,y,a, NULL);
 #endif
 	}
 
 
 
-	void FixAtan2::buildStandardTestCases(TestCaseList * tcl) 
+	void FixAtan2::buildStandardTestCases(TestCaseList * tcl)
 	{
-		mpfr_t z;
-		mpz_class zz;
+		//mpfr_t z;
+		//mpz_class zz;
 		TestCase* tc;
 
 		// 0
@@ -314,7 +314,7 @@ namespace flopoco {
 
 
 	}
-	
+
 
 
 

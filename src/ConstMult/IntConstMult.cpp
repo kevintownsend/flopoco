@@ -1085,7 +1085,7 @@ namespace flopoco{
 	ShiftAddOp* IntConstMult::buildEuclideanDag(const mpz_class n, ShiftAddDag* constant){
 
 		REPORT(FULL,"Entering buildEuclideanDag for "<<n.get_mpz_t());
-		ShiftAddOp *finalQ, *pmQ, *finalAQ, *finalR, *res;
+		ShiftAddOp *finalQ, *pmQ, *finalAQ, *finalR; //*res;
 		ShiftAddDag *computeQ, *computeR;
 		mpz_t q,d,r,test;
 
@@ -1162,7 +1162,7 @@ namespace flopoco{
 
 	/** prepares all the features needed for all the methods building a ShiftAddDag */
 	int  IntConstMult::prepareBoothTree(mpz_class &n, ShiftAddDag* &tree_try, ShiftAddOp** &level, ShiftAddOp* &result,
-			ShiftAddOp* &MX, int* &shifts, int &nonZeroInBoothCode, int &globalshift){
+			ShiftAddOp* &MX, unsigned int* &shifts, int &nonZeroInBoothCode, int &globalshift){
 		int i,j;
 
 		int nsize = intlog2(n);
@@ -1198,7 +1198,7 @@ namespace flopoco{
 
 				// fill an initial array with Xs and MXs. Objective is to perform the additions with the right weight.
 				level = new ShiftAddOp*[nonZeroInBoothCode];
-				shifts = new int[nonZeroInBoothCode];
+				shifts = new unsigned int[nonZeroInBoothCode];
 				for (j=0; j<nonZeroInBoothCode-1; j++) {
 					if (1==BoothCode[i]) // i was previously initialized as the weight of the first non-zero bit
 						level[j] = tree_try->PX; // j corresponds to the non-zero bit we are looking at. then we have to set its shift in the shift array
@@ -1226,11 +1226,11 @@ namespace flopoco{
 	// Assumes: implementation is initialized
 	ShiftAddDag*  IntConstMult::buildMultBoothTreeFromRight(mpz_class n){
 		ShiftAddDag* tree_try= new ShiftAddDag(this);
-		int k,i,j,nk,nonZeroInBoothCode,globalshift;
+		int k,j,nk,nonZeroInBoothCode,globalshift;
 		ShiftAddOp *result;
 		ShiftAddOp *MX=0;
 		ShiftAddOp**  level;
-		int*     shifts;
+		unsigned int* shifts;
 
 
 		REPORT(DEBUG, "Entering buildMultBoothTreeFromRight for "<< n);		
@@ -1276,11 +1276,11 @@ namespace flopoco{
 	// Assumes: implementation is initialized
 	ShiftAddDag*  IntConstMult::buildMultBoothTreeFromLeft(mpz_class n){
 		ShiftAddDag* tree_try= new ShiftAddDag(this);
-		int k,i,j,nk,nonZeroInBoothCode,globalshift;
+		int k,j,nk,nonZeroInBoothCode,globalshift; 
 		ShiftAddOp *result;
 		ShiftAddOp *MX=0;
 		ShiftAddOp**  level;
-		int*     shifts;
+		unsigned int* shifts;
 
 
 		REPORT(DEBUG, "Entering buildMultBoothTreeFromLeft for "<< n);
@@ -1326,18 +1326,18 @@ namespace flopoco{
 	// Assumes: implementation is initialized
 	ShiftAddDag*  IntConstMult::buildMultBoothTreeToMiddle(mpz_class n){
 		ShiftAddDag* tree_try= new ShiftAddDag(this);
-		int k,i,j,nk,nonZeroInBoothCode,globalshift;
+		int k,j,nk,nonZeroInBoothCode,globalshift; 
 		ShiftAddOp *result;
 		ShiftAddOp *MX=0;
 		ShiftAddOp**  level;
-		int*     shifts;
+		unsigned int* shifts;
 
 
 		REPORT(DEBUG, "Entering buildMultBoothTreeToMiddle for "<< n);
 
 		if ( !prepareBoothTree(n,tree_try, level, result, MX, shifts, nonZeroInBoothCode, globalshift) ){
 			ShiftAddOp **fillLevel;
-			int* shiftsLevel;
+			unsigned int* shiftsLevel;
 			unsigned int sizeOfFillLevel;
 			k=nonZeroInBoothCode;
 
@@ -1349,7 +1349,7 @@ namespace flopoco{
 					sizeOfFillLevel = k>>1;
 
 				fillLevel = new ShiftAddOp*[sizeOfFillLevel];
-				shiftsLevel = new int[sizeOfFillLevel];
+				shiftsLevel = new unsigned int[sizeOfFillLevel];
 				for ( j=0; j<(k>>1); j+=2 ) { //we construct the DAG starting from the extreme sides and go to the middle.
 					if ((j+1)<(k>>1))
 					{
@@ -1411,7 +1411,7 @@ namespace flopoco{
 	/**
 	 * searches the smallest shift in an array of integers
 	 */
-	unsigned int searchSmallestShift( int* shifts, unsigned int size ) {
+	unsigned int searchSmallestShift(unsigned int* shifts, unsigned int size ) {
 		if ( size<2 )
 			return 0;
 
@@ -1426,7 +1426,7 @@ namespace flopoco{
 	/**
 	 * computes the number of buildable ShiftAddOps in an array (there are token in pairs)
 	 */
-	unsigned int computeFillLevelSize( int* shifts, unsigned int size, unsigned int shift ) {
+	unsigned int computeFillLevelSize(unsigned int* shifts, unsigned int size, unsigned int shift ) {
 		unsigned int sizeOfFillLevel=size;
 		if (size>=2) {
 			for ( unsigned int i=0; i<size-1; i++ ){
@@ -1447,11 +1447,11 @@ namespace flopoco{
 	// Assumes: implementation is initialized
 	ShiftAddDag* IntConstMult::buildMultBoothTreeSmallestShifts(mpz_class n){
 		ShiftAddDag* tree_try= new ShiftAddDag(this);
-		int k,i,j,nk,nonZeroInBoothCode,globalshift;
+		int k,j,nonZeroInBoothCode,globalshift;
 		ShiftAddOp *result;
 		ShiftAddOp *MX=0;
 		ShiftAddOp**  level;
-		int*     shifts;
+		unsigned int* shifts;
 
 
 		REPORT(DEBUG, "Entering buildMultBoothTreeSmallestShifts for "<< n);
@@ -1459,7 +1459,7 @@ namespace flopoco{
 		//	and compute all the operator including this shift, leaving the others for the next step
 		if ( !prepareBoothTree(n,tree_try, level, result, MX, shifts, nonZeroInBoothCode, globalshift) ){
 			ShiftAddOp **fillLevel;
-			int* shiftsLevel;
+			unsigned int* shiftsLevel;
 			unsigned int sizeOfFillLevel;
 			k=nonZeroInBoothCode;
 			unsigned int shiftPlace=0;
@@ -1469,7 +1469,7 @@ namespace flopoco{
 				smallestShift = searchSmallestShift(shifts, k);
 				sizeOfFillLevel = computeFillLevelSize(shifts, k, smallestShift);
 				fillLevel = new ShiftAddOp*[sizeOfFillLevel];
-				shiftsLevel = new int[sizeOfFillLevel];
+				shiftsLevel = new unsigned int[sizeOfFillLevel];
 
 				for ( j=0; j<k; j++ )
 				{
@@ -1479,7 +1479,8 @@ namespace flopoco{
 							fillLevel[j-shiftPlace]=tree_try->provideShiftAddOp( Add, tree_try->PX, 1, tree_try->PX);
 						else
 							fillLevel[j-shiftPlace]=tree_try->provideShiftAddOp( Add, level[j+1], smallestShift, level[j] );
-						shiftsLevel[j-(shiftPlace++)]=shifts[j++];
+						shiftsLevel[j-(shiftPlace++)]=shifts[j];
+						j++;
 					}
 					else {//else copy the non zero bit to the next step
 						fillLevel[j-shiftPlace]=level[j];
@@ -1528,12 +1529,12 @@ namespace flopoco{
 	ShiftAddDag* IntConstMult::buildMultBoothTreeBitheap(mpz_class n, int levels)
 	{
 		ShiftAddDag* tree_try= new ShiftAddDag(this);
-		int k,i,j,nk,nonZeroInBoothCode;
+		int k,j,nk,nonZeroInBoothCode;
 		int globalshift = 0;
 		ShiftAddOp *result = NULL;
 		ShiftAddOp *MX=0;
 		ShiftAddOp**  level;
-		int*     shifts;
+		unsigned int* shifts;
 		vector<int> tempHeadShifts;
 
 		REPORT(DEBUG, "Entering buildMultBoothTreeBitheap for "<< n);

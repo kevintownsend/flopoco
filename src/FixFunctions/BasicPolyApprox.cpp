@@ -1,13 +1,13 @@
 /*
 
-  A class that manages polynomial approximation for FloPoCo (and possibly later for metalibm). 
+  A class that manages polynomial approximation for FloPoCo (and possibly later for metalibm).
 
   Authors: Florent de Dinechin
 
   This file is part of the FloPoCo project
   developed by the Arenaire team at Ecole Normale Superieure de Lyon
 	then the Socrate team at INSA de Lyon
-  
+
   Initial software.
   Copyright © INSA-Lyon, ENS-Lyon, INRIA, CNRS, UCBL
 
@@ -22,7 +22,7 @@
 namespace flopoco{
 
 
-	BasicPolyApprox::BasicPolyApprox(FixFunction *f_, double targetAccuracy, int addGuardBits): 
+	BasicPolyApprox::BasicPolyApprox(FixFunction *f_, double targetAccuracy, int addGuardBits):
 		f(f_)
 	{
 		needToFreeF = false;
@@ -53,7 +53,7 @@ namespace flopoco{
 		buildFixFormatVector();
 	}
 
-	BasicPolyApprox::BasicPolyApprox(sollya_obj_t fS_, int degree_, int lsb_, bool signedIn): 
+	BasicPolyApprox::BasicPolyApprox(sollya_obj_t fS_, int degree_, int lsb_, bool signedIn):
 		degree(degree_), LSB(lsb_)
 	{
 		f = new FixFunction(fS_, signedIn);
@@ -65,7 +65,7 @@ namespace flopoco{
 
 
 
-	BasicPolyApprox::BasicPolyApprox(int degree_, vector<int> MSB, int LSB_, vector<mpz_class> mpzCoeff): 
+	BasicPolyApprox::BasicPolyApprox(int degree_, vector<int> MSB, int LSB_, vector<mpz_class> mpzCoeff):
 	  degree(degree_), LSB(LSB_)
   {
 		needToFreeF = false;
@@ -83,7 +83,7 @@ namespace flopoco{
 	}
 
 
-		
+
 	BasicPolyApprox::~BasicPolyApprox()
 	{
 		// clear the Sollya constants
@@ -97,7 +97,7 @@ namespace flopoco{
 	  sollya_lib_clear_obj(polynomialS);
 		//	  sollya_lib_clear_obj(S);
 		if(coeff.size()!=0){
-			for (int i=0; i<coeff.size(); i++)
+			for (unsigned int i=0; i<coeff.size(); i++)
 				free(coeff[i]);
 		}
 	}
@@ -116,7 +116,7 @@ namespace flopoco{
 
 		// initial evaluation of the required degree
 		//guessdegree(f,I,eps,w,bound ) : (function, range, constant, function, constant) → range
-		sollya_obj_t degreeIntervalS = sollya_lib_guessdegree(fS, rangeS, targetAccuracyS, NULL); 
+		sollya_obj_t degreeIntervalS = sollya_lib_guessdegree(fS, rangeS, targetAccuracyS, NULL);
 		sollya_obj_t degreeInfS = sollya_lib_inf(degreeIntervalS);
 		sollya_obj_t degreeSupS = sollya_lib_sup(degreeIntervalS);
 		sollya_lib_get_constant_as_int(degreeInfP, degreeInfS);
@@ -146,7 +146,7 @@ namespace flopoco{
 		// This will be the LSB of the constant (unless extended below)
 		LSB = floor(log2(targetAccuracy));
 		REPORT(DEBUG, "LSB without guard bits is " << LSB);
-		
+
 		// A few lines to add guard bits to the constant, it will be for free in terms of evaluation
 		double coeffAccuracy = targetAccuracy;
 
@@ -170,12 +170,12 @@ namespace flopoco{
 		bool tryReducingLSB=true;
 		while(not success) {
 
-			buildApproxFromDegreeAndLSBs();			
+			buildApproxFromDegreeAndLSBs();
 
 			// did we success in getting an accurate enough polynomial?
 			if(approxErrorBound < targetAccuracy) {
 				REPORT(DEBUG, "Polynomial is accurate enough");
-				success=true; 
+				success=true;
 			}
 			else {
 				success=false;
@@ -203,7 +203,7 @@ namespace flopoco{
 				}
 			}
 		} // exit from the while loop... hopefully
- 
+
 		// Please leave the memory in the state you would like to find it when entering
 	  sollya_lib_clear_obj(degreeS);
 	}
@@ -219,7 +219,7 @@ namespace flopoco{
 
 		REPORT(DEBUG, "Trying to build coefficients with LSB=" << LSB);
 		// Build the list of coefficient LSBs for fpminimax
-		// Sollya library is a bit painful, it is safer just build a big string and parse it. 
+		// Sollya library is a bit painful, it is safer just build a big string and parse it.
 		ostringstream s;
 		s << "[|";
 		for(int i=0; i<=degree ; i++) {
@@ -229,20 +229,20 @@ namespace flopoco{
 		s << "|]";
 		sollya_obj_t coeffSizeListS = sollya_lib_parse_string(s.str().c_str());
 		if(DEBUG <= verbose) {
-			sollya_lib_printf("> BasicPolyApprox::buildApproxFromDegreeAndLSBs:    fpminimax(%b, %b, %b, %b, %b, %b);\n", 
+			sollya_lib_printf("> BasicPolyApprox::buildApproxFromDegreeAndLSBs:    fpminimax(%b, %b, %b, %b, %b, %b);\n",
 												fS, degreeS, coeffSizeListS, rangeS, fixedS, absoluteS);
 		}
-		// Tadaaa! After all this we may launch fpminimax	
+		// Tadaaa! After all this we may launch fpminimax
 		polynomialS = sollya_lib_fpminimax(fS, degreeS, coeffSizeListS, rangeS, fixedS, absoluteS, NULL);
 		sollya_lib_clear_obj(coeffSizeListS);
 		if(DEBUG <= verbose)
 			sollya_lib_printf("> BasicPolyApprox::buildBasicPolyApprox: obtained polynomial   %b\n", polynomialS);
-		
+
 		// Checking its approximation error;
-		sollya_obj_t supNormS; // it will end up there 
+		sollya_obj_t supNormS; // it will end up there
 		sollya_obj_t supNormAccS = sollya_lib_parse_string("1b-10"); // This is the size of the returned interval... 10^-3 should be enough for anybody
 		if(DEBUG <= verbose) {
-			sollya_lib_printf(">   supnorm(%b, %b, %b, %b, %b);\n", 
+			sollya_lib_printf(">   supnorm(%b, %b, %b, %b, %b);\n",
 												polynomialS, fS, rangeS, absoluteS, supNormAccS);
 		}
 		sollya_obj_t supNormRangeS = sollya_lib_supnorm(polynomialS, fS, rangeS, absoluteS, supNormAccS);
@@ -250,18 +250,18 @@ namespace flopoco{
 			cout <<  ">   Sollya infnorm failed, but do not loose all hope yet: launching dirtyinfnorm:" << endl;
 			sollya_obj_t pminusfS = sollya_lib_sub(polynomialS, fS);
 			if(DEBUG <= verbose) {
-				sollya_lib_printf(">   dirtyinfnorm(%b, %b);\n", 
+				sollya_lib_printf(">   dirtyinfnorm(%b, %b);\n",
 													pminusfS, rangeS);
 			}
 			supNormS = sollya_lib_dirtyinfnorm(pminusfS, rangeS);
 			sollya_lib_clear_obj(pminusfS);
 			if(sollya_lib_obj_is_error(supNormS)) {
-				ostringstream o; 
-				o << " ERROR in " << uniqueName_ << " (" << srcFileName << "): " << "Sollya can't seem to be able to compute the infinite norm" << endl; 
+				ostringstream o;
+				o << " ERROR in " << uniqueName_ << " (" << srcFileName << "): " << "Sollya can't seem to be able to compute the infinite norm" << endl;
 				throw o.str();
 			}
 		}
-		else{ // supnorm succeeded, we are mostly interested in the sup of the interval 
+		else{ // supnorm succeeded, we are mostly interested in the sup of the interval
 			supNormS = sollya_lib_sup(supNormRangeS);
 		}
 		sollya_lib_clear_obj(supNormAccS);
@@ -269,7 +269,7 @@ namespace flopoco{
 
 		sollya_lib_get_constant_as_double(& approxErrorBound, supNormS);
 		sollya_lib_clear_obj(supNormS);
-			
+
 		REPORT(DEBUG, "Polynomial accuracy is " << approxErrorBound);
 		// Please leave the memory in the state you would like to find it when entering
 	  sollya_lib_clear_obj(degreeS);
@@ -291,7 +291,7 @@ namespace flopoco{
 			sollya_obj_t coeffS = sollya_lib_coeff(polynomialS, iS);
 			//sollya_lib_printf(">  c%d = %b \n", i, coeffS);
 			sollya_lib_clear_obj(iS);
-			
+
 			mpfr_t mpcoeff, mptmp;
 			// First a tentative conversion to double to get an estimate of the MSB and zeroness
 			double dcoeff;
@@ -307,15 +307,15 @@ namespace flopoco{
 				msb++; // For the sign
 				lsb = LSB;
 				// now we may safely allocate the proper size for the mpfr_t. Add two bits for sign + rounding.
-				mpfr_init2(mpcoeff, msb-lsb+3);  
-				mpfr_init2(mptmp, msb-lsb+3);  
+				mpfr_init2(mpcoeff, msb-lsb+3);
+				mpfr_init2(mptmp, msb-lsb+3);
 				sollya_lib_get_constant(mpcoeff, coeffS);
-				// Now recompute the MSB explicitely. 
+				// Now recompute the MSB explicitely.
 				mpfr_abs(mptmp, mpcoeff, GMP_RNDN); // exact
 				mpfr_log2(mptmp, mptmp, GMP_RNDU);
 				mpfr_floor(mptmp, mptmp);
 				msb = mpfr_get_si(mptmp, GMP_RNDU);
-				mpfr_clear(mptmp);	
+				mpfr_clear(mptmp);
 				msb++;
 			}
 			FixConstant* fixcoeff =	new FixConstant(msb, lsb, true/*signed*/, mpcoeff);
@@ -323,7 +323,7 @@ namespace flopoco{
 
 			sollya_lib_clear_obj(coeffS);
 			mpfr_clear(mpcoeff);
-	}		
+	}
 
 		// printing debug string out of the final vector
 		ostringstream debugstring;
@@ -338,8 +338,8 @@ namespace flopoco{
 		for (int i=0; i<=degree; i++){
 			int lsb= coeff[i]->LSB;
 			int msb= coeff[i]->MSB;
-			debugstring <<  endl << "> coeff" << right << setw(2) << i << ": " 
-									<< " (" << setw(2)<< msb << ", " << setw(3)<< lsb << ")   " 
+			debugstring <<  endl << "> coeff" << right << setw(2) << i << ": "
+									<< " (" << setw(2)<< msb << ", " << setw(3)<< lsb << ")   "
 									<< setw(bitwidth + lsb0-lsb) << coeff[i]->getBitVector()
 									<< "  " << setw(10) << printMPFR(coeff[i]->fpValue) ;
 		}
