@@ -1,6 +1,6 @@
 /*
 
-  A class that manages fixed-point  polynomial approximation for FloPoCo (and possibly later for metalibm). 
+  A class that manages fixed-point  polynomial approximation for FloPoCo (and possibly later for metalibm).
 
 	At the moment, only on [0,1], no possibility to have it on [-1,1].
 	Rationale: no point really as soon as we are not in the degenerate case alpha=0.
@@ -9,7 +9,7 @@
 
   This file is part of the FloPoCo project
   developed by the Arenaire team at Ecole Normale Superieure de Lyon
-  
+
   Initial software.
   Copyright © INSA-Lyon, ENS-Lyon, INRIA, CNRS, UCBL
 
@@ -18,7 +18,7 @@
 */
 
 
-/* 
+/*
 	 The function is assumed to have inputs in [0,1]
 */
 #include "PiecewisePolyApprox.hpp"
@@ -28,8 +28,8 @@
 
 namespace flopoco{
 
-	PiecewisePolyApprox::PiecewisePolyApprox(FixFunction *f_, double targetAccuracy_, int degree_): 
-		f(f_), targetAccuracy(targetAccuracy_), degree(degree_)
+	PiecewisePolyApprox::PiecewisePolyApprox(FixFunction *f_, double targetAccuracy_, int degree_):
+		degree(degree_), f(f_), targetAccuracy(targetAccuracy_)
 	{
 		needToFreeF = false;
 		srcFileName="PiecewisePolyApprox"; // should be somehow static but this is too much to ask me
@@ -38,7 +38,7 @@ namespace flopoco{
 
 
 	PiecewisePolyApprox::PiecewisePolyApprox(string sollyaString_, double targetAccuracy_, int degree_):
-		targetAccuracy(targetAccuracy_), degree(degree_)
+		degree(degree_), targetAccuracy(targetAccuracy_)
 	{
 		//  parsing delegated to FixFunction
 		f = new FixFunction(sollyaString_, false /* on [0,1]*/);
@@ -62,7 +62,7 @@ namespace flopoco{
 	sollya_obj_t buildSubIntervalFunction(sollya_obj_t fS, int alpha, int i){
 		stringstream s;
 		s << "(1b-" << alpha << ")*x + ("<< i << "b-" << alpha << ")";
-		string ss = s.str(); // do not use c_str directly on the stringstream, it is too transient (?) 
+		string ss = s.str(); // do not use c_str directly on the stringstream, it is too transient (?)
 		sollya_obj_t newxS = sollya_lib_parse_string(ss.c_str());
 		sollya_obj_t giS = sollya_lib_substitute(fS,newxS);
 		sollya_lib_clear_obj(newxS);
@@ -73,7 +73,7 @@ namespace flopoco{
 	sollya_obj_t buildSubIntervalFunction(sollya_obj_t fS, int alpha, int i){
 		stringstream s;
 		s << "(1b-" << alpha+1 << ")*x + ("<< i << "b-" << alpha << " + 1b-" << alpha+1 << ")";
-		string ss = s.str(); // do not use c_str directly on the stringstream, it is too transient (?) 
+		string ss = s.str(); // do not use c_str directly on the stringstream, it is too transient (?)
 		sollya_obj_t newxS = sollya_lib_parse_string(ss.c_str());
 		sollya_obj_t giS = sollya_lib_substitute(fS,newxS);
 		sollya_lib_clear_obj(newxS);
@@ -86,7 +86,7 @@ namespace flopoco{
 
 	// split into smaller and smaller intervals until the function can be approximated by a polynomial of degree degree.
 	void PiecewisePolyApprox::build() {
-		
+
 		ostringstream cacheFileName;
 		cacheFileName << "PiecewisePoly_"<<vhdlize(f->description) << "_" << degree << "_" << targetAccuracy << ".cache";
 
@@ -94,7 +94,7 @@ namespace flopoco{
 		// Test existence of cache file
 		fstream file;
 		file.open(cacheFileName.str().c_str(), ios::in);
-		
+
 		// check for bogus .cache file
 		if(file.is_open() && file.peek() == std::ifstream::traits_type::eof())
 			{
@@ -103,18 +103,18 @@ namespace flopoco{
 				file.open(cacheFileName.str().c_str(), ios::in); // of course this one will fail
 			}
 
-		if(!file.is_open()){ 
-			//********************** Do the work, then write the cache ********************* 
+		if(!file.is_open()){
+			//********************** Do the work, then write the cache *********************
 			sollya_obj_t fS = f->fS; // no need to free this one
-			sollya_obj_t rangeS; 
+			sollya_obj_t rangeS;
 
 #if 0
-			rangeS  = sollya_lib_parse_string("[0;1]"); 
+			rangeS  = sollya_lib_parse_string("[0;1]");
 #else
-			rangeS  = sollya_lib_parse_string("[-1;1]"); 
+			rangeS  = sollya_lib_parse_string("[-1;1]");
 #endif
 			// TODO test with [-1,1] which is the whole point of current refactoring.
-			// There needs to be a bit of logic here because rangeS should be [-1,1] by default to exploit signed arith, 
+			// There needs to be a bit of logic here because rangeS should be [-1,1] by default to exploit signed arith,
 			// except in the case when alpha=0 because then rangeS should be f->rangeS (and should not be freed)
 
 			int nbIntervals;
@@ -148,7 +148,7 @@ namespace flopoco{
 						break;
 					}
 				} // end for loop on i
-			
+
 				// Did we success?
 				if (alphaOK)
 					break;
@@ -159,13 +159,13 @@ namespace flopoco{
 			// Compute the LSB of each coefficient. Minimum value is:
 			LSB = floor(log2(targetAccuracy));
 			REPORT(DEBUG, "To obtain target accuracy " << targetAccuracy << " with a degree-"<<degree <<" polynomial, we compute coefficients accurate to " << targetAccuracy/degree
-						 << " (LSB="<<LSB<<")"); 
-			// It is pretty sure that adding intlog2(degree) bits is enough for FPMinimax. 
+						 << " (LSB="<<LSB<<")");
+			// It is pretty sure that adding intlog2(degree) bits is enough for FPMinimax.
 			int lsbAttemptsMax = intlog2(degree);
 			int lsbAttempts=0; // a counter of attempts to move the LSB down, caped by lsbAttemptsMax
-			
-			
-			// Still have to do a while loop because we can't trust guessdegree, damn 
+
+
+			// Still have to do a while loop because we can't trust guessdegree, damn
 			bool success=false;
 			while(!success) {
 				// Now fill the vector of polynomials, computing the coefficient parameters along.
@@ -180,7 +180,7 @@ namespace flopoco{
 					MSB.push_back(INT_MIN);
 				}
 
-		
+
 				for (int i=0; i<nbIntervals; i++) {
 					REPORT(DETAILED, " ... computing polynomial approx for interval " << i << " / "<< nbIntervals);
 					// Recompute the substitution. No big deal.
@@ -188,18 +188,18 @@ namespace flopoco{
 
 					p = new BasicPolyApprox(giS, degree, LSB, true);
 					poly.push_back(p);
-					if (approxErrorBound < p->approxErrorBound){ 
+					if (approxErrorBound < p->approxErrorBound){
 						REPORT(DEBUG, "   new approxErrorBound=" << p->approxErrorBound );
 						approxErrorBound = p->approxErrorBound;
 					}
 
-					// Now compute the englobing MSB and LSB for each coefficient	
+					// Now compute the englobing MSB and LSB for each coefficient
 					for (int j=0; j<=degree; j++) {
 						// if the coeff is zero, we can set its MSB to anything, so we exclude this case
 						if (  (!p->coeff[j]->isZero())  &&  (p->coeff[j]->MSB > MSB[j])  )
 							MSB[j] = p->coeff[j]->MSB;
 					}
-		
+
 				} // end for loop on i
 
 
@@ -215,7 +215,7 @@ namespace flopoco{
 						poly.pop_back();
 					}
 					if(lsbAttempts<=lsbAttemptsMax) {
-						lsbAttempts++; 
+						lsbAttempts++;
 						LSB--;
 					}
 					else {
@@ -232,12 +232,12 @@ namespace flopoco{
 			// Now we need to resize all the coefficients of degree i to the largest one
 			for (int i=0; i<nbIntervals; i++) {
 				for (int j=0; j<=degree; j++) {
-					// REPORT(DEBUG "Resizing MSB of coeff " << j << " of poly " << i << " : from " << poly[i] -> coeff[j] -> MSB << " to " <<  MSB[j]);  
+					// REPORT(DEBUG "Resizing MSB of coeff " << j << " of poly " << i << " : from " << poly[i] -> coeff[j] -> MSB << " to " <<  MSB[j]);
 					poly[i] -> coeff[j] -> changeMSB(MSB[j]);
-					// REPORT(DEBUG, "   Now  " << poly[i] -> coeff[j] -> MSB);  
+					// REPORT(DEBUG, "   Now  " << poly[i] -> coeff[j] -> MSB);
 				}
 			}
-			// TODO? In the previous loop we could also check if one of the coeffs is always positive or negative, and optimize generated code accordingly 
+			// TODO? In the previous loop we could also check if one of the coeffs is always positive or negative, and optimize generated code accordingly
 
 			// A bit of reporting
 			REPORT(INFO,"Final report: ");
@@ -249,18 +249,18 @@ namespace flopoco{
 				REPORT(INFO,"      MSB["<<j<<"] = " << MSB[j] << "  size=" << size);
 			}
 			REPORT(INFO, "  Total size of the table is " << nbIntervals << " x " << totalOutputSize << " bits");
-			
+
 			// Write the cache file
 			REPORT(INFO, "Writing to cache file: " << cacheFileName.str());
 			file.open(cacheFileName.str().c_str(), ios::out);
 			file << "Polynomial data cache for " << cacheFileName.str() << endl;
-			file << "Erasing this file is harmless, but do not try to edit it." <<endl; 
+			file << "Erasing this file is harmless, but do not try to edit it." <<endl;
 			file << degree <<endl;
 			file << alpha <<endl;
 			file << LSB <<endl;
 			for (int j=0; j<=degree; j++) {
 				file << MSB[j] << endl;
-			} 
+			}
 			file << approxErrorBound << endl;
 			// now the coefficients themselves
 			for (int i=0; i<(1<<alpha); i++) {
@@ -273,7 +273,7 @@ namespace flopoco{
 
 		else {
 			REPORT(INFO, "Polynomial data cache found: " << cacheFileName.str());
-			//********************** Just read the cache ********************* 
+			//********************** Just read the cache *********************
 			string line;
 			getline(file, line); // ignore the first line which is a comment
 			getline(file, line); // ignore the second line which is a comment
@@ -283,7 +283,7 @@ namespace flopoco{
 
 			for (int j=0; j<=degree; j++) {
 				int msb;
-				file >> msb; 
+				file >> msb;
 				MSB.push_back(msb);
 			}
 			file >> approxErrorBound;
@@ -291,10 +291,10 @@ namespace flopoco{
 			for (int i=0; i<(1<<alpha); i++) {
 				vector<mpz_class> coeff;
 				for (int j=0; j<=degree; j++) {
-					mpz_class c; 
+					mpz_class c;
 					file >> c;
 					coeff.push_back(c);
-				}				
+				}
 				BasicPolyApprox* p = new BasicPolyApprox(degree,MSB,LSB,coeff);
 				poly.push_back(p);
 			}
@@ -303,11 +303,11 @@ namespace flopoco{
 
 
 
-	
+
 	mpz_class PiecewisePolyApprox::getCoeff(int i, int d){
 		BasicPolyApprox* p = poly[i];
 		FixConstant* c = p->coeff[d];
 		return c->getBitVectorAsMPZ();
-	} 
+	}
 
 } //namespace
