@@ -848,6 +848,7 @@ namespace flopoco{
 							totalDelay -= (1.0/target_->frequency()) + target_->ffDelay();
 							// cout << " after one nextCycle total delay =" << totalDelay << endl;
 					}
+					return true;
 #endif
 				}
 				else {
@@ -2208,7 +2209,7 @@ namespace flopoco{
 
 			// boolean indicating that we are still analysing TestState on the same operator
 			bool firstEqual = true;
-			for (it; it != testMemory.end () && firstEqual ; it++ ){
+			for (; it != testMemory.end () && firstEqual ; it++ ){
 				bool exist = false;
 				TestState  memoryVect = ( *it ).second;
 				if ( opName.compare ( ( * ( it ) ).first ) != 0 ){
