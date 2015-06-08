@@ -2287,7 +2287,7 @@ namespace flopoco
 			//the leftover bits
 			unsigned int currentLevel = (maxWeight-minWeight) / subAddSize;
 
-			if(((maxWeight-minWeight)%subAddSize > 0) && ((maxWeight-minWeight)>subAddSize))
+			if(((int)(maxWeight-minWeight)%subAddSize > 0) && ((int)(maxWeight-minWeight)>subAddSize))
 			{
 				//handle timing
 				op->setCycleFromSignal(join(outAdderName, "_int_", currentLevel-1));
@@ -2464,7 +2464,7 @@ namespace flopoco
 		double adderDelay;
 		unsigned adderMaxWeight = minWeight;
 
-		WeightedBit /**latestBitAdded,*/ *possiblyLatestBitAdded;
+		//WeightedBit *latestBitAdded, *possiblyLatestBitAdded;
 
 		//search for lsb columns that won't be compressed at the current stage
 		//REPORT(INFO, endl);
@@ -2485,7 +2485,7 @@ namespace flopoco
 			{
 				timeLatestBitAdded = (*it)->getCycle()*(1/op->getTarget()->frequency()) +
 					(*it)->getCriticalPath((*it)->getCycle());
-				possiblyLatestBitAdded = *it;
+				//possiblyLatestBitAdded = *it;
 			}
 
 			if((cnt[index] > 1) && (columnIndex < bits[index].size()-1))
@@ -2876,7 +2876,7 @@ namespace flopoco
 		}
 
 		//update the next three (actually, the log of the size of the largest compressor) columns
-		for(int i=minWeight; i<maxWeight; i++)
+		for(unsigned int i=minWeight; i<maxWeight; i++)
 		{
 			cnt[i]=0;
 			for(list<WeightedBit*>::iterator it = bits[i].begin(); it!=bits[i].end(); it++)
