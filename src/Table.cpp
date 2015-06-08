@@ -58,17 +58,13 @@ namespace flopoco{
 		Operator(target_),
 		target(target_), wIn(_wIn), wOut(_wOut), minIn(_minIn), maxIn(_maxIn)
 	{
+		srcFileName = "Table";
 		if(wIn<0){
-			stringstream err;
-			err<<"wIn="<<wIn<<"; Input size cannot be negative"<<endl;
-			THROWERROR(err);
+			THROWERROR("wIn="<<wIn<<"; Input size cannot be negative"<<endl);
 		}
 		if(wOut<0){
-			stringstream err;
-			err<<"wOut="<<wOut<<"; Output size cannot be negative"<<endl;
-			THROWERROR(err);
+			THROWERROR("wOut="<<wOut<<"; Output size cannot be negative"<<endl);
 		}
-		srcFileName="Table";
 		setCopyrightString("Florent de Dinechin (2007-2012)");
 
 		// Set up the IO signals
