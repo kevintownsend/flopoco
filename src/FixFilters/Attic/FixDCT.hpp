@@ -35,7 +35,7 @@ namespace flopoco{
 							 BitHeap* bitheap,
 							 bool signedInput_ = false, map<string, double> inputDelays = emptyDelayMap);
 		*/
-		~FixDCT2(){};
+		virtual ~FixDCT2();
 
 		// Overloading the virtual functions of Operator
 		/* the emulate function is used to simulate in software the operator

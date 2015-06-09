@@ -49,7 +49,7 @@ namespace flopoco{
 		
 		DualTable(Target* target);
 
-		virtual ~DualTable() {};
+		virtual ~DualTable();
 
 	
 		/** The function that will define the values contained in the table
@@ -115,7 +115,7 @@ namespace flopoco{
 		
 			void setInputData(std::ostringstream&  data);				
 			primitiveDualMemory(Target* target, int _wIn, int _wOut, int _minIn, int _maxIn);
-			~primitiveDualMemory() {}
+			virtual ~primitiveDualMemory(); 
 		
 		
 		private:
