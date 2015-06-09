@@ -59,10 +59,6 @@ namespace flopoco{
 			WeightedBit(WeightedBit* bit, int deathCycle,  double DeathCP, string killerCompressor);
 
 
-			/** destructor */
-			~WeightedBit(){};
-
-
 			/** return the cycle at which this bit is defined */
 			int getCycle();
 
@@ -71,11 +67,6 @@ namespace flopoco{
 
 			/** returns the stage when this bit should be compressed */
 			int computeStage(int stagesPerCycle, double elementaryTime);
-
-
-
-
-
 
 			/** return the VHDL signal name of this bit */
 			string getName();
