@@ -41,7 +41,6 @@ namespace flopoco
 				Snapshot(vector<list<WeightedBit*> > bitheap, int minWeight_, int maxWeight_, unsigned maxHeight,  
 						bool didCompress_,  int cycle, double cp);
 
-				~Snapshot(){};
 
 				/** ordering by availability time */
 				friend bool operator< (Snapshot& b1, Snapshot& b2);
