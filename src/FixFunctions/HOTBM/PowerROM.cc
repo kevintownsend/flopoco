@@ -7,17 +7,19 @@
 
   This file is part of the FloPoCo project
   developed by the Arenaire team at Ecole Normale Superieure de Lyon
-  
+
   Initial software.
   Copyright © ENS-Lyon, INRIA, CNRS, UCBL,
-  2005-2011  
+  2005-2011
 
   All rights reserved.
 
 */
 #include "PowerROM.hh"
 
-
+flopoco::Operator* PowerROM::toComponent(flopoco::Target* t, std::string name) {
+	return new Component (t, *this, name);
+}
 
 PowerROM::PowerROM(int d_, Param &p_)
 	: Power(d_, p_), pp(*(PowerROMParam *)((TermPowMultParam *)p.t[d])->p)
@@ -130,7 +132,7 @@ Component::Component (flopoco::Target* t, PowerROM pr, std::string name)
 		vhdl << "  r <= ";
 		VHDLGen::genInteger(vhdl, mpT[0], pp.lambda);
 		vhdl << ";" << endl;
-	}		
+	}
 
 	for (long long int i = 0; i < P(pp.beta-1); i++)
 		mpz_clear(mpT[i]);
