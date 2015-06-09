@@ -22,9 +22,7 @@ public:
 	long long int evalRound(long long int a, long long int b) const;
 
 	friend Component::Component (flopoco::Target*, TermPowMult, std::string);
-	flopoco::Operator* toComponent(flopoco::Target* t, std::string name) {
-		return new Component (t, *this, name);
-	}
+	flopoco::Operator* toComponent(flopoco::Target* t, std::string name) ;
 
 protected:
 	PWPolynomial calcErrTab(int k_ = 0);

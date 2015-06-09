@@ -7,10 +7,10 @@
 
   This file is part of the FloPoCo project
   developed by the Arenaire team at Ecole Normale Superieure de Lyon
-  
+
   Initial software.
   Copyright © ENS-Lyon, INRIA, CNRS, UCBL,
-  2005-2011  
+  2005-2011
 
   All rights reserved.
 
@@ -18,7 +18,9 @@
 #include "PowerAdHoc.hh"
 #include "Operator.hpp"
 
-
+flopoco::Operator* PowerAdHoc::toComponent(flopoco::Target* t, std::string name) {
+	return new Component (t, *this, name);
+}
 
 PowerAdHoc::PowerAdHoc(int d_, Param &p_)
 	: Power(d_, p_), pp(*(PowerAdHocParam *)((TermPowMultParam *)p.t[d])->p)
