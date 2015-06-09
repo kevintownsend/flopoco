@@ -5,9 +5,9 @@
 
   This file is part of the FloPoCo project
   developed by the Arenaire team at Ecole Normale Superieure de Lyon
-  
+
   Initial software.
-  Copyright © ENS-Lyon, INRIA, CNRS, UCBL,  
+  Copyright © ENS-Lyon, INRIA, CNRS, UCBL,
   2008-2010.
   All rights reserved.
 
@@ -42,7 +42,7 @@ namespace flopoco{
 			std::ostringstream o;
 			if(namebase != "")
 				o << namebase << "_";
- 
+
 			o << "hotbm_" << vhdlize(func) << wI << "_" << wO << "_" << n;
 			o << "_" << vhdlize(xmin) << "_" << vhdlize(xmax) << "_" << vhdlize(scale);
 			uniqueName_ = o.str();
@@ -95,10 +95,12 @@ namespace flopoco{
 		mpz_class rd (rd_t), ru = rd + 1;
 		tc->addExpectedOutput ("R", rd);
 		tc->addExpectedOutput ("R", ru);
-		
+
 		mpz_clear (rd_t);
 		mpfr_clear (mpX);
 		mpfr_clear (mpR);
 	}
 
+	int HOTBM::wIn() const { return wI; }
+	int HOTBM::wOut() const { return wO + 1; }
 }
