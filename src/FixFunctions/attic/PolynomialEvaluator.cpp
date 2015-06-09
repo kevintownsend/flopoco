@@ -71,6 +71,11 @@ namespace flopoco{
 		return valueMpfr_;
 	}
 
+	int PolynomialEvaluator::getPolynomialDegree()
+	{
+		return degree_;
+	}
+
 //YVar----------------------------------------------------------------------
 	YVar::YVar( unsigned size, int weight, const int sign = 0 ):
 		FixedPointCoefficient(size, weight), sign_(sign){
@@ -933,6 +938,10 @@ namespace flopoco{
 			return false;
 	}
 
+	int Pi::getWeight()
+	{
+		return weight;
+	}
 }
 
 

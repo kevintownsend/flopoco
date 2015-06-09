@@ -77,9 +77,6 @@ namespace flopoco{
 		/** constructor */
 		YVar( unsigned size, int weight, const int sign = 0 );
 
-		/** Destructor */
-		~YVar(){};
-
 		/**
 		 * Fetch the variable size (if known). 0 = unknown
 		 * @return sign
@@ -96,9 +93,6 @@ namespace flopoco{
 		LevelSignal(string name, unsigned size, int shift);
 
 		LevelSignal(LevelSignal* l);
-
-		/* Destructor */
-		~LevelSignal(){};
 
 		string getName();
 
@@ -117,12 +111,9 @@ namespace flopoco{
 	public:
 		Sigma(int size1, int weight1, int size2, int weight2);
 
-		/* Destructor */
-		~Sigma(){};
-
 		unsigned getSize();
 
-		int getWeight;
+		int getWeight();
 
 		int getGuardBits()
 
@@ -137,15 +128,9 @@ namespace flopoco{
 	public:
 		Pi(unsigned size1, int weight1, unsigned size2, int weight2);
 
-		/* Destructor */
-		~Pi(){};
-
 		unsigned getSize();
 
-		int getWeight(){
-			return weight;
-		}
-
+		int getWeight();
 	protected:
 		unsigned size;
 		int      weight;
@@ -194,7 +179,7 @@ namespace flopoco{
 		/** Gets the polynomial degree
 		 * @return the polynomial degree
 		 */
-		int getPolynomialDegree(){ return degree_; }
+		int getPolynomialDegree();
 
 		/** print the polynomial
 		 * @param[in] coef  the coefficinets
