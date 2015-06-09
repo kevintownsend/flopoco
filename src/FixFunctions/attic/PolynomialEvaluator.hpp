@@ -43,7 +43,7 @@ namespace flopoco{
 		int getWeight();
 
 		/**
-		 * @brief Set the weight of the MSB
+		 * Set the weight of the MSB
 		 */
 		void setWeight(int w);
 
@@ -69,16 +69,13 @@ namespace flopoco{
 	};
 
 	/**
-	 * @brief The YVar class
+	 * The YVar class
 	 */
 	class YVar: public FixedPointCoefficient
 	{
 	public:
 		/** @brief constructor */
 		YVar( unsigned size, int weight, const int sign = 0 );
-
-		/** @brief Destructor */
-		~YVar(){};
 
 		/**
 		 * @brief Fetch the variable size (if known). 0 = unknown
@@ -97,9 +94,6 @@ namespace flopoco{
 
 		LevelSignal(LevelSignal* l);
 
-		/** @brief Destructor */
-		~LevelSignal(){};
-
 		string getName();
 
 		unsigned getSize();
@@ -117,9 +111,6 @@ namespace flopoco{
 	public:
 		Sigma(int size1, int weight1, int size2, int weight2);
 
-		/** @brief Destructor */
-		~Sigma(){};
-
 		unsigned getSize();
 
 		int getWeight;
@@ -136,9 +127,6 @@ namespace flopoco{
 	class Pi{
 	public:
 		Pi(unsigned size1, int weight1, unsigned size2, int weight2);
-
-		/* Destructor */
-		~Pi(){};
 
 		unsigned getSize();
 
@@ -165,7 +153,7 @@ namespace flopoco{
 
 		/**
 		 * @brief The polynomial evaluator class. FIXME the parameters are subhect to change
-		 * \todo document them
+		 * @todo document them
 		 */
 		PolynomialEvaluator(Target* target, vector<FixedPointCoefficient*> coef, YVar* y, int targetPrec, mpfr_t* approxError, map<string, double> inputDelays = emptyDelayMap);
 
@@ -193,8 +181,7 @@ namespace flopoco{
 		 */
 		void setPolynomialDegree(int d);
 
-		/**
-		 * @brief Gets the polynomial degree
+		/** Gets the polynomial degree
 		 * @return the polynomial degree
 		 */
 		int getPolynomialDegree(){ return degree_; }
@@ -257,12 +244,14 @@ namespace flopoco{
 		/** @brief fills-up a map of objective states for the truncations */
 		void determineObjectiveStatesForTruncationsOnY();
 
-		/** @brief updates the MaxBoundY vector with the maximum number of states
+		/**
+		 * @brief updates the MaxBoundY vector with the maximum number of states
 		 * for each Y
 		 */
 		void setNumberOfPossibleValuesForEachY();
 
-		/** \todo PROPER WAY; it only accounts (for now) on the DPS block
+		/**
+		 *  @todo PROPER WAY; it only accounts (for now) on the DPS block
 		 *  size. We can use as many guard bits in order not to use extra
 		 *  multipliers
 		 */
@@ -272,31 +261,33 @@ namespace flopoco{
 
 		void reinitCoefficientGuardBitsLastIteration();
 
-		/**
-		 * @brief Get range values for multiplications. We pefrom one error
+		/** Get range values for multiplications. We pefrom one error
 		 * analysis run where we dont't truncate or add any guard bits
 		 */
 		void coldStart();
 
-		/** @brief We allow possible truncation of y. Horner evaluation therefore
+		/**
+		 * @brief We allow possible truncation of y. Horner evaluation therefore
 			allows for d differnt truncations on y (1 to d). For each y
 			there are at most 3 possible truncation values:
 			-no truncation
 			-truncate so to fit x dimmension of the embedded multiplier
 			-truncate so to fit y dimmension of the embedded multiplier
-			* @param[in] i      What y are we talking about. Takes values in 1..d
-			* @param[in] level  which one of the 3 values are we talking about 0..2
-			* @return the corresponding value to the selected level
-			*/
+		 * @param[in] i      What y are we talking about. Takes values in 1..d
+		 * @param[in] level  which one of the 3 values are we talking about 0..2
+		 * @return the corresponding value to the selected level
+		 */
 		int getPossibleYValue(int i, int state);
-		/** advances to the next step in the design space exploration on the
+		/**
+		 * @brief advances to the next step in the design space exploration on the
 		 * y dimmension.
 		 * @return true if there is a next state, false if a solution has been
 		 *found.
 		 */
 		bool nextStateY();
 
-		/** advances to the next step in the design space exploration on the
+		/**
+		 * @brief advances to the next step in the design space exploration on the
 		 * coefficient guard bit direction.
 		 * @return true if there is a next state, false if a solution has been
 		 *found.
