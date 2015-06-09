@@ -40,22 +40,12 @@ namespace flopoco{
 		}*/
 
 
-		template <class paramType> friend FlopocoStream& operator <<(FlopocoStream& output, paramType c) {
-			output.vhdlCodeBuffer << c;
-			return output;
-		}
-		
+		template <class paramType> friend FlopocoStream& operator <<(FlopocoStream& output, paramType c); 		
 
 		
-		friend FlopocoStream & operator<<(FlopocoStream& output, FlopocoStream fs) {
-			output.vhdlCodeBuffer << fs.str();
-			return output; 
-		}
+		friend FlopocoStream & operator<<(FlopocoStream& output, FlopocoStream fs); 
 		
-		friend FlopocoStream& operator<<( FlopocoStream& output, UNUSED(ostream& (*f)(ostream& fs)) ){
-			output.vhdlCodeBuffer << std::endl;
-			return output;
-		}
+		friend FlopocoStream& operator<<( FlopocoStream& output, UNUSED(ostream& (*f)(ostream& fs)a)) ;
 		
 		public:
 			/**
@@ -78,20 +68,13 @@ namespace flopoco{
 			 * flushed 
 			 * @return the augmented string encapsulated by FlopocoStream  
 			 */
-			string str(){
-				flush(currentCycle_);
-				return vhdlCode.str();
-			}
+			string str();
 
 			/** 
 			 * Resets both the buffer and the code stream. 
 			 * @return returns empty string for compatibility issues.
 			 */ 
-			string str(string UNUSED(s) ){
-				vhdlCode.str("");
-				vhdlCodeBuffer.str("");
-				return "";
-			}
+			string str(string UNUSED(s) );
 			
 			/**
 			 * the information from the buffer is flushed when cycle information
@@ -100,33 +83,13 @@ namespace flopoco{
 			 * @param[in] currentCycle the current pipeline level for the vhdl code
 			 *            from the buffer
 			 */
-			void flush(int currentCycle){
-				if (! disabledParsing ){
-					ostringstream bufferCode;
-					if ( vhdlCodeBuffer.str() != string("") ){
-						/* do processing if buffer is not empty */
-					
-						/* scan buffer sequence and annotate ids */
-						bufferCode << annotateIDs( currentCycle );
-					
-						/* the newly processed code is appended to the existing one */
-						vhdlCode << bufferCode.str();
-					
-					}
-				}else{
-					vhdlCode << vhdlCodeBuffer.str();				
-				}
-				/* reset buffer */
-				vhdlCodeBuffer.str(""); 
-			}
+			void flush(int currentCycle);
 			
 			/** 
 			 * Function used to flush the buffer (annotate the last IDs from the
 			 * buffer) when constructor has finished writing into the vhdl stream
 			 */ 
-			void flush(){
-				flush ( currentCycle_ );
-			}
+			void flush();
 			
 			/**
 			 * Function that annotates the signal IDs from the buffer with 

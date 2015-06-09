@@ -42,4 +42,54 @@ namespace flopoco{
 	FlopocoStream::~FlopocoStream(){
 	}
 
+	template <class paramType> FlopocoStream& FlopocoStream::operator <<(
+			FlopocoStream& output, paramType c) {
+		output.vhdlCodeBuffer << c;
+		return output;
+	}
+	
+	FlopocoStream & FlopocoStream::operator<<(FlopocoStream& output, FlopocoStream fs) {
+		output.vhdlCodeBuffer << fs.str();
+		return output; 
+	}
+	
+	FlopocoStream& FlopocoStream::operator<<( FlopocoStream& output, UNUSED(ostream& (*f)(ostream& fs)) ){
+		output.vhdlCodeBuffer << std::endl;
+		return output;
+	}
+	
+	string FlopocoStream::str(){
+		flush(currentCycle_);
+		return vhdlCode.str();
+	}
+
+	string FlopocoStream::str(string UNUSED(s) ){
+		vhdlCode.str("");
+		vhdlCodeBuffer.str("");
+		return "";
+	}
+
+	void FlopocoStream::flush(int currentCycle){
+		if (! disabledParsing ){
+			ostringstream bufferCode;
+			if ( vhdlCodeBuffer.str() != string("") ){
+				/* do processing if buffer is not empty */
+
+				/* scan buffer sequence and annotate ids */
+				bufferCode << annotateIDs( currentCycle );
+
+				/* the newly processed code is appended to the existing one */
+				vhdlCode << bufferCode.str();
+
+			}
+		}else{
+			vhdlCode << vhdlCodeBuffer.str();				
+		}
+		/* reset buffer */
+		vhdlCodeBuffer.str(""); 
+	}
+
+	void FlopocoStream::flush(){
+		flush ( currentCycle_ );
+	}
 }
