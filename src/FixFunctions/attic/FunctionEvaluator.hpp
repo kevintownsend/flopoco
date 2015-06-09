@@ -13,17 +13,17 @@
 namespace flopoco{
 
 
-	/** The FunctionEvaluator class */
+	/** @brief The FunctionEvaluator class */
 	class FunctionEvaluator : public Operator
 	{
 	public:
 		/**
-		 * The FunctionEvaluator constructor
+		 * @brief The FunctionEvaluator constructor
 		 */
 		FunctionEvaluator(Target* target, string func, int wInX, int lsbOut, int n, bool finalRounding = true, map<string, double> inputDelays = emptyDelayMap);
 
 		/**
-		 * FunctionEvaluator destructor
+		 * @brief FunctionEvaluator destructor
 		 */
 		~FunctionEvaluator();
 

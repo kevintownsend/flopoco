@@ -17,7 +17,7 @@ namespace flopoco{
 
 
 	/**
-	 * The FixedPointCoefficinet class provides the objects for representing
+	 * @brief The FixedPointCoefficinet class provides the objects for representing
 	 * fixed-point coefficinets. It is used by the polynomial evaluator
 	 */
 	class FixedPointCoefficient
@@ -27,29 +27,29 @@ namespace flopoco{
 		FixedPointCoefficient(FixedPointCoefficient *x);
 
 		/**
-		 * Constructor. Initializes the attributes.
+		 * @brief Constructor. Initializes the attributes.
 		 */
 		FixedPointCoefficient(unsigned size, int weight);
 
 		FixedPointCoefficient(unsigned size, int weight, mpfr_t valueMpfr);
 
-		/** Destructor */
+		/** @brief Destructor */
 		~FixedPointCoefficient();
 
 		/**
-		 * Fetch the weight of the MSB
+		 * @brief Fetch the weight of the MSB
 		 * @return weight of the MSB
 		 */
 		int getWeight();
 
 		/**
-		 * Set the weight of the MSB
+		 * @brief Set the weight of the MSB
 		 */
 		void setWeight(int w);
 
 
 		/**
-		 * Fetch the size (width) of the coefficient
+		 * @brief Fetch the size (width) of the coefficient
 		 * @return coefficient width
 		 */
 		unsigned getSize();
@@ -62,26 +62,26 @@ namespace flopoco{
 
 	protected:
 		int size_;        /**< The width (in bits) of the coefficient. In theory this equals to the
-		                     minimum number of bits required to represent abs(value) */
+							 minimum number of bits required to represent abs(value) */
 		int weight_;      /**< The shift value. Coefficient is represented as value * 2 (shift) */
 
 		mpfr_t* valueMpfr_;
 	};
 
 	/**
-	 * The YVar class
+	 * @brief The YVar class
 	 */
 	class YVar: public FixedPointCoefficient
 	{
 	public:
-		/** constructor */
+		/** @brief constructor */
 		YVar( unsigned size, int weight, const int sign = 0 );
 
-		/** Destructor */
+		/** @brief Destructor */
 		~YVar(){};
 
 		/**
-		 * Fetch the variable size (if known). 0 = unknown
+		 * @brief Fetch the variable size (if known). 0 = unknown
 		 * @return sign
 		 */
 		int getSign();
@@ -90,14 +90,14 @@ namespace flopoco{
 		int sign_;        /**< The variable sign in known */
 	};
 
-	/** class LevelSignal. Models The level signals */
+	/** @brief class LevelSignal. Models The level signals */
 	class LevelSignal{
 	public:
 		LevelSignal(string name, unsigned size, int shift);
 
 		LevelSignal(LevelSignal* l);
 
-		/* Destructor */
+		/** @brief Destructor */
 		~LevelSignal(){};
 
 		string getName();
@@ -112,12 +112,12 @@ namespace flopoco{
 		int      shift_;
 	};
 
-	/** horner variables, sigma and pi */
+	/** @brief horner variables, sigma and pi */
 	class Sigma{
 	public:
 		Sigma(int size1, int weight1, int size2, int weight2);
 
-		/* Destructor */
+		/** @brief Destructor */
 		~Sigma(){};
 
 		unsigned getSize();
@@ -132,7 +132,7 @@ namespace flopoco{
 		int      guardBits;
 	};
 
-	/** horner variables, sigma and pi */
+	/** @brief horner variables, sigma and pi */
 	class Pi{
 	public:
 		Pi(unsigned size1, int weight1, unsigned size2, int weight2);
@@ -156,7 +156,7 @@ namespace flopoco{
 
 
 	/**
-	 * The PolynomialEvaluator class. Constructs the oprator for evaluating
+	 * @brief The PolynomialEvaluator class. Constructs the oprator for evaluating
 	 * a polynomial shiftth fix-point coefficients.
 	 */
 	class PolynomialEvaluator : public Operator
@@ -164,19 +164,20 @@ namespace flopoco{
 	public:
 
 		/**
-		 * The polynomial evaluator class. FIXME the parameters are subhect to change
-		 * TODO document them
+		 * @brief The polynomial evaluator class. FIXME the parameters are subhect to change
+		 * \todo document them
 		 */
 		PolynomialEvaluator(Target* target, vector<FixedPointCoefficient*> coef, YVar* y, int targetPrec, mpfr_t* approxError, map<string, double> inputDelays = emptyDelayMap);
 
-		/** Destructor */
+		/** @brief Destructor */
 		~PolynomialEvaluator();
 
 
 		/* ------------------------------ EXTRA -----------------------------*/
 		/* ------------------------------------------------------------------*/
 
-		/** Update coefficients.
+		/**
+		 * @brief Update coefficients.
 		 * The input coefficients have the format:
 		 *           size   = #of bits at the right of the .
 		 *           weight = the weight of the MSB
@@ -186,17 +187,20 @@ namespace flopoco{
 		 */
 		void updateCoefficients(vector<FixedPointCoefficient*> coef);
 
-		/** Sets the polynomial degree
+		/**
+		 * @brief Sets the polynomial degree
 		 * @param d the polynomial degree
 		 */
 		void setPolynomialDegree(int d);
 
-		/** Gets the polynomial degree
+		/**
+		 * @brief Gets the polynomial degree
 		 * @return the polynomial degree
 		 */
 		int getPolynomialDegree(){ return degree_; }
 
-		/** print the polynomial
+		/**
+		 * @brief print the polynomial
 		 * @param[in] coef  the coefficinets
 		 * @param[in] y     the variable
 		 * @param[in] level the initial recursion level 0
@@ -210,24 +214,27 @@ namespace flopoco{
 		/* ----------------- ERROR RELATED ----------------------------------*/
 		/* ------------------------------------------------------------------*/
 
-		/** sets the approximation error budget for the polynomial evaluator.
+		/**
+		 * @brief sets the approximation error budget for the polynomial evaluator.
 		 * @param p the error budget as an mpfr pointer
 		 */
 		void setApproximationError( mpfr_t *p);
 
-		/** sets the mpfr associated to the maximal value of y. This value
+		/**
+		 * @brief sets the mpfr associated to the maximal value of y. This value
 		 * is required in the error analysis step
 		 * @param[in] y the variable containing info about the size and weight
 		 */
 		void setMaxYValue(YVar* y);
 
-		/** perform errorVector allocations */
+		/** @brief perform errorVector allocations */
 		void allocateErrorVectors();
 
-		/** hide messy vector initializations */
+		/** @brief hide messy vector initializations */
 		void allocateAndInitializeExplorationVectors();
 
-		/** The function that does the error estimation starting from a
+		/**
+		 * @brief The function that does the error estimation starting from a
 		 * set of guard bits for the coefficients and a set of truncations
 		 * for the Y
 		 * @param[in] yGuard the vector containing the truncation error for Y
@@ -243,18 +250,19 @@ namespace flopoco{
 		/* ---------------- EXPLORATION RELATED -----------------------------*/
 		/* ------------------------------------------------------------------*/
 
-		/** hide messy vector exploration vectors initializations */
+		/** @brief hide messy vector exploration vectors initializations */
 		void initializeExplorationVectors();
 
 
-		/** fills-up a map of objective states for the truncations */
+		/** @brief fills-up a map of objective states for the truncations */
 		void determineObjectiveStatesForTruncationsOnY();
 
-		/** updates the MaxBoundY vector with the maximum number of states
-		 * for each Y */
+		/** @brief updates the MaxBoundY vector with the maximum number of states
+		 * for each Y
+		 */
 		void setNumberOfPossibleValuesForEachY();
 
-		/** TODO PROPER WAY; it only accounts (for now) on the DPS block
+		/** \todo PROPER WAY; it only accounts (for now) on the DPS block
 		 *  size. We can use as many guard bits in order not to use extra
 		 *  multipliers
 		 */
@@ -264,21 +272,22 @@ namespace flopoco{
 
 		void reinitCoefficientGuardBitsLastIteration();
 
-		/** Get range values for multiplications. We pefrom one error
+		/**
+		 * @brief Get range values for multiplications. We pefrom one error
 		 * analysis run where we dont't truncate or add any guard bits
 		 */
 		void coldStart();
 
-		/** We allow possible truncation of y. Horner evaluation therefore
-		    allows for d differnt truncations on y (1 to d). For each y
-		    there are at most 3 possible truncation values:
-		    -no truncation
-		    -truncate so to fit x dimmension of the embedded multiplier
-		    -truncate so to fit y dimmension of the embedded multiplier
-		    * @param[in] i      What y are we talking about. Takes values in 1..d
-		    * @param[in] level  which one of the 3 values are we talking about 0..2
-		    * @return the corresponding value to the selected level
-		    */
+		/** @brief We allow possible truncation of y. Horner evaluation therefore
+			allows for d differnt truncations on y (1 to d). For each y
+			there are at most 3 possible truncation values:
+			-no truncation
+			-truncate so to fit x dimmension of the embedded multiplier
+			-truncate so to fit y dimmension of the embedded multiplier
+			* @param[in] i      What y are we talking about. Takes values in 1..d
+			* @param[in] level  which one of the 3 values are we talking about 0..2
+			* @return the corresponding value to the selected level
+			*/
 		int getPossibleYValue(int i, int state);
 		/** advances to the next step in the design space exploration on the
 		 * y dimmension.
@@ -308,8 +317,8 @@ namespace flopoco{
 
 		mpfr_t* approximationError; /* the error performed in the polynomial finding step */
 		mpfr_t targetError;         /* the target error for this component. In most cases
-		                               this should be equal to 1/2 ulp as the other 1/2 ulp
-		                               is lost in the final rounding */
+									   this should be equal to 1/2 ulp as the other 1/2 ulp
+									   is lost in the final rounding */
 
 		unsigned wR;
 		int weightR;
