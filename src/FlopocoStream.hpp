@@ -7,6 +7,7 @@
 #include <mpfr.h>
 #include <gmpxx.h>
 #include <cstdlib>
+#include <string.h>
 
 //#include "VHDLLexer.hpp"
 #include "LexerContext.hpp"
@@ -40,12 +41,18 @@ namespace flopoco{
 		}*/
 
 
-		template <class paramType> friend FlopocoStream& operator <<(FlopocoStream& output, paramType c); 		
+		template <class paramType> friend FlopocoStream& operator <<(
+				FlopocoStream& output, 
+				paramType c
+			){
+			output.vhdlCodeBuffer << c;
+			return output;
+		}
 
 		
 		friend FlopocoStream & operator<<(FlopocoStream& output, FlopocoStream fs); 
 		
-		friend FlopocoStream& operator<<( FlopocoStream& output, UNUSED(ostream& (*f)(ostream& fs)a)) ;
+		friend FlopocoStream& operator<<( FlopocoStream& output, UNUSED(ostream& (*f)(ostream& fs))) ;
 		
 		public:
 			/**
@@ -74,7 +81,7 @@ namespace flopoco{
 			 * Resets both the buffer and the code stream. 
 			 * @return returns empty string for compatibility issues.
 			 */ 
-			string str(string UNUSED(s) );
+			string str(string UNUSED(s));
 			
 			/**
 			 * the information from the buffer is flushed when cycle information
@@ -97,25 +104,7 @@ namespace flopoco{
 			 * @param[in] currentCycle Cycle Information
 			 * @return the string containing the annotated information
 			 */
-			string annotateIDs( int currentCycle ){
-//				vhdlCode << "-- CurrentCycle is = " << currentCycle << endl;
-				ostringstream vhdlO;
-				istringstream in( vhdlCodeBuffer.str() );
-				/* instantiate the flex++ object  for lexing the buffer info */
-				LexerContext* lexer = new LexerContext(&in, &vhdlO);
-				/* This variable is visible from within the flex++ scanner class */
-				lexer->yyTheCycle = currentCycle;
-				/* call the FlexLexer ++ on the buffer. The lexing output is
-				 in the variable vhdlO. Additionally, a temporary table contating
-				 the tuples <name, cycle> is created */
-				lexer->lex();
-				/* the temporary table is used to update the member of the FlopocoStream
-				 class useTable */
-
-				updateUseMap(lexer);
-				/* the annotated string is returned */
-				return vhdlO.str();
-			}
+			string annotateIDs(int currentCycle);
 			
 			/**
 			 * The extern useTable rewritten by flex for each buffer is used 
@@ -124,58 +113,34 @@ namespace flopoco{
 			 * @param[in] tmpUseTable a vector of pairs which will be copied 
 			 *            into the member variable useTable 
 			 */
-			void updateUseTable(vector<pair<string,int> > tmpUseTable){
-				vector<pair<string, int> >::iterator iter;
-				for (iter = tmpUseTable.begin(); iter!=tmpUseTable.end();++iter){
-					pair < string, int> tmp;
-					tmp.first  =  (*iter).first;
-					tmp.second = (*iter).second;
-					useTable.push_back(tmp);
-				}			
-			}
+			void updateUseTable(vector<pair<string,int> > tmpUseTable);
 
 			/**
 			 * A wrapper for updateUseTable
 			 * The external table is erased of information
 			 */			
-			void updateUseMap(LexerContext* lexer){
-				updateUseTable(lexer->theUseTable);
-				lexer->theUseTable.erase(lexer->theUseTable.begin(), lexer->theUseTable.end());
-			}
+			void updateUseMap(LexerContext* lexer);
 			
-			void setCycle(int cycle){
-				currentCycle_=cycle;
-			}
+			void setCycle(int cycle);
 
 			/**
 			 * member function used to set the code resulted after a second parsing
 			 * was perfromed
 			 * @param[in] code the 2nd parse level code 
 			 */
-			void setSecondLevelCode(string code){
-				vhdlCode.str("");
-				vhdlCode << code;
-			}
+			void setSecondLevelCode(string code);
 			
 			/**
 			 * Returns the useTable
 			 */  
-			vector<pair<string, int> > getUseTable(){
-				return useTable;
-			}
+			vector<pair<string, int> > getUseTable();
 
 
-			void disableParsing(bool s){
-				disabledParsing = s;
-			}
+			void disableParsing(bool s);
 			
-			bool isParsing(){
-				return !disabledParsing;
-			}
+			bool isParsing();
 			
-			bool isEmpty(){
-				return ((vhdlCode.str()).length() == 0 && (vhdlCodeBuffer.str()).length() == 0 );
-			}
+			bool isEmpty();
 
 
 			ostringstream vhdlCode;              /**< the vhdl code afte */
