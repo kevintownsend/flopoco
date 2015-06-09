@@ -31,6 +31,8 @@ namespace flopoco{
 		buildVHDL();
 	};
 
+	FixHalfSine::~FixHalfSine(){}
+
 
 }
 
