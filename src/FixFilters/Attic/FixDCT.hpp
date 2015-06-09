@@ -29,7 +29,7 @@ namespace flopoco{
 	public:
 
 		FixDCT2(Target* target, int p_, int N_, int k_, bool signedInput_ = false, map<string, double> inputDelays = emptyDelayMap);
-		
+
 		/*
 		FixDCT(Operator* parentOp, Target* target, int p_, int N_, int k_,
 							 BitHeap* bitheap,
@@ -38,24 +38,25 @@ namespace flopoco{
 		virtual ~FixDCT2();
 
 		// Overloading the virtual functions of Operator
-		/* the emulate function is used to simulate in software the operator
-		   in order to compare this result with those outputed by the vhdl opertator */
+		/** @brief the emulate function is used to simulate in software the operator
+		 * in order to compare this result with those outputed by the vhdl opertator
+		 */
 		void emulate(TestCase* tc);
-		
-		/* function used to create Standard testCase defined by the developper */
+
+		/** @brief function used to create Standard testCase defined by the developper */
 		void buildStandardTestCases(TestCaseList* tcl);
-		
-		//TODO: revert back to returning an mpfr_t
+
+		/// \todo: revert back to returning an mpfr_t
 		long double getDCT2FilterCoeff(int i);
 		string getDCT2FilterCoeffString(int i);
-		
-		
-		int p;  					/**< The precision of inputs and outputs */ 
+
+
+		int p;  					/**< The precision of inputs and outputs */
 		int N;  					/**< The number of taps */
 		int k;  					/**< The number of the current sample */
-		
+
 		bool signedInput;			/**< The inputs are signed, or not */
-		
+
 		mpfr_t mpcoeff[10000];  	/**< The coefficients of the DCT2 filter, as MPFR numbers */
 		vector<string> coeff;		/**< the coefficients as strings */
 

@@ -12,33 +12,33 @@ class Fragment
 {
 public:
   Fragment(int length, Fragment* next_part);
-  virtual ~Fragment() {} // ne supprime pas next_part, car l'objet peut être partagé avec d'autres morceaux
+  virtual ~Fragment() {} // ne supprime pas next_part, car l'objet peut Ãªtre partagÃ© avec d'autres morceaux
   int prepare(double& area, double& max_error, bool with_sign = true, int accuracy = -1, bool showinfo = true);
   void generate(std::string prefix, ostream& code_file, ostream& table_file);
   int getStart() {return start;}
 
 protected:
-  int totallength();                            // calcule récursivement la somme des longueurs des morceaux
-  virtual double area();                        // évalue l'aire des multiplieurs et des tables (récursivement)
-  virtual double max_error(double input_error); // évalue l'erreur maximale en ULPs
+  int totallength();                            // calcule rÃ©cursivement la somme des longueurs des morceaux
+  virtual double area();                        // Ã©value l'aire des multiplieurs et des tables (rÃ©cursivement)
+  virtual double max_error(double input_error); // Ã©value l'erreur maximale en ULPs
   virtual void evalpos(int accuracy, int start, // calcule l'emplacement et la longueur du morceau dans la mantisse
-    int& overlapping, bool& is_signed) = 0;
+						int& overlapping, bool& is_signed) = 0;
   virtual void showinfo(int number);            // affiche l'emplacement du morceau et son type
-  virtual void write_declaration(std::string prefix, ostream& o);   // écrit la déclaration du composant (dans le package)
-  virtual void write_arch(std::string prefix, ostream& o);          // écrit l'entité et l'architecture
-  virtual void write_tbl_declaration(std::string prefix, ostream& o); // écrit la déclaration du ou des composant(s) servant de table
-  virtual void write_tbl_arch(std::string prefix, ostream& o);      // écrit les tables
+  virtual void write_declaration(std::string prefix, ostream& o);   // Ã©crit la dÃ©claration du composant (dans le package)
+  virtual void write_arch(std::string prefix, ostream& o);          // Ã©crit l'entitÃ© et l'architecture
+  virtual void write_tbl_declaration(std::string prefix, ostream& o); // Ã©crit la dÃ©claration du ou des composant(s) servant de table
+  virtual void write_tbl_arch(std::string prefix, ostream& o);      // Ã©crit les tables
 
-  // données sur le morceau
-  int length;		// longueur demandée, CE N'EST PAS LA LONGUEUR REELLE (il faut ajouter le recouvrement)
-  Fragment* next_part;	// morceau suivant de la liste chaînée
+  // donnÃ©es sur le morceau
+  int length;		// longueur demandÃ©e, CE N'EST PAS LA LONGUEUR REELLE (il faut ajouter le recouvrement)
+  Fragment* next_part;	// morceau suivant de la liste chaÃ®nÃ©e
 
-  // paramètres calculées à partir des données
-  int accuracy;		// nombre de chiffres après la virgule (pour la totalité de l'entrée et le résultat)
-  int start;		// le premier chiffre du morceau est le (start+1)-ième après la virgule
-  int end;		// le dernier chiffre du morceau est le end-ième après la virgule
+  // paramÃ¨tres calculÃ©es Ã  partir des donnÃ©es
+  int accuracy;		// nombre de chiffres aprÃ¨s la virgule (pour la totalitÃ© de l'entrÃ©e et le rÃ©sultat)
+  int start;		// le premier chiffre du morceau est le (start+1)-iÃ¨me aprÃ¨s la virgule
+  int end;		// le dernier chiffre du morceau est le end-iÃ¨me aprÃ¨s la virgule
   int reallength;	// reallength = end - start, nombre de bits du morceau
-  bool is_signed;	// indique si l'entrée peut être négative (la plage dans les négatifs étant identique)
+  bool is_signed;	// indique si l'entrÃ©e peut Ãªtre nÃ©gative (la plage dans les nÃ©gatifs Ã©tant identique)
 };
 
 double table_area(int input_bits, int output_bits); // in slices

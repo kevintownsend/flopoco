@@ -29,16 +29,18 @@ namespace flopoco{
 
 		ShiftAddDag(ShiftAddDag* reference); //copy constructor. This perform a deep copy of saolist and PX and copies only the pointer icm (not the instance)
 
-		virtual ~ShiftAddDag(); 		
-		
-		// This method looks up in the current Dag if the required op
-		// exists, and either returns a pointer to it, or creates the
-		// corresponding node.
+		virtual ~ShiftAddDag();
+
+		/**
+		 * @brief This method looks up in the current Dag if the required op
+		 * exists, and either returns a pointer to it, or creates the
+		 * corresponding node.
+		 */
 		ShiftAddOp* provideShiftAddOp(ShiftAddOpType op, ShiftAddOp* i, int s, ShiftAddOp* j=NULL);
 
 		mpz_class computeConstant(ShiftAddOpType op, ShiftAddOp* i, int s, ShiftAddOp* j);
 
-		//This method appends saolist with patch.saolist and returns patch.result.
+		/** @brief This method appends saolist with patch.saolist and returns patch.result. */
 		ShiftAddOp* sadAppend(ShiftAddDag* patch);
 
 	};

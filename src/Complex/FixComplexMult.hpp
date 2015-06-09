@@ -6,9 +6,9 @@
 #include "Operator.hpp"
 
 namespace flopoco{
-	
+
 	/**
-	 * Multiplier for complex numbers
+	 * @brief Multiplier for complex numbers
 	 * Depending on the value of threeMultiplications, the multiplication
 	 * (a+jb)*(c+jd) can be either
 	 * 		Re(z)=a*c+-b*d
@@ -21,19 +21,19 @@ namespace flopoco{
 	 * 		Im(z)=m1+m3, with 3 multiplications and 5 additions
 	 * @param[int] wI input size
 	 * @param[int] wO output size
- 	 */
+	 */
 	class FixedComplexMultiplier : public Operator
 	{
 	public:
 		FixedComplexMultiplier(Target* target, int wI, int wO, float threshold, bool signedOperator = true, bool threeMultiplications = false);
 		~FixedComplexMultiplier();
-		
+
 		void emulate(TestCase * tc);
 		void buildStandardTestCases(TestCaseList* tcl);
 
 		int wI, wO;
 		bool signedOperator;
-		float threshold; 
+		float threshold;
 
 	};
 }

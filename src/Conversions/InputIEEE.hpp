@@ -17,7 +17,7 @@ namespace flopoco{
 	{
 	public:
 		/**
-		 * The InputIEEE constructor
+		 * @brief The InputIEEE constructor
 		 * @param[in]		target		the target device
 		 * @param[in]		wE			the the with of the exponent for the f-p number X
 		 * @param[in]		wF			the the with of the fraction for the f-p number X
@@ -38,13 +38,13 @@ namespace flopoco{
 
 	private:
 		/** The width of the exponent for the input X */
-		int wEI; 
+		int wEI;
 		/** The width of the fraction for the input X */
-		int wFI; 
+		int wFI;
 		/** The width of the exponent for the output R */
-		int wEO; 
+		int wEO;
 		/** The width of the fraction for the output R */
-		int wFO; 
+		int wFO;
 		/** used only when wEI>wEO: minimal exponent representable in output format, biased with input bias */
 		int underflowThreshold;
 		/** used only when wEI>wEO: maximal exponent representable in output format, biased with input bias */

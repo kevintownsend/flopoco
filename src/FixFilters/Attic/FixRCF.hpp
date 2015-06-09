@@ -38,14 +38,16 @@ namespace flopoco{
 		virtual ~FixRCF();
 
 		// Overloading the virtual functions of Operator
-		/* the emulate function is used to simulate in software the operator
-		   in order to compare this result with those outputed by the vhdl opertator */
+		/**
+		 * @brief the emulate function is used to simulate in software the operator
+		 * in order to compare this result with those outputed by the vhdl opertator
+		 */
 		void emulate(TestCase* tc);
 
-		/* function used to create Standard testCase defined by the developper */
+		/** @brief function used to create Standard testCase defined by the developper */
 		void buildStandardTestCases(TestCaseList* tcl);
 
-		//TODO: revert back to returning an mpfr_t
+		/// \todo: revert back to returning an mpfr_t
 		long double getFixRCFilterCoeff(int i);
 		string getFixRCFilterCoeffString(int i);
 

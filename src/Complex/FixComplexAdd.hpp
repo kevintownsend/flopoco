@@ -6,16 +6,16 @@
 #include "Operator.hpp"
 
 namespace flopoco{
-	
+
 	/**
-	 * Complex adder for fixed point numbers
+	 * @brief Complex adder for fixed point numbers
 	 */
 	class FixedComplexAdder : public Operator
 	{
 	public:
 		FixedComplexAdder(Target* target, int wI, int wF, bool signedOperator = true, map<string, double> inputDelays = emptyDelayMap);
 		~FixedComplexAdder();
-		
+
 		void emulate(TestCase * tc);
 
 		int wI, wF, w;

@@ -17,22 +17,21 @@ namespace flopoco{
 
 
 	/**
-		Class ShiftAddOp defines a shift-and-add operation, of one of 5 types:
-		Add(z,i, s, y)     Vz  <-   Vi<<s  + Vy 
-		Sub(z,i, s, y)     Vz  <-   Vi<<s  - Vy 
-		RSub(z,i, s, y)    Vz  <-   -Vi<<s  + Vy 
-		Shift(i,s)         Vz  <-   Vi<<s 
-		Neg(i,s)        Vz  <-   (-Vi) 
+		@brief Class ShiftAddOp defines a shift-and-add operation, of one of 5 types:
+		Add(z,i, s, y)     Vz  <-   Vi<<s  + Vy
+		Sub(z,i, s, y)     Vz  <-   Vi<<s  - Vy
+		RSub(z,i, s, y)    Vz  <-   -Vi<<s  + Vy
+		Shift(i,s)         Vz  <-   Vi<<s
+		Neg(i,s)        Vz  <-   (-Vi)
 		i, y and z are variable identifiers.
-		This is single-assignment code, therefore 
+		This is single-assignment code, therefore
 		1/ the ShiftAddOp constructor builds a new variable number for the destination.
-		2/ the ShiftAddOp object holds all the information related to its destination variable Vz. 
+		2/ the ShiftAddOp object holds all the information related to its destination variable Vz.
 
 		You don't have to use all these types. In IntConstMult, we build an initial
 		tree out of Add, Neg and Shift, then transform some subtrees into Sub
-		and RSub in an optimization phase */
-
-
+		and RSub in an optimization phase
+	*/
 	class ShiftAddOp {
 	public:
 		ShiftAddDag* impl;
@@ -41,17 +40,17 @@ namespace flopoco{
 		ShiftAddOp* j;
 		vector<ShiftAddOp*> parentList;
 
-		/**  The shift on i*/
-		int s; 
+		/** The shift on i*/
+		int s;
 
 		/** the constant by which this variable multiplies */
-		mpz_class n; 
+		mpz_class n;
 
 		/** string representation of the constant */
-		string name;  
+		string name;
 
 		/** size of the constant */
-		int size; 
+		int size;
 
 		/** cost in term of full-adders */
 		int cost_in_full_adders;
@@ -60,9 +59,9 @@ namespace flopoco{
 		bool already_visited;
 
 
-		/** Constructor */
+		/** @brief Constructor */
 		ShiftAddOp(ShiftAddDag* impl, ShiftAddOpType op, ShiftAddOp* i=NULL, int s=0, ShiftAddOp* j=NULL);
-	
+
 		friend std::ostream& operator<<(std::ostream& o, const ShiftAddOp& sao ); // output
 
 		friend FlopocoStream& operator<<(FlopocoStream& o, const ShiftAddOp& sao ); // output

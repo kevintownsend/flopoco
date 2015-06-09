@@ -9,8 +9,8 @@ using namespace std;
 class IFunContainer
 {
 public:
-  // negative est vrai si x < 0 ou si x = 0 et qu'on veut représenter 0-
-  // result n'est jamais initialisé (quand USE_MPFR est définie)
+  // negative est vrai si x < 0 ou si x = 0 et qu'on veut reprÃ©senter 0-
+  // result n'est jamais initialisÃ© (quand USE_MPFR est dÃ©finie)
   virtual void function(double x, bool negative, mpfr_t& result) = 0;
   // pour faire taire gcc
   virtual ~IFunContainer() {}
