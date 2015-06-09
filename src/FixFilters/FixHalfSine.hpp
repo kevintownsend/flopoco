@@ -20,7 +20,7 @@ namespace flopoco{
 
 		FixHalfSine(Target* target, int lsb_, int N_);
 
-		~FixHalfSine(){};
+		virtual ~FixHalfSine();
 
 	private: 
 		int N; /* FixFIR::n = 2*N */
