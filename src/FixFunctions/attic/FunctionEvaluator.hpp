@@ -26,30 +26,26 @@ namespace flopoco{
 		 * FunctionEvaluator destructor
 		 */
 		~FunctionEvaluator();
-		
+
 		void emulate(TestCase * tc);
 
 		PiecewiseFunction *pf;
 		PolyCoeffTable *tg;
 		PolynomialEvaluator *pe;
-		
-		int getRWidth(){
-			return wR;
-		}
-			
-		int getRWeight(){
-			return weightR;
-		}
+
+		int getRWidth();
+
+		int getRWeight();
 
 		protected:
-		
+
 		unsigned wR;
 		int weightR;
 
-		int wInX_;   
+		int wInX_;
 		int lsbOut_;
 		bool finalRounding_;
-		
+
 	};
 
 }
