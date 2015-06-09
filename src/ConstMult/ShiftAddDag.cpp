@@ -80,6 +80,11 @@ namespace flopoco{
 		PX = new ShiftAddOp(this, X);
 	};
 
+	ShiftAddDag::~ShiftAddDag() {
+			delete PX;
+			/* TODO with an iterator for (int i=0; i<sao.size; i++) delete sao[i];*/
+	}
+
 
 	// This method looks up in the current Dag if the required op
 	// exists, and either returns a pointer to it, or creates the

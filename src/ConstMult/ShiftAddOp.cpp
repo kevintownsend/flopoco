@@ -25,6 +25,7 @@
 
 using namespace std;
 
+		
 
 namespace flopoco{
 
@@ -81,5 +82,31 @@ namespace flopoco{
 
 	}
 
+	std::ostream& operator<<(std::ostream& o, const ShiftAddOp& sao ) // output
+	{    
+		o << sao.name << " <-  ";
+		switch(sao.op) {
+			case X:        o << " X"; break;
+			case Add:      o << sao.i->name << "<<" << sao.s << "  + " << sao.j->name;   break;
+			case Sub:      o << sao.i->name << "<<" << sao.s << "  - " << sao.j->name;   break;
+			case RSub:     o << sao.j->name << "  - " << sao.i->name << "<<" << sao.s ;   break;
+			case Shift:    o << " " << sao.i->name << "<<" << sao.s;                     break;
+			case Neg:      o << "-" << sao.i->name;   break;
+		}   
+		return o;
+	}
 
+	FlopocoStream& operator<<(FlopocoStream& o, const ShiftAddOp& sao ) // output
+	{    
+		o << sao.name << " <-  ";
+		switch(sao.op) {
+			case X:        o << " X"; break;
+			case Add:      o << sao.i->name << "<<" << sao.s << "  + " << sao.j->name;   break;
+			case Sub:      o << sao.i->name << "<<" << sao.s << "  - " << sao.j->name;   break;
+			case RSub:      o << sao.j->name << "  - " << sao.i->name << "<<" << sao.s ;   break;
+			case Shift:    o << " " << sao.i->name << "<<" << sao.s;                     break;
+			case Neg:      o << "-" << sao.i->name;   break;
+		}   
+		return o;
+	}
 }
