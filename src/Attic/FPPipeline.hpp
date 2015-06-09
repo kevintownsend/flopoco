@@ -28,29 +28,30 @@
 // #include "UtilSollya.hh"
 
 namespace flopoco{
-	
+
 	extern vector<Operator*> oplist;
-	
+
 	/** The FPPipeline class.  */
 	class FPPipeline : public Operator {
 		public:
-			/** Class that assembles floating-point operators starting with 
+			/**
+			 * @brief Class that assembles floating-point operators starting with
 			 * an untyped, untimed Python-like description of the computational
 			 * datapath
 			 * @param[in] target     The target FPGA object
 			 * @param[in] filename   The filename containing the datapath
 			 * @param[in] wE         Exponent width
 			 * @param[in] wF         Fraction width
-			**/ 
+			**/
 			FPPipeline(Target* target, string filename, int wE, int wF);
-			
+
 			/**
-			* FPPipeline destructor
+			* @brief FPPipeline destructor
 			*/
 			~FPPipeline();
-			
+
 			/**
-			 * Function which generates the VHDL code containing the assembled 
+			 * @brief Function which generates the VHDL code containing the assembled
 			 * operators starting from the node containg the output variable
 			 * @param[in] n    The output variable (one of the output node list)
 			 * @param[in] top  Boolean describing if this function is called from
@@ -59,11 +60,11 @@ namespace flopoco{
 		void generateVHDL_c(node* n, bool top);
 
 
-			
+
 		protected:
-			int wE;   /**< Exponent size*/ 
+			int wE;   /**< Exponent size*/
 			int wF;  /**< Significand fraction size */
 	};
-	
+
 }
 #endif

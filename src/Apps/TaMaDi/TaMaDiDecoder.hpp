@@ -18,20 +18,20 @@ namespace flopoco{
 	public:
 
 		/**
-		 * The TaMaDiDecoder constructor
+		 * @brief			The TaMaDiDecoder constructor
 		 * @param[in]		target  the target device
-		 * @param[in]		n		number of outputs      
-		 **/ 
+		 * @param[in]		n		number of outputs
+		 **/
 		TaMaDiDecoder(Target* target, int n);
 
 		/**
-		 * TaMaDiDecoder destructor
+		 * @brief			TaMaDiDecoder destructor
 		 */
 		~TaMaDiDecoder();
-	
+
 	protected:
-		
-		
+
+
 	private:
 	};
 }

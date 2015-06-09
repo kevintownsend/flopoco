@@ -21,28 +21,28 @@ namespace flopoco{
 	public:
 
 		/**
-		 * The FPFMAcc constructor
+		 * @brief			The FPFMAcc constructor
 		 * @param[in]		target   the target device
 		 * @param[in]		wE       the width of the exponent for the inputs X and Y
 		 * @param[in]		wF      the width of the fraction for the input X
-		 **/ 
+		 **/
 		FPFMAcc(Target* target, int wE, int wF, int adderLatency = -1);
 
 		/**
-		 * FPFMAcc destructor
+		 * @brief			FPFMAcc destructor
 		 */
 		~FPFMAcc();
-	
+
 	protected:
-		
-		int wE;     /**< The width of the exponent for the inputs X and Y*/ 
+
+		int wE;     /**< The width of the exponent for the inputs X and Y*/
 		int wF;     /**< The width of the fraction for the input X */
 
 	private:
-		
+
 //		FPTruncMult* fpTruncMultiplier; /**< instance of a FPMult */
 //		FPAdd*     longAcc;      /**< instance of a FPAdd */
-		
+
 	};
 }
 #endif

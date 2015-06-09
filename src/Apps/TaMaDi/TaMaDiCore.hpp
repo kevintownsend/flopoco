@@ -18,25 +18,25 @@ namespace flopoco{
 	public:
 
 		/**
-		 * The TaMaDiCore constructor
+		 * @brief			The TaMaDiCore constructor
 		 * @param[in]		target  the target device
-		 * @param[in]		p		binary-format precision we are intrested in      
-		 * @param[in]		m		largest possble precision value  
-		 **/ 
+		 * @param[in]		p		binary-format precision we are intrested in
+		 * @param[in]		m		largest possble precision value
+		 **/
 		TaMaDiCore(Target* target, int wp, int d, int iterations, int wIntervalID, int compSize);
 
 		/**
-		 * TaMaDiCore destructor
+		 * @brief			TaMaDiCore destructor
 		 */
 		~TaMaDiCore();
-	
+
 	protected:
-		
+
 		int wp;    /**< Working precision will be defined as m-p */
 		int d;     /**< The degree of the polynomial */
 		int iterations;
 		int wIntervalID;
-	
+
 		void outputVHDL(std::ostream& o, std::string name);
 	private:
 	};

@@ -19,28 +19,28 @@ namespace flopoco{
 	public:
 
 		/**
-		 * The FPJacobi constructor
+		 * @brief			The FPJacobi constructor
 		 * @param[in]		target   the target device
 		 * @param[in]		wE       the width of the exponent for the inputs X and Y
 		 * @param[in]		wF      the width of the fraction for the input X
-		 **/ 
+		 **/
 		FPJacobi(Target* target, int wE, int wF, int l1, int l2, int l3, int version);
 
 		/**
-		 * FPJacobi destructor
+		 * @brief			FPJacobi destructor
 		 */
 		~FPJacobi();
-	
+
 	protected:
-		
-		int wE;     /**< The width of the exponent for the inputs X and Y*/ 
+
+		int wE;     /**< The width of the exponent for the inputs X and Y*/
 		int wF;     /**< The width of the fraction for the input X */
 
 	private:
-		
+
 //		FPTruncMult* fpTruncMultiplier; /**< instance of a FPMult */
 //		FPAdd*     longAcc;      /**< instance of a FPAdd */
-		
+
 	};
 }
 #endif

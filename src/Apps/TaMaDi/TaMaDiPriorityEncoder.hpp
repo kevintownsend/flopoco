@@ -18,20 +18,20 @@ namespace flopoco{
 	public:
 
 		/**
-		 * The TaMaDiPriorityEncoder constructor
+		 * @brief			The TaMaDiPriorityEncoder constructor
 		 * @param[in]		target  the target device
-		 * @param[in]		n		number of inputs      
-		 **/ 
+		 * @param[in]		n		number of inputs
+		 **/
 		TaMaDiPriorityEncoder(Target* target, int n);
 
 		/**
-		 * TaMaDiPriorityEncoder destructor
+		 * @brief			TaMaDiPriorityEncoder destructor
 		 */
 		~TaMaDiPriorityEncoder();
-	
+
 	protected:
-		
-		
+
+
 	private:
 	};
 }
