@@ -911,7 +911,6 @@ namespace flopoco{
 			return false;
 	}
 
-
 	/** advances to the next step in the design space exploration on the
 	 * coefficient guard bit direction.
 	 * @return true if there is a next state, false if a solution has been

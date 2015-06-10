@@ -130,9 +130,7 @@ namespace flopoco{
 
 		unsigned getSize();
 
-		int getWeight(){
-			return weight;
-		}
+		int getWeight();
 
 	protected:
 		unsigned size;
@@ -184,7 +182,7 @@ namespace flopoco{
 		/** Gets the polynomial degree
 		 * @return the polynomial degree
 		 */
-		int getPolynomialDegree(){ return degree_; }
+		int getPolynomialDegree();
 
 		/**
 		 * @brief print the polynomial
@@ -344,11 +342,6 @@ namespace flopoco{
 		multimap<int, int> objectiveStatesY;
 
 		/* for efficiency we move these variables here */
-
-
-
-
-
 	};
 }
 
