@@ -11,7 +11,7 @@ namespace flopoco{
 	 * @brief Multiplier for complex numbers
 	 * Depending on the value of threeMultiplications, the multiplication
 	 * (a+jb)*(c+jd) can be either
-	 * 		Re(z)=a*c+-b*d
+	 * 		Re(z)=a*c-b*d
 	 * 		Im(z)=a*d+b*c, with 4 multiplications and 3 additions
 	 * or
 	 * 		m1=(a+b)*c

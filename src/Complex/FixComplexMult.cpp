@@ -10,18 +10,32 @@ namespace flopoco{
 
 	//TODO: explore implementation using multiply-accumulate operators
 	//FIXME: correct timing of the circuit
-	FixedComplexMultiplier::FixedComplexMultiplier(Target* target, int wI_, int wO_, float threshold_, bool signedOperator_, bool threeMultiplications)
-		: Operator(target), wI(wI_), wO(wO_), signedOperator(signedOperator_), threshold(threshold_)
+	FixedComplexMultiplier::FixedComplexMultiplier(
+				Target* target, 
+				int wI_, 
+				int wO_, 
+				float threshold_, 
+				bool signedOperator_, 
+				bool threeMultiplications
+			)
+		: 	Operator(target), 
+			wI(wI_), wO(wO_), 
+			signedOperator(signedOperator_), 
+			threshold(threshold_)
 	{
 		
 		ostringstream name;
 
-		setCopyrightString ( "Matei Istoan, Florent de Dinechin (2008-2012)" );
+		setCopyrightString("Matei Istoan, Florent de Dinechin (2008-2012)");
 
 			if(signedOperator)
+			{
 				useStdLogicSigned();
+			}
 			else
+			{
 				useStdLogicUnsigned();
+			}
 
 		if(target->isPipelined())
 			name << "FixedComplexMultiplier_" << wI << "_" << wO << "_f"<< target->frequencyMHz() << "_uid" << getNewUId();

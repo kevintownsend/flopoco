@@ -115,7 +115,7 @@ namespace flopoco{
 
 		int getWeight;
 
-		int getGuardBits()
+		int getGuardBits();
 
 	protected:
 		unsigned size;
