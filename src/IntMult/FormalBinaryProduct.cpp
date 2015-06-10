@@ -5,6 +5,13 @@ using namespace flopoco;
 using std::cout;
 using std::endl;
 
+MonomialOfBits::MonomialOfBits(size_t n): data(std::vector<bool>(n)), n(n) {
+}
+
+bool operator== (const MonomialOfBits& rhs) const {
+	return (this->n == rhs.n) && (this->data == rhs.data);
+}
+
 MonomialOfBits MonomialOfBits::operator* (const MonomialOfBits& rhs) const
 {
 	if (this->n != rhs.n)
@@ -49,6 +56,11 @@ std::ostream& operator<< (std::ostream& o, const MonomialOfBits& m)
 	return o;
 }
 
+ProductBit::ProductBit(size_t mon_size)
+	:data (std::list<MonomialOfBits>())
+	,mon_size (mon_size) {
+}
+
 // the ProductBitIR must have a 0 or 1 coeff (see also the throw)
 ProductBit::ProductBit (const ProductBitIR& rhs)
 	:data (std::list<MonomialOfBits>())
@@ -67,6 +79,11 @@ ProductBit::ProductBit (const ProductBitIR& rhs)
 				      "on which simplify() has been called\n";
 		}
 	}
+}
+
+ProductBitIR::ProductBitIR(size_t mon_size)
+	:data (std::map<MonomialOfBits,int>())
+	,mon_size (mon_size) {
 }
 
 ProductBitIR::ProductBitIR (const ProductBit& rhs)
@@ -150,6 +167,19 @@ std::ostream& operator<< (std::ostream& o, const ProductBitIR& pbi)
 		o << '0';
 	return o;
 }
+
+ProductIR::ProductIR(size_t w, int msb, size_t mon_size)
+	:data (std::vector<ProductBitIR>
+			(w, ProductBitIR(mon_size))
+		  )
+	,msb (msb),mon_size (mon_size) {
+}
+
+ProductIR::ProductIR(std::vector<ProductBitIR> data,
+		int msb, size_t mon_size)
+	:data (data), msb (msb), mon_size (mon_size) {
+}
+
 ProductIR::ProductIR (const Product& rhs)
 	:data(std::vector<ProductBitIR>
 			(rhs.data.size(),ProductBitIR(rhs.mon_size))
@@ -346,7 +376,7 @@ ProductIRQuoRem ProductIR::div (int divisor)
 		std::vector<ProductBitIR>::iterator qi = res.quo.data.begin();
 		for (; qi != res.quo.data.end(); qi++) {
 			// ???z & 1 = 0 or 1, so get_si() is safe
-			qi->addToCoeff (m, 
+			qi->addToCoeff (m,
 				static_cast<mpz_class>(quoz & 1).get_si());
 			quoz >>= 1;
 		}

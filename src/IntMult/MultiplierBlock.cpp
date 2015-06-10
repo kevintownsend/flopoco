@@ -9,17 +9,17 @@ namespace flopoco{
 		MultiplierBlock::MultiplierBlock(int wX, int wY, int lsbX, int lsbY, string input1, string input2, int weightShift_, int cycle) :
 			wX(wX), wY(wY), lsbX(lsbX), lsbY(lsbY), weightShift(weightShift_), inputName1(input1), inputName2(input2)
 		{
-			srcFileName=":MultiplierBlock"; 
+			srcFileName=":MultiplierBlock";
 			cycle=cycle;
 			//before update weight=lsbX+lsbY-weightShift;
 			weight=lsbX+lsbY+weightShift;
 			previous=NULL;
-			next=NULL;			
+			next=NULL;
 		}
 
 
 		bool MultiplierBlock::operator <= (MultiplierBlock* b){
-			if ((weight<=b->getWeight())) 
+			if ((weight<=b->getWeight()))
 				return true;
 			else
 				return false;
@@ -43,6 +43,11 @@ namespace flopoco{
 		int MultiplierBlock::getSigLength()
 		{
 			return signalLength;
+		}
+
+		int MultiplierBlock::getWeight()
+		{
+			return weight;
 		}
 
 		int MultiplierBlock::getwX()
@@ -81,7 +86,7 @@ namespace flopoco{
 		{
 			return cycle;
 		}
-	
+
 
 		void MultiplierBlock::setNext(MultiplierBlock* b)
 		{
@@ -96,7 +101,7 @@ namespace flopoco{
 				return NULL;
 		}
 
-		
+
 
 		MultiplierBlock* MultiplierBlock::getPrevious()
 		{
@@ -129,7 +134,7 @@ namespace flopoco{
 			//Altera chaining
 			else
 			{
-				if((next==NULL) && (previous==NULL) && (nextMultiplierBlock->getNext()==NULL) && (nextMultiplierBlock->getPrevious()==NULL) 
+				if((next==NULL) && (previous==NULL) && (nextMultiplierBlock->getNext()==NULL) && (nextMultiplierBlock->getPrevious()==NULL)
 						&& (abs(wX-nextMultiplierBlock->getwX())<=1) && (abs(wY-nextMultiplierBlock->getwY())<=1))
 				{
 					if((wX>18) || (wY>18))
@@ -144,7 +149,7 @@ namespace flopoco{
 				}
 				else
 				{
-					return false;					
+					return false;
 				}
 			}
 		}
@@ -155,15 +160,15 @@ namespace flopoco{
 					(this->lsbY==next->gettopY()+17)) ||
 				((this->lsbY==next->gettopY()) &&
 					(this->lsbX==next->gettopX()+17)) )  ||
-				
+
 				(((this->lsbX==next->gettopX()) &&
 					(this->lsbY==next->gettopY()-17)) ||
 				((this->lsbY==next->gettopY()) &&
-					(this->lsbX==next->gettopX()-17)) )) 
+					(this->lsbX==next->gettopX()-17)) ))
 				return true;
 			else
 				return false;
 
-		}    
+		}
 
 }

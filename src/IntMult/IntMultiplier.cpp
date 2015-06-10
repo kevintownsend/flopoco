@@ -178,8 +178,7 @@ namespace flopoco {
 		parentOp(parentOp_),
 		bitHeap(bitHeap_),
 		negate(negate_),
-		signedIO(signedIO_),
-		target(parentOp_->getTarget())
+		signedIO(signedIO_)
 	{
 
 		multiplierUid=parentOp->getNewUId();
@@ -220,13 +219,13 @@ namespace flopoco {
 	IntMultiplier::IntMultiplier (Target* target_, int wX_, int wY_, int wOut_, bool signedIO_, map<string, double> inputDelays_, bool enableSuperTiles_):
 		Operator ( target_, inputDelays_ ),
 		wXdecl(wX_), wYdecl(wY_), wOut(wOut_),
-		negate(false), signedIO(signedIO_),enableSuperTiles(enableSuperTiles_), target(target_)
+		negate(false), signedIO(signedIO_),enableSuperTiles(enableSuperTiles_)
 	{
 		srcFileName="IntMultiplier";
 		setCopyrightString ( "Florent de Dinechin, Kinga Illyes, Bogdan Popa, Bogdan Pasca, 2012" );
 
 		// useDSP or not?
-		useDSP = target->useHardMultipliers();
+		useDSP = target_->useHardMultipliers();
 
 		//commented-out because the addition operators need the ieee_std_signed/unsigned libraries
 		useNumericStd();
@@ -277,7 +276,7 @@ namespace flopoco {
 		addInput ( yname  , wYdecl, true );
 		addOutput ( "R"  , wOut, 2 , true );
 
-		if(target->plainVHDL()) {
+		if(target_->plainVHDL()) {
 			vhdl << tab << declareFixPoint("XX",signedIO,-1, -wXdecl) << " <= " << (signedIO?"signed":"unsigned") << "(" << xname <<");" << endl;
 			vhdl << tab << declareFixPoint("YY",signedIO,-1, -wYdecl) << " <= " << (signedIO?"signed":"unsigned") << "(" << yname <<");" << endl;
 			vhdl << tab << declareFixPoint("RR",signedIO,-1, -wXdecl-wYdecl) << " <= XX*YY;" << endl;
@@ -301,7 +300,7 @@ namespace flopoco {
 			// For a stand-alone operator, we add the rounding-by-truncation bit,
 			// The following turns truncation into rounding, except that the overhead is large for small multipliers.
 			// No rounding needed for a tabulated multiplier.
-			if(lsbWeightInBitHeap<0 && !tabulatedMultiplierP(target, wX, wY))
+			if(lsbWeightInBitHeap<0 && !tabulatedMultiplierP(target_, wX, wY))
 				{
 					//int weight = -lsbWeightInBitHeap-1;
 					int weight = g-1;
@@ -1261,6 +1260,7 @@ namespace flopoco {
 	bool IntMultiplier::worthUsingOneDSP(int topX, int topY, int botX, int botY, int wxDSP, int wyDSP)
 	{
 #if 1
+		Target* target = parentOp->getTarget();
 		REPORT(DEBUG, "in worthUsingOneDSP at coordinates: topX=" << topX << " topY=" << topY << " botX=" << botX << " botY" << botY
 				<< " with DSP size wxDSP=" << wxDSP << " wyDSP=" << wyDSP);
 

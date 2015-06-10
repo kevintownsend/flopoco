@@ -10,16 +10,16 @@ using namespace std;
 
 namespace flopoco {
 
-	class MultiplierBlock 
+	class MultiplierBlock
 	{
-	public: 
-		
+	public:
+
 		/**
 		 * The default constructor
 		 */
 		MultiplierBlock(int wX, int wY, int lsbX, int lsbY, string input1, string input2, int weightShift = 0, int cycle = -1);
-	
-		
+
+
 		/**
 		 * Set the value of the output signal name
 		 * @param name= the new value
@@ -33,13 +33,9 @@ namespace flopoco {
 		void setSignalLength(int length);
 
 		/**
-		*returns the weight of the multiplierBlock (top right corner)		
+		*returns the weight of the multiplierBlock (top right corner)
 		**/
-		int getWeight()
-		{
-			return weight;
-		}
-
+		int getWeight();
 
 		/**
 		*returns the output signal name
@@ -75,7 +71,7 @@ namespace flopoco {
 		*returns the bottom left corner X coordinate
 		**/
 		int getbotX();
-		
+
 		/**
 		*returns the bottom left corner Y coordinate
 		**/
@@ -85,7 +81,7 @@ namespace flopoco {
 
 
 		/**
-		*returns the name of the first signal which enters in DSP. 
+		*returns the name of the first signal which enters in DSP.
 		*for example if the DSP is doing a multiplication like Z <=X * Y
 		*then X is the first input signal and Y is the second input signal
 		**/
@@ -93,13 +89,13 @@ namespace flopoco {
 		{return inputName1;}
 
 		/**
-		*returns the name of the second  signal which enters in DSP. 
+		*returns the name of the second  signal which enters in DSP.
 		*for example if the DSP is doing a multiplication like Z <=X * Y
 		*then X is the first input signal and Y is the second input signal
 		**/
 		string getInputName2()
 		{return inputName2;}
-		
+
 		/**
 		*verifies if two block can be chained in the same supertile or not
 		**/
@@ -108,7 +104,7 @@ namespace flopoco {
 		/**
 		 * checks if two blocks are adjacent
 		**/
-		bool neighbors(MultiplierBlock* next); 
+		bool neighbors(MultiplierBlock* next);
 
 		/**
 		*returns the next block which is chained with the current block in the supertile
@@ -129,16 +125,16 @@ namespace flopoco {
 		*sets the previous block which is chained with the current block in the supertile
 		**/
 		void setPrevious(MultiplierBlock* b);
-		
-			
+
+
 
 		bool operator <= (MultiplierBlock* b);
 
 
 
-		
+
 	private:
-			
+
 		int wX; 							/**< x size */
 		int wY; 							/**< y size */
 		int lsbX; 							/**< x position in a larger multiplier (top right corner) */
