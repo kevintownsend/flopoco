@@ -255,7 +255,7 @@ void usage(char *name, string opName = ""){
 	}
 
 	if ( full || opName == "FixRealKCM"){					
-		OP( "FixRealKCM"," signedInput msbIn lsbIn lsbOut constant useBitheap");
+		OP( "FixRealKCM"," signedInput msbIn lsbIn lsbOut constant");
 		cerr << "Faithful multiplier of a fixed-point input by a real constant\n";
 		cerr << "The constant is provided as a Sollya expression, e.g \"log(2)\"\n";
 	}
@@ -1424,7 +1424,7 @@ bool parseCommandLine(int argc, char* argv[]){
 		} 	
 
 		else if(opname=="FixRealKCM"){
-			int nargs = 6;
+			int nargs = 5;
 			if (i+nargs > argc)
 				usage(argv[0],opname);
 			else {
@@ -1433,8 +1433,7 @@ bool parseCommandLine(int argc, char* argv[]){
 				int lsbIn = atoi(argv[i++]);
 				int lsbOut = atoi(argv[i++]);
 				string constant = argv[i++];
-				int useBitheap = checkBoolean(argv[i++], argv[0]);
-				op = new FixRealKCM(target, signedInput, msbIn, lsbIn, lsbOut, constant, 1.0, emptyDelayMap, useBitheap);
+				op = new FixRealKCM(target, signedInput, msbIn, lsbIn, lsbOut, constant, 1.0, emptyDelayMap);
 				addOperator(op);
 			}
 		}

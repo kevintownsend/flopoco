@@ -45,9 +45,7 @@ namespace flopoco{
 		 */ 
 		Target();
 
-		/** The destructor */
-		virtual ~Target() {}
-
+		virtual ~Target();
 
 		vector<Operator*> * getGlobalOpListRef();
 

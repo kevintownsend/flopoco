@@ -33,10 +33,23 @@ namespace flopoco{
 
 
 	//standalone operator
-	FixRealKCM::FixRealKCM(Target* target, bool signedInput_, int msbIn_, int lsbIn_, int lsbOut_, string constant_, double targetUlpError_, map<string, double> inputDelays, bool useBitheap_) :
-		Operator(target, inputDelays), lsbIn(lsbIn_), msbIn(msbIn_), signedInput(signedInput_),
-		wIn(msbIn_-lsbIn_+1), lsbOut(lsbOut_), constant(constant_), targetUlpError(targetUlpError_),
-		useBitheap(useBitheap_)
+	FixRealKCM::FixRealKCM(
+				Target* target, 
+				bool signedInput_, 
+				int msbIn_, 
+				int lsbIn_, 
+				int lsbOut_, 
+				string constant_, 
+				double targetUlpError_,
+				map<string, double> inputDelays 
+			):Operator(target, inputDelays), 
+			lsbIn(lsbIn_), 
+			msbIn(msbIn_), 
+			signedInput(signedInput_),
+			wIn(msbIn_-lsbIn_+1), 
+			lsbOut(lsbOut_), 
+			constant(constant_), 
+			targetUlpError(targetUlpError_)
 	{
 		srcFileName="FixRealKCM";
 
@@ -274,7 +287,7 @@ namespace flopoco{
 			setCriticalPath( adder->getOutputDelay("R") );
 
 #else // Back to the rake!
-			if(useBitheap)
+			if(!target->plainVHDL())
 			{
 				//create the bitheap
 				bitHeap = new BitHeap(this, wOut+g);
@@ -282,7 +295,7 @@ namespace flopoco{
 
 			if(nbOfTables>2)
 			{
-				if(useBitheap)
+				if(!target->plainVHDL())
 				{
 					//manage the pipeline
 					manageCriticalPath(target->localWireDelay() + target->lutDelay());
@@ -472,11 +485,27 @@ namespace flopoco{
 	
 	//operator incorporated into a global compression
 	//	for use as part of a bigger operator
-	FixRealKCM::FixRealKCM(Operator* parentOp, Target* target, Signal* multiplicandX, 
-												 bool signedInput_, int msbIn_, int lsbIn_, int lsbOut_, 
-												 string constant_, BitHeap* bitHeap_, double targetUlpError_, map<string, double> inputDelays) :
-		Operator(target, inputDelays), lsbIn(lsbIn_), msbIn(msbIn_), signedInput(signedInput_),
-		wIn(msbIn_-lsbIn_+1), lsbOut(lsbOut_), constant(constant_), targetUlpError(targetUlpError_), bitHeap(bitHeap_)
+	FixRealKCM::FixRealKCM(
+			Operator* parentOp, 
+			Target* target, 
+			Signal* multiplicandX, 
+			bool signedInput_, 
+			int msbIn_, 
+			int lsbIn_, 
+			int lsbOut_, 
+			string constant_, 
+			BitHeap* bitHeap_, 
+			double targetUlpError_, 
+			map<string, double> inputDelays
+		):	
+			Operator(target, inputDelays),
+			lsbIn(lsbIn_), msbIn(msbIn_), 
+			signedInput(signedInput_), 
+			wIn(msbIn_-lsbIn_+1), 
+			lsbOut(lsbOut_), 
+			constant(constant_), 
+			targetUlpError(targetUlpError_), 
+			bitHeap(bitHeap_)
 	{
 		srcFileName="FixRealKCM";
 
@@ -741,16 +770,9 @@ namespace flopoco{
 		mpfr_clears(log2C, NULL);
 	}
 
-
-
-	FixRealKCM::~FixRealKCM()
-	{
-		// TODO 
-	}
-
-
-	// To have MPFR work in fix point, we perform the multiplication in very large precision using RN,
-	// and the RU and RD are done only when converting to an int at the end.
+	// To have MPFR work in fix point, we perform the multiplication in very
+	// large precision using RN, and the RU and RD are done only when converting
+	// to an int at the end.
 	void FixRealKCM::emulate(TestCase* tc)
 	{
 		// Get I/O values
@@ -877,8 +899,6 @@ namespace flopoco{
 		setName(name.str());
 	}
   
-	FixRealKCMTable::~FixRealKCMTable() {}
-
 	mpz_class FixRealKCMTable::function(int x0)
 	{
 		if(wIn < 2)
