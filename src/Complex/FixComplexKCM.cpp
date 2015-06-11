@@ -1,4 +1,3 @@
-// general c++ library for manipulating streams
 #include <iostream>
 #include <sstream>
 
@@ -69,7 +68,6 @@ namespace flopoco {
 		//
 		//VHDL outputs goes here
 		//
-		
 	};
 
 	
@@ -81,7 +79,7 @@ namespace flopoco {
 		mpz_class reIn = tc->getInputValue("ReIN");
 		mpz_class imIn = tc->getInputValue("ImIN");
 
-		//Cast to floating point number
+		//Cast to mp floating point number
 		mpfr_t reIn_mpfr, imIn_mpfr;
 		mpfr_init2(reIn_mpfr, inputWidth + 1);
 		mpfr_init2(imIn_mpfr, inputWidth + 1);
