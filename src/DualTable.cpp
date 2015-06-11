@@ -115,7 +115,7 @@ namespace flopoco{
 		// 	}
 	}
 	
-
+	DualTable::~DualTable(){};
 
 	DualTable::DualTable(Target* target) : 
 		Operator(target)
@@ -304,6 +304,8 @@ namespace flopoco{
 		vhdl<<tab<<tab<<tab<<" Y1 <= memVar(conv_integer(X1)); "<<endl;
 		vhdl<<tab<<tab<<tab<<" Y2 <= memVar(conv_integer(X2)); "<<endl;
 	}
+
+	DualTable::primitiveDualMemory::~primitiveDualMemory(){};
 
 }
 

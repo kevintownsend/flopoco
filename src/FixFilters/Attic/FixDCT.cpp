@@ -111,6 +111,7 @@ namespace flopoco{
 		vhdl << tab << "R" << " <= R_int;" << endl;			
 	};
 	
+	FixDCT2::~FixDCT2(){}
 	
 	//generate the i-th coefficient
 	long double FixDCT2::getDCT2FilterCoeff(int i)

@@ -2027,8 +2027,8 @@ namespace flopoco
 		if(isXilinx)
 		{
 			stringstream inAdder0, inAdder1/*, outAdder*/;
-			unsigned int i;
-			unsigned int minIndex, maxIndex;
+			int i;
+			int minIndex, maxIndex;
 
 			//determine the index of the column where the addition should start
 			//	not necessarly the minimum index line
@@ -3056,6 +3056,21 @@ namespace flopoco
 
 	}
 
+	unsigned BitHeap::getMaxWeight() {return maxWeight; }
+
+	unsigned BitHeap::getMinWeight() {return minWeight; }
+
+	int BitHeap::getStagesPerCycle() {return stagesPerCycle;}
+
+	double BitHeap::getElementaryTime() {return elementaryTime;}
+
+	Operator* BitHeap::getOp() {return op;}
+
+	string BitHeap::getName() {return uniqueName_;}
+
+	void BitHeap::setSignedIO(bool s){this->signedIO=s;}
+
+	bool BitHeap::getSignedIO() {return signedIO;}
 
 }
 

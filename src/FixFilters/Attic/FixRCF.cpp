@@ -231,6 +231,8 @@ namespace flopoco{
 		return result.str();
 	};
 
+	FixRCF::~FixRCF(){}
+
 
 	//TODO: redo the emulate function
 	void FixRCF::emulate(TestCase * tc)
