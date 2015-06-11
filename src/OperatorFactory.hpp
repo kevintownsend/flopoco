@@ -23,6 +23,7 @@ namespace flopoco
 	
 		// Note: not using boost::function here, as it's likely to scare people, and also drags in quite a few header dependencies
 	typedef void (*usage_func_t)(std::ostream &);
+	typedef void (*usage_func_t)(std::ostream &);
 	typedef OperatorPtr (*parser_func_t)(Target *,const std::vector<std::string> &,int &);	
 	class OperatorFactory;
 	typedef std::shared_ptr<OperatorFactory> OperatorFactoryPtr;
@@ -37,16 +38,16 @@ namespace flopoco
 
 		static void registerFactory(OperatorFactoryPtr factory);
 		static void add(
-										std::string name,			
-										std::string categories,	// semi-colon seperated list of categories
-										usage_func_t usage,
-										parser_func_t parser
-										);
-
+										std::string name,
+										std::string categories,	/**<  semicolon-seperated list of categories */
+										std::string parameterList, /**<  semicolon-separated list of parameters, each being name(type)[=default]:short_description  */ 
+										std::string additionalDetails, /**< only for the HTML doc and the detailed help */ 
+										parser_func_t parser	);
+		
 		static unsigned getFactoryCount();
 		static OperatorFactoryPtr getFactoryByIndex(unsigned i);
 		static OperatorFactoryPtr findFactory(std::string operatorName);
-
+		
 
 		
 	private:
@@ -68,9 +69,21 @@ namespace flopoco
 	{
 
 	private:
+		/** The types supported by the command line */
+		typedef enum {
+			Bool,
+			Int,
+			Real,
+			String
+		} ParamType;
+		
 		std::string m_name;
 		std::vector<std::string> m_categories;
-		usage_func_t m_usage;
+		std::vector<std::string> m_paramNames;
+		std::map<std::string,ParamType> m_paramType;
+		std::map<std::string,std::string> m_paramDoc;
+		std::map<std::string,std::string> m_paramDefault;
+		std::string m_additionalDetails;
 		parser_func_t m_parser;
 	public:
 		
@@ -82,10 +95,11 @@ namespace flopoco
 				\param testParameters Zero or more sets of arguments that the operator can be tested with.
 		**/
 		OperatorFactory(
-										std::string name,			
-										std::string categories,
-										usage_func_t usage,
-										parser_func_t parser	);
+						 std::string name,
+						 std::string categories,	/**<  semicolon-seperated list of categories */
+						 std::string parameters, /**<  semicolon-separated list of parameters, each being name(type)[=default]:short_description  */ 
+						 std::string additionalDetails, /**< only for the HTML doc and the detailed help */ 
+						 parser_func_t parser	);
 		
 		virtual const std::string &name() const
 		{ return m_name; }
@@ -94,7 +108,9 @@ namespace flopoco
 		{ return m_categories; }
 		
 		virtual void usage(std::ostream &dst) const
-		{ m_usage(dst); }
+		{
+			// TODO
+		}
 		
 		/*! Consumes zero or more string arguments, and creates an operator
 			\param args The offered arguments start at index 0 of the vector, and it is up to the
@@ -112,13 +128,7 @@ namespace flopoco
 
 
 
-		static void add(
-										std::string name,			
-										std::string categories,	// semi-colon seperated list of categories
-										usage_func_t usage,
-										parser_func_t parser
-										);
-
+		/**
 	public:	
 		static std::vector<std::string> Parameters(std::string a)
 		{ return std::vector<std::string>(1, a); }
@@ -144,7 +154,7 @@ namespace flopoco
 	
 		static std::vector<std::vector<std::string> > ParameterList(const std::vector<std::string> &a, const std::vector<std::string> &b, const std::vector<std::string> &c)
 		{ std::vector<std::vector<std::string> > res; res.push_back(a); res.push_back(b); res.push_back(c); return res; }
-	
+		*/
 	};
 }; // namespace flopoco
 

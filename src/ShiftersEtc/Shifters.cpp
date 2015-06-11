@@ -156,12 +156,6 @@ namespace flopoco{
 		tc->addExpectedOutput("R", sr);
 	}
 
-
-	void Shifter::usage(std::ostream &dst)
-	{
-		dst << "TEST"<<endl;
-	}
-
 	
 
 	OperatorPtr Shifter::parseCommandLine(Target *target ,const std::vector<std::string> &args,int &consumed) {
@@ -175,9 +169,10 @@ namespace flopoco{
 
 	
 	void Shifter::registerFactory(){
-		OperatorFactoryHolding::add("Shifter",
-																"operator",
-																Shifter::usage,
+		OperatorFactoryHolding::add("Shifter", // name
+																"operator", // categories
+																"wIn(int): input size in bits; maxShift(int): maximum shift distance in bits; direction(bool): 0=left, 1=right",
+																"A classical barrel shifter. The output size is computed.",
 																Shifter::parseCommandLine
 																) ;
 
