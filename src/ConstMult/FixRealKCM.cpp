@@ -80,7 +80,8 @@ namespace flopoco{
 		mpfr_init2(mpC, 10000);
 		sollya_lib_get_constant(mpC, node);
 
-		//if negative constant, then set negativeConstant and remake the constant positive
+		//if negative constant, then set negativeConstant and remake the
+		//constant positive
 		negativeConstant = false;
 		if(mpfr_cmp_si(mpC, 0) < 0)
 		{
@@ -106,7 +107,8 @@ namespace flopoco{
 		wOut = msbOut + signBit - lsbOut+1;
 		REPORT(DEBUG, "msbConstant=" << msbC << "   lsbOut="<<lsbOut << "   msbOut="<<msbOut << "   wOut="<<wOut);
 		
-		int lutWidth = target->lutInputs(); // -1 because the tools are able to pack LUT + addition in one LUT 
+		// -1 because the tools are able to pack LUT + addition in one LUT 
+		int lutWidth = target->lutInputs(); 
 	
 		// First set up all the sizes
 		int nbOfTables = 0;
@@ -126,7 +128,8 @@ namespace flopoco{
 		nbOfTables = counter;
 		counter--;
 		diSize[counter] = wIn - (currentSize - diSize[counter]);
-		//Better to move the remaining bits to the first tables, than to have them in a new table
+		//Better to move the remaining bits to the first tables, than to have
+		//them in a new table
 		if (diSize[counter] <= lutWidth/2)
 		{
 			diSize[1] += diSize[counter];
@@ -154,8 +157,9 @@ namespace flopoco{
 
 		if(wIn <= lutWidth+1)
 		{
-			///////////////////////////////////  multiplication using 1 table only ////////////////////////////////////
-			REPORT(INFO, "Constant multiplication in a single table, will be correctly rounded");
+			///////  multiplication using 1 table only ////////////////////////
+			REPORT(INFO, 
+				"Constant multiplication in a single table, will be correctly rounded");
 			g=0;
 
 			FixRealKCMTable *t;
