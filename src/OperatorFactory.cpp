@@ -5,10 +5,10 @@ void addOperator(flopoco::Operator *op);
 namespace flopoco
 {	
 	// Global factory list
-	std::vector<OperatorFactoryPtr> OperatorFactoryHolding::sm_factoriesByIndex;
-	std::map<std::string,OperatorFactoryPtr> OperatorFactoryHolding::sm_factoriesByName;
+	std::vector<OperatorFactoryPtr> UserInterface::sm_factoriesByIndex;
+	std::map<std::string,OperatorFactoryPtr> UserInterface::sm_factoriesByName;
 
-void OperatorFactoryHolding::registerFactory(OperatorFactoryPtr factory)
+void UserInterface::registerFactory(OperatorFactoryPtr factory)
 {
 	if(sm_factoriesByName.find(factory->name())!=sm_factoriesByName.end())
 		throw std::string("OperatorFactory - Factory with name '"+factory->name()+" has already been registered.");
@@ -17,17 +17,17 @@ void OperatorFactoryHolding::registerFactory(OperatorFactoryPtr factory)
 	sm_factoriesByName.insert(std::make_pair(factory->name(), factory));
 }
 
-unsigned OperatorFactoryHolding::getFactoryCount()
+unsigned UserInterface::getFactoryCount()
 {
 	return sm_factoriesByIndex.size();
 }
 
-OperatorFactoryPtr OperatorFactoryHolding::getFactoryByIndex(unsigned i)
+OperatorFactoryPtr UserInterface::getFactoryByIndex(unsigned i)
 {
 	return sm_factoriesByIndex.at(i);
 }
 
-OperatorFactoryPtr OperatorFactoryHolding::findFactory(std::string operatorName)
+OperatorFactoryPtr UserInterface::findFactory(std::string operatorName)
 {
 	return sm_factoriesByName[operatorName];
 }
@@ -112,7 +112,7 @@ OperatorFactoryPtr OperatorFactoryHolding::findFactory(std::string operatorName)
 }
 
 			
-void OperatorFactoryHolding::add(
+void UserInterface::add(
 																 std::string name,
 																 std::string categories,	/**<  semicolon-seperated list of categories */
 																 std::string parameterList, /**<  semicolon-separated list of parameters, each being name(type)[=default]:short_description  */ 
@@ -121,7 +121,7 @@ void OperatorFactoryHolding::add(
 																 )
 {
 	OperatorFactoryPtr factory(new OperatorFactory(name, categories, parameterList, additionalDetails, parser));
-	OperatorFactoryHolding::registerFactory(factory);
+	UserInterface::registerFactory(factory);
 }
 
 

@@ -1994,11 +1994,11 @@ int main(int argc, char* argv[] )
 	Shifter::registerFactory();
 
 	// The following is test code
-	cout << OperatorFactoryHolding::getFactoryCount() <<endl ;
-	OperatorFactoryHolding::getFactoryByIndex(0)->usage(cout);
+	cout << UserInterface::getFactoryCount() <<endl ;
+	UserInterface::getFactoryByIndex(0)->usage(cout);
 	std::vector<std::string> params;
 	int c;
-	OperatorPtr test = OperatorFactoryHolding::getFactoryByIndex(0)->parseCommandLine(target, params, c);
+	OperatorPtr test = UserInterface::getFactoryByIndex(0)->parseCommandLine(target, params, c);
 	addOperator(test.get());
 																																										
 #if 0

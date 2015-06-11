@@ -32,7 +32,7 @@ namespace flopoco
 
 	
 	/** This is the class that manages a list of OperatorFactories, and the overall command line and documentation. Each OperatorFactory is responsible for the command line and parsing for one Operator sub-class. */
-	class OperatorFactoryHolding
+	class UserInterface
 	{
 	public:
 
