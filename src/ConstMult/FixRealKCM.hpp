@@ -13,24 +13,47 @@ namespace flopoco{
 	{
 	public:
 
-		/** Input size will be msbIn-lsbIn+1 if unsigned, msbIn-lsbIn+2 if signed. 
-				TODO this is not the standard interface. msbIn should be the sign bit if signed. Fix this some day */
-		FixRealKCM(Target* target, bool signedInput, int msbIn, int lsbIn, int lsbOut, string constant,
-							 double targetUlpError = 1.0, map<string, double> inputDelays = emptyDelayMap,
-							 bool useBitheap = false);
-							 
-		FixRealKCM(Operator* parentOp, Target* target, Signal* multiplicandX, 
-							 bool signedInput, int msbIn, int lsbIn, int lsbOut, string constant,
-							 BitHeap* bitheap,
-							 double targetUlpError = 1.0, map<string, double> inputDelays = emptyDelayMap);
-							 
-		~FixRealKCM();
+		/**
+		 * @brief Input size will be msbIn-lsbIn+1 if unsigned, msbIn-lsbIn+2 if
+		 * signed.  
+		 * \todo this is not the standard interface. msbIn should be
+		 * the sign bit if signed. Fix this some day
+		 */
+		FixRealKCM(
+				Target* target, 
+				bool signedInput, 
+				int msbIn, int lsbIn, 
+				int lsbOut, 
+				string constant, 
+				double targetUlpError = 1.0, 
+				map<string, double> inputDelays = emptyDelayMap
+			);
+
+		FixRealKCM(
+				Operator* parentOp, 
+				Target* target, 
+				Signal* multiplicandX,
+				bool signedInput, 
+				int msbIn, 
+				int lsbIn, 
+				int lsbOut, 
+				string constant,
+				BitHeap* bitheap,
+				double targetUlpError = 1.0, 
+				map<string, double> inputDelays = emptyDelayMap
+			);
+
 
 		// Overloading the virtual functions of Operator
-	  
+
 		void emulate(TestCase* tc);
-		
-		static int neededGuardBits(Target* target, int wIn, int lsbOut, double targetUlpError);
+
+		static int neededGuardBits(
+				Target* target, 
+				int wIn, 
+				int lsbOut, 
+				double targetUlpError
+			);
 
 		int lsbIn;
 		int msbIn;
@@ -44,26 +67,32 @@ namespace flopoco{
 		mpfr_t mpC;
 		int msbC;
 		int g;
-		
-		bool useBitheap;
-		
 		bool negativeConstant;
-		
+
 		BitHeap*	bitHeap;    			/**< The heap of weighted bits that will be used to do the additions */
 		Operator*	parentOp;				/**< The operator which envelops this constant multiplier */
 
 	};
-  
+
 	class FixRealKCMTable : public Table
 	{
 	public:
-		FixRealKCMTable(Target* target, FixRealKCM* mother, int i, int weight, int wIn, int wOut, bool signedInput, bool last, int logicTable = 1);
-		~FixRealKCMTable();
-    
+		FixRealKCMTable(
+				Target* target, 
+				FixRealKCM* mother, 
+				int i, 
+				int weight, 
+				int wIn, 
+				int wOut, 
+				bool signedInput, 
+				bool last, 
+				int logicTable = 1
+			);
+
 		mpz_class function(int x);
 		FixRealKCM* mother;
 		int index;
-		int weight; 
+		int weight;
 		bool signedInput;
 		bool last;
 	};
