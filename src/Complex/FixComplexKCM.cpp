@@ -175,29 +175,41 @@ namespace flopoco {
 		TestCase* tc;
 
 		tc = new TestCase(this);		
-		tc->addInput("ReIN", 0.0);
-		tc->addInput("ImIN", 0.0);
+		tc->addInput("ReIN", 0);
+		tc->addInput("ImIN", 0);
 		emulate(tc);
 		tcl->add(tc);
 		
 		tc = new TestCase(this);		
-		tc->addInput("ReIN", 1.0);
-		tc->addInput("ImIN", 0.0);
+		tc->addInput("ReIN", 1);
+		tc->addInput("ImIN", 0);
 		emulate(tc);
 		tcl->add(tc);
 
 		tc = new TestCase(this);		
-		tc->addInput("ReIN", 0.0);
-		tc->addInput("ImIN", 1.0);
+		tc->addInput("ReIN", 0);
+		tc->addInput("ImIN", 1);
 		emulate(tc);
 		tcl->add(tc);
 		
 		tc = new TestCase(this);		
-		tc->addInput("ReIN", 1.0);
-		tc->addInput("ImIN", 1.0);
+		tc->addInput("ReIN", 1);
+		tc->addInput("ImIN", 1);
 		emulate(tc);
 		tcl->add(tc);
-		
+
+		tc = new TestCase(this);		
+		tc->addInput("ReIN", -1);
+		tc->addInput("ImIN", -1);
+		emulate(tc);
+		tcl->add(tc);
+
+		tc = new TestCase(this);		
+		tc->addInput("ReIN", 2);
+		tc->addInput("ImIN", 0);
+		emulate(tc);
+		tcl->add(tc);
+
 	}
 }//namespace
 
