@@ -65,6 +65,7 @@ namespace flopoco {
 			//Computed values for testBenchs
 			mpfr_t mpfr_constant_re;
 			mpfr_t mpfr_constant_im;
+
 	};
 
 

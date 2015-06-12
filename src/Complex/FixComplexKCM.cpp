@@ -63,6 +63,10 @@ namespace flopoco {
 		}
 
 		int outputWidth = msb_out - lsb_out + 1;
+		if(!signedInput)
+		{
+			outputWidth ++;
+		}
 
 		// declaring output
 		addOutput("ReOut", outputWidth);
@@ -104,10 +108,37 @@ namespace flopoco {
 	void FixComplexKCM::emulate(TestCase * tc) {
 		int inputWidth = msb_in - lsb_in + 1;		
 		int outputWidth = msb_out - lsb_out + 1;
+		if(!signedInput)
+		{
+			outputWidth++;
+		}
 
 		/* first we are going to format the entries */
 		mpz_class reIn = tc->getInputValue("ReIN");
 		mpz_class imIn = tc->getInputValue("ImIN");
+
+		/* Sign handling */
+		// Msb index counting from one
+		bool reInNeg = (
+				signedInput &&
+				(mpz_tstbit(reIn.get_mpz_t(), inputWidth - 1) == 1)
+			);
+
+		bool imInNeg = (
+				signedInput && 
+				(mpz_tstbit(imIn.get_mpz_t(), inputWidth - 1) == 1)
+			);
+
+		// 2's complement -> absolute value unsigned representation
+		if(reInNeg)
+		{
+			reIn = (mpz_class(1) << inputWidth) - reIn;
+		}
+
+		if(imInNeg)
+		{
+			imIn = (mpz_class(1) << inputWidth) - imIn;
+		}
 
 		//Cast to mp floating point number
 		mpfr_t reIn_mpfr, imIn_mpfr;
@@ -148,8 +179,38 @@ namespace flopoco {
 		// x_r * c_im -> xrecim_prod
 		mpfr_mul(xrecim_prod, reIn_mpfr, mpfr_constant_im, GMP_RNDN);
 
+		/* Input sign correction */
+		if(reInNeg)
+		{
+			//Exact
+			mpfr_neg(re_prod, re_prod, GMP_RNDN);
+			mpfr_neg(xrecim_prod, xrecim_prod, GMP_RNDN);
+		}
+
+		if(imInNeg)
+		{
+			//Exact
+			mpfr_neg(im_prod, im_prod, GMP_RNDN);
+			mpfr_neg(crexim_prod, crexim_prod, GMP_RNDN);
+		}
+
 		mpfr_sub(reOut, re_prod, im_prod, GMP_RNDN);
 		mpfr_add(imOut, crexim_prod, xrecim_prod, GMP_RNDN);
+
+		bool reOutNeg = (mpfr_sgn(reOut) < 0);
+		bool imOutNeg = (mpfr_sgn(imOut) < 0);
+
+		if(reOutNeg)
+		{
+			//Exact
+			mpfr_abs(reOut, reOut, GMP_RNDN);
+		}
+
+		if(imOutNeg)
+		{
+			//Exact
+			mpfr_abs(imOut, imOut, GMP_RNDN);
+		}
 
 		//Scale back (Exact)
 		mpfr_mul_2si(reOut, reOut, -lsb_out, GMP_RNDN);
@@ -162,7 +223,23 @@ namespace flopoco {
 		mpfr_get_z(reDown.get_mpz_t(), reOut, GMP_RNDD);
 		mpfr_get_z(imDown.get_mpz_t(), imOut, GMP_RNDD);
 		mpfr_get_z(imUp.get_mpz_t(), imOut, GMP_RNDU);
-		
+
+		cout << "OutputWidth : " << outputWidth << endl;
+		cout << "re :" << reUp << endl << "im :" << imUp <<endl;
+
+		//If result was negative, compute 2's complement
+		if(reOutNeg)
+		{
+			reUp = (mpz_class(1) << outputWidth) - reUp;
+			reDown = (mpz_class(1) << outputWidth) - reDown;
+		}
+
+		if(imOutNeg)
+		{
+			imUp = (mpz_class(1) << outputWidth) - imUp;
+			imDown = (mpz_class(1) << outputWidth) - imDown;
+		}
+
 		//Add expected results to corresponding outputs
 		tc->addExpectedOutput("ReOut", reUp);	
 		tc->addExpectedOutput("ReOut", reDown);	
@@ -198,11 +275,14 @@ namespace flopoco {
 		emulate(tc);
 		tcl->add(tc);
 
-		tc = new TestCase(this);		
-		tc->addInput("ReIN", -1);
-		tc->addInput("ImIN", -1);
-		emulate(tc);
-		tcl->add(tc);
+		if(signedInput)
+		{
+			tc = new TestCase(this);		
+			tc->addInput("ReIN", -1);
+			tc->addInput("ImIN", -1);
+			emulate(tc);
+			tcl->add(tc);
+		}
 
 		tc = new TestCase(this);		
 		tc->addInput("ReIN", 2);
