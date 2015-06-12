@@ -1,5 +1,6 @@
 #include <iostream>
 #include <sstream>
+#include <sollya.h>
 
 
 // include the header of the Operator
@@ -10,17 +11,20 @@ namespace flopoco {
 
 	FixComplexKCM::FixComplexKCM(
 			Target* target,
+			bool signedInput,
 			int msb_in, 
 			int lsb_in, 
 			int lsb_out,
-			string constant
+			string constant_re,
+			string constant_im
 		): 	
 			Operator(target),
 			signedInput(signedInput),
 			msb_in(msb_in),
 			lsb_in(lsb_in),
 			lsb_out(lsb_out),
-			constant(constant)
+			constant_re(constant_re),
+			constant_im(constant_im)
 	{
 		if(lsb_in>msb_in) 
 		{
@@ -33,8 +37,10 @@ namespace flopoco {
 
 		// definition of the name of the operator
 		ostringstream name;
-		name << "FixComplexKCM_" << msb_in <<"_" << lsb_in << "_" << 
-			lsb_out << "_" << constant ;
+		name << "FixComplexKCM_" << vhdlize(msb_in) <<"_" << vhdlize(lsb_in) 
+			<< "_" << vhdlize(lsb_out) << "_" << vhdlize(constant_re) << "_" <<
+			vhdlize(constant_im) << "_" << ((signedInput) ? "" : "un") <<
+			"signed" ;
 
 		setName(name.str());
 		
@@ -48,7 +54,7 @@ namespace flopoco {
 		addInput ("ImIN" , inputWidth);
 
 		//Since it's a sum of two products
-		msb_out =  * msb_in + 1;
+		msb_out =  2 * msb_in + 1;
 		if(msb_out < lsb_out)
 		{
 			throw string(
@@ -64,6 +70,30 @@ namespace flopoco {
 
 		// basic message
 		REPORT(INFO,"Declaration of FixComplexKCM\n");
+
+		//Computing constants for testBench
+		sollya_obj_t nodeIm, nodeRe;	
+		nodeRe = sollya_lib_parse_string(constant_re.c_str());
+		nodeIm = sollya_lib_parse_string(constant_im.c_str());
+		
+		if(sollya_lib_obj_is_error(nodeRe))
+		{
+			ostringstream error;
+			error << srcFileName <<" : Unable to parse string \""  <<
+				constant_re << "\" as a numeric constant" << endl;
+		}
+		
+		if(sollya_lib_obj_is_error(nodeIm))
+		{
+			ostringstream error;
+			error << srcFileName <<" : Unable to parse string \""  <<
+				constant_im << "\" as a numeric constant" << endl;
+		}
+
+		mpfr_inits2(10000, mpfr_constant_re, mpfr_constant_im, NULL);
+
+		sollya_lib_get_constant(mpfr_constant_re, nodeRe);
+		sollya_lib_get_constant(mpfr_constant_im, nodeIm);
 
 		//
 		//VHDL outputs goes here
@@ -85,8 +115,8 @@ namespace flopoco {
 		mpfr_init2(imIn_mpfr, inputWidth + 1);
 
 		//Exact
-		mpft_set_z(reIn_mpfr, reIn.get_mpz_t(), GMP_RNDN); 
-		mpft_set_z(imIn_mpfr, imIn.get_mpz_t(), GMP_RNDN);
+		mpfr_set_z(reIn_mpfr, reIn.get_mpz_t(), GMP_RNDN); 
+		mpfr_set_z(imIn_mpfr, imIn.get_mpz_t(), GMP_RNDN);
 
 		//Exact
 		mpfr_mul_2si(reIn_mpfr, reIn_mpfr, lsb_in, GMP_RNDN);
@@ -95,30 +125,43 @@ namespace flopoco {
 		mpfr_t re_prod, im_prod, crexim_prod, xrecim_prod;
 		mpfr_t reOut, imOut;
 
-		mpfr_inits2(inputWidth + 1, re_prod, reIn_mpfr, crexim_prod, xrecim_prod);
-		mpfr_inits2(outputWidth + 1, reOut, imOut);
+		mpfr_inits2(
+				2 * inputWidth + 1, 
+				re_prod, 
+				im_prod, 
+				crexim_prod, 
+				xrecim_prod, 
+				NULL
+			);
 
-		//Products : Error <= 1/4 * 2^lsb_in 
-		mpfr_mult(re_prod, reIn_mpfr, constant_re, GMP_RNDN);
-		mpfr_mult(im_prod, imIn_mpfr, constant_im, GMP_RNDN);
-		mpfr_mult(crexim_prod, constant_re, imIn_mpfr, GMP_RNDN);
-		mpfr_mult(xrecim_prod, reIn_mpfr, constant_im, GMP_RNDN);
+		mpfr_inits2(5 * outputWidth + 1, reOut, imOut, NULL);
 
-		//Sums : Error <= 2^(lsb_in -1)	
+		// c_r * x_r -> re_prod
+		mpfr_mul(re_prod, reIn_mpfr, mpfr_constant_re, GMP_RNDN);
+
+		// c_i * x_i -> im_prod
+		mpfr_mul(im_prod, imIn_mpfr, mpfr_constant_im, GMP_RNDN);
+
+		// c_r * x_i -> crexim_prod
+		mpfr_mul(crexim_prod, mpfr_constant_re, imIn_mpfr, GMP_RNDN);
+
+		// x_r * c_im -> xrecim_prod
+		mpfr_mul(xrecim_prod, reIn_mpfr, mpfr_constant_im, GMP_RNDN);
+
 		mpfr_sub(reOut, re_prod, im_prod, GMP_RNDN);
 		mpfr_add(imOut, crexim_prod, xrecim_prod, GMP_RNDN);
 
 		//Scale back (Exact)
-		mpfr_mul_2si(reOut, reOut, -lsb_out);
-		mpfr_mul_2si(imOut, imOut, -lsb_out);
+		mpfr_mul_2si(reOut, reOut, -lsb_out, GMP_RNDN);
+		mpfr_mul_2si(imOut, imOut, -lsb_out, GMP_RNDN);
 
 		//Get bits vector
 		mpz_class reUp, reDown, imUp, imDown;
 
-		mprfr_get_z(reUp.get_mpz_t(), reOut, GMP_RNDU);
-		mprfr_get_z(reDown.get_mpz_t(), reOut, GMP_RNDD);
-		mprfr_get_z(imDown.get_mpz_t(), imOut, GMP_RNDD);
-		mprfr_get_z(imUp.get_mpz_t(), imOut, GMP_RNDU);
+		mpfr_get_z(reUp.get_mpz_t(), reOut, GMP_RNDU);
+		mpfr_get_z(reDown.get_mpz_t(), reOut, GMP_RNDD);
+		mpfr_get_z(imDown.get_mpz_t(), imOut, GMP_RNDD);
+		mpfr_get_z(imUp.get_mpz_t(), imOut, GMP_RNDU);
 		
 		//Add expected results to corresponding outputs
 		tc->addExpectedOutput("ReOut", reUp);	
@@ -129,6 +172,33 @@ namespace flopoco {
 
 
 	void FixComplexKCM::buildStandardTestCases(TestCaseList * tcl) {
-		// please fill me with regression tests or corner case tests!
+		TestCase* tc;
+
+		tc = new TestCase(this);		
+		tc->addInput("ReIN", 0.0);
+		tc->addInput("ImIN", 0.0);
+		emulate(tc);
+		tcl->add(tc);
+		
+		tc = new TestCase(this);		
+		tc->addInput("ReIN", 1.0);
+		tc->addInput("ImIN", 0.0);
+		emulate(tc);
+		tcl->add(tc);
+
+		tc = new TestCase(this);		
+		tc->addInput("ReIN", 0.0);
+		tc->addInput("ImIN", 1.0);
+		emulate(tc);
+		tcl->add(tc);
+		
+		tc = new TestCase(this);		
+		tc->addInput("ReIN", 1.0);
+		tc->addInput("ImIN", 1.0);
+		emulate(tc);
+		tcl->add(tc);
+		
 	}
 }//namespace
+
+//TODO : Free memory (mpfr_t)

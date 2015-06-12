@@ -293,7 +293,7 @@ src/Conversions/Fix2FP
  src/IntMult/IntSquarer
 
 # Complex numbers ---------------------------------------------------
-# TODO for Matei
+src/Complex/FixComplexKCM
 
 
 # Floating-point adders and subtracters -----------------------------

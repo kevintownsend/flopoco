@@ -38,7 +38,8 @@ namespace flopoco {
 					int msb_in, 
 					int lsb_in, 
 					int lsb_out,
-					string constant
+					string constant_re,
+					string constant_im
 				);
 
 
@@ -58,8 +59,12 @@ namespace flopoco {
 			int lsb_out;
 			int msb_out;
 
-			mpfr_t constant_re;
-			mpfr_t constant_im;
+			string constant_re;
+			string constant_im;
+
+			//Computed values for testBenchs
+			mpfr_t mpfr_constant_re;
+			mpfr_t mpfr_constant_im;
 	};
 
 

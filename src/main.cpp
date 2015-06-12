@@ -68,16 +68,8 @@ void usage(char *name, string opName = ""){
 		cerr << "Each operator specification is one of: \n";
 	}
 
-
-    
-    
-    
-
-
 	if ( full )
 		cerr << center("SHIFTERS/LZOC", '_') << "\n";
-
-    
     
 	if ( full || opName == "LeftShifter") 
 		OP("LeftShifter","wIn MaxShift");
@@ -259,6 +251,12 @@ void usage(char *name, string opName = ""){
 		cerr << "Faithful multiplier of a fixed-point input by a real constant\n";
 		cerr << "The constant is provided as a Sollya expression, e.g \"log(2)\"\n";
 	}
+	if(full || opName == "FixComplexKCM")
+	{
+		OP("FixComplexKCM", "signedInput msbIn lsbIn lsbOut constantRealPart constantImaginaryPart");
+		cerr << "Faithful multiplier of a fixed-point input by a complex constant\n";
+		cerr << "The constant real and imaginary parts are provided as a Sollya expression, e.g \"log(2)\"\n";
+	}
 
 	if ( full || opName == "IntConstDiv"){					
 		OP( "IntConstDiv","n d alpha");
@@ -432,9 +430,6 @@ void usage(char *name, string opName = ""){
 		OP( "FixFunctionByPiecewisePoly","f lsbI msbO lsbO d");
 		cerr << "Evaluator of function f on [0,1), using a piecewise polynomial of degree d with Horner scheme \n";
 	}
-
-
-
 
 	if ( full )
 		cerr << center("FIXED POINT FILTERS", '_') << "\n";
@@ -1434,6 +1429,24 @@ bool parseCommandLine(int argc, char* argv[]){
 				int lsbOut = atoi(argv[i++]);
 				string constant = argv[i++];
 				op = new FixRealKCM(target, signedInput, msbIn, lsbIn, lsbOut, constant, 1.0, emptyDelayMap);
+				addOperator(op);
+			}
+		}
+
+		else if(opname=="FixComplexKCM"){
+			int nargs = 6;
+			if (i+nargs > argc)
+			{
+				usage(argv[0],opname);
+			}
+			else {
+				int signedInput = checkBoolean(argv[i++], argv[0]);
+				int msbIn = atoi(argv[i++]);
+				int lsbIn = atoi(argv[i++]);
+				int lsbOut = atoi(argv[i++]);
+				string re_constant = argv[i++];
+				string im_constant = argv[i++];
+				op = new FixComplexKCM(target, signedInput, msbIn, lsbIn, lsbOut, re_constant, im_constant);
 				addOperator(op);
 			}
 		}

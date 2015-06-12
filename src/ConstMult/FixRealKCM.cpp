@@ -42,14 +42,15 @@ namespace flopoco{
 				string constant_, 
 				double targetUlpError_,
 				map<string, double> inputDelays 
-			):Operator(target, inputDelays), 
-			lsbIn(lsbIn_), 
-			msbIn(msbIn_), 
-			signedInput(signedInput_),
-			wIn(msbIn_-lsbIn_+1), 
-			lsbOut(lsbOut_), 
-			constant(constant_), 
-			targetUlpError(targetUlpError_)
+			):
+				Operator(target, inputDelays), 
+				lsbIn(lsbIn_), 
+				msbIn(msbIn_), 
+				signedInput(signedInput_),
+				wIn(msbIn_-lsbIn_+1), 
+				lsbOut(lsbOut_), 
+				constant(constant_), 
+				targetUlpError(targetUlpError_)
 	{
 		srcFileName="FixRealKCM";
 
@@ -324,7 +325,9 @@ namespace flopoco{
 							//manage the critical path
 							manageCriticalPath(target->lutDelay());
 							
-							if(negativeConstant != (w==(ppiSize[i]-1) && i==(nbOfTables-1)))
+							if(negativeConstant != (w==(ppiSize[i]-1) 
+										&& i==(nbOfTables-1)))
+
 								s << "not(pp" << i << of(w) << ")";
 							else
 								s << "pp" << i << of(w);

@@ -869,9 +869,6 @@ namespace flopoco{
 		emulate(tc);
 		tcl->add(tc);
 
-
-
-
 		tc = new TestCase(this); 
 		tc->addComment("The largest number whose exp is finite");
 		fx = new FPNumber(wE, wF, FPNumber::largestPositive);
@@ -926,9 +923,6 @@ namespace flopoco{
 		emulate(tc);
 		tcl->add(tc);
 		delete(fy);
-
-
-
 	
 		mpfr_clears(x, y, NULL);
 	}
