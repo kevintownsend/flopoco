@@ -53,24 +53,25 @@ namespace flopoco {
 		addInput ("ReIN" , input_width);
 		addInput ("ImIN" , input_width);
 
-		
-		//Computing constants for testBench
+		//Computing constants for testBench and in order to know constant width
 		sollya_obj_t nodeIm, nodeRe;	
 		nodeRe = sollya_lib_parse_string(constant_re.c_str());
-		nodeIm = sollya_lib_parse_string(constant_im.c_str());
 		
 		if(sollya_lib_obj_is_error(nodeRe))
 		{
 			ostringstream error;
 			error << srcFileName <<" : Unable to parse string \""  <<
 				constant_re << "\" as a numeric constant" << endl;
+			throw error.str();
 		}
 		
+		nodeIm = sollya_lib_parse_string(constant_im.c_str());
 		if(sollya_lib_obj_is_error(nodeIm))
 		{
 			ostringstream error;
 			error << srcFileName <<" : Unable to parse string \""  <<
 				constant_im << "\" as a numeric constant" << endl;
+			throw error.str();
 		}
 
 		mpfr_inits2(10000, mpfr_constant_re, mpfr_constant_im, NULL);
@@ -97,11 +98,13 @@ namespace flopoco {
 
 		//Since it's a sum of two products
 		msb_out =  msb_in + constantMaxMsb + 1;
+
 		if(msb_out < lsb_out)
 		{
 			throw string(
-				"FixComplexKCM: Error, the result computed "
-				"would always be zero (msb_out < lsb_out)");
+					"FixComplexKCM: Error, the result computed "
+					"would always be zero (msb_out < lsb_out)"
+					);
 		}
 
 		output_width = msb_out - lsb_out + 1;
@@ -116,11 +119,6 @@ namespace flopoco {
 
 		// basic message
 		REPORT(INFO,"Declaration of FixComplexKCM\n");
-
-
-		//
-		//VHDL outputs goes here
-		//
 	};
 
 	FixComplexKCM::~FixComplexKCM()
@@ -239,12 +237,13 @@ namespace flopoco {
 		mpfr_mul_2si(imOut, imOut, -lsb_out, GMP_RNDN);
 
 		//Get bits vector
-		mpz_class reUp, reDown, imUp, imDown;
+		mpz_class reUp, reDown, imUp, imDown, carry;
 
 		mpfr_get_z(reUp.get_mpz_t(), reOut, GMP_RNDU);
 		mpfr_get_z(reDown.get_mpz_t(), reOut, GMP_RNDD);
 		mpfr_get_z(imDown.get_mpz_t(), imOut, GMP_RNDD);
 		mpfr_get_z(imUp.get_mpz_t(), imOut, GMP_RNDU);
+		carry = 0;
 
 		//If result was negative, compute 2's complement
 		if(reOutNeg)
@@ -257,6 +256,29 @@ namespace flopoco {
 		{
 			imUp = (mpz_class(1) << output_width) - imUp;
 			imDown = (mpz_class(1) << output_width) - imDown;
+		}
+
+		//Handle border cases
+		if(imUp > (mpz_class(1) << output_width) - 1 )
+		{
+			cout << "OhOhOhh" ;
+			imUp = 0;
+		}
+
+		if(reUp > (mpz_class(1) << output_width) - 1)
+		{
+			reUp = 0;
+		}
+
+		if(imDown > (mpz_class(1) << output_width) - 1 )
+		{
+			cout << "OhOhOhh" ;
+			imDown = 0;
+		}
+
+		if(reDown > (mpz_class(1) << output_width) - 1)
+		{
+			reDown = 0;
 		}
 
 		//Add expected results to corresponding outputs
@@ -315,12 +337,6 @@ namespace flopoco {
 
 		if(signedInput)
 		{
-			tc = new TestCase(this);
-			tc->addInput("ReIN", -4);
-			tc->addInput("ImIN", 0);
-			emulate(tc);
-			tcl->add(tc);
-
 			tc = new TestCase(this);		
 			tc->addInput("ReIN", -1 * one);
 			tc->addInput("ImIN", -1 * one);
@@ -336,5 +352,3 @@ namespace flopoco {
 
 	}
 }//namespace
-
-//TODO : Free memory (mpfr_t)
