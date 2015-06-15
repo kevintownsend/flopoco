@@ -181,7 +181,7 @@ namespace flopoco{
 
 		     ?? < sizeY <= 26 Y  is small enough that we can use the magic table + 1-DSP reconstruction
 		    3/
-*/
+		*/
 		
 		// Various architecture parameter to be determined before attempting to build the architecture
 		bool expYTabulated=false;
@@ -306,7 +306,7 @@ namespace flopoco{
 
 
 
-		//***************** Building a few MPFR constants, useful or obsolete ******** 
+		//********* Building a few MPFR constants, useful or obsolete *********
 		mpz_class mpzLog2, mpzInvLog2;
 	
 		mpfr_t mp2, mp1, mplog2, mpinvlog2;
@@ -351,7 +351,7 @@ namespace flopoco{
 
 
 
-		//***************** Input unpacking and shifting to fixed-point ******** 
+		//******** Input unpacking and shifting to fixed-point ********
 
 		setCriticalPath( getMaxInputDelays(inputDelays) + target->localWireDelay());
 		vhdl << tab  << declare("Xexn", 2) << " <= X(wE+wFIn+2 downto wE+wFIn+1);" << endl;
@@ -418,11 +418,15 @@ namespace flopoco{
 		int sizeXfix = wE+wF+g; // still unsigned; msb=wE-1; lsb = -wF-g
 		manageCriticalPath( target->localWireDelay(sizeXfix) + target->lutDelay());
 
-		vhdl << tab << declare("fixX", sizeXfix) << " <= " << " fixX0" << range(wE-1 + wF+g + wFIn+1 -1, wFIn) << "when resultWillBeOne='0' else " << zg(sizeXfix) <<  ";" << endl;		
+		vhdl << tab << declare("fixX", sizeXfix) << " <= " << " fixX0" << 
+			range(wE-1 + wF+g + wFIn+1 -1, wFIn) << 
+			"when resultWillBeOne='0' else " << zg(sizeXfix) <<  ";" << endl;		
 
 		int lsbXforFirstMult=-3; 
 		int sizeXMulIn = wE-2 - lsbXforFirstMult +1; // msb=wE-2, lsb=-3
-		vhdl << tab <<	declare("xMulIn", sizeXMulIn) << " <=  fixX" << range(sizeXfix-2, sizeXfix - sizeXMulIn-1  ) << "; -- truncation, error 2^-3" << endl;
+		vhdl << tab <<	declare("xMulIn", sizeXMulIn) << " <=  fixX" << 
+			range(sizeXfix-2, sizeXfix - sizeXMulIn-1  ) << 
+			"; -- truncation, error 2^-3" << endl;
 
 		//***************** Multiplication by 1/log2 to get approximate result ******** 
 		// FixRealKCM does the rounding to the proper place with the proper error
@@ -498,13 +502,7 @@ namespace flopoco{
 		vhdl << instance(yPaddedAdder, "theYAdder") << endl;
 		syncCycleFromSignal("Y", yPaddedAdder->getOutputDelay("R"));
 
-
 		vhdl << tab << "-- Now compute the exp of this fixed-point value" <<endl;
-
-
-
-		
-
 
 		if(expYTabulated) {
 			ExpYTable* table;
@@ -595,12 +593,14 @@ namespace flopoco{
 				ostringstream function;
 				function << "1b"<<2*k-1<<"*(exp(x*1b-" << k << ")-x*1b-" << k << "-1)";  // e^z-z-1
 				fe = new FixFunctionByPiecewisePoly(target, function.str(), 
-																						-sizeZhigh, // lsbIn,
-																						-1, // msbOut // was -2*k
-																						-wF-g+2*k-1, // lsbOut // was -wF-g 
-																						d, // degree
-																						true, // finalRounding
-																						inDelayMap("X", target->localWireDelay() + getCriticalPath()) );
+						-sizeZhigh, // lsbIn,
+						-1, // msbOut // was -2*k
+						-wF-g+2*k-1, // lsbOut // was -wF-g 
+						d, // degree
+						true, // finalRounding
+						inDelayMap("X", target->localWireDelay() + getCriticalPath()) 
+					);
+				
 				addSubComponent(fe);
 				inPortMap(fe, "X", "Zhigh");
 				outPortMap(fe, "Y", "expZmZm1");
@@ -613,15 +613,22 @@ namespace flopoco{
 			if(!useMagicTableExpZm1) {
 				// here we have in expZmZm1 e^Z-Z-1
 				// Alignment of expZmZm10:  MSB has weight -2*k, LSB has weight -(wF+g).
-				//		vhdl << tab << declare("ShouldBeZero2", (sizeExpY- sizeExpZmZm1)) << " <= expZmZm1_0" << range(sizeExpY-1, sizeExpZmZm1)  << "; -- for debug to check it is always 0" <<endl;
+				//		vhdl << tab << declare("ShouldBeZero2", (sizeExpY-
+				//		sizeExpZmZm1)) << " <= expZmZm1_0" << range(sizeExpY-1,
+				//		sizeExpZmZm1)  << "; -- for debug to check it is always
+				//		0" <<endl;
 				
 				vhdl << tab << "-- Computing Z + (exp(Z)-1-Z)" << endl;
 			
 				addexpZminus1 = new IntAdder( target, sizeExpZm1, inDelayMap( "X", target->localWireDelay() + getCriticalPath() ) );
 				addSubComponent(addexpZminus1);
 				
-				vhdl << tab << declare( "expZminus1X", sizeExpZm1) << " <= '0' & Z;"<<endl;
-				vhdl << tab << declare( "expZminus1Y", sizeExpZm1) << " <= " << rangeAssign(sizeZ, sizeZ-k+1, "'0'") << " & expZmZm1 ;" << endl;
+				vhdl << tab << declare( "expZminus1X", sizeExpZm1) << 
+						" <= '0' & Z;"<<endl;
+
+				vhdl << tab << declare( "expZminus1Y", sizeExpZm1) << " <= " <<
+						rangeAssign(sizeZ, sizeZ-k+1, "'0'") << 
+						" & expZmZm1 ;" << endl;
 				
 				inPortMap(addexpZminus1, "X", "expZminus1X");
 				inPortMap(addexpZminus1, "Y", "expZminus1Y");

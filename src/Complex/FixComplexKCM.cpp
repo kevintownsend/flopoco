@@ -3,8 +3,9 @@
 #include <sollya.h>
 
 
-// include the header of the Operator
+#include "ConstMult/FixRealKCM.hpp"
 #include "FixComplexKCM.hpp"
+
 
 using namespace std;
 namespace flopoco {
@@ -345,7 +346,7 @@ namespace flopoco {
 		}
 
 		tc = new TestCase(this);		
-		tc->addInput("ReIN", 2);
+		tc->addInput("ReIN", 2 * one);
 		tc->addInput("ImIN", 0);
 		emulate(tc);
 		tcl->add(tc);
