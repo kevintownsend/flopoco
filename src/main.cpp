@@ -8,7 +8,7 @@
             Bogdan Pasca, Bogdan.Pasca@ens-lyon.org
 
   Initial software.
-  Copyright © ENS-Lyon, INRIA, CNRS, UCBL, INSA-Lyon  
+  Copyright © ENS-Lyon, INRIA, CNRS, UCBL, INSA Lyon  
   2008-2014.
   All rights reserved.
 
@@ -1975,21 +1975,6 @@ bool parseCommandLine(int argc, char* argv[]){
 	} while (i<argc);
 	return true;
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 int main(int argc, char* argv[] )

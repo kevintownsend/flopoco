@@ -42,6 +42,9 @@ namespace flopoco {
 					string constant_im
 				);
 
+			virtual ~FixComplexKCM();
+
+
 
 			// Below all the functions needed to test the operator
 			/* the emulate function is used to simulate in software the operator
@@ -58,6 +61,10 @@ namespace flopoco {
 			int lsb_in;
 			int lsb_out;
 			int msb_out;
+			int input_width;
+			int output_width;
+			int constantReMsb;
+			int constantImMsb;
 
 			string constant_re;
 			string constant_im;

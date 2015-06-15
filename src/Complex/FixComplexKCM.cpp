@@ -47,34 +47,13 @@ namespace flopoco {
 		// Copyright 
 		setCopyrightString("3IF 2015 dev team (2015)");
 
-		int inputWidth = 1 + msb_in - lsb_in;
+		input_width = 1 + msb_in - lsb_in;
 		
 		// declaring inputs
-		addInput ("ReIN" , inputWidth);
-		addInput ("ImIN" , inputWidth);
+		addInput ("ReIN" , input_width);
+		addInput ("ImIN" , input_width);
 
-		//Since it's a sum of two products
-		msb_out =  2 * msb_in + 1;
-		if(msb_out < lsb_out)
-		{
-			throw string(
-				"FixComplexKCM: Error, the result computed "
-				"would always be zero (msb_out < lsb_out)");
-		}
-
-		int outputWidth = msb_out - lsb_out + 1;
-		if(!signedInput)
-		{
-			outputWidth ++;
-		}
-
-		// declaring output
-		addOutput("ReOut", outputWidth);
-		addOutput("ImOut", outputWidth);
-
-		// basic message
-		REPORT(INFO,"Declaration of FixComplexKCM\n");
-
+		
 		//Computing constants for testBench
 		sollya_obj_t nodeIm, nodeRe;	
 		nodeRe = sollya_lib_parse_string(constant_re.c_str());
@@ -99,18 +78,61 @@ namespace flopoco {
 		sollya_lib_get_constant(mpfr_constant_re, nodeRe);
 		sollya_lib_get_constant(mpfr_constant_im, nodeIm);
 
+		mpfr_t log2C;
+		mpfr_init2(log2C, 100); 
+		
+		//Constant real part width
+		mpfr_log2(log2C, mpfr_constant_re, GMP_RNDN);
+		constantReMsb = mpfr_get_si(log2C, GMP_RNDU);
+
+		//Constant imaginary part width
+		mpfr_log2(log2C, mpfr_constant_im, GMP_RNDN);
+		constantImMsb = mpfr_get_si(log2C, GMP_RNDU);
+
+		//Free
+		mpfr_clear(log2C);
+
+		int constantMaxMsb = (constantImMsb > constantReMsb) ? 	constantImMsb :
+																constantReMsb;
+
+		//Since it's a sum of two products
+		msb_out =  msb_in + constantMaxMsb + 1;
+		if(msb_out < lsb_out)
+		{
+			throw string(
+				"FixComplexKCM: Error, the result computed "
+				"would always be zero (msb_out < lsb_out)");
+		}
+
+		output_width = msb_out - lsb_out + 1;
+		if(!signedInput)
+		{
+			output_width ++;
+		}
+
+		// declaring output
+		addOutput("ReOut", output_width);
+		addOutput("ImOut", output_width);
+
+		// basic message
+		REPORT(INFO,"Declaration of FixComplexKCM\n");
+
+
 		//
 		//VHDL outputs goes here
 		//
 	};
 
+	FixComplexKCM::~FixComplexKCM()
+	{
+		mpfr_clears(mpfr_constant_im, mpfr_constant_re, NULL);
+	}
 	
 	void FixComplexKCM::emulate(TestCase * tc) {
-		int inputWidth = msb_in - lsb_in + 1;		
-		int outputWidth = msb_out - lsb_out + 1;
+
 		if(!signedInput)
 		{
-			outputWidth++;
+			output_width++;
 		}
 
 		/* first we are going to format the entries */
@@ -121,29 +143,29 @@ namespace flopoco {
 		// Msb index counting from one
 		bool reInNeg = (
 				signedInput &&
-				(mpz_tstbit(reIn.get_mpz_t(), inputWidth - 1) == 1)
+				(mpz_tstbit(reIn.get_mpz_t(), input_width - 1) == 1)
 			);
 
 		bool imInNeg = (
 				signedInput && 
-				(mpz_tstbit(imIn.get_mpz_t(), inputWidth - 1) == 1)
+				(mpz_tstbit(imIn.get_mpz_t(), input_width - 1) == 1)
 			);
 
 		// 2's complement -> absolute value unsigned representation
 		if(reInNeg)
 		{
-			reIn = (mpz_class(1) << inputWidth) - reIn;
+			reIn = (mpz_class(1) << input_width) - reIn;
 		}
 
 		if(imInNeg)
 		{
-			imIn = (mpz_class(1) << inputWidth) - imIn;
+			imIn = (mpz_class(1) << input_width) - imIn;
 		}
 
 		//Cast to mp floating point number
 		mpfr_t reIn_mpfr, imIn_mpfr;
-		mpfr_init2(reIn_mpfr, inputWidth + 1);
-		mpfr_init2(imIn_mpfr, inputWidth + 1);
+		mpfr_init2(reIn_mpfr, input_width + 1);
+		mpfr_init2(imIn_mpfr, input_width + 1);
 
 		//Exact
 		mpfr_set_z(reIn_mpfr, reIn.get_mpz_t(), GMP_RNDN); 
@@ -157,7 +179,7 @@ namespace flopoco {
 		mpfr_t reOut, imOut;
 
 		mpfr_inits2(
-				2 * inputWidth + 1, 
+				2 * input_width + 1, 
 				re_prod, 
 				im_prod, 
 				crexim_prod, 
@@ -165,7 +187,7 @@ namespace flopoco {
 				NULL
 			);
 
-		mpfr_inits2(5 * outputWidth + 1, reOut, imOut, NULL);
+		mpfr_inits2(5 * output_width + 1, reOut, imOut, NULL);
 
 		// c_r * x_r -> re_prod
 		mpfr_mul(re_prod, reIn_mpfr, mpfr_constant_re, GMP_RNDN);
@@ -224,20 +246,17 @@ namespace flopoco {
 		mpfr_get_z(imDown.get_mpz_t(), imOut, GMP_RNDD);
 		mpfr_get_z(imUp.get_mpz_t(), imOut, GMP_RNDU);
 
-		cout << "OutputWidth : " << outputWidth << endl;
-		cout << "re :" << reUp << endl << "im :" << imUp <<endl;
-
 		//If result was negative, compute 2's complement
 		if(reOutNeg)
 		{
-			reUp = (mpz_class(1) << outputWidth) - reUp;
-			reDown = (mpz_class(1) << outputWidth) - reDown;
+			reUp = (mpz_class(1) << output_width) - reUp;
+			reDown = (mpz_class(1) << output_width) - reDown;
 		}
 
 		if(imOutNeg)
 		{
-			imUp = (mpz_class(1) << outputWidth) - imUp;
-			imDown = (mpz_class(1) << outputWidth) - imDown;
+			imUp = (mpz_class(1) << output_width) - imUp;
+			imDown = (mpz_class(1) << output_width) - imDown;
 		}
 
 		//Add expected results to corresponding outputs
@@ -245,12 +264,31 @@ namespace flopoco {
 		tc->addExpectedOutput("ReOut", reDown);	
 		tc->addExpectedOutput("ImOut", imUp);	
 		tc->addExpectedOutput("ImOut", imDown);	
+
+		mpfr_clears(
+				reOut,
+				imOut, 
+				re_prod, 
+				im_prod, 
+				crexim_prod, 
+				xrecim_prod, 
+				reIn_mpfr, 
+				imIn_mpfr,
+				NULL
+			);
 	}
 
 
 	void FixComplexKCM::buildStandardTestCases(TestCaseList * tcl) {
 		TestCase* tc;
 
+		int one = 1;
+		if(lsb_in < 0 && msb_in >= 0)
+		{
+			//Real one
+			one = one << -lsb_in;
+		}
+
 		tc = new TestCase(this);		
 		tc->addInput("ReIN", 0);
 		tc->addInput("ImIN", 0);
@@ -258,28 +296,34 @@ namespace flopoco {
 		tcl->add(tc);
 		
 		tc = new TestCase(this);		
-		tc->addInput("ReIN", 1);
+		tc->addInput("ReIN", one);
 		tc->addInput("ImIN", 0);
 		emulate(tc);
 		tcl->add(tc);
 
 		tc = new TestCase(this);		
 		tc->addInput("ReIN", 0);
-		tc->addInput("ImIN", 1);
+		tc->addInput("ImIN", one);
 		emulate(tc);
 		tcl->add(tc);
 		
 		tc = new TestCase(this);		
-		tc->addInput("ReIN", 1);
-		tc->addInput("ImIN", 1);
+		tc->addInput("ReIN", one);
+		tc->addInput("ImIN", one);
 		emulate(tc);
 		tcl->add(tc);
 
 		if(signedInput)
 		{
+			tc = new TestCase(this);
+			tc->addInput("ReIN", -4);
+			tc->addInput("ImIN", 0);
+			emulate(tc);
+			tcl->add(tc);
+
 			tc = new TestCase(this);		
-			tc->addInput("ReIN", -1);
-			tc->addInput("ImIN", -1);
+			tc->addInput("ReIN", -1 * one);
+			tc->addInput("ImIN", -1 * one);
 			emulate(tc);
 			tcl->add(tc);
 		}
