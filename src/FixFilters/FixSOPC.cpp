@@ -150,16 +150,17 @@ namespace flopoco{
 			
 			for (int i=0; i<n; i++)	{
 				// Multiplication: instantiating a KCM object. It will add bits also to the right of lsbOutKCM
-				new FixRealKCM(this,				// the envelopping operator
-											 getTarget(), 	// the target FPGA
-											 getSignalByName(join("X",i)),
-											 true, 		// signed
-											 msbIn[i]-1, 		// input MSB ?? TODO one sign bit will be added by KCM because it has a non-standard interface. To be fixed someday
-											 lsbIn[i], 		// input LSB weight
-											 lsbOutKCM, 		// output LSB weight -- the output MSB is computed out of the constant
-											 coeff[i], 	// pass the string unmodified
-											 bitHeap		// pass the reference to the bitheap that will accumulate the intermediary products
-											 );
+				new FixRealKCM(
+						this,				// the envelopping operator
+						 getTarget(), 	// the target FPGA
+						 getSignalByName(join("X",i)),
+						 true, 		// signed
+						 msbIn[i]-1, 		// input MSB ?? TODO one sign bit will be added by KCM because it has a non-standard interface. To be fixed someday
+						 lsbIn[i], 		// input LSB weight
+						 lsbOutKCM, 		// output LSB weight -- the output MSB is computed out of the constant
+						 coeff[i], 	// pass the string unmodified
+						 bitHeap		// pass the reference to the bitheap that will accumulate the intermediary products
+					 );
 			}
 			
 			//rounding - add 1/2 ulps
@@ -180,12 +181,12 @@ namespace flopoco{
 			// All the KCMs in parallel
 			for(int i=0; i< n; i++)	{
 				FixRealKCM* mult = new FixRealKCM(getTarget(), 
-																					true, // signed
-																					msbIn[i]-1, // input MSB,TODO one sign bit will be added by KCM because it has a non-standard interface. To be fixed someday
-																					lsbIn[i], // input LSB weight
-																					lsbOut-g, // output LSB weight -- the output MSB is computed out of the constant
-																					coeff[i] // pass the string unmodified
-																					);
+						true, // signed
+						msbIn[i]-1, // input MSB,TODO one sign bit will be added by KCM because it has a non-standard interface. To be fixed someday
+						lsbIn[i], // input LSB weight
+						lsbOut-g, // output LSB weight -- the output MSB is computed out of the constant
+						coeff[i] // pass the string unmodified
+					);
 				addSubComponent(mult);
 				inPortMap(mult,"X", join("X", i));
 				outPortMap(mult, "R", join("P", i));

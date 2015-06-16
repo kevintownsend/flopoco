@@ -157,11 +157,22 @@ namespace flopoco{
 
 
 
-	FPExp::FPExp(Target* target, int wE_, int wF_, int k_, int d_, int guardBits, bool fullInput,  map<string, double> inputDelays)
-		: Operator(target), wE(wE_), wF(wF_), k(k_), d(d_), g(guardBits)
+	FPExp::FPExp(
+			Target* target, 
+			int wE_, 
+			int wF_,
+			int k_,
+			int d_,  
+			int guardBits, 
+			bool fullInput,   
+			map<string, double> inputDelays 
+		): 	Operator(target), 
+			wE(wE_), 
+			wF(wF_), 
+			k(k_), 
+			d(d_), 
+			g(guardBits)
 	{
-
-
 		// Paperwork
 
 		std::ostringstream name;
@@ -174,16 +185,18 @@ namespace flopoco{
 
 		/*  We have the following cases. 
 
-		     wF is really small. Then Y is small enough that e^Y is can be tabulated in a blockram.
-		     In this case g=2.
+			 wF is really small. Then Y is small enough that e^Y is can be
+			 tabulated in a blockram.  In this case g=2.
 		    
-		     10/11 < sizeY < ?? Y is still split into A and Z, but e^Z is simply tabulated 
+			 10/11 < sizeY < ?? Y is still split into A and Z, but e^Z is simply
+			 tabulated 
 
-		     ?? < sizeY <= 26 Y  is small enough that we can use the magic table + 1-DSP reconstruction
-		    3/
+			 ?? < sizeY <= 26 Y  is small enough that we can use the magic table
+			 + 1-DSP reconstruction 3/
 		*/
 		
-		// Various architecture parameter to be determined before attempting to build the architecture
+		// Various architecture parameter to be determined before attempting to
+		// build the architecture
 		bool expYTabulated=false;
 		bool useMagicTableExpZm1=false;
 		bool useMagicTableExpZmZm1=false;
@@ -200,7 +213,7 @@ namespace flopoco{
  		int blockRAMSize=target->sizeOfMemoryBlock();
 
 
-		// ************The following lines decide the architecture out of the size of wF***********************
+		//* The following lines decide the architecture out of the size of wF *
 
 		// First check if wF is small enough to tabulate e^Y in a block RAM
 		g=2;
@@ -438,7 +451,6 @@ namespace flopoco{
 		                                         "1/log(2)", //  constant
 		                                         0.5 + 0.09, // error: we have 0.125 on X, and target is 0.5+0.22 
 		                                         inDelayMap( "X", target->localWireDelay(2) + getCriticalPath())
-																						 
 		                                         );
 		addSubComponent(mulInvLog2);
 		outPortMap(mulInvLog2, "R", "absK");
@@ -452,12 +464,14 @@ namespace flopoco{
 		// First compute K
 		manageCriticalPath(target->localWireDelay() + target->adderDelay(wE+1));
 		vhdl << tab << declare("minusAbsK",wE+1) << " <= " << rangeAssign(wE, 0, "'0'")<< " - ('0' & absK);"<<endl;
-		// The synthesizer should be able to merge the addition and this mux, so the next line is commented
+		// The synthesizer should be able to merge the addition and this mux, so
+		// the next line is commented
 		// manageCriticalPath(target->localWireDelay() + target->lutDelay());
 		vhdl << tab << declare("K",wE+1) << " <= minusAbsK when  XSign='1'   else ('0' & absK);"<<endl;
 
 		// get back to the cycle+critical path at the output of the first multiplier
-		// We kind of forget the critical path at the end of the compute K block, because mulLog2 will be much larger.
+		// We kind of forget the critical path at the end of the compute K
+		// block, because mulLog2 will be much larger.
 		setCycleFromSignal("absK", mulInvLog2->getOutputDelay("R") );
 
 		FixRealKCM *mulLog2 = new FixRealKCM(target, 

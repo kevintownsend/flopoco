@@ -1,16 +1,16 @@
 /*
  * A faithful multiplier by a real constant, using a variation of the KCM method
-
- This file is part of the FloPoCo project developed by the Arenaire
- team at Ecole Normale Superieure de Lyon
-  
- Author : Florent de Dinechin, Florent.de.Dinechin@ens-lyon.fr
-
- Initial software.
- Copyright © ENS-Lyon, INRIA, CNRS, UCBL,  
- 2008-2011.
-  All rights reserved.
-*/
+ *
+ * This file is part of the FloPoCo project developed by the Arenaire
+ * team at Ecole Normale Superieure de Lyon
+ * 
+ * Author : Florent de Dinechin, Florent.de.Dinechin@ens-lyon.fr
+ *
+ * Initial software.
+ * Copyright © ENS-Lyon, INRIA, CNRS, UCBL,  
+ * 2008-2011.
+ * All rights reserved.
+ */
 
 // TODO the first table should have lutSize input bits!
 

@@ -7,7 +7,7 @@
   Author : Florent de Dinechin, Florent.de.Dinechin@ens-lyon.fr, Kinga Illyes, Bogdan Popa
 
   Initial software.
-  Copyright Š ENS-Lyon, INRIA, CNRS, UCBL,
+  Copyright © ENS-Lyon, INRIA, CNRS, UCBL,
   2012.
   All rights reserved.
 

@@ -69,8 +69,11 @@ namespace flopoco{
 		int g;
 		bool negativeConstant;
 
-		BitHeap*	bitHeap;    			/**< The heap of weighted bits that will be used to do the additions */
-		Operator*	parentOp;				/**< The operator which envelops this constant multiplier */
+		/* The heap of weighted bits that will be used to do the additions */
+		BitHeap*	bitHeap;    	
+
+		/* The operator which envelops this constant multiplier */
+		Operator*	parentOp;
 
 	};
 

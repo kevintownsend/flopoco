@@ -32,7 +32,8 @@
    Each bit in the bit heap is flagged with the cycle at which it is produced.
    Compression works as follows:
 
-   First check if there are DSP blocks, chain them into supertiles, generate the corresponding VHDL, and add the result to the bit heap
+   First check if there are DSP blocks, chain them into supertiles, generate 
+   the corresponding VHDL, and add the result to the bit heap
    Then, compress the bit heap
 
 
@@ -64,14 +65,20 @@ namespace flopoco{
 
 		/**
 		 * @brief The constructor
-		 * @param op                the operator in which this bit heap is beeing built
-		 * @param maxWeight         the maximum weight of the heap (it should be known statically, shouldn't it?)
-		 * @param enableSuperTiles  if true, the bit heap compression will try and supertile DSP blocks
-		 * @param name              a description of the heap that will be integrated into its unique name
-		 * @param compressionType	 the type of compression applied to the bit heap:
-										0 = using only compressors (default),
-										1 = using only an adder tree,
-										2 = using a mix of the two, with an addition tree at the end of the compression
+		 * @param op                the operator in which this bit heap is 
+		 * 							beeing built
+		 * @param maxWeight         the maximum weight of the heap (it should 
+		 * 							be known statically, shouldn't it?)
+		 * @param enableSuperTiles  if true, the bit heap compression will try 
+		 * 							and supertile DSP blocks
+		 * @param name              a description of the heap that will be 
+		 * 							integrated into its unique name
+		 * @param compressionType	the type of compression applied to the bit heap:
+		 *								0 = using only compressors (default),
+		 *								1 = using only an adder tree,
+		 *								2 = using a mix of the two, with an 
+		 *									addition tree at the end of the 
+		 *									compression
 		 */
 		BitHeap(Operator* op, int maxWeight, bool enableSuperTiles = true, string name = "", int compressionType = COMPRESSION_TYPE);
 		~BitHeap();

@@ -120,6 +120,87 @@ namespace flopoco {
 
 		// basic message
 		REPORT(INFO,"Declaration of FixComplexKCM\n");
+
+		BitHeap* bitheapRe = new BitHeap(this, 1 + msb_out - lsb_in);
+		BitHeap* bitheapIm = new BitHeap(this, 1 + msb_out - lsb_in);
+
+		/* Workaround for non standard interface of FixRealKCM */
+		int declared_msb_in = msb_in;
+		if(signedInput)
+		{
+			declared_msb_in--;
+		}
+
+		//---- Real part computation ------------------------------------------
+
+		FixRealKCM(
+				this,
+				target,
+				getSignalByName("ReIN"),
+				signedInput,
+				declared_msb_in,
+				lsb_in,
+				lsb_out - 1,
+				constant_re,
+				bitheapRe,
+				0.5
+			);
+
+		FixRealKCM(
+				this, 
+				target, 
+				getSignalByName("ImIN"),
+				signedInput,
+				declared_msb_in,
+				lsb_in,
+				lsb_out - 1,
+				constant_im,
+				bitheapRe,
+				0.5
+			);
+
+		//--- Imaginary part computation --------------------------------------
+		
+		FixRealKCM(
+				this,
+				target,
+				getSignalByName("ImIN"),
+				signedInput,
+				declared_msb_in,
+				lsb_in,
+				lsb_out - 1,
+				constant_re,
+				bitheapIm,
+				0.5
+			);
+
+		FixRealKCM(
+				this, 
+				target, 
+				getSignalByName("ReIN"),
+				signedInput,
+				declared_msb_in,
+				lsb_in,
+				lsb_out - 1,
+				constant_im,
+				bitheapRe,
+				0.5
+			);
+
+		//BitHeap management
+
+		bitheapIm->addConstantOneBit(0);
+		bitheapRe->addConstantOneBit(0);
+
+		bitheapIm->generateCompressorVHDL();
+		bitheapRe->generateCompressorVHDL();
+
+		vhdl << "ImOut" << " <= " << bitheapIm->getSumName() << 
+			range(output_width, lsb_out) << ";" << endl;
+
+		vhdl << "ReOut" << " <= " << bitheapRe->getSumName() << 
+			range(output_width, lsb_out) << ";" << endl;
+
 	};
 
 	FixComplexKCM::~FixComplexKCM()
@@ -262,7 +343,6 @@ namespace flopoco {
 		//Handle border cases
 		if(imUp > (mpz_class(1) << output_width) - 1 )
 		{
-			cout << "OhOhOhh" ;
 			imUp = 0;
 		}
 
@@ -273,7 +353,6 @@ namespace flopoco {
 
 		if(imDown > (mpz_class(1) << output_width) - 1 )
 		{
-			cout << "OhOhOhh" ;
 			imDown = 0;
 		}
 

@@ -153,7 +153,8 @@ public:
 	// Test:
 	// One option is that fixed-point I/Os should always be plain std_logic_vectors.
 	// It just makes the framework simpler, and anyway typing is managed internally
-	// FP I/O need to be typed to manage the testbenches, e.g. FP equality does not resume to equality on the bit vectors.
+	// FP I/O need to be typed to manage the testbenches, e.g. FP equality does
+	// not resume to equality on the bit vectors.  
 	// This is not the case for fixed-point
 	// (comment by F de Dinechin)
 
@@ -601,10 +602,6 @@ public:
 	 */	
 	void outputVHDL(std::ostream& o);   // calls the previous with name = uniqueName
 
-
-
-
-
 	/** True if the operator needs a clock signal; 
 	 * It will also get a rst but doesn't need to use it.
 	 */	
@@ -628,8 +625,6 @@ public:
 	 */	
 	void setCombinatorial();
 
-
-
 	/** Set the operator to need a recirculation signal in order to 
 			trigger the pipeline work
 	*/
@@ -640,15 +635,10 @@ public:
 		*/
 	void setHasDelay1Feedbacks();
 
-
 	/** Indicates that it is not a warning if there is feedback of one cycle, but it
 		is an error if a feedback of more than one cycle happens.
 		*/
 	bool hasDelay1Feedbacks();
-	
-
-
-
 	
 	
 
