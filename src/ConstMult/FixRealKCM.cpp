@@ -306,6 +306,7 @@ namespace flopoco{
 					
 					for(int i=0; i<nbOfTables; i++)
 					{
+						REPORT(DEBUG, "Adding bits for table " << i)
 						//manage the critical path
 						setCycleFromSignal(join("d",i));
 						
@@ -315,7 +316,7 @@ namespace flopoco{
 						
 						//manage the critical path
 						syncCycleFromSignal(join("pp",i));
-						
+
 						//add the bits to the bit heap
 						for(int w=0; w<=ppiSize[i]-1; w++)
 						{
@@ -332,15 +333,13 @@ namespace flopoco{
 							bitHeap->addBit(w, s.str());
 						}
 						
-						if(negativeConstant || (i==(nbOfTables-1)  && 
-									!negativeConstant))
+
+
+						// Sign extension
+						if(negativeConstant   ||   (i==(nbOfTables-1)  && !negativeConstant) )
 						{
-							for(
-									int w=(
-										(
-										 (negativeConstant && i==(nbOfTables-1)) || 
-										 (i==(nbOfTables-1))
-										) ? 
+							for(int w=( /// WTF? This test is false here.
+ 										((negativeConstant   && i==(nbOfTables-1)) || (i==(nbOfTables-1))	) ? 
 											ppiSize[i]-1 : 
 											ppiSize[i]
 										); 
@@ -354,7 +353,6 @@ namespace flopoco{
 								bitHeap->addConstantOneBit(0);
 						}
 					}
-					
 					//add one bit at weight g-1, for faithfull rounding
 					bitHeap->addConstantOneBit(g-1);				
 					

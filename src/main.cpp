@@ -1429,7 +1429,7 @@ bool parseCommandLine(int argc, char* argv[]){
 				int lsbIn = atoi(argv[i++]);
 				int lsbOut = atoi(argv[i++]);
 				string constant = argv[i++];
-				op = new FixRealKCM(target, signedInput, msbIn, lsbIn, lsbOut, constant, 1.0, emptyDelayMap);
+				op = new FixRealKCM(target, signedInput, msbIn, lsbIn, lsbOut, constant);
 				addOperator(op);
 			}
 		}
@@ -1457,9 +1457,9 @@ bool parseCommandLine(int argc, char* argv[]){
 			if (i+nargs > argc)
 				usage(argv[0],opname);
 			else {
-				int lsbIn = atoi(argv[i++]);
-				int msbIn = atoi(argv[i++]);
 				int signedInput = checkBoolean(argv[i++], argv[0]);
+				int msbIn = atoi(argv[i++]);
+				int lsbIn = atoi(argv[i++]);
 				int lsbOut = atoi(argv[i++]);
 				string constant = argv[i++];
 				float targetUlpError = atof(argv[i++]);
