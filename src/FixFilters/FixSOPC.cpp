@@ -15,8 +15,19 @@ namespace flopoco{
 	const int veryLargePrec = 6400;  /*6400 bits should be enough for anybody */
 
 
-	FixSOPC::FixSOPC(Target* target_, int lsbIn_, int lsbOut_, vector<string> coeff_) : 
-		Operator(target_),  lsbOut(lsbOut_), coeff(coeff_), g(-1), computeMSBOut(true), computeGuardBits(true), addFinalRoundBit(true)
+	FixSOPC::FixSOPC(
+			Target* target_, 
+			int lsbIn_,
+			int lsbOut_,
+			vector<string> coeff_
+		) : 
+			Operator(target_),
+			lsbOut(lsbOut_),
+			coeff(coeff_),
+			g(-1),
+			computeMSBOut(true),
+			computeGuardBits(true),
+			addFinalRoundBit(true)
 	{
 		n = coeff.size();
 		for (int i=0; i<n; i++) {
@@ -27,8 +38,23 @@ namespace flopoco{
 	}
 	
 
-	FixSOPC::FixSOPC(Target* target_, vector<int> msbIn_, vector<int> lsbIn_, int msbOut_, int lsbOut_, vector<string> coeff_, int g_) :
-		Operator(target_),  msbIn(msbIn_), lsbIn(lsbIn_), msbOut(msbOut_), lsbOut(lsbOut_), coeff(coeff_), g(g_), computeMSBOut(false)
+	FixSOPC::FixSOPC(
+			Target* target_,
+			vector<int> msbIn_,
+			vector<int> lsbIn_,
+			int msbOut_,
+			int lsbOut_,
+			vector<string> coeff_,
+			int g_
+		) :
+			Operator(target_),
+			msbIn(msbIn_),
+			lsbIn(lsbIn_),
+			msbOut(msbOut_),
+			lsbOut(lsbOut_),
+			coeff(coeff_),
+			g(g_),
+			computeMSBOut(false)
 	{
 		n = coeff.size();
 		if (g==-1)
@@ -57,18 +83,22 @@ namespace flopoco{
 		srcFileName="FixSOPC";
 					
 		ostringstream name;
-		name<<"FixSOPC_uid"<<getNewUId(); 
+		name << "FixSOPC_uid" << getNewUId(); 
 		setName(name.str()); 
 	
 		setCopyrightString("Matei Istoan, Louis Besème, Florent de Dinechin (2013-2015)");
 		
 		for (int i=0; i< n; i++)
+		{
 			addInput(join("X",i), msbIn[i]-lsbIn[i]+1); 
+		}
 
 		//reporting on the filter
 		ostringstream clist;
 		for (int i=0; i< n; i++)
+		{
 			clist << "    " << coeff[i] << ", ";
+		}
 		REPORT(INFO, "Building a " << n << "-tap FIR; lsbOut=" << lsbOut << " for coefficients " << clist.str());
 
 
@@ -102,6 +132,7 @@ namespace flopoco{
 			mpfr_init2 (sumAbsCoeff, veryLargePrec);
 			mpfr_init2 (absCoeff, veryLargePrec);
 			mpfr_set_d (sumAbsCoeff, 0.0, GMP_RNDN);
+
 			for (int i=0; i< n; i++)	{
 			// Accumulate the absolute values
 				mpfr_abs(absCoeff, mpcoeff[i], GMP_RNDU);
@@ -169,11 +200,11 @@ namespace flopoco{
 			//compress the bitheap
 			bitHeap -> generateCompressorVHDL();
 			
-			vhdl << tab << "R" << " <= " << bitHeap-> getSumName() << range(sumSize-1, g+guardBitsKCM) << ";" << endl;
+			vhdl << tab << "R" << " <= " << bitHeap-> getSumName() << 
+				range(sumSize-1, g+guardBitsKCM) << ";" << endl;
 		}
 
 		else
-
 		{
 			 THROWERROR("Sorry, plainVHDL doesn't work at the moment for FixSOPC. Somebody has to fix it and remove this message" );
 			// Technically if you comment the line above it generates non-correct VHDL

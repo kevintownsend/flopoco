@@ -118,11 +118,12 @@ namespace flopoco {
 		addOutput("ReOut", output_width);
 		addOutput("ImOut", output_width);
 
+
 		// basic message
 		REPORT(INFO,"Declaration of FixComplexKCM\n");
 
-		BitHeap* bitheapRe = new BitHeap(this, 1 + msb_out - lsb_in);
-		BitHeap* bitheapIm = new BitHeap(this, 1 + msb_out - lsb_in);
+		BitHeap* bitheapRe = new BitHeap(this, 2 + msb_out - lsb_out);
+		BitHeap* bitheapIm = new BitHeap(this, 2 + msb_out - lsb_out);
 
 		/* Workaround for non standard interface of FixRealKCM */
 		int declared_msb_in = msb_in;
@@ -132,8 +133,7 @@ namespace flopoco {
 		}
 
 		//---- Real part computation ------------------------------------------
-
-		FixRealKCM(
+		new FixRealKCM(
 				this,
 				target,
 				getSignalByName("ReIN"),
@@ -142,11 +142,10 @@ namespace flopoco {
 				lsb_in,
 				lsb_out - 1,
 				constant_re,
-				bitheapRe,
-				0.5
+				bitheapRe
 			);
 
-		FixRealKCM(
+		new FixRealKCM(
 				this, 
 				target, 
 				getSignalByName("ImIN"),
@@ -154,14 +153,13 @@ namespace flopoco {
 				declared_msb_in,
 				lsb_in,
 				lsb_out - 1,
-				constant_im,
-				bitheapRe,
-				0.5
+				"-1 * " + constant_im,
+				bitheapRe
 			);
 
 		//--- Imaginary part computation --------------------------------------
 		
-		FixRealKCM(
+		new FixRealKCM(
 				this,
 				target,
 				getSignalByName("ImIN"),
@@ -170,11 +168,10 @@ namespace flopoco {
 				lsb_in,
 				lsb_out - 1,
 				constant_re,
-				bitheapIm,
-				0.5
+				bitheapIm
 			);
 
-		FixRealKCM(
+		new FixRealKCM(
 				this, 
 				target, 
 				getSignalByName("ReIN"),
@@ -183,23 +180,23 @@ namespace flopoco {
 				lsb_in,
 				lsb_out - 1,
 				constant_im,
-				bitheapRe,
-				0.5
+				bitheapRe
 			);
 
 		//BitHeap management
 
+		//Add 1/2 ulp
 		bitheapIm->addConstantOneBit(0);
 		bitheapRe->addConstantOneBit(0);
 
 		bitheapIm->generateCompressorVHDL();
 		bitheapRe->generateCompressorVHDL();
 
-		vhdl << "ImOut" << " <= " << bitheapIm->getSumName() << 
-			range(output_width, lsb_out) << ";" << endl;
+		vhdl << "ImOut" << " <= " << bitheapIm->getSumName(output_width, 1) << 
+			";" << endl;
 
-		vhdl << "ReOut" << " <= " << bitheapRe->getSumName() << 
-			range(output_width, lsb_out) << ";" << endl;
+		vhdl << "ReOut" << " <= " << bitheapRe->getSumName(output_width, 1) <<  
+			";" << endl;
 
 	};
 
@@ -210,14 +207,10 @@ namespace flopoco {
 	
 	void FixComplexKCM::emulate(TestCase * tc) {
 
-		if(!signedInput)
-		{
-			output_width++;
-		}
-
 		/* first we are going to format the entries */
 		mpz_class reIn = tc->getInputValue("ReIN");
 		mpz_class imIn = tc->getInputValue("ImIN");
+
 
 		/* Sign handling */
 		// Msb index counting from one
