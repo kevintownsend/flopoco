@@ -96,7 +96,6 @@ namespace flopoco {
 
 		int constantMaxMsb = (constantImMsb > constantReMsb) ? 	constantImMsb :
 																constantReMsb;
-
 		//Since it's a sum of two products
 		msb_out =  msb_in + constantMaxMsb + 1;
 
@@ -122,8 +121,8 @@ namespace flopoco {
 		// basic message
 		REPORT(INFO,"Declaration of FixComplexKCM\n");
 
-		BitHeap* bitheapRe = new BitHeap(this, 2 + msb_out - lsb_out);
-		BitHeap* bitheapIm = new BitHeap(this, 2 + msb_out - lsb_out);
+		BitHeap* bitheapRe = new BitHeap(this, 1 + output_width);
+		BitHeap* bitheapIm = new BitHeap(this, 1 + output_width);
 
 		/* Workaround for non standard interface of FixRealKCM */
 		int declared_msb_in = msb_in;
@@ -180,7 +179,7 @@ namespace flopoco {
 				lsb_in,
 				lsb_out - 1,
 				constant_im,
-				bitheapRe
+				bitheapIm
 			);
 
 		//BitHeap management
