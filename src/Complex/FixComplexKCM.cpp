@@ -108,6 +108,11 @@ namespace flopoco {
 		}
 
 		output_width = msb_out - lsb_out + 1;
+
+		int guard_bits = 10;
+
+		cerr << guard_bits << endl;
+
 		if(!signedInput)
 		{
 			output_width ++;
@@ -121,8 +126,8 @@ namespace flopoco {
 		// basic message
 		REPORT(INFO,"Declaration of FixComplexKCM\n");
 
-		BitHeap* bitheapRe = new BitHeap(this, 1 + output_width);
-		BitHeap* bitheapIm = new BitHeap(this, 1 + output_width);
+		BitHeap* bitheapRe = new BitHeap(this, guard_bits + output_width);
+		BitHeap* bitheapIm = new BitHeap(this, guard_bits + output_width);
 
 		/* Workaround for non standard interface of FixRealKCM */
 		int declared_msb_in = msb_in;
@@ -130,6 +135,10 @@ namespace flopoco {
 		{
 			declared_msb_in--;
 		}
+
+		//Add 1/2 ulp
+		bitheapIm->addConstantOneBit(0);
+		bitheapRe->addConstantOneBit(0);
 
 		//---- Real part computation ------------------------------------------
 		new FixRealKCM(
@@ -139,7 +148,7 @@ namespace flopoco {
 				signedInput,
 				declared_msb_in,
 				lsb_in,
-				lsb_out - 1,
+				lsb_out - guard_bits,
 				constant_re,
 				bitheapRe
 			);
@@ -151,13 +160,14 @@ namespace flopoco {
 				signedInput,
 				declared_msb_in,
 				lsb_in,
-				lsb_out - 1,
+				lsb_out - guard_bits,
 				"-1 * " + constant_im,
 				bitheapRe
 			);
 
 		//--- Imaginary part computation --------------------------------------
 		
+
 		new FixRealKCM(
 				this,
 				target,
@@ -165,7 +175,7 @@ namespace flopoco {
 				signedInput,
 				declared_msb_in,
 				lsb_in,
-				lsb_out - 1,
+				lsb_out - guard_bits,
 				constant_re,
 				bitheapIm
 			);
@@ -177,24 +187,19 @@ namespace flopoco {
 				signedInput,
 				declared_msb_in,
 				lsb_in,
-				lsb_out - 1,
+				lsb_out - guard_bits,
 				constant_im,
 				bitheapIm
 			);
 
 		//BitHeap management
-
-		//Add 1/2 ulp
-		bitheapIm->addConstantOneBit(0);
-		bitheapRe->addConstantOneBit(0);
-
 		bitheapIm->generateCompressorVHDL();
 		bitheapRe->generateCompressorVHDL();
 
-		vhdl << "ImOut" << " <= " << bitheapIm->getSumName(output_width, 1) << 
+		vhdl << "ImOut" << " <= " << bitheapIm->getSumName(output_width, guard_bits) << 
 			";" << endl;
 
-		vhdl << "ReOut" << " <= " << bitheapRe->getSumName(output_width, 1) <<  
+		vhdl << "ReOut" << " <= " << bitheapRe->getSumName(output_width, guard_bits) <<  
 			";" << endl;
 
 	};
