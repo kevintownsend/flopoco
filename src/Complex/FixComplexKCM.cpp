@@ -109,9 +109,7 @@ namespace flopoco {
 
 		output_width = msb_out - lsb_out + 1;
 
-		int guard_bits = 10;
-
-		cerr << guard_bits << endl;
+		int guard_bits = 1;
 
 		if(!signedInput)
 		{
@@ -196,11 +194,11 @@ namespace flopoco {
 		bitheapIm->generateCompressorVHDL();
 		bitheapRe->generateCompressorVHDL();
 
-		vhdl << "ImOut" << " <= " << bitheapIm->getSumName(output_width, guard_bits) << 
-			";" << endl;
+		vhdl << "ImOut" << " <= " << 
+			bitheapIm->getSumName(output_width, guard_bits) << ";" << endl;
 
-		vhdl << "ReOut" << " <= " << bitheapRe->getSumName(output_width, guard_bits) <<  
-			";" << endl;
+		vhdl << "ReOut" << " <= " << 
+			bitheapRe->getSumName(output_width, guard_bits) << ";" << endl;
 
 	};
 
