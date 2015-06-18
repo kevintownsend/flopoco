@@ -1463,7 +1463,7 @@ bool parseCommandLine(int argc, char* argv[]){
 				int lsbOut = atoi(argv[i++]);
 				string constant = argv[i++];
 				float targetUlpError = atof(argv[i++]);
-				op = new FixRealKCM(target, lsbIn, msbIn, signedInput, lsbOut, constant, targetUlpError);
+				op = new FixRealKCM(target, signedInput, msbIn, lsbIn, lsbOut, constant, targetUlpError);
 				addOperator(op);
 			}        
 		}

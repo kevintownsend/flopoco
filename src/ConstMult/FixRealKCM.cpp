@@ -43,9 +43,9 @@ namespace flopoco{
 				double targetUlpError_,
 				map<string, double> inputDelays 
 			):Operator(target, inputDelays), 
-			lsbIn(lsbIn_), 
-			msbIn(msbIn_), 
 			signedInput(signedInput_),
+			msbIn(msbIn_), 
+			lsbIn(lsbIn_), 
 			wIn(msbIn_-lsbIn_+1), 
 			lsbOut(lsbOut_), 
 			constant(constant_), 
@@ -57,9 +57,9 @@ namespace flopoco{
 			throw string("FixRealKCM: Error, lsbIn>msbIn");
     
 		if(targetUlpError>1.0) 
-			throw string("FixRealKCM: Error, targetUlpError>1.0. Should be between 0.5 and 1.");
+			THROWERROR("FixRealKCM: Error, targetUlpError="<<targetUlpError<<">1.0. Should be between 0.5 and 1.");
 		if(targetUlpError<0.5) 
-			throw string("FixRealKCM: Error, targetUlpError<0.5. Should be between 0.5 and 1.");
+			THROWERROR("FixRealKCM: Error, targetUlpError="<<targetUlpError<<"<0.5. Should be between 0.5 and 1.");
 		
 		int signBit=0;
 		if(signedInput)
@@ -105,23 +105,23 @@ namespace flopoco{
 
 		msbOut = msbC + msbIn;
 		wOut = msbOut + signBit - lsbOut+1;
-		REPORT(DEBUG, "msbConstant=" << msbC << "   lsbOut="<<lsbOut << "   msbOut="<<msbOut << "   wOut="<<wOut);
+		REPORT(DEBUG, "msbConstant=" << msbC
+					 << "   (msbIn,lsbIn)=("<<msbIn<<","<< lsbIn << ")   wIn=" << wIn
+					 << "   (msbOut,lsbOut)=("<<msbOut<<","<<lsbOut << ")   wOut="<<wIn);
 		
-		// -1 because the tools are able to pack LUT + addition in one LUT 
 		int lutWidth = target->lutInputs(); 
 	
-		// First set up all the sizes
+		// First set up all the sizes. Table 0 is the ????most one
 		int nbOfTables = 0;
 		int diSize[17*42];
 
-		//New version, that adds the extra bits at first tables
 		diSize[0] = lutWidth;
 		int currentSize = diSize[0];
 		
 		int counter=1;
-		while(currentSize < wIn) 
-		{
-			diSize[counter] = lutWidth-1;
+		while(currentSize < wIn) {
+			diSize[counter] = lutWidth-1; // -1 because the tools are able to pack LUT + addition in one LUT 
+
 			currentSize += diSize[counter];
 			counter++;
 		}
@@ -158,8 +158,7 @@ namespace flopoco{
 		if(wIn <= lutWidth+1)
 		{
 			///////  multiplication using 1 table only ////////////////////////
-			REPORT(INFO, 
-				"Constant multiplication in a single table, will be correctly rounded");
+			REPORT(INFO, "Constant multiplication in a single table, will be correctly rounded");
 			g=0;
 
 			FixRealKCMTable *t;
@@ -540,8 +539,9 @@ namespace flopoco{
 			map<string, double> inputDelays
 		):	
 			Operator(target, inputDelays),
-			lsbIn(lsbIn_), msbIn(msbIn_), 
 			signedInput(signedInput_), 
+			msbIn(msbIn_),
+			lsbIn(lsbIn_), 
 			wIn(msbIn_-lsbIn_+1), 
 			lsbOut(lsbOut_), 
 			constant(constant_), 
