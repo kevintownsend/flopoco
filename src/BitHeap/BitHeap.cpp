@@ -31,14 +31,23 @@ using namespace std;
 namespace flopoco
 {
 
-	BitHeap::BitHeap(Operator* op, int maxWeight, bool enableSuperTiles, string name, int compressionType) :
-		op(op), compressionType(compressionType), maxWeight(maxWeight), enableSuperTiles(enableSuperTiles)
+	BitHeap::BitHeap(
+			Operator* op, 
+			int maxWeight, 
+			bool enableSuperTiles, 
+			string name, 
+			int compressionType
+		) :
+			op(op), 
+			compressionType(compressionType), 
+			maxWeight(maxWeight), 
+			enableSuperTiles(enableSuperTiles)
 	{
 		// Set up the vector of lists of weighted bits, and the vector of uids
 		srcFileName=op->getSrcFileName() + ":BitHeap"; // for REPORT to work
 		guid = Operator::getNewUId();
 		stringstream s;
-		s << op->getName() << "_BitHeap"<< name << "_" <<guid; // for REPORT to work
+		s << op->getName() << "_BitHeap"<< name << "_" << guid; // for REPORT to work
 
 		uniqueName_=s.str();
 		REPORT(DEBUG, "Creating BitHeap of size " << maxWeight);

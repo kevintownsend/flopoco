@@ -57,9 +57,11 @@ namespace flopoco{
 			throw string("FixRealKCM: Error, lsbIn>msbIn");
     
 		if(targetUlpError>1.0) 
-			throw string("FixRealKCM: Error, targetUlpError>1.0. Should be between 0.5 and 1.");
+			throw string("FixRealKCM: Error, targetUlpError>1.0."
+					"Should be between 0.5 and 1.");
 		if(targetUlpError<0.5) 
-			throw string("FixRealKCM: Error, targetUlpError<0.5. Should be between 0.5 and 1.");
+			throw string("FixRealKCM: Error, targetUlpError<0.5."
+					" Should be between 0.5 and 1.");
 		
 		int signBit=0;
 		if(signedInput)
@@ -71,11 +73,12 @@ namespace flopoco{
 		node = sollya_lib_parse_string(constant.c_str());	
 		/* If  parse error throw an exception */
 		if (sollya_lib_obj_is_error(node))
-			{
+		{
 				ostringstream error;
-				error << srcFileName << ": Unable to parse string "<< constant << " as a numeric constant" <<endl;
+				error << srcFileName << ": Unable to parse string "<< 
+					constant << " as a numeric constant" <<endl;
 				throw error.str();
-			}
+		}
 
 		mpfr_init2(mpC, 10000);
 		sollya_lib_get_constant(mpC, node);
@@ -94,8 +97,9 @@ namespace flopoco{
 
 		// build the name
 		ostringstream name; 
-		name <<"FixRealKCM_" << vhdlize(lsbIn)  << "_" << vhdlize(msbIn) << "_" << vhdlize(lsbOut) << "_" 
-		     << vhdlize(constant_)  << (signedInput  ?"_signed" : "_unsigned");
+		name <<"FixRealKCM_" << vhdlize(lsbIn)  << "_" << vhdlize(msbIn) << 
+			"_" << vhdlize(lsbOut) << "_" << vhdlize(constant_)  << 
+			(signedInput  ?"_signed" : "_unsigned");
 		setName(name.str());
 
 		mpfr_t log2C;
@@ -105,9 +109,11 @@ namespace flopoco{
 
 		msbOut = msbC + msbIn;
 		wOut = msbOut + signBit - lsbOut+1;
-		REPORT(DEBUG, "msbConstant=" << msbC << "   lsbOut="<<lsbOut << "   msbOut="<<msbOut << "   wOut="<<wOut);
+		REPORT(DEBUG, "msbConstant=" << msbC << "   lsbOut="<<lsbOut << 
+				"   msbOut="<<msbOut << "   wOut="<<wOut);
 		
-		// -1 because the tools are able to pack LUT + addition in one LUT 
+		// TODO : Move at right place 
+		// // -1 because the tools are able to pack LUT + addition in one LUT 
 		int lutWidth = target->lutInputs(); 
 	
 		// First set up all the sizes
@@ -117,17 +123,21 @@ namespace flopoco{
 		//New version, that adds the extra bits at first tables
 		diSize[0] = lutWidth;
 		int currentSize = diSize[0];
-		
 		int counter=1;
+
 		while(currentSize < wIn) 
 		{
 			diSize[counter] = lutWidth-1;
 			currentSize += diSize[counter];
 			counter++;
 		}
+
 		nbOfTables = counter;
 		counter--;
+
+		//Last lut
 		diSize[counter] = wIn - (currentSize - diSize[counter]);
+
 		//Better to move the remaining bits to the first tables, than to have
 		//them in a new table
 		if (diSize[counter] <= lutWidth/2)
@@ -159,11 +169,22 @@ namespace flopoco{
 		{
 			///////  multiplication using 1 table only ////////////////////////
 			REPORT(INFO, 
-				"Constant multiplication in a single table, will be correctly rounded");
+				"Constant multiplication in a single table,"
+				"will be correctly rounded");
 			g=0;
 
 			FixRealKCMTable *t;
-			t = new FixRealKCMTable(target, this, 0, 0, wIn, wOut, signedInput, false);
+			t = new FixRealKCMTable(
+					target, 
+					this, 
+					0, 
+					0, 
+					wIn, 
+					wOut, 
+					signedInput, 
+					false
+				);
+
 			addSubComponent(t);
 			useSoftRAM(t);
 
@@ -183,8 +204,10 @@ namespace flopoco{
 				//manage the critical path
 				manageCriticalPath(target->localWireDelay() + target->lutDelay());
 				
-				vhdl << tab << declare("Y_xored", wOut) << " <= Y xor " << og(wOut) << ";" << endl;
-				vhdl << tab << declare("Y_negated", wOut) << " <= Y_xored + (" << zg(wOut-1) << " & \'1\');" << endl;
+				vhdl << tab << declare("Y_xored", wOut) << " <= Y xor " << 
+					og(wOut) << ";" << endl;
+				vhdl << tab << declare("Y_negated", wOut) << 
+					"<= Y_xored + (" << zg(wOut-1) << " & \'1\');" << endl;
 				
 				vhdl << tab << "R <= Y_negated;" << endl;
 			}
@@ -197,18 +220,23 @@ namespace flopoco{
 		}
 		else
 		{
-			///////////////////////////////////   Generic Case  ////////////////////////////////////
+			//////////////////   Generic Case  ///////////////////////
 
-			// How many guard bits? ulp=2^lsbOut, and we want to ensure targetUlpError
-			// One half-ulp for the final rounding, and nbOfTables tables with an error of 2^(lsbOut-g-1) each 
-			// so we want nbOfTables*2^(lsbOut-g-1) + 0.5 < targetUlpError*2^lsbOut 
-
-			// For targetUlpError=1.0,    3, 4 tables: g=2;  5..8 tables: g=3  etc
+			// How many guard bits? ulp=2^lsbOut, and we want to ensure
+			// targetUlpError One half-ulp for the final rounding, and
+			// nbOfTables tables with an error of 2^(lsbOut-g-1) each so we 
+			// want nbOfTables*2^(lsbOut-g-1) + 0.5 < targetUlpError*2^lsbOut 
+			// For targetUlpError=1.0,    3, 4 tables: g=2;  5..8 tables: g=3
+			// etc
 
 			if(nbOfTables==2 && targetUlpError==1.0)
 				g=0; // specific case: two CR table make up a faithful sum
 			else
-				g = ceil(log2(nbOfTables/((targetUlpError-0.5)*exp2(-lsbOut)))) -1 -lsbOut;
+				g = ceil(
+						log2(
+							nbOfTables/((targetUlpError-0.5)*exp2(-lsbOut))
+							)
+						) -1 -lsbOut;
 
 			REPORT(DEBUG, "g=" << g);
 
@@ -218,8 +246,11 @@ namespace flopoco{
 
 			int ppiSize[42*17]; // should be more than enough for everybody
 			FixRealKCMTable *t[17*42]; 
-			//first split the input X into digits having lutWidth bits -> this is as generic as it gets :)
-			bool tableSigned=false, last;
+		
+			//first split the input X into digits having lutWidth bits -> this
+			//is as generic as it gets :)
+			bool tableSigned=false;
+			bool last;
 			int highBit = wIn;
 			int ppI = wOut+g;
 			
@@ -230,7 +261,8 @@ namespace flopoco{
 				// The previous one wOut+g-lastLutWidth
 				// the previous one wOut+g-lastLutWidth-lutWidth etc
 
-				vhdl << tab << declare( join("d",i), diSize[i] ) << " <= X" << range(highBit-1,   highBit - diSize[i]) << ";" <<endl;
+				vhdl << tab << declare( join("d",i), diSize[i] ) << " <= X" << 
+					range(highBit-1,   highBit - diSize[i]) << ";" <<endl;
 				highBit -= diSize[i];
 				ppiSize[i] = ppI;
 				ppI -= diSize[i];
@@ -247,18 +279,29 @@ namespace flopoco{
 					last=true;
 				}
 
-				REPORT(DEBUG, "Table i=" << i << ", input size=" << diSize[i] << ", output size=" << ppiSize[i]);
+				REPORT(DEBUG, "Table i=" << i << ", input size=" << 
+						diSize[i] << ", output size=" << ppiSize[i]);
 
 				// Now produce the VHDL
 				
-				t[i] = new FixRealKCMTable(target, this, i, highBit, // already updated 
-				                           diSize[i], ppiSize[i], tableSigned, last, 1);
+				// already updated 
+				t[i] = new FixRealKCMTable(
+							target, 
+							this, 
+							i, 
+							highBit, 
+							diSize[i], 
+							ppiSize[i], 
+							tableSigned, 
+							last, 
+							1
+						);
 				useSoftRAM(t[i]);
 				addSubComponent(t[i]);
             	
 
 #define USE_MADDER 0
-#if USE_MADDER // size= 190
+#if 0//USE_MADDER // size= 190
 				vhdl << tab << declare( join("addOp",i), wOut+g ) << " <= ";
 				if (i!=nbOfTables-1) //if not the last table
 					vhdl << rangeAssign(wOut+g-1, ppiSize[i], "'0'") << " & " ;	
@@ -268,7 +311,7 @@ namespace flopoco{
 			
 			Operator* adder;
 			
-#if USE_MADDER
+#if 0 //USE_MADDER
 			if(nbOfTables>2)
 			{
 				adder = new IntMultiAdder(target, wOut+g, nbOfTables, inDelayMap("X0",target->localWireDelay() + getCriticalPath()));
@@ -778,8 +821,18 @@ namespace flopoco{
 						", output size=" << ppiSize[i]);
 
 				// Now produce the VHDL
-				t[i] = new FixRealKCMTable(target, this, i, highBit, // already updated
-				                  diSize[i], ppiSize[i], tableSigned, last, 1);
+				t[i] = new FixRealKCMTable(
+								target, 
+								this, 
+								i, 
+								highBit, // already updated
+								diSize[i], 
+								ppiSize[i], 
+								tableSigned, 
+								last, 
+								1
+							);
+
 				parentOp->useSoftRAM(t[i]);
 				parentOp->addSubComponent(t[i]);
 			}
@@ -788,7 +841,7 @@ namespace flopoco{
 			
 			REPORT(DEBUG, "working with bitheap of size=" << bitheapSize);
 			
-			for(int i=0; i<nbOfTables; i++)
+			for(int i=0; i < nbOfTables; i++)
 			{
 				//manage pipeline
 				parentOp->setCycleFromSignal(join("d", i, "_kcmMult_", getuid()));
@@ -965,7 +1018,7 @@ namespace flopoco{
 
 
 
-	/****************************** The FixRealKCMTable class ********************/
+	/************************** The FixRealKCMTable class ********************/
 
 
 	FixRealKCMTable::FixRealKCMTable(
@@ -988,17 +1041,20 @@ namespace flopoco{
 	{
 		ostringstream name; 
 		srcFileName="FixRealKCM";
-		name << mother->getName() << "_Table_"<<index;
+		name << mother->getName() << "_Table_" << index;
 		setName(name.str());
 	}
   
 	mpz_class FixRealKCMTable::function(int x0)
 	{
+		//If the table contains just two values
 		if(wIn < 2)
 		{
-			// Now we want to compute the product correctly rounded to LSB
+			// Now we want to compute the product correctly rounded to 
 			// lsbOut-g but we have to coerce MPFR into rounding to this
 			// fixed-point format.
+
+			//
 			mpfr_t mpR;
 			
 			mpfr_init2(mpR, 10*wOut);

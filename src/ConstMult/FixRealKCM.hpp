@@ -79,25 +79,25 @@ namespace flopoco{
 
 	class FixRealKCMTable : public Table
 	{
-	public:
-		FixRealKCMTable(
-				Target* target, 
-				FixRealKCM* mother, 
-				int i, 
-				int weight, 
-				int wIn, 
-				int wOut, 
-				bool signedInput, 
-				bool last, 
-				int logicTable = 1
-			);
+		public:
+			FixRealKCMTable(
+					Target* target, 
+					FixRealKCM* mother, 
+					int i, 
+					int weight, 
+					int wIn, 
+					int wOut, 
+					bool signedInput, 
+					bool last, 
+					int logicTable = 1
+					);
 
-		mpz_class function(int x);
-		FixRealKCM* mother;
-		int index;
-		int weight;
-		bool signedInput;
-		bool last;
+			mpz_class function(int x);
+			FixRealKCM* mother;
+			int index;
+			int weight;
+			bool signedInput;
+			bool last;
 	};
 
 }
