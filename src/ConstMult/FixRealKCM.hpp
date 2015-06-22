@@ -55,12 +55,12 @@ namespace flopoco{
 				double targetUlpError
 			);
 
-		int lsbIn;
-		int msbIn;
 		bool signedInput;
+		int msbIn;
+		int lsbIn;
 		int wIn;
-		int lsbOut;
 		int msbOut;
+		int lsbOut;
 		int wOut;
 		string constant;
 		float targetUlpError;

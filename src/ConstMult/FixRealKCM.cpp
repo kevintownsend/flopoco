@@ -43,9 +43,9 @@ namespace flopoco{
 				double targetUlpError_,
 				map<string, double> inputDelays 
 			):Operator(target, inputDelays), 
-			lsbIn(lsbIn_), 
-			msbIn(msbIn_), 
 			signedInput(signedInput_),
+			msbIn(msbIn_), 
+			lsbIn(lsbIn_), 
 			wIn(msbIn_-lsbIn_+1), 
 			lsbOut(lsbOut_), 
 			constant(constant_), 
@@ -56,12 +56,11 @@ namespace flopoco{
 		if(lsbIn>msbIn) 
 			throw string("FixRealKCM: Error, lsbIn>msbIn");
     
-		if(targetUlpError>1.0) 
-			throw string("FixRealKCM: Error, targetUlpError>1.0."
-					"Should be between 0.5 and 1.");
+			THROWERROR("FixRealKCM: Error, targetUlpError="<<
+					targetUlpError<<">1.0. Should be between 0.5 and 1.");
 		if(targetUlpError<0.5) 
-			throw string("FixRealKCM: Error, targetUlpError<0.5."
-					" Should be between 0.5 and 1.");
+			THROWERROR("FixRealKCM: Error, targetUlpError="<<
+					targetUlpError<<"<0.5. Should be between 0.5 and 1.");
 		
 		int signBit=0;
 		if(signedInput)
@@ -109,25 +108,24 @@ namespace flopoco{
 
 		msbOut = msbC + msbIn;
 		wOut = msbOut + signBit - lsbOut+1;
-		REPORT(DEBUG, "msbConstant=" << msbC << "   lsbOut="<<lsbOut << 
-				"   msbOut="<<msbOut << "   wOut="<<wOut);
+
+		REPORT(DEBUG, "msbConstant=" << msbC
+					 << "   (msbIn,lsbIn)=("<<msbIn<<","<< lsbIn << ")   wIn=" << wIn
+					 << "   (msbOut,lsbOut)=("<<msbOut<<","<<lsbOut << ")   wOut="<<wIn);
 		
-		// TODO : Move at right place 
-		// // -1 because the tools are able to pack LUT + addition in one LUT 
 		int lutWidth = target->lutInputs(); 
 	
-		// First set up all the sizes
+		// First set up all the sizes. Table 0 is the ????most one
 		int nbOfTables = 0;
 		int diSize[17*42];
 
-		//New version, that adds the extra bits at first tables
 		diSize[0] = lutWidth;
 		int currentSize = diSize[0];
 		int counter=1;
 
-		while(currentSize < wIn) 
-		{
-			diSize[counter] = lutWidth-1;
+		while(currentSize < wIn) {
+			diSize[counter] = lutWidth-1; // -1 because the tools are able to pack LUT + addition in one LUT 
+
 			currentSize += diSize[counter];
 			counter++;
 		}
@@ -301,7 +299,7 @@ namespace flopoco{
             	
 
 #define USE_MADDER 0
-#if 0//USE_MADDER // size= 190
+#if USE_MADDER // size= 190
 				vhdl << tab << declare( join("addOp",i), wOut+g ) << " <= ";
 				if (i!=nbOfTables-1) //if not the last table
 					vhdl << rangeAssign(wOut+g-1, ppiSize[i], "'0'") << " & " ;	
@@ -311,7 +309,7 @@ namespace flopoco{
 			
 			Operator* adder;
 			
-#if 0 //USE_MADDER
+#if USE_MADDER
 			if(nbOfTables>2)
 			{
 				adder = new IntMultiAdder(target, wOut+g, nbOfTables, inDelayMap("X0",target->localWireDelay() + getCriticalPath()));
@@ -349,6 +347,7 @@ namespace flopoco{
 					
 					for(int i=0; i<nbOfTables; i++)
 					{
+						REPORT(DEBUG, "Adding bits for table " << i)
 						//manage the critical path
 						setCycleFromSignal(join("d",i));
 						
@@ -358,7 +357,7 @@ namespace flopoco{
 						
 						//manage the critical path
 						syncCycleFromSignal(join("pp",i));
-						
+
 						//add the bits to the bit heap
 						for(int w=0; w<=ppiSize[i]-1; w++)
 						{
@@ -375,15 +374,13 @@ namespace flopoco{
 							bitHeap->addBit(w, s.str());
 						}
 						
-						if(negativeConstant || (i==(nbOfTables-1)  && 
-									!negativeConstant))
+
+
+						// Sign extension
+						if(negativeConstant   ||   (i==(nbOfTables-1)  && !negativeConstant) )
 						{
-							for(
-									int w=(
-										(
-										 (negativeConstant && i==(nbOfTables-1)) || 
-										 (i==(nbOfTables-1))
-										) ? 
+							for(int w=( /// WTF? This test is false here.
+ 										((negativeConstant   && i==(nbOfTables-1)) || (i==(nbOfTables-1))	) ? 
 											ppiSize[i]-1 : 
 											ppiSize[i]
 										); 
@@ -397,7 +394,6 @@ namespace flopoco{
 								bitHeap->addConstantOneBit(0);
 						}
 					}
-					
 					//add one bit at weight g-1, for faithfull rounding
 					bitHeap->addConstantOneBit(g-1);				
 					
@@ -585,8 +581,9 @@ namespace flopoco{
 			map<string, double> inputDelays
 		):	
 			Operator(target, inputDelays),
-			lsbIn(lsbIn_), msbIn(msbIn_), 
 			signedInput(signedInput_), 
+			msbIn(msbIn_),
+			lsbIn(lsbIn_), 
 			wIn(msbIn_-lsbIn_+1), 
 			lsbOut(lsbOut_), 
 			constant(constant_), 
