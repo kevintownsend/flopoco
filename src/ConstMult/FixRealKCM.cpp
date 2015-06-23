@@ -56,6 +56,7 @@ namespace flopoco{
 		if(lsbIn>msbIn) 
 			throw string("FixRealKCM: Error, lsbIn>msbIn");
     
+		if(targetUlpError > 1.0)
 			THROWERROR("FixRealKCM: Error, targetUlpError="<<
 					targetUlpError<<">1.0. Should be between 0.5 and 1.");
 		if(targetUlpError<0.5) 
