@@ -51,7 +51,8 @@ namespace flopoco{
 		static int neededGuardBits(
 				Target* target, 
 				int wIn, 
-				int lsbOut, 
+				//useless ?
+				//int lsbOut, 
 				double targetUlpError
 			);
 
@@ -74,6 +75,14 @@ namespace flopoco{
 
 		/* The operator which envelops this constant multiplier */
 		Operator*	parentOp;
+		
+		private:
+		void init();
+		static int computeTableNumbers(
+			Target* target,
+			int wIn,
+			int** disize_target = nullptr
+		);
 
 	};
 

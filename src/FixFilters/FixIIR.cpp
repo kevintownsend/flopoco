@@ -122,10 +122,10 @@ namespace flopoco {
 		int wInKCM_B = 1 -lsbOut;	//1 sign bit + p bit 
 		int lsbOutKCM = lsbOut-g;
 		double targetUlpError = 1.0;
-		int guardBitsKCM_B = FixRealKCM::neededGuardBits(target, wInKCM_B, lsbOutKCM, targetUlpError);
+		int guardBitsKCM_B = FixRealKCM::neededGuardBits(target, wInKCM_B, targetUlpError);
 
 		int wInKCM_A = 1+1+msbOut-lsbOut+g;
-		int guardBitsKCM_A = FixRealKCM::neededGuardBits(target, wInKCM_A, lsbOutKCM, targetUlpError);
+		int guardBitsKCM_A = FixRealKCM::neededGuardBits(target, wInKCM_A, targetUlpError);
 
 		int guardBitsKCM = max(guardBitsKCM_A, guardBitsKCM_B);
 

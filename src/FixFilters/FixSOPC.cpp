@@ -166,7 +166,7 @@ namespace flopoco{
 		for(int i=0; i<n; i++)		{
 			int wInKCM = msbIn[i]-lsbIn[i]+1;	//p bits + 1 sign bit
 			double targetUlpError = 1.0;
-			int temp = FixRealKCM::neededGuardBits(getTarget(), wInKCM, lsbOutKCM, targetUlpError);			
+			int temp = FixRealKCM::neededGuardBits(getTarget(), wInKCM, targetUlpError);			
 			if(temp > guardBitsKCM)
 				guardBitsKCM = temp;
 		}

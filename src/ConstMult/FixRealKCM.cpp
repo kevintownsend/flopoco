@@ -31,37 +31,24 @@ using namespace std;
 
 namespace flopoco{
 
-
-	//standalone operator
-	FixRealKCM::FixRealKCM(
-				Target* target, 
-				bool signedInput_, 
-				int msbIn_, 
-				int lsbIn_, 
-				int lsbOut_, 
-				string constant_, 
-				double targetUlpError_,
-				map<string, double> inputDelays 
-			):Operator(target, inputDelays), 
-			signedInput(signedInput_),
-			msbIn(msbIn_), 
-			lsbIn(lsbIn_), 
-			wIn(msbIn_-lsbIn_+1), 
-			lsbOut(lsbOut_), 
-			constant(constant_), 
-			targetUlpError(targetUlpError_)
+	/**
+	* @brief init : all operator initialisation stuff goes here
+	*/
+	void FixRealKCM::init()
 	{
-		srcFileName="FixRealKCM";
+	srcFileName="FixRealKCM";
 
 		if(lsbIn>msbIn) 
 			throw string("FixRealKCM: Error, lsbIn>msbIn");
     
 		if(targetUlpError > 1.0)
 			THROWERROR("FixRealKCM: Error, targetUlpError="<<
-					targetUlpError<<">1.0. Should be between 0.5 and 1.");
-		if(targetUlpError<0.5) 
+					targetUlpError<<">1.0. Should be in ]0.5 ; 1].");
+		//Error on final rounding is er <= 2^{lsbout - 1} = 1/2 ulp so 
+		//it's impossible to reach 0.5 ulp of precision
+		if(targetUlpError <= 0.5) 
 			THROWERROR("FixRealKCM: Error, targetUlpError="<<
-					targetUlpError<<"<0.5. Should be between 0.5 and 1.");
+					targetUlpError<<"<0.5. Should be in ]0.5 ; 1]");
 		
 		int signBit=0;
 		if(signedInput)
@@ -98,7 +85,7 @@ namespace flopoco{
 		// build the name
 		ostringstream name; 
 		name <<"FixRealKCM_" << vhdlize(lsbIn)  << "_" << vhdlize(msbIn) << 
-			"_" << vhdlize(lsbOut) << "_" << vhdlize(constant_)  << 
+			"_" << vhdlize(lsbOut) << "_" << vhdlize(constant)  << 
 			(signedInput  ?"_signed" : "_unsigned");
 		setName(name.str());
 
@@ -106,6 +93,7 @@ namespace flopoco{
 		mpfr_init2(log2C, 100); // should be enough for anybody
 		mpfr_log2(log2C, mpC, GMP_RNDN);
 		msbC = mpfr_get_si(log2C, GMP_RNDU);
+		mpfr_clears(log2C, NULL);
 
 		msbOut = msbC + msbIn;
 		wOut = msbOut + signBit - lsbOut+1;
@@ -113,19 +101,27 @@ namespace flopoco{
 		REPORT(DEBUG, "msbConstant=" << msbC
 					 << "   (msbIn,lsbIn)=("<<msbIn<<","<< lsbIn << ")   wIn=" << wIn
 					 << "   (msbOut,lsbOut)=("<<msbOut<<","<<lsbOut << ")   wOut="<<wIn);
-		
+	}
+	
+	int FixRealKCM::computeTableNumbers(
+			Target* target,
+			int wIn,
+			int** disize_target
+		)
+	{
 		int lutWidth = target->lutInputs(); 
 	
-		// First set up all the sizes. Table 0 is the ????most one
+		// First set up all the sizes. Table 0 is the most one
 		int nbOfTables = 0;
-		int diSize[17*42];
+		int* diSize = new int[17*42];		
 
 		diSize[0] = lutWidth;
 		int currentSize = diSize[0];
 		int counter=1;
 
 		while(currentSize < wIn) {
-			diSize[counter] = lutWidth-1; // -1 because the tools are able to pack LUT + addition in one LUT 
+			// -1 because the tools are able to pack LUT + addition in one LUT 
+			diSize[counter] = lutWidth-1; 
 
 			currentSize += diSize[counter];
 			counter++;
@@ -156,13 +152,50 @@ namespace flopoco{
 			diSize[counter] = wIn - (currentSize - diSize[counter]);
 		}
 		
+		if(disize_target != nullptr)
+		{
+			*disize_target = diSize;
+		}
+		else
+		{
+			delete[] diSize;
+		}
+		return nbOfTables;
+	}
+
+	//standalone operator
+	FixRealKCM::FixRealKCM(
+				Target* target, 
+				bool signedInput_, 
+				int msbIn_, 
+				int lsbIn_, 
+				int lsbOut_, 
+				string constant_, 
+				double targetUlpError_,
+				map<string, double> inputDelays 
+			):Operator(target, inputDelays), 
+			signedInput(signedInput_),
+			msbIn(msbIn_), 
+			lsbIn(lsbIn_), 
+			wIn(msbIn_-lsbIn_+1), 
+			lsbOut(lsbOut_), 
+			constant(constant_), 
+			targetUlpError(targetUlpError_)
+	{
+		init();		
+		
+		int* diSize;
+		int nbOfTables = computeTableNumbers(target, wIn, &diSize);
+		int lutWidth = target->lutInputs();
+		
 		REPORT(INFO, "Constant multiplication in "<< nbOfTables << " tables");
-		
 		//manage the critical path
-		setCriticalPath(getMaxInputDelays(inputDelays));
 		
+		setCriticalPath(getMaxInputDelays(inputDelays));
 		addInput("X", wIn);
 		addOutput("R", wOut);
+		
+		//[LFORG] OK
 
 		if(wIn <= lutWidth+1)
 		{
@@ -261,7 +294,7 @@ namespace flopoco{
 				// the previous one wOut+g-lastLutWidth-lutWidth etc
 
 				vhdl << tab << declare( join("d",i), diSize[i] ) << " <= X" << 
-					range(highBit-1,   highBit - diSize[i]) << ";" <<endl;
+					range(highBit-1,   highBit - diSize[i]) << ";" << endl;
 				highBit -= diSize[i];
 				ppiSize[i] = ppI;
 				ppI -= diSize[i];
@@ -346,7 +379,7 @@ namespace flopoco{
 					//manage the pipeline
 					manageCriticalPath(target->localWireDelay() + target->lutDelay());
 					
-					for(int i=0; i<nbOfTables; i++)
+					for(int i = 0; i < nbOfTables; i++)
 					{
 						REPORT(DEBUG, "Adding bits for table " << i)
 						//manage the critical path
@@ -375,8 +408,6 @@ namespace flopoco{
 							bitHeap->addBit(w, s.str());
 						}
 						
-
-
 						// Sign extension
 						if(negativeConstant   ||   (i==(nbOfTables-1)  && !negativeConstant) )
 						{
@@ -408,7 +439,7 @@ namespace flopoco{
 					vhdl << declare("OutRes", wOut+g) << " <= " << 
 						bitHeap->getSumName() << range(wOut+g-1, 0) << ";" << endl;
 				}
-				else
+				else // Target->plainVHDL() is true 
 				{
 					bool pipeinit;
 					bool pipe[17*42];
@@ -561,8 +592,7 @@ namespace flopoco{
 			vhdl << tab << "R <= OutRes" << range(wOut+g-1, g) << ";" << endl;
 			outDelayMap["R"] = getCriticalPath();
 		}
-
-		mpfr_clears(log2C, NULL);
+		delete[] diSize;
 	}
 	
 	
@@ -591,110 +621,17 @@ namespace flopoco{
 			targetUlpError(targetUlpError_), 
 			bitHeap(bitHeap_)
 	{
-		srcFileName="FixRealKCM";
-
-		if(lsbIn>msbIn) 
-			throw string("FixRealKCM: Error, lsbIn>msbIn");
-    
-		if(targetUlpError>1.0) 
-			throw string("FixRealKCM: Error, targetUlpError>1.0. Should be between 0.5 and 1.");
-		if(targetUlpError<0.5) 
-			throw string("FixRealKCM: Error, targetUlpError<0.5. Should be between 0.5 and 1.");
 		
-		int signBit=0;
-		if(signedInput)
-			signBit=1;
-		wIn += signBit;
-
-		/* Convert the input string into a sollya evaluation tree */
-		sollya_obj_t node;
-		node = sollya_lib_parse_string(constant.c_str());	
-		/* If  parse error throw an exception */
-		if (sollya_lib_obj_is_error(node))
-			{
-				ostringstream error;
-				error << srcFileName << ": Unable to parse string "<< 
-					constant << " as a numeric constant" <<endl;
-				throw error.str();
-			}
-
-		mpfr_init2(mpC, 10000);
-		sollya_lib_get_constant(mpC, node);
-
-		//if the constant is negative, remake it positive and set negativeConstant
-		negativeConstant = false;
-		if(mpfr_cmp_si(mpC, 0) < 0)
-		{
-			//throw string("FixRealKCMBH: only positive constants are supported");
-			negativeConstant = true;
-			mpfr_abs(mpC, mpC, GMP_RNDN);
-		}
-
-		REPORT(DEBUG, "Constant evaluates to " << mpfr_get_d(mpC, GMP_RNDN));
-
-		// build the name
-		ostringstream name; 
-		name <<"FixRealKCM_" << vhdlize(lsbIn)  << "_" << vhdlize(msbIn) << 
-			"_" << vhdlize(lsbOut) << "_" 
-		     << vhdlize(constant_)  << (signedInput ? "_signed" : "_unsigned");
-		setName(name.str()); 
-
-		mpfr_t log2C;
-		mpfr_init2(log2C, 100); // should be enough for anybody
-		mpfr_log2(log2C, mpC, GMP_RNDN);
-		msbC = mpfr_get_si(log2C, GMP_RNDU);
-
-		msbOut = msbC + msbIn;
+		init();
 		
-		//FIXME: is this correct? the msbOut should never be less than lsbOut, right?
-		if(msbOut < lsbOut)
-			msbOut = lsbOut;
-		
-		wOut = msbOut + signBit - lsbOut + 1;
-		REPORT(DEBUG, "msbConstant=" << msbC << "   msbIn=" << msbIn << 
-				"   lsbIn=" << lsbIn << "   msbOut=" << msbOut << 
-				"   lsbOut=" << lsbOut << "   wOut="<<wOut);
-
 		// -1 because the tools are able to pack LUT + addition in one LUT
 		int lutWidth = target->lutInputs(); 
 
 		// First set up all the sizes
-		int nbOfTables = 0;
-		int diSize[17*42];
+		int *diSize;
+		int nbOfTables = computeTableNumbers(target, wIn, &diSize);
+		
 
-		//New version, that adds the extra bits at first tables
-		diSize[0] = lutWidth;
-		int currentSize = diSize[0];
-		
-		int counter=1;
-		while(currentSize < wIn)
-		{
-			diSize[counter] = lutWidth-1;
-			currentSize += diSize[counter];
-			counter++;
-		}
-		nbOfTables = counter;
-		counter--;
-		diSize[counter] = wIn - (currentSize - diSize[counter]);		
-		
-		//Better to move the remaining bits to the first tables, than to have
-		//them in a new table
-		if (diSize[counter] <= lutWidth/2)
-		{
-			diSize[1] += diSize[counter];
-			
-			counter=2;
-			currentSize = diSize[0] + diSize[1];
-			while(currentSize < wIn) 
-			{
-				diSize[counter] = lutWidth-1;
-				currentSize += diSize[counter];
-				counter++;	
-			}
-			nbOfTables = counter;
-			counter--;
-			diSize[counter] = wIn - (currentSize - diSize[counter]);
-		}
 		REPORT(INFO, "Constant multiplication in "<< nbOfTables << " tables");		
 		
 		//manage pipeline
@@ -772,14 +709,8 @@ namespace flopoco{
 			// For targetUlpError=1.0,    3, 4 tables: g=2;  5..8 tables: g=3
 			// etc
 
-			if(nbOfTables==2 && targetUlpError==1.0)
-				g=0; // specific case: two CR table make up a faithful sum
-			else
-				g = ceil(
-							log2(nbOfTables/((targetUlpError-0.5)*exp2(-lsbOut)))
-						) -1 -lsbOut;
-
-			REPORT(DEBUG, "g=" << g);
+				g = neededGuardBits(target, wIn, targetUlpError);	
+					REPORT(DEBUG, "g=" << g);
 
 			//manage pipeline
 			parentOp->syncCycleFromSignal(multiplicandX->getName());
@@ -888,8 +819,7 @@ namespace flopoco{
 				
 			}
 		}
-
-		mpfr_clears(log2C, NULL);
+		delete[] diSize;
 	}
 
 	// To have MPFR work in fix point, we perform the multiplication in very
@@ -953,63 +883,22 @@ namespace flopoco{
 	int FixRealKCM::neededGuardBits(
 			Target* target, 
 			int wIn, 
-			int lsbOut, 
 			double targetUlpError
 		)
 	{
 		int guardBits;
-		// -1 because the tools are able to pack LUT + addition in one LUT
-		int lutWidth = target->lutInputs(); 
-		int currentSize;
-		int counter;
+		int nbOfTables = computeTableNumbers(target, wIn, nullptr);
 
-		// First set up all the sizes
-		int nbOfTables = 0;
-		int diSize[17*42];
-
-		//New version, that adds the extra bits at first tables
-		diSize[0] = lutWidth;
-		currentSize = diSize[0];
-		
-		counter = 1;
-		while(currentSize < wIn) 
+		if(targetUlpError > 1.0 || targetUlpError <= 0.5)
 		{
-			diSize[counter] = lutWidth-1;
-			currentSize += diSize[counter];
-			counter++;
-		}
-		nbOfTables = counter;
-		counter--;
-		diSize[counter] = wIn - (currentSize - diSize[counter]);		
-		
-		//Better to move the remaining bits to the first tables, than to have
-		//them in a new table
-		if (diSize[counter] <= lutWidth/2)
-		{
-			diSize[1] += diSize[counter];
-			
-			counter=2;
-			currentSize = diSize[0] + diSize[1];
-			while(currentSize < wIn) 
-			{
-				diSize[counter] = lutWidth-1;
-				currentSize += diSize[counter];
-				counter++;
-			}
-			nbOfTables = counter;
-			counter--;
-			diSize[counter] = wIn - (currentSize - diSize[counter]);
+			return -1; 
 		}
 				
 		if(nbOfTables<=2 && targetUlpError==1.0)
 			// specific case: two CR table make up a faithful sum
 			guardBits = 0; 
 		else
-			guardBits = ceil(
-					log2(
-						nbOfTables/
-						((targetUlpError-0.5)*exp2(-lsbOut))
-						)) -1 - lsbOut;
+			guardBits = ceil(log2((double)nbOfTables/targetUlpError));
 			
 		return guardBits;
 	}
