@@ -259,10 +259,10 @@ namespace flopoco{
 				c = n.back();
 			}
 			// not sure yet there is a _d in front
-			if (c=='d') {
+			if (c=='d' && n.length()>0) {
 				n.pop_back();
 				c = n.back();
-				if (c=='_') {
+				if (c=='_' && n.length()>0) {
 					n.pop_back();
 					c = n.back();
 					success=true;
@@ -270,7 +270,7 @@ namespace flopoco{
 			}
 
 			if(success) {
-				// cout << "**** Stripped " << name << " into " << n << endl;
+				 cout << "**** Stripped " << name << " into " << n << endl;
 				name=n;
 			}
 		}
@@ -1186,6 +1186,7 @@ namespace flopoco{
 		if (op->isSequential())
 			o << "  -- pipelineDepth="<< op->getPipelineDepth() << " maxInDelay=" << getMaxInputDelays(op->inputDelayMap);
 		o << endl;
+
 		o << tab << tab << "port map ( ";
 		// build vhdl and erase portMap_
 		map<string,string>::iterator it;
@@ -1226,7 +1227,7 @@ namespace flopoco{
 			// The following try was intended to distinguish between variable and constant
 			// but getSignalByName doesn't catch delayed variables
 			try{
-				//				cout << "its = " << (*it).second << "  " << endl;
+				//cout << "its = " << (*it).second << "  " << endl;
 				rhs = getDelayedSignalByName((*it).second);
 				if (rhs->isFix() && !outputSignal){
 						rhsString = std_logic_vector((*it).second);
@@ -1241,17 +1242,18 @@ namespace flopoco{
 				rhsString=(*it).second;
 			}
 
-
 			o << (*it).first << " => " << rhsString;
 
 			if ( outputSignal && parsing ){
 				vhdl << o.str();
+
 				vhdl.flush(currentCycle_);
 				o.str("");
 				vhdl.disableParsing(!parsing);
 			}
 			//op->portMap_.erase(it);
 		}
+
 		o << ");" << endl;
 
 
