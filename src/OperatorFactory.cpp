@@ -92,10 +92,16 @@ namespace flopoco
 				}
 				int j = typeEnd+1;
 				if (part[j]=='=') {
-					//parsec default value
-					cout << "Default value here" << endl;
+					//parse default value
+					j++;
+					int defaultValEnd = part.find(':', 0);
+					std::string defaultVal=part.substr(j, defaultValEnd-j);
+					cout << " default to {" <<  defaultVal << "}  ";
+					m_paramDefault[name]=defaultVal;
+					j=defaultValEnd;
 				}
-				else if(part[j]==':') {
+				if(part[j]==':') {
+					m_paramDefault[name]="";
 					// description
 					j++;
 					while (part[j]==' ') j++; // remove leading spaces
