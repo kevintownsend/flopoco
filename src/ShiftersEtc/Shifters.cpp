@@ -170,9 +170,9 @@ namespace flopoco{
 	
 	void Shifter::registerFactory(){
 		UserInterface::add("Shifter", // name
+											 "A classical barrel shifter. The output size is computed.",
 											 "operator", // categories
 											 "wIn(int): input size in bits;   maxShift(int): maximum shift distance in bits;   direction(bool): 0=left, 1=right", // This string will be parsed
-											 "A classical barrel shifter. The output size is computed.",
 											 Shifter::parseCommandLine
 											 ) ;
 		

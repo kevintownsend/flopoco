@@ -22,8 +22,6 @@ namespace flopoco
 {
 	
 		// Note: not using boost::function here, as it's likely to scare people, and also drags in quite a few header dependencies
-	typedef void (*usage_func_t)(std::ostream &);
-	typedef void (*usage_func_t)(std::ostream &);
 	typedef OperatorPtr (*parser_func_t)(Target *,const std::vector<std::string> &,int &);	
 	class OperatorFactory;
 	typedef std::shared_ptr<OperatorFactory> OperatorFactoryPtr;
@@ -35,14 +33,20 @@ namespace flopoco
 	class UserInterface
 	{
 	public:
+		typedef std::pair<std::string, std::map<std::string, std::string>> param_map_t;
 
 		static void registerFactory(OperatorFactoryPtr factory);
 		static void add(
 										std::string name,
+										std::string description, /**< for the HTML doc and the detailed help */ 
 										std::string categories,	/**<  semicolon-seperated list of categories */
 										std::string parameterList, /**<  semicolon-separated list of parameters, each being name(type)[=default]:short_description  */ 
-										std::string additionalDetails, /**< only for the HTML doc and the detailed help */ 
 										parser_func_t parser	);
+		
+
+		static param_map_t  parseArguments(string opName, const std::vector<std::string> &args, int &consumed);
+		static int checkStrictlyPositiveInt(UserInterface::param_map_t, std::string);
+		static int checkOptionalInt(UserInterface::param_map_t, std::string);
 		
 		static unsigned getFactoryCount();
 		static OperatorFactoryPtr getFactoryByIndex(unsigned i);
@@ -78,12 +82,12 @@ namespace flopoco
 		} ParamType;
 		
 		std::string m_name;
+		std::string m_description;
 		std::vector<std::string> m_categories;
 		std::vector<std::string> m_paramNames;
 		std::map<std::string,ParamType> m_paramType;
 		std::map<std::string,std::string> m_paramDoc;
-		std::map<std::string,std::string> m_paramDefault;
-		std::string m_additionalDetails;
+		std::map<std::string,std::string> m_paramDefault; /* If equal to "", this parameter is mandatory (no default)*/
 		parser_func_t m_parser;
 	public:
 		
@@ -96,9 +100,9 @@ namespace flopoco
 		**/
 		OperatorFactory(
 						 std::string name,
+						 std::string description, /**<  for the HTML doc and the detailed help */ 
 						 std::string categories,	/**<  semicolon-seperated list of categories */
 						 std::string parameters, /**<  semicolon-separated list of parameters, each being name(type)[=default]:short_description  */ 
-						 std::string additionalDetails, /**< only for the HTML doc and the detailed help */ 
 						 parser_func_t parser	);
 		
 		virtual const std::string &name() const

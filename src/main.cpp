@@ -2005,6 +2005,7 @@ int main(int argc, char* argv[] )
 
 	//	OperatorFactory::registerFactory(new ShifterFactory());
 	Shifter::registerFactory();
+	FPExp::registerFactory();
 
 	// The following is test code
 	cout << UserInterface::getFactoryCount() <<endl ;

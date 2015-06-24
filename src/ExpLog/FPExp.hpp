@@ -26,11 +26,11 @@ class Fragment;
 
 namespace flopoco{
 
-
+	
 	class FPExp : public Operator
 	{
 	public:
-
+		
 		/** The magic dual table, that holds either (e^A, e^Z-1) or (e^A, e^Z-Z-1) 
 		       |.....e^A....||...expZpart.....|
 		       <--sizeExpA--><--sizeExpZPart-->
@@ -74,6 +74,13 @@ namespace flopoco{
 		void buildStandardTestCases(TestCaseList* tcl);
 		TestCase* buildRandomTestCase(int i);
 
+		// User-interface stuff
+		/** Factory method */
+		static OperatorPtr parseCommandLine(Target *target ,const std::vector<std::string> &args,int &consumed);
+		
+		static void registerFactory();
+		
+		
 	private:
 		int wE; /**< Exponent size */
 		int wF; /**< Fraction size */
@@ -81,6 +88,5 @@ namespace flopoco{
 		int d;  /**< Degree of the polynomial approximation */
 		int g;  /**< Number of guard bits */
 	};
-
 }
 #endif
