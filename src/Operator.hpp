@@ -293,7 +293,8 @@ public:
 
 
 	/* Functions related to pipeline management */
-	// TODO We should introduce a notion of pipetime, which is (cycle, critical path) in lexicographic order.
+	// TODO We should introduce a notion of pipetime, which is 
+	// (cycle, critical path) in lexicographic order.
 
 	/** Define the current cycle, and resets the critical path 
 	 * @param the new value of the current cycle */
@@ -317,7 +318,8 @@ public:
 	/** Set or reset the critical path of the current cycle  */
 	void setCriticalPath(double delay) ;
 
-	/** Adds to the critical path of the current stage, and insert a pipeline stage if needed
+	/** Adds to the critical path of the current stage, and insert a pipeline 
+	 *  stage if needed
 	 * @param the delay to add to the critical path of current pipeline stage */
 	void addToCriticalPath(double delay) ;
 
@@ -328,24 +330,26 @@ public:
 	 * @param the name of the output */
 	double getOutputDelay(string s); 
 
-	/** Set the current cycle to that of a signal and reset the critical path. It may increase or decrease current cycle. 
+	/** Set the current cycle to that of a signal and reset the critical path. 
+	 * It may increase or decrease current cycle. 
 	 * @param name is the signal name. It must have been defined before 
 	 * @param report is a boolean, if true it will report the cycle 
 	 */
 	void setCycleFromSignal(string name, bool report=true) ;
 
-	/** Set the current cycle and the critical path. It may increase or decrease current cycle. 
+	/** Set the current cycle and the critical path. It may increase or 
+	 *  decrease current cycle. 
 	 * @param name is the signal name. It must have been defined before. 
-	 * @param criticalPath is the critical path delay associated to this signal: typically getDelay(name)
+	 * @param criticalPath is the critical path delay associated to this 
+	 * 		  signal: typically getDelay(name)
 	 * @param report is a boolean, if true it will report the cycle 
 	 */
 	void setCycleFromSignal(string name, double criticalPath, bool report=true) ;
 	// TODO: FIXME  
-	// param criticalPath is the critical path delay associated to this signal: typically getDelay(name)
+	// param criticalPath is the critical path delay associated to this signal:
+	// typically getDelay(name)
 	// Shouldn't this be the default behaviour?
 	// Check current use and fix.
-
-
 
 	int getCycleFromSignal(string name, bool report = false);
 		
@@ -365,15 +369,16 @@ public:
 
 		 We have three cases:
 		 1/ currentCycle > name.cycle, then do nothing
-		 2/ currentCycle < name.cycle, then advance currentCycle to name.cycle, and set the current critical path to criticalPath
+		 2/ currentCycle < name.cycle, then advance currentCycle to name.cycle, 
+		 and set the current critical path to criticalPath
 		 3/ currentCycle = name.cycle: set critical path to the max of the two critical paths.
 		 */
 	bool syncCycleFromSignal(string name, double criticalPath, bool report=true) ;
 
 
 	/** sets the delay of the signal with name given by first argument 
-		@param name the name of the signal
-		@param delay the delay to be associated with the name	
+	*	@param name the name of the signal
+	*   @param delay the delay to be associated with the name	
 	**/
 	void setSignalDelay(string name, double delay);
 
@@ -387,16 +392,21 @@ public:
 	/** Declares a signal appearing on the Left Hand Side of a VHDL assignment
 	 * @param name is the name of the signal
 	 * @param width is the width of the signal (optional, default 1)
-	 * @param isbus: a signal of width 1 is declared as std_logic when false, as std_logic_vector when true (optional, default false)
-	 * @param regType: the registring type of this signal. See also the Signal Class for more info
+	 * @param isbus: a signal of width 1 is declared as std_logic when false, 
+	 * 				 as std_logic_vector when true (optional, default false)
+	 * @param regType: the registring type of this signal. See also the Signal 
+	 * 				   Class for more info
 	 * @return name
 	 */
 	string declare(string name, const int width, bool isbus=true, Signal::SignalType regType = Signal::wire );
 
-	/** Declares a signal of length 1 as in the previous declare() function, but as std_logic by default
+	/** Declares a signal of length 1 as in the previous declare() function, 
+	 * 	but as std_logic by default
 	 * @param name is the name of the signal
-	 * @param isbus: if true, declares the signal as std_logic_vector; else declares the signal as std_logic
-	 * @param regType: the registring type of this signal. See also the Signal Class for mor info
+	 * @param isbus: if true, declares the signal as std_logic_vector; 
+	 * 				 else declares the signal as std_logic
+	 * @param regType: the registring type of this signal. See also the Signal 
+	 * 				   Class for mor info
 	 * @return name
 	 */
 	string declare(string name, Signal::SignalType regType = Signal::wire );
@@ -409,8 +419,9 @@ public:
 	string declareFixPoint(string name, const bool isSigned, const int MSB, const int LSB, Signal::SignalType regType = Signal::wire );
 
 	/** Resizes a fixed-point signal and assigns it to a new declared signal.
-			May zero-extend, sign-extend, or truncate.
-			Warns at debug level when truncating LSBs, and warns a bit louder when truncating MSBs.  
+	 *		May zero-extend, sign-extend, or truncate.
+	 *		Warns at debug level when truncating LSBs, and warns a bit louder 
+	 *		when truncating MSBs.  
 	 * @param lhsName is the name of the new (resized) signal
 	 * @param rhsName is the name of the old (to be resized) signal
 	 * @return name
@@ -461,17 +472,15 @@ public:
 	 */
 	string instance(Operator* op, string instanceName);
 
-
-
-
-	/** adds attributes to the generated VHDL so that the tools use embedded RAM blocks for an instance
+	/** adds attributes to the generated VHDL so that the tools use embedded 
+	 *  RAM blocks for an instance
 	 * @ param t a pointer to this instance
 	 */
 	void useHardRAM(Operator* t); 
 	void useSoftRAM(Operator* t); 
 
 	/** define architecture name for this operator (by default : arch)
-	 *	@param[in] 	architectureName		- new name for the operator architecture
+	 *	@param[in] 	architectureName - new name for the operator architecture
 	 **/
 	void setArchitectureName(string architectureName);
 
@@ -1221,7 +1230,8 @@ public:
 	 * 		- count registers added due to pipelining framework
 	 * 		- count input/output ports
 	 * 		- count resources in subcomponents
-	 * Should not be used together with the manual estimation functions addWireCount, addPortCount, addComponentResourceCount!
+	 * Should not be used together with the manual estimation functions 
+	 * addWireCount, addPortCount, addComponentResourceCount!
 	 * @return the string describing the performed operation
 	 */
 	void addAutomaticResourceEstimations();

@@ -51,8 +51,6 @@ namespace flopoco{
 		static int neededGuardBits(
 				Target* target, 
 				int wIn, 
-				//useless ?
-				//int lsbOut, 
 				double targetUlpError
 			);
 

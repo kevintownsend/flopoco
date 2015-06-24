@@ -47,7 +47,8 @@
    and feed them to an adder.
    compress the others bits greedily,
    adding more bits, flagged with the current cycle,
-   setting the cycle of the consumed bits to -1 so they won't be considered in subsequent iterations
+   setting the cycle of the consumed bits to -1 so they won't be considered in
+   subsequent iterations
 
 */
 
@@ -121,7 +122,14 @@ namespace flopoco{
 		 * @brief add to the bit heap the value held by a signal, considered as an unsigned integer
 		 * only add the bits between indices msb and lsb, including
 		 */
-		void addUnsignedBitVector(int weight, string x, unsigned size, int msb, int lsb, bool negativeWeight=false);
+		void addUnsignedBitVector(
+				int weight, 
+				string x, 
+				unsigned size, 
+				int msb, 
+				int lsb, 
+				bool negativeWeight=false
+			);
 
 		/**
 		 * @brief add to the bit heap the opposite of the value held by a signal, considered as an unsigned integer

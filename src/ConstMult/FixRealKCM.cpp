@@ -98,9 +98,13 @@ namespace flopoco{
 		msbOut = msbC + msbIn;
 		wOut = msbOut + signBit - lsbOut+1;
 
-		REPORT(DEBUG, "msbConstant=" << msbC
-					 << "   (msbIn,lsbIn)=("<<msbIn<<","<< lsbIn << ")   wIn=" << wIn
-					 << "   (msbOut,lsbOut)=("<<msbOut<<","<<lsbOut << ")   wOut="<<wIn);
+		REPORT(DEBUG, "msbConstant=" << msbC  << "   (msbIn,lsbIn)=("<< 
+				msbIn << "," << lsbIn << ")   wIn=" << wIn << 
+				"   (msbOut,lsbOut)=(" << msbOut << "," << lsbOut <<
+				")   wOut=" << wOut
+			);
+
+		g = neededGuardBits(getTarget(), wIn, targetUlpError);
 	}
 	
 	int FixRealKCM::computeTableNumbers(
@@ -195,15 +199,12 @@ namespace flopoco{
 		addInput("X", wIn);
 		addOutput("R", wOut);
 		
-		//[LFORG] OK
-
 		if(wIn <= lutWidth+1)
 		{
 			///////  multiplication using 1 table only ////////////////////////
 			REPORT(INFO, 
 				"Constant multiplication in a single table,"
 				"will be correctly rounded");
-			g=0;
 
 			FixRealKCMTable *t;
 			t = new FixRealKCMTable(
@@ -253,25 +254,6 @@ namespace flopoco{
 		else
 		{
 			//////////////////   Generic Case  ///////////////////////
-
-			// How many guard bits? ulp=2^lsbOut, and we want to ensure
-			// targetUlpError One half-ulp for the final rounding, and
-			// nbOfTables tables with an error of 2^(lsbOut-g-1) each so we 
-			// want nbOfTables*2^(lsbOut-g-1) + 0.5 < targetUlpError*2^lsbOut 
-			// For targetUlpError=1.0,    3, 4 tables: g=2;  5..8 tables: g=3
-			// etc
-
-			if(nbOfTables==2 && targetUlpError==1.0)
-				g=0; // specific case: two CR table make up a faithful sum
-			else
-				g = ceil(
-						log2(
-							nbOfTables/((targetUlpError-0.5)*exp2(-lsbOut))
-							)
-						) -1 -lsbOut;
-
-			REPORT(DEBUG, "g=" << g);
-
 
 			// All the tables are read in parallel
 			setCriticalPath(getMaxInputDelays(inputDelays));
@@ -641,7 +623,6 @@ namespace flopoco{
 		{
 			//////////////// multiplication using 1 table only ////////////////
 			REPORT(INFO, "Constant multiplication in a single table, will be correctly rounded");
-			g=0;
 			int bitheapSize = bitHeap->getMaxWeight() - bitHeap->getMinWeight()  + 1;
 
 			FixRealKCMTable *t;
@@ -700,17 +681,6 @@ namespace flopoco{
 		else
 		{
 			///////////////////////   Generic Case  ///////////////////////////
-
-			// How many guard bits? ulp=2^lsbOut, and we want to ensure
-			// targetUlpError One half-ulp for the final rounding, and
-			// nbOfTables tables with an error of 2^(lsbOut-g-1) each so we want
-			// nbOfTables*2^(lsbOut-g-1) + 0.5 < targetUlpError*2^lsbOut 
-			//
-			// For targetUlpError=1.0,    3, 4 tables: g=2;  5..8 tables: g=3
-			// etc
-
-				g = neededGuardBits(target, wIn, targetUlpError);	
-					REPORT(DEBUG, "g=" << g);
 
 			//manage pipeline
 			parentOp->syncCycleFromSignal(multiplicandX->getName());
@@ -891,10 +861,11 @@ namespace flopoco{
 
 		if(targetUlpError > 1.0 || targetUlpError <= 0.5)
 		{
+			cout << "ERREUR !!!!" << endl;
 			return -1; 
 		}
 				
-		if(nbOfTables<=2 && targetUlpError==1.0)
+		if((nbOfTables <= 2 && targetUlpError==1.0) || nbOfTables == 1)
 			// specific case: two CR table make up a faithful sum
 			guardBits = 0; 
 		else
