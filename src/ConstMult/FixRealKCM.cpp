@@ -866,10 +866,17 @@ namespace flopoco{
 		}
 				
 		if((nbOfTables <= 2 && targetUlpError==1.0) || nbOfTables == 1)
+		{
 			// specific case: two CR table make up a faithful sum
 			guardBits = 0; 
+		}
 		else
-			guardBits = ceil(log2((double)nbOfTables/targetUlpError));
+		{
+			/* Since we want the output error to be strictly less than 
+			 * 2^(lsbout) * targetUlpError and we have 
+			 */ 
+			guardBits = ceil(log2((double)nbOfTables/(2*targetUlpError - 1)));
+		}
 			
 		return guardBits;
 	}
