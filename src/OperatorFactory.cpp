@@ -34,13 +34,14 @@ namespace flopoco
 
 	string OperatorFactory::getFullDoc(){
 		ostringstream s;
-		s << name() << "  ";
+		s << name() << ": " << m_description << endl << "  Parameters:"<<endl;
 		for (unsigned i=0; i<m_paramNames.size(); i++) {
 			string pname = m_paramNames[i];
-			s << "  " << pname << " (): ";// << m_paramType[name];
-			s << m_paramDoc[pname] << "  " << endl;			
+			s << "    " << pname << " (" << m_paramType[pname] << "): " << m_paramDoc[pname] << "  ";
+			if("" != m_paramDefault[pname])
+				s << "  (optional, default value is " << m_paramDefault[pname] <<")";
+			s<< endl;			
 		}
-		s << m_description << endl;
 		return s.str();
 	}
 
@@ -90,20 +91,15 @@ namespace flopoco
 				int typeEnd = part.find(')', 0);
 				std::string type=part.substr(nameEnd+1, typeEnd-nameEnd-1);
 				cout << " of type  {" << type <<"}";
-				if(type=="bool")
-					m_paramType[name] = OperatorFactory::Bool;
-				else if(type=="int")
-					m_paramType[name] = OperatorFactory::Int;
-				else if(type=="real")
-					m_paramType[name] = OperatorFactory::Real;
-				else if(type=="string")
-					m_paramType[name] = OperatorFactory::String;
+				if(type=="bool" || type=="int" || type=="real" || type=="string")
+					m_paramType[name] = type;
 				else {
 					ostringstream s;
 					s << "OperatorFactory: Type (" << type << ")  not a supported type.";
 					throw s.str();
 				}
 				int j = typeEnd+1;
+				m_paramDefault[name]="";
 				if (part[j]=='=') {
 					//parse default value
 					j++;
@@ -114,7 +110,6 @@ namespace flopoco
 					j=defaultValEnd;
 				}
 				if(part[j]==':') {
-					m_paramDefault[name]="";
 					// description
 					j++;
 					while (part[j]==' ') j++; // remove leading spaces

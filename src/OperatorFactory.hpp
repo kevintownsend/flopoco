@@ -80,23 +80,15 @@ namespace flopoco
 	{
 
 	private:
-		/** The types supported by the command line */
-		typedef enum {
-			Bool,
-			Int,
-			Real,
-			String
-		} ParamType;
 		
 		string m_name;
 		string m_description;
 		vector<string> m_categories;
 		vector<string> m_paramNames;
-		map<string,ParamType> m_paramType;
+		map<string,string> m_paramType;
 		map<string,string> m_paramDoc;
 		map<string,string> m_paramDefault; /* If equal to "", this parameter is mandatory (no default)*/
 		parser_func_t m_parser;
-
 
 	public:
 		
