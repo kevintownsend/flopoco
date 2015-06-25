@@ -32,6 +32,19 @@ namespace flopoco
 
 
 
+	string OperatorFactory::getFullDoc(){
+		ostringstream s;
+		s << name() << "  ";
+		for (unsigned i=0; i<m_paramNames.size(); i++) {
+			string pname = m_paramNames[i];
+			s << "  " << pname << " (): ";// << m_paramType[name];
+			s << m_paramDoc[pname] << "  " << endl;			
+		}
+		s << m_description << endl;
+		return s.str();
+	}
+
+	
 
 	OperatorFactory::OperatorFactory(
 						 std::string name,
@@ -128,6 +141,7 @@ namespace flopoco
 	}
 
 
+
 	
 	void UserInterface::add( std::string name,
 													 std::string description, /**< for the HTML doc and the detailed help */ 
@@ -136,6 +150,17 @@ namespace flopoco
 													 parser_func_t parser	 ) {
 		OperatorFactoryPtr factory(new OperatorFactory(name, description, categories, parameterList, parser));
 		UserInterface::registerFactory(factory);
+	}
+
+
+
+	string UserInterface::getFullDoc(){
+		ostringstream s; 
+		for(unsigned i = 0; i<getFactoryCount(); i++) {
+			OperatorFactoryPtr f =  UserInterface::getFactoryByIndex(i);
+			s << f -> getFullDoc();
+		}
+		return s.str();
 	}
 
 

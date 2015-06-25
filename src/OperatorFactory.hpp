@@ -1,5 +1,8 @@
-/*
-An operator factory to enable parsing and doc to be delegated to the operators
+/**
+A generic user interface class that manages the command line and the documentation for various operators
+Includes an operator factory inspired by David Thomas
+
+For typical use, see src/ExpLog/FPExp.*
 
 Author : David Thomas, Florent de Dinechin
 
@@ -22,41 +25,45 @@ namespace flopoco
 {
 	
 		// Note: not using boost::function here, as it's likely to scare people, and also drags in quite a few header dependencies
-	typedef OperatorPtr (*parser_func_t)(Target *,const std::vector<std::string> &,int &);	
+	typedef OperatorPtr (*parser_func_t)(Target *,const vector<string> &,int &);	
 	class OperatorFactory;
-	typedef std::shared_ptr<OperatorFactory> OperatorFactoryPtr;
+	typedef shared_ptr<OperatorFactory> OperatorFactoryPtr;
 
 
 
 	
-	/** This is the class that manages a list of OperatorFactories, and the overall command line and documentation. Each OperatorFactory is responsible for the command line and parsing for one Operator sub-class. */
+	/** This is the class that manages a list of OperatorFactories, and the overall command line and documentation.
+			Each OperatorFactory is responsible for the command line and parsing for one Operator sub-class. */
 	class UserInterface
 	{
 	public:
-		typedef std::pair<std::string, std::map<std::string, std::string>> param_map_t;
+		typedef pair<string, map<string, string>> param_map_t;
 
 		static void registerFactory(OperatorFactoryPtr factory);
 		static void add(
-										std::string name,
-										std::string description, /**< for the HTML doc and the detailed help */ 
-										std::string categories,	/**<  semicolon-seperated list of categories */
-										std::string parameterList, /**<  semicolon-separated list of parameters, each being name(type)[=default]:short_description  */ 
+										string name,
+										string description, /**< for the HTML doc and the detailed help */ 
+										string categories,	/**<  semicolon-seperated list of categories */
+										string parameterList, /**<  semicolon-separated list of parameters, each being name(type)[=default]:short_description  */ 
 										parser_func_t parser	);
 		
 
-		static param_map_t  parseArguments(string opName, const std::vector<std::string> &args, int &consumed);
-		static int checkStrictlyPositiveInt(UserInterface::param_map_t, std::string);
-		static int checkOptionalInt(UserInterface::param_map_t, std::string);
+		static param_map_t  parseArguments(string opName, const vector<string> &args, int &consumed);
+		static int checkStrictlyPositiveInt(UserInterface::param_map_t, string);
+		static int checkOptionalInt(UserInterface::param_map_t, string);
+
+		/** Provide a string with the full documentation. TODO: an HTML version*/
+		static string getFullDoc();
 		
 		static unsigned getFactoryCount();
 		static OperatorFactoryPtr getFactoryByIndex(unsigned i);
-		static OperatorFactoryPtr findFactory(std::string operatorName);
+		static OperatorFactoryPtr findFactory(string operatorName);
 		
 
 		
 	private:
-		static std::vector<OperatorFactoryPtr> sm_factoriesByIndex;
-		static std::map<std::string,OperatorFactoryPtr> sm_factoriesByName;
+		static vector<OperatorFactoryPtr> sm_factoriesByIndex;
+		static map<string,OperatorFactoryPtr> sm_factoriesByName;
 	};
 
 
@@ -81,40 +88,42 @@ namespace flopoco
 			String
 		} ParamType;
 		
-		std::string m_name;
-		std::string m_description;
-		std::vector<std::string> m_categories;
-		std::vector<std::string> m_paramNames;
-		std::map<std::string,ParamType> m_paramType;
-		std::map<std::string,std::string> m_paramDoc;
-		std::map<std::string,std::string> m_paramDefault; /* If equal to "", this parameter is mandatory (no default)*/
+		string m_name;
+		string m_description;
+		vector<string> m_categories;
+		vector<string> m_paramNames;
+		map<string,ParamType> m_paramType;
+		map<string,string> m_paramDoc;
+		map<string,string> m_paramDefault; /* If equal to "", this parameter is mandatory (no default)*/
 		parser_func_t m_parser;
+
+
 	public:
 		
-		/** Implements a no-frills factory, given a usage function and a parser function
+		/** Implements a no-frills factory
 				\param name Name for the operator. The factory will only respond for this name (case sensitive)
+				\param description The short documentation
 				\param categories A semi-colon seperated list of categories that the operator belongs to. Used to sort the doc.
-				\param usage A function that can print the usage for the function to a std::ostream
+				\param parameters A semicolon-separated list of parameter description, each being name(type)[=default]:short_description
 				\param parser A function that can parse a vector of string arguments into an Operator instance
 				\param testParameters Zero or more sets of arguments that the operator can be tested with.
 		**/
 		OperatorFactory(
-						 std::string name,
-						 std::string description, /**<  for the HTML doc and the detailed help */ 
-						 std::string categories,	/**<  semicolon-seperated list of categories */
-						 std::string parameters, /**<  semicolon-separated list of parameters, each being name(type)[=default]:short_description  */ 
+						 string name,
+						 string description, /**<  for the HTML doc and the detailed help */ 
+						 string categories,	/**<  semicolon-seperated list of categories */
+						 string parameters, /**<  semicolon-separated list of parameters, each being name(type)[=default]:short_description  */ 
 						 parser_func_t parser	);
 		
-		virtual const std::string &name() const
+		virtual const string &name() const
 		{ return m_name; }
 		
-		virtual const std::vector<std::string> &categories() const
+		virtual const vector<string> &categories() const
 		{ return m_categories; }
 		
-		virtual void usage(std::ostream &dst) const
-		{
-			// TODO
-		}
+
+		/** Provide a string with the full documentation. TODO: an HTML version*/
+		string getFullDoc();
 		
 		/*! Consumes zero or more string arguments, and creates an operator
 			\param args The offered arguments start at index 0 of the vector, and it is up to the
@@ -123,7 +132,7 @@ namespace flopoco
 		*/
 		virtual OperatorPtr parseCommandLine(
 																			 Target *target,
-																			 const std::vector<std::string> &args,
+																			 const vector<string> &args,
 																			 int &consumed
 																			 )const
 		{
@@ -132,33 +141,6 @@ namespace flopoco
 
 
 
-		/**
-	public:	
-		static std::vector<std::string> Parameters(std::string a)
-		{ return std::vector<std::string>(1, a); }
-	
-		static std::vector<std::string> Parameters(std::string a, std::string b)
-		{ std::vector<std::string> res; res.push_back(a); res.push_back(b); return res; }
-	
-		static std::vector<std::string> Parameters(std::string a, std::string b, std::string c)
-		{ std::vector<std::string> res; res.push_back(a); res.push_back(b); res.push_back(c); return res; }
-	
-		static std::vector<std::string> Parameters(std::string a, std::string b, std::string c, std::string d)
-		{ std::vector<std::string> res; res.push_back(a); res.push_back(b); res.push_back(c); res.push_back(d); return res; }
-	
-		static std::vector<std::string> Parameters(std::string a, std::string b, std::string c, std::string d, std::string e)
-		{ std::vector<std::string> res; res.push_back(a); res.push_back(b); res.push_back(c); res.push_back(d); res.push_back(e); return res; }
-	
-	
-		static std::vector<std::vector<std::string> > ParameterList(const std::vector<std::string> &a)
-		{ std::vector<std::vector<std::string> > res; res.push_back(a); return res; }
-
-		static std::vector<std::vector<std::string> > ParameterList(const std::vector<std::string> &a, const std::vector<std::string> &b)
-		{ std::vector<std::vector<std::string> > res; res.push_back(a); res.push_back(b); return res; }
-	
-		static std::vector<std::vector<std::string> > ParameterList(const std::vector<std::string> &a, const std::vector<std::string> &b, const std::vector<std::string> &c)
-		{ std::vector<std::vector<std::string> > res; res.push_back(a); res.push_back(b); res.push_back(c); return res; }
-		*/
 	};
 }; // namespace flopoco
 
