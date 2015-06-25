@@ -2000,7 +2000,7 @@ int main(int argc, char* argv[] )
 	uint32_t i;
 	
 
-	target = new Virtex5(); // this also creates a global operator list TODO move it to the factory, or somewhere.
+	Target* target = new Virtex5(); // this also creates a global operator list TODO move it to the factory, or somewhere.
 
 
 	Shifter::registerFactory();
@@ -2010,12 +2010,10 @@ int main(int argc, char* argv[] )
 	cout << UserInterface::getFactoryCount() << " factories registered " << endl ;
 
 	cout << UserInterface::getFullDoc();
-#if 0
-	std::vector<std::string> commandLineParams = UserInterface::parseCommandLine(int argc, char* argv[] );
-	int c;
-	OperatorPtr test = UserInterface::getFactoryByIndex(0)->parseCommandLine(target, params, c);
-	addOperator(test.get());
-#endif
+
+	UserInterface::parseAll(target, argc, argv);
+
+
 	
 #if 0
 

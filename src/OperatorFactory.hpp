@@ -25,7 +25,7 @@ namespace flopoco
 {
 	
 		// Note: not using boost::function here, as it's likely to scare people, and also drags in quite a few header dependencies
-	typedef OperatorPtr (*parser_func_t)(Target *,const vector<string> &,int &);	
+	typedef OperatorPtr (*parser_func_t)(Target *,const vector<string> &);	
 	class OperatorFactory;
 	typedef shared_ptr<OperatorFactory> OperatorFactoryPtr;
 
@@ -37,8 +37,6 @@ namespace flopoco
 	class UserInterface
 	{
 	public:
-		typedef pair<string, map<string, string>> param_map_t;
-
 		static void registerFactory(OperatorFactoryPtr factory);
 		static void add(
 										string name,
@@ -48,16 +46,19 @@ namespace flopoco
 										parser_func_t parser	);
 		
 
-		static param_map_t  parseArguments(string opName, const vector<string> &args, int &consumed);
-		static int checkStrictlyPositiveInt(UserInterface::param_map_t, string);
-		static int checkOptionalInt(UserInterface::param_map_t, string);
+		static void parseGlobalOptions(const vector<string> &args);
+
+		static void parseAll(Target* target, int argc, char* argv[]);
+		//		static param_map_t  parseArguments(string opName, const vector<string> &args);
+		static int checkStrictlyPositiveInt(vector<string>, string);
+		static int checkOptionalInt(vector<string>, string);
 
 		/** Provide a string with the full documentation. TODO: an HTML version*/
 		static string getFullDoc();
 		
 		static unsigned getFactoryCount();
 		static OperatorFactoryPtr getFactoryByIndex(unsigned i);
-		static OperatorFactoryPtr findFactory(string operatorName);
+		static OperatorFactoryPtr getFactoryByName(string operatorName);
 		
 
 		
@@ -122,13 +123,9 @@ namespace flopoco
 			factory to check the types and whether there are enough.
 			\param consumed On exit, the factory indicates how many of the arguments are used up.
 		*/
-		virtual OperatorPtr parseCommandLine(
-																			 Target *target,
-																			 const vector<string> &args,
-																			 int &consumed
-																			 )const
+		virtual OperatorPtr parseArguments(Target* target,  const vector<string> &args	)const
 		{
-			return m_parser(target, args, consumed);
+			return m_parser(target, args);
 		}
 
 

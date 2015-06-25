@@ -68,7 +68,7 @@ namespace flopoco{
 		~FPExp();
 		
 		// Overloading the virtual functions of Operator
-		// void outputVHDL(std::ostream& o, std::string name);
+		// void outputVHDL(ostream& o, string name);
 		
 		void emulate(TestCase * tc);
 		void buildStandardTestCases(TestCaseList* tcl);
@@ -76,7 +76,7 @@ namespace flopoco{
 
 		// User-interface stuff
 		/** Factory method */
-		static OperatorPtr parseCommandLine(Target *target ,const std::vector<std::string> &args,int &consumed);
+		static OperatorPtr parseArguments(Target *target ,const vector<string> &args);
 		
 		static void registerFactory();
 		

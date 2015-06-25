@@ -158,8 +158,7 @@ namespace flopoco{
 
 	
 
-	OperatorPtr Shifter::parseCommandLine(Target *target ,const std::vector<std::string> &args,int &consumed) {
-		consumed=3;
+	OperatorPtr Shifter::parseArguments(Target *target ,const std::vector<std::string> &args) {
 		int wIn=8;
 		int maxShift=8;
 		ShiftDirection direction = Shifter::Left;		
@@ -173,7 +172,7 @@ namespace flopoco{
 											 "A classical barrel shifter. The output size is computed.",
 											 "operator", // categories
 											 "wIn(int): input size in bits;   maxShift(int): maximum shift distance in bits;   direction(bool): 0=left, 1=right", // This string will be parsed
-											 Shifter::parseCommandLine
+											 Shifter::parseArguments
 											 ) ;
 		
 	}

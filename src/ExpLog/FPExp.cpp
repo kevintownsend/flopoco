@@ -164,7 +164,7 @@ namespace flopoco{
 
 		// Paperwork
 
-		std::ostringstream name;
+		ostringstream name;
 		name << "FPExp_" << wE << "_" << wF ;
 		setNameWithFreq(name.str());
 
@@ -968,19 +968,15 @@ namespace flopoco{
 
 
 
-	OperatorPtr FPExp::parseCommandLine(Target *target, const std::vector<std::string> &args, int &consumed) {
-		UserInterface::param_map_t  paramMap;
-		paramMap = UserInterface::parseArguments("FPExp", args, consumed); // just extracts the name-value pairs from the command line
-		int wE = UserInterface::checkStrictlyPositiveInt(paramMap, "wE"); 
-		int wF = UserInterface::checkStrictlyPositiveInt(paramMap, "wF");
-		int k = UserInterface::checkOptionalInt(paramMap, "k");
-		int d = UserInterface::checkOptionalInt(paramMap, "d");
-		int g = UserInterface::checkOptionalInt(paramMap, "g");
-		return std::make_shared<FPExp>(target, wE, wF, k, d, g);
+	OperatorPtr FPExp::parseArguments(Target *target, const vector<string> &args) {
+		int wE = UserInterface::checkStrictlyPositiveInt(args, "wE"); 
+		int wF = UserInterface::checkStrictlyPositiveInt(args, "wF");
+		int k = UserInterface::checkOptionalInt(args, "k");
+		int d = UserInterface::checkOptionalInt(args, "d");
+		int g = UserInterface::checkOptionalInt(args, "g");
+		return make_shared<FPExp>(target, wE, wF, k, d, g);
 	}
 
-
-	
 	void FPExp::registerFactory(){
 		UserInterface::add("FPExp", // name
 											 "A faithful floating-point exponential function",
@@ -990,7 +986,7 @@ namespace flopoco{
                         d(int)=0: degree of the polynomial; \
                         k(int)=0: input size to the range reduction table;\
                         g(int)=-1: number of guard bits",
-											 FPExp::parseCommandLine
+											 FPExp::parseArguments
 											 ) ;
 		
 	}
