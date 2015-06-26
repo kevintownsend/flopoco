@@ -54,7 +54,7 @@ namespace flopoco{
 
 		if(newVersion)
 		{
-			extraBit = 0;
+			int extraBit = 0;
 			extraBit+=2; //Here we'll prescale by 5/4 => 2 right extra bits
 			extraBit+=1; //The sticky bit
 			extraBit+=2; //To have a correctly rounded result
@@ -208,19 +208,32 @@ namespace flopoco{
 
 
 			//TODO : carefully review the rounding process to match new nDigit's value. Make it clear and explicit
+			int stickyBitPos = 0;
 			vhdl << tab << declare("fR", wF+5) << " <= ";
-			if (wF % 3 == 1)
-				vhdl << "fR0(" << 3*nDigit-2 << " downto 4) & (fR0(3) or fR0(2) & \"0\"; " << endl;
-			else if (wF % 3 == 2)
+			if (wF % 3 == 1) //0 extra bit, nothing to remove
+			{
+				vhdl << "fR0(" << 3*nDigit-2 << " downto 0) & \"0\"; " << endl;
+				stickyBitPos = 3;
+			}
+
+			else if (wF % 3 == 2)// 2 extra bits
+			{
 				vhdl << "fR0(" << 3*nDigit-2 << " downto 2) & \"0\"; " << endl;
-			else
-				vhdl << "fR0(" << 3*nDigit-2 << " downto 5) & (fR0(4) or fR0(3) or fR0(2)) & \"0\"; " << endl;
+				stickyBitPos = 1;
+			}
+
+			else // 1 extra bit
+			{
+				vhdl << "fR0(" << 3*nDigit-2 << " downto 1) & \"0\"; " << endl;
+				stickyBitPos = 2;
+			}
 
 
 			vhdl << tab << "-- normalisation" << endl;
 			vhdl << tab << "with fR(" << wF+4 << ") select" << endl;
 
-			vhdl << tab << tab << declare("fRn1", wF+3) << " <= fR(" << wF+3 << " downto 2) & (fR(1) or fR(0)) when '1'," << endl;
+			//Review this part of the process
+			vhdl << tab << tab << declare("fRn1", wF+3) << " <= fR(" << wF+3 << " downto 2) & fR("<<stickyBitPos<<") when '1'," << endl;
 			vhdl << tab << tab << "        fR(" << wF+2 << " downto 0)          when others;" << endl;
 
 			vhdl << tab << declare("expR1", wE+2) << " <= expR0"
@@ -249,7 +262,7 @@ namespace flopoco{
 		}
 
 
-		else //TODO : the old version, now using 5-input's LUTs, try to fit in 4-input's LUTs (same as above : select qA and qB and make a 2-levels addition)
+		else //TODO : the old version is using 5-input's LUTs, try to fit in 4-input's LUTs (same as above : select qA and qB and make a 2-levels addition)
 		{
 			// -------- Parameter set up -----------------
 			nDigit = (wF+6) >> 1;
