@@ -254,7 +254,6 @@ namespace flopoco{
 		else
 		{
 			//////////////////   Generic Case  ///////////////////////
-
 			// All the tables are read in parallel
 			setCriticalPath(getMaxInputDelays(inputDelays));
 
@@ -393,19 +392,19 @@ namespace flopoco{
 						// Sign extension
 						if(negativeConstant   ||   (i==(nbOfTables-1)  && !negativeConstant) )
 						{
-							for(int w=( /// WTF? This test is false here.
- 										((negativeConstant   && i==(nbOfTables-1)) || (i==(nbOfTables-1))	) ? 
+							for(int w=( 
+ 										(i==(nbOfTables-1)) ? 
 											ppiSize[i]-1 : 
 											ppiSize[i]
 										); 
-									w<wOut+g; 
+									w < wOut+g; 
 									w++)
 							{
 								bitHeap->addConstantOneBit(w);
 							}
 							
-							if(negativeConstant)
-								bitHeap->addConstantOneBit(0);
+							if(negativeConstant){}
+							//	bitHeap->addConstantOneBit(0);
 						}
 					}
 					//add one bit at weight g-1, for faithfull rounding
@@ -689,7 +688,8 @@ namespace flopoco{
 			FixRealKCMTable *t[17*42];
 			//first split the input X into digits having lutWidth bits -> this
 			//is as generic as it gets :)
-			bool tableSigned=false, last;
+			bool tableSigned=false;
+			bool last;
 			int highBit = wIn;
 			int ppI = wOut+g;
 			for (int i=nbOfTables-1; i>=0; i--) 
@@ -913,13 +913,13 @@ namespace flopoco{
 	mpz_class FixRealKCMTable::function(int x0)
 	{
 		//If the table contains just two values
+		//To test
 		if(wIn < 2)
 		{
 			// Now we want to compute the product correctly rounded to 
 			// lsbOut-g but we have to coerce MPFR into rounding to this
 			// fixed-point format.
 
-			//
 			mpfr_t mpR;
 			
 			mpfr_init2(mpR, 10*wOut);
