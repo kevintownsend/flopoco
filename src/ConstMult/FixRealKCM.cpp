@@ -79,7 +79,8 @@ namespace flopoco{
 			//throw string("FixRealKCMBH: only positive constants are supported");
 			negativeConstant = true;
 		}
-			mpfr_abs(absC, mpC, GMP_RNDN);
+
+		mpfr_abs(absC, mpC, GMP_RNDN);
 
 		REPORT(DEBUG, "Constant evaluates to " << mpfr_get_d(mpC, GMP_RNDN));
 
@@ -92,7 +93,7 @@ namespace flopoco{
 
 		mpfr_t log2C;
 		mpfr_init2(log2C, 100); // should be enough for anybody
-		mpfr_log2(log2C, mpC, GMP_RNDN);
+		mpfr_log2(log2C, absC, GMP_RNDN);
 		msbC = mpfr_get_si(log2C, GMP_RNDU);
 		mpfr_clears(log2C, NULL);
 
@@ -822,8 +823,15 @@ namespace flopoco{
 		mpfr_t mpR;
 		mpfr_init2(mpR, 10*wOut);
 		
+		//negate the constant if necessary
+		if(negativeConstant)
+		{
+			mpfr_abs(mpC, mpC, GMP_RNDN);
+			mpfr_neg(mpC, mpC, GMP_RNDN);
+		}
+
 		// do the multiplication
-		mpfr_mul(mpR, mpX, absC, GMP_RNDN);
+		mpfr_mul(mpR, mpX, mpC, GMP_RNDN);
 		
 		// scale back to an integer
 		mpfr_mul_2si(mpR, mpR, -lsbOut, GMP_RNDN); //Exact
@@ -837,6 +845,14 @@ namespace flopoco{
 
 		// clean up
 		mpfr_clears(mpX, mpR, NULL);
+
+
+		//negate the constant if necessary, so the constant exits the function
+		//with the value it had before mpC should exit as positive, right?
+		if(negativeConstant)
+		{
+			mpfr_abs(mpC, mpC, GMP_RNDN);
+		}
 		
 	}
 
@@ -978,9 +994,9 @@ namespace flopoco{
 		}
 			//Change number size only if input XOR cste is negative
 			if(
-					!(signedInput && (x0 > (1<<(wIn-1))-1)) 
+					(signedInput && (x0 > (1<<(wIn-1))-1)) 
 					!=
-					!(mother->negativeConstant)
+					mother->negativeConstant
 				)
 			{
 					result = result + (mpz_class(1)<<wOut);
