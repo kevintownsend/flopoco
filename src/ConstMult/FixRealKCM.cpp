@@ -404,7 +404,7 @@ namespace flopoco{
 							}
 							
 							if(negativeConstant){}
-							//	bitHeap->addConstantOneBit(0);
+								bitHeap->addConstantOneBit(0);
 						}
 					}
 					//add one bit at weight g-1, for faithfull rounding
@@ -547,7 +547,9 @@ namespace flopoco{
 				inPortMap (adder, "Y" , "pp1");
 				inPortMapCst(adder, "Cin" , "'0'");
 				if(negativeConstant)
+				{
 					outPortMap(adder, "R", "OutRes_int");
+				}
 				else
 					outPortMap(adder, "R", "OutRes");
 				vhdl << instance(adder, "Result_Adder");
