@@ -803,12 +803,16 @@ namespace flopoco{
 	{
 		// Get I/O values
 		mpz_class svX = tc->getInputValue("X");
+		bool negativeInput = false;
 		
 		// get rid of two's complement
 		if(signedInput)
 		{
 			if ( svX > ( (mpz_class(1)<<(wIn-1))-1) )
+			{
 				svX = svX - (mpz_class(1)<<wIn);
+				negativeInput = true;
+			}
 		}
 		
 		// Cast it to mpfr 
@@ -823,37 +827,27 @@ namespace flopoco{
 		mpfr_t mpR;
 		mpfr_init2(mpR, 10*wOut);
 		
-		//negate the constant if necessary
-		if(negativeConstant)
-		{
-			mpfr_abs(mpC, mpC, GMP_RNDN);
-			mpfr_neg(mpC, mpC, GMP_RNDN);
-		}
-
 		// do the multiplication
-		mpfr_mul(mpR, mpX, mpC, GMP_RNDN);
+		mpfr_mul(mpR, mpX, absC, GMP_RNDN);
 		
 		// scale back to an integer
 		mpfr_mul_2si(mpR, mpR, -lsbOut, GMP_RNDN); //Exact
 		mpz_class svRu, svRd;
 		
 		mpfr_get_z(svRd.get_mpz_t(), mpR, GMP_RNDD);
-		tc->addExpectedOutput("R", svRd);
-		
 		mpfr_get_z(svRu.get_mpz_t(), mpR, GMP_RNDU);
+
+		if(negativeInput != negativeConstant)
+		{
+			svRd = (mpz_class(1) << wOut) - svRd;
+			svRu = (mpz_class(1) << wOut) - svRu;
+		}
+
+		tc->addExpectedOutput("R", svRd);
 		tc->addExpectedOutput("R", svRu);
 
 		// clean up
 		mpfr_clears(mpX, mpR, NULL);
-
-
-		//negate the constant if necessary, so the constant exits the function
-		//with the value it had before mpC should exit as positive, right?
-		if(negativeConstant)
-		{
-			mpfr_abs(mpC, mpC, GMP_RNDN);
-		}
-		
 	}
 
 	int FixRealKCM::neededGuardBits(
