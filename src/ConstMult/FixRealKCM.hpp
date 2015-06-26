@@ -64,6 +64,7 @@ namespace flopoco{
 		string constant;
 		float targetUlpError;
 		mpfr_t mpC;
+		mpfr_t absC;
 		int msbC;
 		int g;
 		bool negativeConstant;

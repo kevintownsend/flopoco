@@ -68,6 +68,7 @@ namespace flopoco{
 		}
 
 		mpfr_init2(mpC, 10000);
+		mpfr_init2(absC, 10000);
 		sollya_lib_get_constant(mpC, node);
 
 		//if negative constant, then set negativeConstant and remake the
@@ -77,8 +78,8 @@ namespace flopoco{
 		{
 			//throw string("FixRealKCMBH: only positive constants are supported");
 			negativeConstant = true;
-			mpfr_abs(mpC, mpC, GMP_RNDN);
 		}
+			mpfr_abs(absC, mpC, GMP_RNDN);
 
 		REPORT(DEBUG, "Constant evaluates to " << mpfr_get_d(mpC, GMP_RNDN));
 
@@ -199,7 +200,7 @@ namespace flopoco{
 		addInput("X", wIn);
 		addOutput("R", wOut);
 		
-		if(wIn <= lutWidth+1)
+		if(wIn <= lutWidth+1) //Marche bien 
 		{
 			///////  multiplication using 1 table only ////////////////////////
 			REPORT(INFO, 
@@ -821,15 +822,8 @@ namespace flopoco{
 		mpfr_t mpR;
 		mpfr_init2(mpR, 10*wOut);
 		
-		//negate the constant if necessary
-		if(negativeConstant)
-		{
-			mpfr_abs(mpC, mpC, GMP_RNDN);
-			mpfr_neg(mpC, mpC, GMP_RNDN);
-		}
-		
 		// do the multiplication
-		mpfr_mul(mpR, mpX, mpC, GMP_RNDN);
+		mpfr_mul(mpR, mpX, absC, GMP_RNDN);
 		
 		// scale back to an integer
 		mpfr_mul_2si(mpR, mpR, -lsbOut, GMP_RNDN); //Exact
@@ -844,12 +838,6 @@ namespace flopoco{
 		// clean up
 		mpfr_clears(mpX, mpR, NULL);
 		
-		//negate the constant if necessary, so the constant exits the function
-		//with the value it had before mpC should exit as positive, right?
-		if(negativeConstant)
-		{
-			mpfr_abs(mpC, mpC, GMP_RNDN);
-		}
 	}
 
 	int FixRealKCM::neededGuardBits(
@@ -914,6 +902,7 @@ namespace flopoco{
   
 	mpz_class FixRealKCMTable::function(int x0)
 	{
+		mpz_class result;
 		//If the table contains just two values
 		//To test
 		if(wIn < 2)
@@ -929,7 +918,9 @@ namespace flopoco{
 			if(x0 == 0)
 				mpfr_set_d(mpR, 0, GMP_RNDN);
 			else
-				mpfr_set(mpR, mother->mpC, GMP_RNDN);
+			{
+				mpfr_set(mpR, mother->absC, GMP_RNDN);
+			}
 
 			// Result is integer*C, which is more or less what we need: just
 			// scale to add g bits.
@@ -937,10 +928,7 @@ namespace flopoco{
 					mother->g, GMP_RNDN); //Exact
 
 			// Here is when we do the rounding
-			mpz_class result;
 			mpfr_get_z(result.get_mpz_t(), mpR, GMP_RNDN); // Should be exact
-
-			return  result;
 		}
 		else
 		{
@@ -969,7 +957,7 @@ namespace flopoco{
 			
 			mpfr_init2(mpR, 10*wOut);	
 			// do the mult in large precision
-			mpfr_mul(mpR, mpX, mother->mpC, GMP_RNDN);
+			mpfr_mul(mpR, mpX, mother->absC, GMP_RNDN);
 
 			// Result is integer*C, which is more or less what we need: just
 			// scale to add g bits.
@@ -983,17 +971,21 @@ namespace flopoco{
 				mpfr_add_si(mpR, mpR, 1<<(mother->g-1), GMP_RNDN);
 
 			// Here is when we do the rounding
-			mpz_class result;
 			mpfr_get_z(result.get_mpz_t(), mpR, GMP_RNDN); // Should be exact
 
 			// Gimme back two's complement
-			if(signedInput)
+			
+		}
+			//Change number size only if input XOR cste is negative
+			if(
+					!(signedInput && (x0 > (1<<(wIn-1))-1)) 
+					!=
+					!(mother->negativeConstant)
+				)
 			{
-				if ( x0 > (1<<(wIn-1))-1 ) // if x was negative
 					result = result + (mpz_class(1)<<wOut);
 			}
 			return  result;
-		}
 	}
 }
 
