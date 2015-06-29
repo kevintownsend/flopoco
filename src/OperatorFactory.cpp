@@ -169,11 +169,9 @@ namespace flopoco
 					cout << " {" << opParams[i] << "}";
 				cout << endl;
 				OperatorFactoryPtr fp = getFactoryByName(opName);
-#if 0 // almost there
 				OperatorPtr op = fp->parseArguments(target, opParams);
 				if(op!=NULL)	// Some factories don't actually create an operator
 					addOperator(op.get());
-#endif
 			}
 		}catch(std::string &s){
 			std::cerr<<"Error : "<<s<<"\n";
@@ -196,8 +194,22 @@ namespace flopoco
 	// The following are helper functions to make implementation of factory parsers trivial
 	// Beware, args[0] is the operator name, so that we may look up the doc in the factories etc.
 
-	int UserInterface::checkStrictlyPositiveInt(vector<string> args, string key){
-		return 0;
+	int UserInterface::checkStrictlyPositiveInt(vector<string> args, string keyArg){
+		vector<string>::iterator i = args.begin();
+		string opName=*i;
+		i++;
+		while (i != args.end()){
+			size_t eqPos = i->find('=');
+			if(string::npos==eqPos || 0==eqPos)
+				throw ("This doesn't seem to be a key=value pair: " + *i);
+			string key= i->substr(0,eqPos);
+			if(key==keyArg) {
+				string val= i->substr(eqPos+1, string::npos);
+				return stoi(val);
+			}
+			i++;
+		} 
+		throw ("Key "+keyArg+" not found in arguments of "+opName );
 	}
 
 	int UserInterface::checkOptionalInt(vector<string> args, string key){

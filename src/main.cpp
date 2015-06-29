@@ -2002,7 +2002,7 @@ int main(int argc, char* argv[] )
 
 	Target* target = new Virtex5(); // this also creates a global operator list TODO move it to the factory, or somewhere.
 
-
+	verbose=3;
 	Shifter::registerFactory();
 	FPExp::registerFactory();
 
