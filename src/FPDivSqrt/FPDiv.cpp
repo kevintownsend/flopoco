@@ -57,8 +57,9 @@ namespace flopoco{
 			int extraBit = 0;
 			extraBit+=2; //Here we'll prescale by 5/4 => 2 right extra bits
 			extraBit+=1; //The sticky bit
-			extraBit+=2; //To have a correctly rounded result
-			nDigit = ceil(((double)(wF + extraBit))/3); //ceil : a digit = 3 bits, so sometimes we may have to computes more bits (to keep the required accuracy)
+			extraBit+=6; //Need an extra digit (+3) to round correctly, and another one because of floor():
+						 //for example, I need 10 digit for wF = 21, wF = 22 and wF = 23
+			nDigit = floor(((double)(wF + extraBit))/3);
 
 			addFPInput ("X", wE, wF);
 			addFPInput ("Y", wE, wF);
@@ -178,7 +179,7 @@ namespace flopoco{
 			manageCriticalPath(srt4stepdelay);
 
 			vhdl << tab << declare("q0",4) << "(3 downto 0) <= \"0000\" when  w0 = (" << wF+5 << " downto 0 => '0')" << endl;
-			vhdl << tab << "             else w0(" << wF+5 << ") & \"100\";" << endl;
+			vhdl << tab << "             else w0(" << wF+5 << ") & \"010\";" << endl;
 
 			for(i=nDigit-1; i>=1; i--) {
 				ostringstream qi, qPi, qMi;
@@ -206,41 +207,30 @@ namespace flopoco{
 
 			nextCycle();///////////////////////////////////////////////////////////////////////
 
-
 			//TODO : carefully review the rounding process to match new nDigit's value. Make it clear and explicit
-			int stickyBitPos = 0;
-			vhdl << tab << declare("fR", wF+5) << " <= ";
-			if (wF % 3 == 1) //0 extra bit, nothing to remove
-			{
-				vhdl << "fR0(" << 3*nDigit-2 << " downto 0) & \"0\"; " << endl;
-				stickyBitPos = 3;
-			}
+			vhdl << tab << declare("fR", wF+6) << " <= ";
+			if (wF % 3 == 1) //2 extra bit
+				vhdl << "fR0(" << 3*nDigit-1 << " downto 3) & (fR0(0) or fR0(1) or fR0(2)); " << endl;
 
-			else if (wF % 3 == 2)// 2 extra bits
-			{
-				vhdl << "fR0(" << 3*nDigit-2 << " downto 2) & \"0\"; " << endl;
-				stickyBitPos = 1;
-			}
+			else if (wF % 3 == 2)// 1 extra bits
+				vhdl << "fR0(" << 3*nDigit-1 << " downto 2) & (fR0(0) or fR0(1)); " << endl;
 
-			else // 1 extra bit
-			{
-				vhdl << "fR0(" << 3*nDigit-2 << " downto 1) & \"0\"; " << endl;
-				stickyBitPos = 2;
-			}
+			else // 3 extra bit
+				vhdl << "fR0(" << 3*nDigit-1 << " downto 4) & (fR0(0) or fR0(1) or fR0(2) or fR0(3)); " << endl;
 
 
 			vhdl << tab << "-- normalisation" << endl;
 			vhdl << tab << "with fR(" << wF+4 << ") select" << endl;
 
 			//Review this part of the process
-			vhdl << tab << tab << declare("fRn1", wF+3) << " <= fR(" << wF+3 << " downto 2) & fR("<<stickyBitPos<<") when '1'," << endl;
-			vhdl << tab << tab << "        fR(" << wF+2 << " downto 0)          when others;" << endl;
+			vhdl << tab << tab << declare("fRn1", wF+4) << " <= fR(" << wF+4 << " downto 2) & (fR(0) or fR(1)) when '1'," << endl;
+			vhdl << tab << tab << "        fR(" << wF+3 << " downto 0)          when others;" << endl;
 
 			vhdl << tab << declare("expR1", wE+2) << " <= expR0"
 				 << " + (\"000\" & (" << wE-2 << " downto 1 => '1') & fR(" << wF+4 << ")); -- add back bias" << endl;
 
 
-			vhdl << tab << declare("round") << " <= fRn1(2) and (fRn1(3) or fRn1(1) or fRn1(0)); -- fRn1(0) is the sticky bit" << endl;
+			vhdl << tab << declare("round") << " <= fRn1(2) and (fRn1(0) or fRn1(1) or fRn1(3)); -- fRn1(0) is the sticky bit" << endl;
 
 			nextCycle();///////////////////////////////////////////////////////////////////////
 			vhdl << tab << "-- final rounding" <<endl;
