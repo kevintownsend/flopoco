@@ -49,16 +49,18 @@ namespace flopoco{
 		name<<"FPDiv_"<<wE<<"_"<<wF;
 		uniqueName_ = name.str();
 
-		bool newVersion = true;//false : radix 4, qi [-3,3], no prescaling
-								//true  : radix 8, qi [-7,7], prescaling     porbably faster
+		bool newVersion = true ;	    //false : radix 4, qi [-3,3], no prescaling
+										//true  : radix 8, qi [-7,7], prescaling     porbably faster
 
 		if(newVersion)
 		{
 			int extraBit = 0;
 			extraBit+=2; //Here we'll prescale by 5/4 => 2 right extra bits
 			extraBit+=1; //The sticky bit
-			extraBit+=6; //Need an extra digit (+3) to round correctly, and another one because of floor():
-						 //for example, I need 10 digit for wF = 21, wF = 22 and wF = 23
+			extraBit+=1; //The result will be in [1/2, 2[ => 1 more bit (2^0)
+			extraBit+=2; //To round correctly the result
+			extraBit+=3; //floor() and the bits cut to get a result depending on wF instead of nDigit (cf. the last step before normalization)
+
 			nDigit = floor(((double)(wF + extraBit))/3);
 
 			addFPInput ("X", wE, wF);
@@ -117,63 +119,85 @@ namespace flopoco{
 			for(i=nDigit-1; i>=1; i--) {
 				manageCriticalPath(srt4stepdelay);
 
-				ostringstream wi, qi, wim1, seli, qiTimesD, wipad, wim1full;
+				ostringstream wi, qi, qa, qb, wim1, seli, qiaTimesD, qibTimesD, wipad, wim1full, wim1fulla;
 				wi << "w" << i;						//actual partial remainder
 				qi << "q" << i;						//actual quotient digit, LUT's output
 				wim1 << "w" << i-1;					//partial remainder for the next iteration, = left shifted wim1full
 				seli << "sel" << i;					//constructed as the wi's first 4 digits and D's first, LUT's input
-				qiTimesD << "q" << i << "D";		//qi*D
+				qiaTimesD << "q" << i << "aD";		//qia*D
+				qibTimesD << "q" << i << "bD";		//qib*D
 				wipad << "w" << i << "pad";			//1-left-shifted wi
 				wim1full << "w" << i-1 << "full";	//partial remainder after this iteration, = wi+qi*D
+				wim1fulla << "w" << i-1 << "fulla";	//partial remainder after this iteration, = wi+qi*D
 
-				//TODO : 2 selections : qa in [-2, 2], qb in {-8,-4,-2,0,2,4,8}, then add in 2 steps
-				//       Also instantiate a personal Table object (still to write)
+				//TODO : DONE 2 selections : qa in [-2, 2], qb in {-8,-4,-2,0,2,4,8}, then add in 2 steps
+				//TODO : Also instantiate a personal Table object (still to write)
 					vhdl << tab << declare(seli.str(),7) << " <= " << wi.str() << range( wF+5, wF+1)<<" & fY"<< range(wF, wF-1) <<";" << endl;
 					vhdl << tab << "with " << seli.str() << " select" << endl;
-					vhdl << tab << declare(qi.str(),4) << " <= " << endl;
-					vhdl << tab << tab << "\"0001\" when \"0000100\" | \"0000101\" | \"0000110\" | \"0000111\" | \"0001000\" | \"0001001\" | \"0001010\" | \"0001011\"," << endl;
-					vhdl << tab << tab << "\"0010\" when \"0001100\" | \"0001101\" | \"0001110\" | \"0001111\"," << endl;
-					vhdl << tab << tab << "\"0011\" when \"0010000\" | \"0010001\" | \"0010010\" | \"0010011\" | \"0010101\" | \"0010110\" | \"0010111\"," << endl;
-					vhdl << tab << tab << "\"0100\" when \"0010100\" | \"0011000\" | \"0011001\" | \"0011010\" | \"0011011\" | \"0011110\" | \"0011111\"," << endl;
-					vhdl << tab << tab << "\"0101\" when \"0011100\" | \"0011101\" | \"0100000\" | \"0100001\" | \"0100010\" | \"0100011\" | \"0100110\" | \"0100111\"," << endl;
-					vhdl << tab << tab << "\"0110\" when \"0100100\" | \"0100101\" | \"0101001\" | \"0101010\" | \"0101011\" | \"0101110\" | \"0101111\"," << endl;
-					vhdl << tab << tab << "\"0111\" when \"0101000\" | \"0101100\" | \"0101101\" | \"0110000\" | \"0110001\" | \"0110010\" | \"0110011\" | ";
+					vhdl << tab << declare(qi.str(),5) << " <= " << endl;
+					vhdl << tab << tab << "\"00001\" when \"0000100\" | \"0000101\" | \"0000110\" | \"0000111\" | \"0001000\" | \"0001001\" | \"0001010\" | \"0001011\"," << endl;
+					vhdl << tab << tab << "\"00010\" when \"0001100\" | \"0001101\" | \"0001110\" | \"0001111\"," << endl;
+					vhdl << tab << tab << "\"00011\" when \"0010000\" | \"0010001\" | \"0010010\" | \"0010011\" | \"0010101\" | \"0010110\" | \"0010111\"," << endl;
+					vhdl << tab << tab << "\"00100\" when \"0010100\" | \"0011000\" | \"0011001\" | \"0011010\" | \"0011011\" | \"0011110\" | \"0011111\"," << endl;
+					vhdl << tab << tab << "\"00101\" when \"0011100\" | \"0011101\" | \"0100000\" | \"0100001\" | \"0100010\" | \"0100011\" | \"0100110\" | \"0100111\"," << endl;
+					vhdl << tab << tab << "\"00110\" when \"0100100\" | \"0100101\" | \"0101001\" | \"0101010\" | \"0101011\" | \"0101110\" | \"0101111\"," << endl;
+					vhdl << tab << tab << "\"10111\" when \"0101000\" | \"0101100\" | \"0101101\" | \"0110000\" | \"0110001\" | \"0110010\" | \"0110011\" | ";
 					vhdl << "\"0110101\" | \"0110110\" | \"0110111\" | \"0111010\" | \"0111011\" | \"0111111\"," << endl;
 
-					vhdl << tab << tab << "\"1001\" when \"1010100\" | \"1010000\" | \"1010001\" | \"1001100\" | \"1001101\" | \"1001110\" | \"1001111\" | ";
+					vhdl << tab << tab << "\"01001\" when \"1010100\" | \"1010000\" | \"1010001\" | \"1001100\" | \"1001101\" | \"1001110\" | \"1001111\" | ";
 					vhdl << "\"1001001\" | \"1001010\" | \"1001011\" | \"1000110\" | \"1000111\" | \"1000011\"," << endl;
-					vhdl << tab << tab << "\"1010\" when \"1011000\" | \"1011001\" | \"1010101\" | \"1010110\" | \"1010111\" | \"1010010\" | \"1010011\"," << endl;
-					vhdl << tab << tab << "\"1011\" when \"1100000\" | \"1100001\" | \"1011100\" | \"1011101\" | \"1011110\" | \"1011111\" | \"1011010\" | \"1011011\"," << endl;
-					vhdl << tab << tab << "\"1100\" when \"1101000\" | \"1100100\" | \"1100101\" | \"1100110\" | \"1100111\" | \"1100010\" | \"1100011\"," << endl;
-					vhdl << tab << tab << "\"1101\" when \"1101100\" | \"1101101\" | \"1101110\" | \"1101111\" | \"1101001\" | \"1101010\" | \"1101011\"," << endl;
-					vhdl << tab << tab << "\"1110\" when \"1110000\" | \"1110001\" | \"1110010\" | \"1110011\"," << endl;
-					vhdl << tab << tab << "\"1111\" when \"1111000\" | \"1111001\" | \"1111010\" | \"1111011\" | \"1110100\" | \"1110101\" | \"1110110\" | \"1110111\"," << endl;
-					vhdl << tab << tab << "\"0000\" when others;" << endl;
+					vhdl << tab << tab << "\"11010\" when \"1011000\" | \"1011001\" | \"1010101\" | \"1010110\" | \"1010111\" | \"1010010\" | \"1010011\"," << endl;
+					vhdl << tab << tab << "\"11011\" when \"1100000\" | \"1100001\" | \"1011100\" | \"1011101\" | \"1011110\" | \"1011111\" | \"1011010\" | \"1011011\"," << endl;
+					vhdl << tab << tab << "\"11100\" when \"1101000\" | \"1100100\" | \"1100101\" | \"1100110\" | \"1100111\" | \"1100010\" | \"1100011\"," << endl;
+					vhdl << tab << tab << "\"11101\" when \"1101100\" | \"1101101\" | \"1101110\" | \"1101111\" | \"1101001\" | \"1101010\" | \"1101011\"," << endl;
+					vhdl << tab << tab << "\"11110\" when \"1110000\" | \"1110001\" | \"1110010\" | \"1110011\"," << endl;
+					vhdl << tab << tab << "\"11111\" when \"1111000\" | \"1111001\" | \"1111010\" | \"1111011\" | \"1110100\" | \"1110101\" | \"1110110\" | \"1110111\"," << endl;
+					vhdl << tab << tab << "\"10000\" when others;" << endl;
 					vhdl << endl;
 				//TODO end
 
-				//TODO : linked to previous TODO : no more precomputed fY multiples => compute them here
-					vhdl << tab << "with " << qi.str() << " select" << endl;
-					vhdl << tab << tab << declare(qiTimesD.str(),wF+7) << " <= "<< endl ;
-					vhdl << tab << tab << tab << "\"0000\" & fY            when \"0001\" | \"1111\"," << endl;
-					vhdl << tab << tab << tab << "\"000\" & fY & \"0\"       when \"0010\" | \"1110\"," << endl;
-					vhdl << tab << tab << tab << "\"0\" & fYTimes3        when \"0011\" | \"1101\"," << endl;
-					vhdl << tab << tab << tab << "\"00\" & fY & \"00\"        when \"0100\" | \"1100\"," << endl;
-					vhdl << tab << tab << tab << "\"0\" & fYTimes5        when \"0101\" | \"1011\"," << endl;
-					vhdl << tab << tab << tab << "\"0\" & fYTimes6        when \"0110\" | \"1010\"," << endl;
-					vhdl << tab << tab << tab << "\"0\" & fYTimes7        when \"0111\" | \"1001\"," << endl;
-					vhdl << tab << tab << tab << "(" << wF+6 << " downto 0 => '0')  when others;" << endl;
-					vhdl << endl;
-				//TODO end
+					vhdl << tab << "with " << qi.str() << range(3, 0) << " select" << endl;
+					vhdl << tab << tab << declare(qiaTimesD.str(), wF+7) << " <= "<< endl ;
+					vhdl << tab << tab << tab << "\"0000\" & fY            when \"0001\" | \"0011\" | \"0101\" | \"0111\" | \"1111\" | \"1101\" | \"1011\" | \"1001\"," << endl;
+					vhdl << tab << tab << tab << "\"000\" & fY & \"0\"           when \"0110\" | \"1010\"," << endl;
+					vhdl << tab << tab << tab << "(" << wF+6 << " downto 0 => '0')          when others;" << endl;
 
-				//TODO : take a look at the vector width
+					vhdl << tab << "with " << qi.str() << range(3, 0) << " select" << endl;
+					vhdl << tab << tab << declare(qibTimesD.str(), wF+7) << " <= "<< endl ;
+					vhdl << tab << tab << tab << "\"000\" & fY & \"0\"           when \"0010\" | \"0011\" | \"1110\" | \"1101\"," << endl;
+					vhdl << tab << tab << tab << "\"00\" & fY & \"00\"           when \"0100\" | \"0101\" | \"0110\" | \"1100\" | \"1011\" | \"1010\"," << endl;
+					vhdl << tab << tab << tab << "\"0\" & fY & \"000\"           when \"0111\" | \"1001\"," << endl;
+					vhdl << tab << tab << tab << "(" << wF+6 << " downto 0 => '0')          when others;" << endl;
+
 					vhdl << tab << declare(wipad.str(), wF+7) << " <= " << wi.str() << " & \"0\";" << endl;
-					vhdl << tab << "with " << qi.str() << "(3) select" << endl;
-					vhdl << tab << declare(wim1full.str(), wF+7 ) << " <= " << wipad.str() << " - " << qiTimesD.str() << " when '0'," << endl;
-					vhdl << tab << "      " << wipad.str() << " + " << qiTimesD.str() << " when others;" << endl;
+					vhdl << tab << "with " << qi.str() << of(4) << " select" << endl;
+					vhdl << tab << declare(wim1fulla.str(), wF+7 ) << " <= " << wipad.str() << " - " << qiaTimesD.str() << " when '0'," << endl;
+					vhdl << tab << "      " << wipad.str() << " + " << qiaTimesD.str() << " when others;" << endl;
+
+					vhdl << tab << "with " << qi.str() << of(3) << " select" << endl;
+					vhdl << tab << declare(wim1full.str(), wF+7) << " <= " << wim1fulla.str() << " - " << qibTimesD.str() << " when '0'," << endl;
+					vhdl << tab << "      " << wim1fulla.str() << " + " << qibTimesD.str() << " when others;" << endl;
+
+
+//					vhdl << tab << "with " << qi.str() << range(3, 0) << " select" << endl;
+//					vhdl << tab << tab << declare(qiaTimesD.str(),wF+7) << " <= "<< endl ;
+//					vhdl << tab << tab << tab << "\"0000\" & fY            when \"0001\" | \"1111\"," << endl;
+//					vhdl << tab << tab << tab << "\"000\" & fY & \"0\"       when \"0010\" | \"1110\"," << endl;
+//					vhdl << tab << tab << tab << "\"0\" & fYTimes3        when \"0011\" | \"1101\"," << endl;
+//					vhdl << tab << tab << tab << "\"00\" & fY & \"00\"        when \"0100\" | \"1100\"," << endl;
+//					vhdl << tab << tab << tab << "\"0\" & fYTimes5        when \"0101\" | \"1011\"," << endl;
+//					vhdl << tab << tab << tab << "\"0\" & fYTimes6        when \"0110\" | \"1010\"," << endl;
+//					vhdl << tab << tab << tab << "\"0\" & fYTimes7        when \"0111\" | \"1001\"," << endl;
+//					vhdl << tab << tab << tab << "(" << wF+6 << " downto 0 => '0')  when others;" << endl;
+//					vhdl << endl;
+//
+//
+//					vhdl << tab << declare(wipad.str(), wF+7) << " <= " << wi.str() << " & \"0\";" << endl;
+//					vhdl << tab << "with " << qi.str() << "(3) select" << endl;
+//					vhdl << tab << declare(wim1full.str(), wF+7 ) << " <= " << wipad.str() << " - " << qiaTimesD.str() << " when '0'," << endl;
+//					vhdl << tab << "      " << wipad.str() << " + " << qiaTimesD.str() << " when others;" << endl;
 					vhdl << endl;
 					vhdl << tab << declare(wim1.str(),wF+6) << " <= " << wim1full.str()<<range(wF+3,0)<<" & \"00\";" << endl;
-				//TODO end
 			}
 
 			manageCriticalPath(srt4stepdelay);
@@ -207,7 +231,7 @@ namespace flopoco{
 
 			nextCycle();///////////////////////////////////////////////////////////////////////
 
-			//TODO : carefully review the rounding process to match new nDigit's value. Make it clear and explicit
+			//The last +3 in computing nDigit is for this part
 			vhdl << tab << declare("fR", wF+6) << " <= ";
 			if (wF % 3 == 1) //2 extra bit
 				vhdl << "fR0(" << 3*nDigit-1 << " downto 3) & (fR0(0) or fR0(1) or fR0(2)); " << endl;
@@ -222,7 +246,6 @@ namespace flopoco{
 			vhdl << tab << "-- normalisation" << endl;
 			vhdl << tab << "with fR(" << wF+4 << ") select" << endl;
 
-			//Review this part of the process
 			vhdl << tab << tab << declare("fRn1", wF+4) << " <= fR(" << wF+4 << " downto 2) & (fR(0) or fR(1)) when '1'," << endl;
 			vhdl << tab << tab << "        fR(" << wF+3 << " downto 0)          when others;" << endl;
 
