@@ -392,7 +392,7 @@ namespace flopoco {
 			vhdl << tab << "-- Ne pouvant me fier a mon raisonnement, j'ai appris par coeur le résultat de toutes les multiplications possibles" << endl;
 
 			SmallMultTable *t = new SmallMultTable(parentOp->getTarget(), wX, wY, wOut, negate, signedIO, signedIO);
-			t->addToGlobalOpList();
+			UserInterface::addToGlobalOpList(t);
 
 			//This table is either exact, or correctly rounded if wOut<wX+wY
 			// FIXME the offset is probably wrong -- possible fix for now
@@ -987,20 +987,20 @@ namespace flopoco {
 
 			// In the negate case we will negate the bits coming out of this table
 			tUU = new SmallMultTable( target, dx, dy, dx+dy, false /*negate*/, false /*signx*/, false/*signy*/);
-			tUU->addToGlobalOpList();
+			UserInterface::addToGlobalOpList(tUU);
 
 			if(signedIO)
 			{ // need for 4 different tables
 
 				tSU = new SmallMultTable( target, dx, dy, dx+dy, false, true, false );
-				tSU->addToGlobalOpList();
+				UserInterface::addToGlobalOpList(tSU);
 
 				tUS = new SmallMultTable( target, dx, dy, dx+dy, false, false, true );
-				tUS->addToGlobalOpList();
+				UserInterface::addToGlobalOpList(tUS);
 
 
 				tSS = new SmallMultTable( target, dx, dy, dx+dy, false, true, true );
-				tSS->addToGlobalOpList();
+				UserInterface::addToGlobalOpList(tSS);
 
 			}
 

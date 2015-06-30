@@ -39,9 +39,9 @@ namespace flopoco{
 		}
 
 
-	vector<Operator*> *  Target::getGlobalOpListRef(){
-		return & globalOpList;
-	}
+	// vector<Operator*> *  Target::getGlobalOpListRef(){
+	// 	return & globalOpList;
+	// }
 
 	string Target::getID(){
 		return id_;

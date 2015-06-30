@@ -7,7 +7,6 @@
 #include "utils.hpp"
 
 #include "Operator.hpp"
-#include "OperatorFactory.hpp"
 
 
 namespace flopoco{

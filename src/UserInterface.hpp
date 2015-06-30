@@ -12,14 +12,14 @@ Copyright © INSA-Lyon, ENS-Lyon, INRIA, CNRS, UCBL,
   All rights reserved.
 
 */
-#ifndef flopoco_operator_factory_hpp
-#define flopoco_operator_factory_hpp
+#ifndef UserInterface_hpp
+#define UserInterface_hpp
 
 #include "Operator.hpp"
 #include <memory>
 
 // Operator Factory, based on the one by David Thomas, with a bit of clean up.
-// For typical use, see src/ShiftersEtc/Shifter.*
+// For typical use, see src/ShiftersEtc/Shifter  or   src/ExpLog/FPExp
 
 namespace flopoco
 {
@@ -31,6 +31,9 @@ namespace flopoco
 
 
 
+
+
+
 	
 	/** This is the class that manages a list of OperatorFactories, and the overall command line and documentation.
 			Each OperatorFactory is responsible for the command line and parsing for one Operator sub-class. */
@@ -38,6 +41,7 @@ namespace flopoco
 	{
 	public:
 		static void registerFactory(OperatorFactoryPtr factory);
+		/**a helper factory function*/ 
 		static void add(
 										string name,
 										string description, /**< for the HTML doc and the detailed help */ 
@@ -45,7 +49,12 @@ namespace flopoco
 										string parameterList, /**<  semicolon-separated list of parameters, each being name(type)[=default]:short_description  */ 
 										parser_func_t parser	);
 		
+		static unsigned getFactoryCount();
+		static OperatorFactoryPtr getFactoryByIndex(unsigned i);
+		static OperatorFactoryPtr getFactoryByName(string operatorName);
 
+
+		////////////////// Parsing-related ///////////////////////////////
 		static void parseGlobalOptions(const vector<string> &args);
 
 		static void parseAll(Target* target, int argc, char* argv[]);
@@ -56,11 +65,30 @@ namespace flopoco
 		/** Provide a string with the full documentation. TODO: an HTML version*/
 		static string getFullDoc();
 		
-		static unsigned getFactoryCount();
-		static OperatorFactoryPtr getFactoryByIndex(unsigned i);
-		static OperatorFactoryPtr getFactoryByName(string operatorName);
+
+
+		/** add an operator to the global (first-level) list, which is stored in its Target (not really its place, sorry).
+				This method should be called by 
+				1/ the main / top-level, or  
+				2/ for sub-components that are really basic operators, 
+				expected to be used several times, *in a way that is independent of the context/timing*.
+				Typical example is a table designed to fit in a LUT or parallel row of LUTs
+		*/
+
+		static void addToGlobalOpList(OperatorPtr op);
+
 		
 
+		/** generates the code for operators in globalOpList, and all their subcomponents */
+		static void outputVHDLToFile(ofstream& file);
+		
+		/** generates the code for operators in oplist, and all their subcomponents */
+		static void outputVHDLToFile(vector<OperatorPtr> &oplist, ofstream& file);
+
+		
+		
+	public:
+		static vector<OperatorPtr>  globalOpList;  /**< Level-0 operators. Each of these can have sub-operators */
 		
 	private:
 		static vector<OperatorFactoryPtr> sm_factoriesByIndex;

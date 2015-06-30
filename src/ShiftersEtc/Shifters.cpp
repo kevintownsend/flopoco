@@ -159,10 +159,11 @@ namespace flopoco{
 	
 
 	OperatorPtr Shifter::parseArguments(Target *target ,const std::vector<std::string> &args) {
-		int wIn=8;
-		int maxShift=8;
+		int wIn = UserInterface::checkStrictlyPositiveInt(args, "wIn");
+		int maxShift = UserInterface::checkStrictlyPositiveInt(args, "maxShift");
+		//boolean dirArg = UserInterface::checkBoolean(args, "dir");
 		ShiftDirection direction = Shifter::Left;		
-		return std::make_shared<Shifter>(target, wIn, maxShift, direction);
+		return new Shifter(target, wIn, maxShift, direction);
 	}
 
 

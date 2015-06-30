@@ -1,18 +1,84 @@
-#include "OperatorFactory.hpp"
+#include "UserInterface.hpp"
 #include <algorithm>
 #include <iostream>
 #include <iomanip>
 
-void addOperator(flopoco::Operator *op);
+
 
 namespace flopoco
-{	
+{
 
+	// This should be obsoleted soon. It is there only because random_main needs it
+	void addOperator(OperatorPtr op) {
+#if 0 // TODO will be done somewhere else
+		if(cl_name!="")	{
+			cerr << "Updating entity name to: " << cl_name << endl;
+			op->changeName(cl_name);
+			cl_name="";
+		}
+#endif
+		UserInterface::globalOpList.push_back(op);
+	}
+
+
+
+	void UserInterface::addToGlobalOpList(OperatorPtr op) {
+		bool alreadyPresent=false;
+		// We assume all the operators added to GlobalOpList are unpipelined.
+		// cout << "Entering addOperator()" << endl;
+		//		vector<Operator*> * globalOpListRef=target_->getGlobalOpListRef();
+		for (unsigned i=0; i<globalOpList.size(); i++){
+			if( op->getName() == globalOpList[i]->getName() ) {
+					alreadyPresent=true;
+					//					REPORT(DEBUG,"Operator::addToGlobalOpList(): " << op->getName() <<" already present in globalOpList");
+				}
+			}
+			if(!alreadyPresent)
+				globalOpList.push_back(op);
+	}
+	
+
+	void UserInterface::outputVHDLToFile(ofstream& file){
+		outputVHDLToFile(globalOpList, file);
+	}
+
+	
+	/* The recursive method */
+	void UserInterface::outputVHDLToFile(vector<OperatorPtr> &oplist, ofstream& file){
+		string srcFileName = "Operator.cpp"; // for REPORT
+		for(unsigned i=0; i<oplist.size(); i++) {
+			try {
+				REPORT(FULL, "---------------OPERATOR: "<<oplist[i]->getName() <<"-------------");
+				REPORT(FULL, "  DECLARE LIST" << printMapContent(oplist[i]->getDeclareTable()));
+				REPORT(FULL, "  USE LIST" << printVectorContent(  (oplist[i]->getFlopocoVHDLStream())->getUseTable()) );
+
+				// check for subcomponents
+				if (! oplist[i]->getOpList().empty() ){
+					//recursively call to print subcomponent
+					outputVHDLToFile(oplist[i]->getOpList(), file);
+				}
+				oplist[i]->getFlopocoVHDLStream()->flush();
+
+				/* second parse is only for sequential operators */
+				if (oplist[i]->isSequential()){
+					REPORT (FULL, "  2nd PASS");
+					oplist[i]->parse2();
+				}
+				oplist[i]->outputVHDL(file);
+
+			} catch (std::string s) {
+					cerr << "Exception while generating '" << oplist[i]->getName() << "': " << s <<endl;
+			}
+		}
+	}
+
+
+	
 	// Global factory list TODO there should be only one.
 	vector<OperatorFactoryPtr> UserInterface::sm_factoriesByIndex;
 	map<string,OperatorFactoryPtr> UserInterface::sm_factoriesByName;
-	// Global Target
-	Target* target;
+
+	vector<OperatorPtr>  UserInterface::globalOpList;  /**< Level-0 operators. Each of these can have sub-operators */
 
 	
 	void UserInterface::registerFactory(OperatorFactoryPtr factory)	{
@@ -170,8 +236,11 @@ namespace flopoco
 				cout << endl;
 				OperatorFactoryPtr fp = getFactoryByName(opName);
 				OperatorPtr op = fp->parseArguments(target, opParams);
-				if(op!=NULL)	// Some factories don't actually create an operator
-					addOperator(op.get());
+				if(op!=NULL)	{// Some factories don't actually create an operator
+					cout << "Adding operator" << endl;
+					addOperator(op);
+					cout << "... done" << endl;
+				}
 			}
 		}catch(std::string &s){
 			std::cerr<<"Error : "<<s<<"\n";
@@ -205,7 +274,14 @@ namespace flopoco
 			string key= i->substr(0,eqPos);
 			if(key==keyArg) {
 				string val= i->substr(eqPos+1, string::npos);
-				return stoi(val);
+				size_t end;
+				int intval=stoi(val, &end);
+				 if (val.length() == 0 || val.length() != end)
+					 throw ("Expecting an int for parameter " + key + ", got "+val);
+				if(intval>0)
+					return intval;
+				else
+					throw ("Expecting strictly positive value for " + key + ", got " + val );
 			}
 			i++;
 		} 

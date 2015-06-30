@@ -974,7 +974,7 @@ namespace flopoco{
 		int k = UserInterface::checkOptionalInt(args, "k");
 		int d = UserInterface::checkOptionalInt(args, "d");
 		int g = UserInterface::checkOptionalInt(args, "g");
-		return make_shared<FPExp>(target, wE, wF, k, d, g);
+		return new FPExp(target, wE, wF, k, d, g);
 	}
 
 	void FPExp::registerFactory(){

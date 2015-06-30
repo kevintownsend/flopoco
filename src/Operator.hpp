@@ -23,14 +23,14 @@
 
 using namespace std;
 
-// variables set by the command-line interface in main.cpp
+namespace flopoco {
+	class Operator;
+ 	typedef Operator* OperatorPtr;
+}
 
+#include "UserInterface.hpp"
 
 namespace flopoco {
-
-	class Operator;
-	typedef std::shared_ptr<Operator> OperatorPtr;
-	
 	// global const variables
 	static const map<string, double> emptyDelayMap;
 	const std::string tab = "   ";
@@ -77,28 +77,11 @@ class Operator
 public:
 
 	/** add a sub-operator to this operator */
-	void addSubComponent(Operator* op);
+	void addSubComponent(OperatorPtr op);
 
 
-	/** add this operator to the global (first-level) list, which is stored in its Target (not really its place, sorry).
-	This method should be called by 
-	1/ the main / top-level, or  
-	2/ for sub-components that are really basic operators, 
-	expected to be used several times, *in a way that is independent of the context/timing*.
-	Typical example is a table designed to fit in a LUT or parallel row of LUTs
- */
-	void addToGlobalOpList();
 
-
-	/** generates the code for a list of operators and all their subcomponents */
-	static void outputVHDLToFile(vector<Operator*> &oplist, ofstream& file);
-
-
-#if 1
-	/** generates the code for this operator and all its subcomponents */
-	void outputVHDLToFile(ofstream& file);
-#endif
-
+	
 	/** Operator Constructor.
 	 * Creates an operator instance with an instantiated target for deployment.
 	 * @param target_ The deployment target of the operator.
@@ -906,12 +889,9 @@ public:
 
 	void setIndirectOperator(Operator* op);
 	
-	vector<Operator*> getOpList(){
-		return oplist;
-	}
 
 
-	vector<Operator*>& getOpListR(){
+	vector<OperatorPtr>& getOpList(){
 		return oplist;
 	}
 
@@ -1401,7 +1381,7 @@ protected:
 	map<string, int>    declareTable;     					/**< Table containing the name and declaration cycle of the signal */
 	int                 myuid;              				/**<unique id>*/
 	int                 cost;             					/**< the cost of the operator depending on different metrics */
-	vector<Operator*>   oplist;                     /**< A list of all the sub-operators */
+	vector<OperatorPtr>   oplist;                     /**< A list of all the sub-operators */
 	
 
 private:    
@@ -1426,7 +1406,7 @@ private:
 	double                 criticalPath_;               	/**< The current delay of the current pipeline stage */
 	bool                   needRecirculationSignal_;    	/**< True if the operator has registers having a recirculation signal  */
 	bool                   hasClockEnable_;    	          /**< True if the operator has a clock enable signal  */
-	int					    hasDelay1Feedbacks_;		/**< True if this operator has feedbacks of one cyle, and no more than one cycle (i.e. an error if the distance is more). False gives warnings */
+	int					           hasDelay1Feedbacks_;		/**< True if this operator has feedbacks of one cyle, and no more than one cycle (i.e. an error if the distance is more). False gives warnings */
 	Operator*              indirectOperator_;              /**< NULL if this operator is just an interface operator to several possible implementations, otherwise points to the instance*/
 
 };
@@ -1437,4 +1417,6 @@ private:
 	extern int verbose;
 
 } //namespace
+
+
 #endif
