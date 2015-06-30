@@ -82,6 +82,9 @@ namespace flopoco
 		/** generates the code for operators in globalOpList, and all their subcomponents */
 		static void outputVHDLToFile(ofstream& file);
 		
+		/** generates a report for operators in globalOpList, and all their subcomponents */
+		static void finalReport(ostream & s);
+		
 		/** generates the code for operators in oplist, and all their subcomponents */
 		static void outputVHDLToFile(vector<OperatorPtr> &oplist, ofstream& file);
 
@@ -97,10 +100,11 @@ namespace flopoco
 
 
 
-
-
-
 	
+
+
+
+
 
 	
 	/** This is the abstract class that each operator factory will inherit. 
@@ -155,7 +159,6 @@ namespace flopoco
 		{
 			return m_parser(target, args);
 		}
-
 
 
 	};

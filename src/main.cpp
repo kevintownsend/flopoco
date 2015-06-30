@@ -70,24 +70,20 @@ int main(int argc, char* argv[] )
 {
 	sollya_lib_init();
 
-	uint32_t i;
 	
-
 	Target* target = new Virtex5(); // this also creates a global operator list TODO move it to the factory, or somewhere.
 
 	verbose=3;
 	Shifter::registerFactory();
 	FPExp::registerFactory();
 
-	// The following is test code
-	cout << UserInterface::getFactoryCount() << " factories registered " << endl ;
+	//	cout << UserInterface::getFactoryCount() << " factories registered " << endl ;
 
 	cout << UserInterface::getFullDoc();
 
 	UserInterface::parseAll(target, argc, argv);
 
-
-	cout << "Successfuly built "<< UserInterface::globalOpList.size() << " operator(s)" << endl;
+	//cout << "Successfuly built "<< UserInterface::globalOpList.size() << " operator(s)" << endl;
 
 	
 	ofstream file;
@@ -95,16 +91,14 @@ int main(int argc, char* argv[] )
 	UserInterface::outputVHDLToFile(file); 
 	file.close();
 
+	UserInterface::finalReport(cerr); 
+	cerr << "Output file: " << filename <<endl;
+
+
+
+
 	
-	
-	cerr << endl<<"Final report:"<<endl;
-	for(auto i: UserInterface::globalOpList) {
-		i->outputFinalReport(0);
-	}
-	
-	cerr<< "Output file: " << filename <<endl;
-	cout << "target= "<< target << " " << endl;
-	
+		
 #if 0
 
 	//------------------------ Resource Estimation ---------------------

@@ -25,12 +25,10 @@ namespace flopoco
 	void UserInterface::addToGlobalOpList(OperatorPtr op) {
 		bool alreadyPresent=false;
 		// We assume all the operators added to GlobalOpList are unpipelined.
-		// cout << "Entering addOperator()" << endl;
-		//		vector<Operator*> * globalOpListRef=target_->getGlobalOpListRef();
-		for (unsigned i=0; i<globalOpList.size(); i++){
-			if( op->getName() == globalOpList[i]->getName() ) {
+		for (auto i: globalOpList){
+			if( op->getName() == i->getName() ) {
 					alreadyPresent=true;
-					//					REPORT(DEBUG,"Operator::addToGlobalOpList(): " << op->getName() <<" already present in globalOpList");
+					// REPORT(DEBUG,"Operator::addToGlobalOpList(): " << op->getName() <<" already present in globalOpList");
 				}
 			}
 			if(!alreadyPresent)
@@ -46,32 +44,40 @@ namespace flopoco
 	/* The recursive method */
 	void UserInterface::outputVHDLToFile(vector<OperatorPtr> &oplist, ofstream& file){
 		string srcFileName = "Operator.cpp"; // for REPORT
-		for(unsigned i=0; i<oplist.size(); i++) {
+		for(auto i: oplist) {
 			try {
-				REPORT(FULL, "---------------OPERATOR: "<<oplist[i]->getName() <<"-------------");
-				REPORT(FULL, "  DECLARE LIST" << printMapContent(oplist[i]->getDeclareTable()));
-				REPORT(FULL, "  USE LIST" << printVectorContent(  (oplist[i]->getFlopocoVHDLStream())->getUseTable()) );
+				REPORT(FULL, "---------------OPERATOR: "<<i->getName() <<"-------------");
+				REPORT(FULL, "  DECLARE LIST" << printMapContent(i->getDeclareTable()));
+				REPORT(FULL, "  USE LIST" << printVectorContent(  (i->getFlopocoVHDLStream())->getUseTable()) );
 
 				// check for subcomponents
-				if (! oplist[i]->getOpList().empty() ){
+				if (! i->getOpList().empty() ){
 					//recursively call to print subcomponent
-					outputVHDLToFile(oplist[i]->getOpList(), file);
+					outputVHDLToFile(i->getOpList(), file);
 				}
-				oplist[i]->getFlopocoVHDLStream()->flush();
+				i->getFlopocoVHDLStream()->flush();
 
 				/* second parse is only for sequential operators */
-				if (oplist[i]->isSequential()){
+				if (i->isSequential()){
 					REPORT (FULL, "  2nd PASS");
-					oplist[i]->parse2();
+					i->parse2();
 				}
-				oplist[i]->outputVHDL(file);
+				i->outputVHDL(file);
 
 			} catch (std::string s) {
-					cerr << "Exception while generating '" << oplist[i]->getName() << "': " << s <<endl;
+					cerr << "Exception while generating '" << i->getName() << "': " << s <<endl;
 			}
 		}
 	}
 
+
+	
+	void UserInterface::finalReport(ostream& s){
+		s << endl<<"Final report:"<<endl;
+		for(auto i: globalOpList) {
+			i->outputFinalReport(s, 0);
+		}
+	}
 
 	
 	// Global factory list TODO there should be only one.

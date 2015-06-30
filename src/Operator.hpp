@@ -765,7 +765,7 @@ public:
 	 * reports the pipeline depth, but feel free to overload if you have any
 	 * thing useful to tell to the end user
 	*/
-	virtual void outputFinalReport(int level);	
+	virtual void outputFinalReport(ostream& s, int level);	
 	
 	
 	/** Gets the pipeline depth of this operator 
