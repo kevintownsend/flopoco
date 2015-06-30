@@ -55,12 +55,14 @@ namespace flopoco
 
 
 		////////////////// Parsing-related ///////////////////////////////
-		static void parseGlobalOptions(const vector<string> &args);
+		static void parseGlobalOptions(vector<string> args);
 
 		static void parseAll(Target* target, int argc, char* argv[]);
 		//		static param_map_t  parseArguments(string opName, const vector<string> &args);
+		static bool checkBoolean( vector<string>, string);
+		static int checkInt( vector<string>, string);
+		static int checkPositiveInt( vector<string>, string);
 		static int checkStrictlyPositiveInt(vector<string>, string);
-		static int checkOptionalInt(vector<string>, string);
 
 		/** Provide a string with the full documentation. TODO: an HTML version*/
 		static string getFullDoc();
@@ -149,7 +151,10 @@ namespace flopoco
 
 		/** Provide a string with the full documentation. TODO: an HTML version*/
 		string getFullDoc();
-		
+
+		/** get the default value associated to a parameter (empty string if there is no default)*/
+		string getDefaultVal(string& key);
+
 		/*! Consumes zero or more string arguments, and creates an operator
 			\param args The offered arguments start at index 0 of the vector, and it is up to the
 			factory to check the types and whether there are enough.

@@ -123,6 +123,12 @@ namespace flopoco
 	}
 
 	
+	string OperatorFactory::getDefaultVal(string& key){
+		return  m_paramDefault[key];
+	}
+
+
+		
 
 	OperatorFactory::OperatorFactory(
 						 string name,
@@ -162,12 +168,12 @@ namespace flopoco
 			if(part.size()!=0) {
 				int nameEnd = part.find('(', 0);
 				string name=part.substr(0, nameEnd);
-				cout << "Found parameter: {" << name<<"}";
+				//cout << "Found parameter: {" << name<<"}";
 				m_paramNames.push_back(name);
 				
 				int typeEnd = part.find(')', 0);
 				string type=part.substr(nameEnd+1, typeEnd-nameEnd-1);
-				cout << " of type  {" << type <<"}";
+				//cout << " of type  {" << type <<"}";
 				if(type=="bool" || type=="int" || type=="real" || type=="string")
 					m_paramType[name] = type;
 				else {
@@ -182,7 +188,7 @@ namespace flopoco
 					j++;
 					int defaultValEnd = part.find(':', 0);
 					string defaultVal=part.substr(j, defaultValEnd-j);
-					cout << " default to {" <<  defaultVal << "}  ";
+					//cout << " default to {" <<  defaultVal << "}  ";
 					m_paramDefault[name]=defaultVal;
 					j=defaultValEnd;
 				}
@@ -192,7 +198,7 @@ namespace flopoco
 					while (part[j]==' ') j++; // remove leading spaces
 					string description = part.substr(j, -1);
 					m_paramDoc[name] = description;
-					cout << " :  {" << description <<"}" << endl;
+					//cout << " :  {" << description <<"}" << endl;
 				}
 				else throw("OperatorFactory: Error parsing parameter description");
 			}
@@ -204,7 +210,7 @@ namespace flopoco
 	}
 	
 
-	void UserInterface::parseGlobalOptions(const vector<string> &args) {
+	void UserInterface::parseGlobalOptions(vector<string> args) {
 		cout << "parsing global options" << endl;
 	}
 
@@ -219,7 +225,7 @@ namespace flopoco
 		}
 		// Now the parsing itself. All the sub-parsers erase the data they consume from the string vectors
 		try {
-			cout << "args.size=" << args.size() <<endl;
+			//cout << "args.size=" << args.size() <<endl;
 			while(args.size() > 0) { // This loop is over the Operators that are passed on the command line
 				parseGlobalOptions(args); 
 				string opName = args[0];  // operator Name
@@ -263,13 +269,20 @@ namespace flopoco
 	}
 
 
+#if 0
+	/* Splits the arguments */
+	pair<string, string> splitKeyVal(string& arg) {
+		size_t eqPos = arg.find('=');
+		if(string::npos==eqPos || 0==eqPos)
+			throw ("This doesn't seem to be a key=value pair: " + arg);
+		string key= arg.substr(0,eqPos);
+		string val= arg.substr(eqPos+1, string::npos);
+		return make_pair<key, val>;
+	}
+#endif
 
 	
-
-	// The following are helper functions to make implementation of factory parsers trivial
-	// Beware, args[0] is the operator name, so that we may look up the doc in the factories etc.
-
-	int UserInterface::checkStrictlyPositiveInt(vector<string> args, string keyArg){
+	string getVal(vector<string>& args, string& keyArg){
 		vector<string>::iterator i = args.begin();
 		string opName=*i;
 		i++;
@@ -280,24 +293,100 @@ namespace flopoco
 			string key= i->substr(0,eqPos);
 			if(key==keyArg) {
 				string val= i->substr(eqPos+1, string::npos);
-				size_t end;
-				int intval=stoi(val, &end);
-				 if (val.length() == 0 || val.length() != end)
-					 throw ("Expecting an int for parameter " + key + ", got "+val);
-				if(intval>0)
-					return intval;
-				else
-					throw ("Expecting strictly positive value for " + key + ", got " + val );
-			}
+				return val;}
 			i++;
-		} 
-		throw ("Key "+keyArg+" not found in arguments of "+opName );
+		}
+		return ""; // not found
+	}
+	
+	// The following are helper functions to make implementation of factory parsers trivial
+	// The code is not efficient but who cares: it is simple to maintain.
+	// Beware, args[0] is the operator name, so that we may look up the doc in the factories etc.
+
+
+
+	
+	bool UserInterface::checkBoolean(vector<string> args, string key){
+		string val=getVal(args, key);
+		if(val=="") {
+			// key not given, use default value
+			val = getFactoryByName(args[0])->getDefaultVal(key);
+			if (val=="") {
+				throw (args[0] +": argument " + key + " not provided, and there doesn't seem to be a default value."
+							 +"\n" +  getFactoryByName(args[0]) -> getFullDoc());
+			}
+		}
+		if(val=="1" || val=="yes" || val=="true" || val=="Yes" || val=="True")
+			return true;
+		else if(val=="0" || val=="no" || val=="false" || val=="No" || val=="False")
+			return false;
+		else
+				throw (args[0] +": expected boolean for argument " + key + ", got" + val);
 	}
 
-	int UserInterface::checkOptionalInt(vector<string> args, string key){
-		return 0;
+
+	
+	int UserInterface::checkInt(vector<string> args, string key){
+		string val=getVal(args, key);
+		if(val=="") {
+			// key not given, use default value
+			val = getFactoryByName(args[0])->getDefaultVal(key);
+			if (val=="") {
+				throw (args[0] +" argument " + key + " not provided, and there doesn't seem to be a default value."
+							 +"\n" +  getFactoryByName(args[0]) -> getFullDoc());
+			}
+		}
+		size_t end;
+		int intval=stoi(val, &end);
+		if (val.length() == 0 || val.length() != end)
+			throw (args[0] +": expecting an int for parameter " + key + ", got "+val);
+		return intval;
 	}
 
+
+	int UserInterface::checkPositiveInt(vector<string> args, string key){
+		string val=getVal(args, key);
+		if(val=="") {
+			// key not given, use default value
+			val = getFactoryByName(args[0])->getDefaultVal(key);
+			if (val=="") {
+				throw (args[0] +" argument " + key + " not provided, and there doesn't seem to be a default value."
+							 +"\n" +  getFactoryByName(args[0]) -> getFullDoc());
+			}
+		}
+		size_t end;
+		int intval=stoi(val, &end);
+		if (val.length() == 0 || val.length() != end)
+			throw (args[0] +": expecting an int for parameter " + key + ", got "+val);
+		if(intval>=0)
+			return intval;
+		else
+			throw (args[0] +": expecting strictly positive value for " + key + ", got " + val );
+	}
+
+
+	int UserInterface::checkStrictlyPositiveInt(vector<string> args, string key){
+		string val=getVal(args, key);
+		if(val=="") {
+			// key not given, use default value
+			val = getFactoryByName(args[0])->getDefaultVal(key);
+			if (val=="") {
+				throw (args[0] +" argument " + key + " not provided, and there doesn't seem to be a default value."
+							 +"\n" +  getFactoryByName(args[0]) -> getFullDoc());
+			}
+		}
+		size_t end;
+		int intval=stoi(val, &end);
+		if (val.length() == 0 || val.length() != end)
+			throw (args[0] +": expecting an int for parameter " + key + ", got "+val);
+		if(intval>0)
+			return intval;
+		else
+			throw (args[0] +": expecting strictly positive value for " + key + ", got " + val );
+	}
+
+
+	
 
 
 	
