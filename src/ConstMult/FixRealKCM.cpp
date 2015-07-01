@@ -29,6 +29,12 @@
 
 using namespace std;
 
+#define WIP_FORGET
+#ifdef WIP_LFORGET
+#pragma message("Version du FixRealKCM en cours de développement")
+#pragma message("Statut : Fonctionne globalement bien mais n'est pas encore optimisé")
+#endif
+
 namespace flopoco{
 
 	/**
@@ -116,9 +122,6 @@ namespace flopoco{
 		)
 	{
 
-#ifndef WIP_FORGET
-#define WIP_FORGET
-#endif
 #ifdef WIP_FORGET
 		int lutWidth = target->lutInputs(); 
 		int* diSize = new int[17*42];		
@@ -231,7 +234,6 @@ namespace flopoco{
 		
 		int* diSize;
 		int nbOfTables = computeTableNumbers(target, wIn, &diSize);
-		int lutWidth = target->lutInputs();
 		
 		REPORT(INFO, "Constant multiplication in "<< nbOfTables << " tables." <<
 				g << "guards bits are used.");
@@ -241,7 +243,6 @@ namespace flopoco{
 		addInput("X", wIn);
 		addOutput("R", wOut);
 
-#define WIP_FORGET 
 #ifdef WIP_FORGET
 		int* doSize;
 
@@ -300,7 +301,6 @@ namespace flopoco{
 					bitHeap->addConstantOneBit(w);
 				}
 			}
-
 		}
 
 		//compress the bitheap and produce the result
@@ -1110,7 +1110,6 @@ namespace flopoco{
 	mpz_class FixRealKCMTable::function(int x0)
 	{
 #ifdef WIP_FORGET
-#pragma message("Using WIP_FORGET FixRealKCMTable function")
 		int x;
 		bool negativeInput = false;
 		
@@ -1184,6 +1183,7 @@ namespace flopoco{
 		}
 
 #else
+#pragma message("tralala")
 		mpz_class result;
 		//If the table contains just two values
 		//To test
