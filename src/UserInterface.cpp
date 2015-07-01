@@ -281,8 +281,12 @@ namespace flopoco
 	}
 #endif
 
-	
-	string getVal(vector<string>& args, string& keyArg){
+
+
+	// Get the value corresponding to a key, case-insensitive
+	string getVal(vector<string>& args, string keyArg){
+		// convert to lower case. not efficient to do this each time but hey, this is a user interface.
+		std::transform(keyArg.begin(), keyArg.end(), keyArg.begin(), ::tolower);
 		vector<string>::iterator i = args.begin();
 		string opName=*i;
 		i++;
@@ -291,6 +295,9 @@ namespace flopoco
 			if(string::npos==eqPos || 0==eqPos)
 				throw ("This doesn't seem to be a key=value pair: " + *i);
 			string key= i->substr(0,eqPos);
+			// convert to lower case
+			std::transform(key.begin(), key.end(), key.begin(), ::tolower);
+			for (auto c:key) c=tolower(c);
 			if(key==keyArg) {
 				string val= i->substr(eqPos+1, string::npos);
 				return val;}
