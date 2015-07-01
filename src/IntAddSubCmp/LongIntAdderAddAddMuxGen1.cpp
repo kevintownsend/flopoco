@@ -45,11 +45,11 @@ namespace flopoco{
 		addInput("Cin");
 		addOutput("R"  , wIn_);
 
-		if (verbose){
-			cout <<"delay for X is   "<< inputDelays["X"]<<endl;	
-			cout <<"delay for Y is   "<< inputDelays["Y"]<<endl;
-			cout <<"delay for Cin is "<< inputDelays["Cin"]<<endl;
-		}
+		// if (verbose){
+		// 	cout <<"delay for X is   "<< inputDelays["X"]<<endl;	
+		// 	cout <<"delay for Y is   "<< inputDelays["Y"]<<endl;
+		// 	cout <<"delay for Cin is "<< inputDelays["Cin"]<<endl;
+		// }
 
 		if (isSequential()){
 
@@ -59,8 +59,8 @@ namespace flopoco{
 				
 				
 				if (false){
-					if (verbose)
-						cout << "The maximum input delay is "<<	maxInputDelay<<endl;
+					// if (verbose)
+					// 	cout << "The maximum input delay is "<<	maxInputDelay<<endl;
 					
 					cSize = new int[2000];
 					REPORT(3, "-- The new version: direct mapping without 0/1 padding, IntAdders instantiated");

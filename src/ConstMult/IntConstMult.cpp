@@ -567,7 +567,7 @@ namespace flopoco{
 				//delete implementation;
 				//implementation=buildMultBoothTreeFromRight(n);
 
-				if(verbose>=DETAILED) showShiftAddDag();
+				if(UserInterface::verbose>=DETAILED) showShiftAddDag();
 
 				int cost=compute_total_cost(implementation->result);
 				REPORT(INFO, "Estimated bare cost (not counting pipeline overhead) : " << cost << " FA/LUT" );
@@ -704,7 +704,7 @@ namespace flopoco{
 				}
 			}
 
-			if(verbose>=DETAILED) showShiftAddDag();
+			if(UserInterface::verbose>=DETAILED) showShiftAddDag();
 
 			int cost=compute_total_cost(implementation->result);
 			REPORT(INFO, "Estimated bare cost (not counting pipeline overhead) : " << cost << " FA/LUT" );

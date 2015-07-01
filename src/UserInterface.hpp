@@ -94,7 +94,11 @@ namespace flopoco
 		
 	public:
 		static vector<OperatorPtr>  globalOpList;  /**< Level-0 operators. Each of these can have sub-operators */
-		
+		static string filename;
+		static string cl_name; // used for the name option
+		static Target* target;
+		static int verbose;
+
 	private:
 		static vector<OperatorFactoryPtr> sm_factoriesByIndex;
 		static map<string,OperatorFactoryPtr> sm_factoriesByName;

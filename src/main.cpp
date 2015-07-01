@@ -32,12 +32,6 @@
 using namespace std;
 using namespace flopoco;
 
-// Global variables, useful in this main to avoid parameter passing
-
-
-	string filename="flopoco.vhdl";
-	string cl_name=""; // used for the -name option
-	Target* target;
 	
 	//------------ Resource Estimation --------------------------------
 	int reLevel;
@@ -53,19 +47,6 @@ using namespace flopoco;
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
 int main(int argc, char* argv[] )
 {
 	sollya_lib_init();
@@ -73,7 +54,9 @@ int main(int argc, char* argv[] )
 	
 	Target* target = new Virtex5(); // this also creates a global operator list TODO move it to the factory, or somewhere.
 
-	verbose=3;
+	UserInterface::verbose=3;
+	UserInterface::filename="flopoco.vhdl";
+	UserInterface::cl_name="flopoco.vhdl";
 	Shifter::registerFactory();
 	FPExp::registerFactory();
 
@@ -88,12 +71,11 @@ int main(int argc, char* argv[] )
 
 	
 	ofstream file;
-	file.open(filename.c_str(), ios::out);
+	file.open(UserInterface::filename.c_str(), ios::out);
 	UserInterface::outputVHDLToFile(file); 
 	file.close();
 
 	UserInterface::finalReport(cerr); 
-	cerr << "Output file: " << filename <<endl;
 
 
 

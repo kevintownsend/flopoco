@@ -44,11 +44,11 @@ namespace flopoco{
 		addInput("Cin");
 		addOutput("R"  , wIn_);
 
-		if (verbose){
-			cout <<"delay for X is   "<< inputDelays["X"]<<endl;	
-			cout <<"delay for Y is   "<< inputDelays["Y"]<<endl;
-			cout <<"delay for Cin is "<< inputDelays["Cin"]<<endl;
-		}
+		// if (verbose){
+		// 	cout <<"delay for X is   "<< inputDelays["X"]<<endl;	
+		// 	cout <<"delay for Y is   "<< inputDelays["Y"]<<endl;
+		// 	cout <<"delay for Cin is "<< inputDelays["Cin"]<<endl;
+		// }
 
 		if (isSequential()){
 

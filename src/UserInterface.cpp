@@ -8,6 +8,20 @@
 namespace flopoco
 {
 
+
+	// Allocation of the global objects
+	string UserInterface::filename="flopoco.vhdl";
+	string UserInterface::cl_name=""; // used for the -name option
+	Target* UserInterface::target;
+	int UserInterface::verbose;
+	
+	// Global factory list TODO there should be only one.
+	vector<OperatorFactoryPtr> UserInterface::sm_factoriesByIndex;
+	map<string,OperatorFactoryPtr> UserInterface::sm_factoriesByName;
+
+	vector<OperatorPtr>  UserInterface::globalOpList;  /**< Level-0 operators. Each of these can have sub-operators */
+
+	
 	// This should be obsoleted soon. It is there only because random_main needs it
 	void addOperator(OperatorPtr op) {
 #if 0 // TODO will be done somewhere else
@@ -77,14 +91,9 @@ namespace flopoco
 		for(auto i: globalOpList) {
 			i->outputFinalReport(s, 0);
 		}
+		cerr << "Output file: " << filename <<endl;
+
 	}
-
-	
-	// Global factory list TODO there should be only one.
-	vector<OperatorFactoryPtr> UserInterface::sm_factoriesByIndex;
-	map<string,OperatorFactoryPtr> UserInterface::sm_factoriesByName;
-
-	vector<OperatorPtr>  UserInterface::globalOpList;  /**< Level-0 operators. Each of these can have sub-operators */
 
 	
 	void UserInterface::registerFactory(OperatorFactoryPtr factory)	{
