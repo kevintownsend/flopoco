@@ -996,7 +996,7 @@ namespace flopoco{
 		{
 			if ( svX > ( (mpz_class(1)<<(wIn-1))-1) )
 			{
-				svX = svX - (mpz_class(1)<<wIn);
+				svX = (mpz_class(1)<<wIn) - svX;
 				negativeInput = true;
 			}
 		}
