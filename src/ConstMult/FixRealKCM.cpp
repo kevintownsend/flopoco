@@ -115,6 +115,44 @@ namespace flopoco{
 			int** disize_target
 		)
 	{
+
+#ifndef WIP_FORGET
+#define WIP_FORGET
+#endif
+#ifdef WIP_FORGET
+		int lutWidth = target->lutInputs(); 
+		int* diSize = new int[17*42];		
+		int currentSize;
+		currentSize = diSize[0] = (wIn < lutWidth) ? wIn : lutWidth;
+		diSize[1] = 0;
+		int nbOfTables = 1;
+		size_t idx = 1;
+
+		int remainingBits = (wIn - diSize[0]) % (lutWidth - 1);
+
+		size_t i;
+		for(i = idx ; currentSize < wIn - remainingBits ; ++i)
+		{
+			currentSize += diSize[i] = ((wIn - currentSize) < (lutWidth - 1))?
+				wIn - currentSize : lutWidth - 1;
+			nbOfTables++;
+		}
+
+		if(remainingBits <= lutWidth/2)
+		{
+			diSize[1] += remainingBits;
+			if(nbOfTables < 2)
+			{
+				nbOfTables++;
+			}
+		}
+		else
+		{
+			diSize[idx] = remainingBits;
+			nbOfTables++;
+		}
+
+#else
 		int lutWidth = target->lutInputs(); 
 	
 		// First set up all the sizes. Table 0 is the most one
@@ -157,7 +195,7 @@ namespace flopoco{
 			counter--;
 			diSize[counter] = wIn - (currentSize - diSize[counter]);
 		}
-		
+#endif
 		if(disize_target != nullptr)
 		{
 			*disize_target = diSize;
@@ -642,6 +680,8 @@ namespace flopoco{
 			outDelayMap["R"] = getCriticalPath();
 		}
 #endif
+		vhdl << tab << "R <= OutRes" << range(wOut+g-1, g) << ";" << endl;
+		outDelayMap["R"] = getCriticalPath();
 		delete[] diSize;
 	}
 	
@@ -877,25 +917,26 @@ namespace flopoco{
 		bool last = true;
 		int highBit = wIn;
 		int tableDo = wOut+g;
-
-		//if constant is negative and input is unsigned then we need an
-		//extra bit for sign extension
-		int signBitExtension = (negativeConstant) ? 1 : 0;
-
+		
 		for (int i=nbOfTables-1; i>=0; i--)
 		{
 			// The last table has to have wOut+g  bits.
 			// The previous one wOut+g-lastLutWidth
 			// the previous one wOut+g-anteLastLutWidth-lastlutWidth etc
-
+			
 			vhdl << tab << declare( join("d",i), diSize[i] ) << " <= X" << 
 				range(highBit-1,   highBit - diSize[i]) << ";" << endl;
 			highBit -= diSize[i];
-			doSize[i] = tableDo + signBitExtension;
+			doSize[i] = tableDo;
+			if(!(last && signedInput))
+			{
+				doSize[i]++;
+			}
 			tableDo -= diSize[i];
 
 			REPORT(DEBUG, "Table i=" << i << ", input size=" << 
-					diSize[i] << ", output size=" << doSize[i]);
+					diSize[i] << ", output size=" << doSize[i] << 
+					", weight= " << highBit);
 
 			// Now produce the VHDL
 
@@ -1058,11 +1099,10 @@ namespace flopoco{
 	mpz_class FixRealKCMTable::function(int x0)
 	{
 #ifdef WIP_FORGET
-
+#pragma message("Using WIP_FORGET FixRealKCMTable function")
 		int x;
 		bool negativeInput = false;
-		int extraSignedBit = (mother->negativeConstant && !mother->signedInput) 
-			? 1 : 0; 
+		
 		// get rid of two's complement
 		x = x0;
 		//Only the last "digit" has a negative weight
@@ -1094,12 +1134,14 @@ namespace flopoco{
 			// do the mult in large precision
 			mpfr_mul(mpR, mpX, mother->absC, GMP_RNDN);
 			
+			int rescaleShift = (last && mother->signedInput) ? 0 : 1;
+
 			// Result is integer*C, which is more or less what we need: just
 			// scale to add g bits.
 			mpfr_mul_2si(
 					mpR, 
 					mpR,
-					wOut - mother->msbC - weight - wIn,
+					wOut - mother->msbC - weight - wIn - rescaleShift + mother->g,
 					GMP_RNDN
 				); //Exact
 
@@ -1110,20 +1152,6 @@ namespace flopoco{
 			if(negativeInput != mother->negativeConstant)
 			{
 				result = (mpz_class(1) << wOut) - result;
-			}
-		}
-
-		//Msb toogling for fast sign extension
-		if(signedOutput && false)
-		{
-			mpz_class maxBit = mpz_class(1) << (wOut - 1);
-			if(result < maxBit)
-			{
-				result += maxBit;
-			}
-			else
-			{
-				result -= maxBit;
 			}
 		}
 
@@ -1203,7 +1231,7 @@ namespace flopoco{
 			// Here is when we do the rounding
 			mpfr_get_z(result.get_mpz_t(), mpR, GMP_RNDN); // Should be exact
 
-			
+						
 		}
 			//Change number sign only if input XOR cste is negative
 			if(
