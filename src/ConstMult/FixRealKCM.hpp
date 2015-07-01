@@ -102,9 +102,9 @@ namespace flopoco{
 					int weight, 
 					int wIn, 
 					int wOut, 
-					//if true, all outputs will be prepared for constant vector 
+					//if true, all outputs will be prepared for fast sign
 					//sign extension (I.E. msb will be inverted)
-					bool signedOutput, 
+					bool fastSignExtend, 
 					bool last, 
 					int logicTable = 1
 					);
@@ -114,7 +114,7 @@ namespace flopoco{
 			int index;
 			//Weight of input lsb
 			int weight;
-			bool signedOutput;
+			bool fastSignExtend;
 			bool last;
 	};
 

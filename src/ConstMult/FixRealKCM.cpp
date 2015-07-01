@@ -122,34 +122,35 @@ namespace flopoco{
 #ifdef WIP_FORGET
 		int lutWidth = target->lutInputs(); 
 		int* diSize = new int[17*42];		
-		int currentSize;
-		currentSize = diSize[0] = (wIn < lutWidth) ? wIn : lutWidth;
-		diSize[1] = 0;
-		int nbOfTables = 1;
-		size_t idx = 1;
-
-		int remainingBits = (wIn - diSize[0]) % (lutWidth - 1);
-
-		size_t i;
-		for(i = idx ; currentSize < wIn - remainingBits ; ++i)
+		if(wIn <= lutWidth)
 		{
-			currentSize += diSize[i] = ((wIn - currentSize) < (lutWidth - 1))?
-				wIn - currentSize : lutWidth - 1;
-			nbOfTables++;
+			diSize[0] = wIn;
+			if(disize_target != nullptr)
+			{
+				*disize_target = diSize;
+			}
+			else
+			{
+				delete[] diSize;
+			}
+
+			return 1;
 		}
+
+		diSize[0] = lutWidth;
+		
+		int nbOfTables = 1 + ((wIn) - lutWidth) / (lutWidth - 1);
+		int remainingBits = (wIn - diSize[0]) % (lutWidth - 1);
+		for(int i = 1 ; i < nbOfTables ; i++)
+			diSize[i] = lutWidth - 1;
 
 		if(remainingBits <= lutWidth/2)
 		{
 			diSize[1] += remainingBits;
-			if(nbOfTables < 2)
-			{
-				nbOfTables++;
-			}
 		}
 		else
 		{
-			diSize[idx] = remainingBits;
-			nbOfTables++;
+			diSize[nbOfTables++] = remainingBits;
 		}
 
 #else
@@ -232,7 +233,8 @@ namespace flopoco{
 		int nbOfTables = computeTableNumbers(target, wIn, &diSize);
 		int lutWidth = target->lutInputs();
 		
-		REPORT(INFO, "Constant multiplication in "<< nbOfTables << " tables");
+		REPORT(INFO, "Constant multiplication in "<< nbOfTables << " tables." <<
+				g << "guards bits are used.");
 		//manage the critical path
 		
 		setCriticalPath(getMaxInputDelays(inputDelays));
@@ -275,20 +277,30 @@ namespace flopoco{
 			syncCycleFromSignal(join("pp",i));
 
 			//add the bits to the bit heap
-			for(int w=0; w<=doSize[i]-1; w++)
+			int w;
+			for(w=0; w < doSize[i]; w++)
 			{
 				stringstream s;
 
 				//manage the critical path
 				manageCriticalPath(target->lutDelay());
 
-				if(negativeConstant != (w==(doSize[i]-1) && i==(nbOfTables-1)))
-					s << "not(pp" << i << of(w) << ")";
-				else
-					s << "pp" << i << of(w);
+				s << "pp" << i << of(w);
 
 				bitHeap->addBit(w, s.str());
+			} // w = table.msb + 1
+	
+			//Negative subproduct sign extension :
+			//As fast sign extension was enabled, we only need to add
+			//1 to each weight from table.msb to wOut - 1
+			if(negativeConstant && (i+1 != nbOfTables))
+			{	
+				for(w-- ; w < wOut + g ; w++)
+				{
+					bitHeap->addConstantOneBit(w);
+				}
 			}
+
 		}
 
 		//compress the bitheap and produce the result
@@ -913,11 +925,10 @@ namespace flopoco{
 
 		//first split the input X into digits having lutWidth bits -> this
 		//is as generic as it gets :)
-		bool signedOutput = negativeConstant || signedInput;
 		bool last = true;
 		int highBit = wIn;
 		int tableDo = wOut+g;
-		
+
 		for (int i=nbOfTables-1; i>=0; i--)
 		{
 			// The last table has to have wOut+g  bits.
@@ -948,7 +959,7 @@ namespace flopoco{
 					highBit, 
 					diSize[i], 
 					doSize[i], 
-					signedOutput, 
+					negativeConstant && !last, 
 					last 
 				);
 			useSoftRAM(t[i]);
@@ -1079,7 +1090,7 @@ namespace flopoco{
 			int weight, 
 			int wIn, 
 			int wOut, 
-			bool signedOutput, 
+			bool fastSignExtend, 
 			bool last, 
 			int pipeline
 		):
@@ -1087,7 +1098,7 @@ namespace flopoco{
 			mother(mother), 
 			index(i), 
 			weight(weight), 
-			signedOutput(signedOutput), 
+			fastSignExtend(fastSignExtend), 
 			last(last)
 	{
 		ostringstream name; 
@@ -1141,17 +1152,34 @@ namespace flopoco{
 			mpfr_mul_2si(
 					mpR, 
 					mpR,
-					wOut - mother->msbC - weight - wIn - rescaleShift + mother->g,
+					wOut - mother->msbC - weight - wIn - rescaleShift,
 					GMP_RNDN
 				); //Exact
 
 			// Here is when we do the rounding
 			mpfr_get_z(result.get_mpz_t(), mpR, GMP_RNDN); // Should be exact
 
-				//Get the real sign
+			//Get the real sign
 			if(negativeInput != mother->negativeConstant)
 			{
 				result = (mpz_class(1) << wOut) - result;
+			}
+
+			
+		}
+
+		//Preparation for fast sign extension
+		if(fastSignExtend)
+		{
+			mpz_class shifter = mpz_class(1) << (wOut - 1);
+
+			if(result < shifter)
+			{
+				result += shifter;
+			}
+			else
+			{
+				result -= shifter;
 			}
 		}
 
