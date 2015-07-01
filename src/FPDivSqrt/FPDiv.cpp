@@ -110,7 +110,7 @@ namespace flopoco{
 			double srt4stepdelay =  2*target->lutDelay() + 2*target->localWireDelay() + target->adderDelay(wF+4);
 
 			SelFunctionTable* table;
-			table = new SelFunctionTable(target, 0.75, 1.0, 2, 5, 7, 8);
+			table = new SelFunctionTable(target, 0.75, 1.0, 2, 5, 7, 8, 7, 5);
 			addSubComponent(table);
 
 			for(i=nDigit-1; i>=1; i--) {
@@ -270,10 +270,14 @@ namespace flopoco{
 
 			double srt4stepdelay =  2*target->lutDelay() + 2*target->localWireDelay() + target->adderDelay(wF+4);
 
+			SelFunctionTable* table;
+			table = new SelFunctionTable(target, 0.5, 1.0, 1, 4, 3, 4, 5, 3);
+			addSubComponent(table);
+
 			for(i=nDigit-1; i>=1; i--) {
 				manageCriticalPath(srt4stepdelay);
 
-				ostringstream wi, qi, wim1, seli, qiTimesD, wipad, wim1full;
+				ostringstream wi, qi, wim1, seli, qiTimesD, wipad, wim1full, tInstance;
 				wi << "w" << i;						//actual partial remainder
 				qi << "q" << i;						//actual quotient digit, LUT's output
 				wim1 << "w" << i-1;					//partial remainder for the next iteration, = left shifted wim1full
@@ -281,6 +285,7 @@ namespace flopoco{
 				qiTimesD << "q" << i << "D";		//qi*D
 				wipad << "w" << i << "pad";			//1-left-shifted wi
 				wim1full << "w" << i-1 << "full";	//partial remainder after this iteration, = wi+qi*D
+				tInstance << "SelFunctionTable" << i;
 
 				/*
 					Detailed algorithm :
@@ -298,15 +303,20 @@ namespace flopoco{
 				*/
 
 				vhdl << tab << declare(seli.str(),5) << " <= " << wi.str() << range( wF+2, wF-1)<<" & fY"<<of(wF-1)<<";" << endl;
-				vhdl << tab << "with " << seli.str() << " select" << endl;
-				vhdl << tab << declare(qi.str(),3) << " <= " << endl;
-				vhdl << tab << tab << "\"001\" when \"00010\" | \"00011\"," << endl;
-				vhdl << tab << tab << "\"010\" when \"00100\" | \"00101\" | \"00111\"," << endl;
-				vhdl << tab << tab << "\"011\" when \"00110\" | \"01000\" | \"01001\" | \"01010\" | \"01011\" | \"01101\" | \"01111\"," << endl;
-				vhdl << tab << tab << "\"101\" when \"11000\" | \"10110\" | \"10111\" | \"10100\" | \"10101\" | \"10011\" | \"10001\"," << endl;
-				vhdl << tab << tab << "\"110\" when \"11010\" | \"11011\" | \"11001\"," << endl;
-				vhdl << tab << tab << "\"111\" when \"11100\" | \"11101\"," << endl;
-				vhdl << tab << tab << "\"000\" when others;" << endl;
+				inPortMap (table , "X", seli.str());
+				outPortMap(table , "Y", qi.str());
+				vhdl << instance(table , tInstance.str());
+
+
+//				vhdl << tab << "with " << seli.str() << " select" << endl;
+//				vhdl << tab << declare(qi.str(),3) << " <= " << endl;
+//				vhdl << tab << tab << "\"001\" when \"00010\" | \"00011\"," << endl;
+//				vhdl << tab << tab << "\"010\" when \"00100\" | \"00101\" | \"00111\"," << endl;
+//				vhdl << tab << tab << "\"011\" when \"00110\" | \"01000\" | \"01001\" | \"01010\" | \"01011\" | \"01101\" | \"01111\"," << endl;
+//				vhdl << tab << tab << "\"101\" when \"11000\" | \"10110\" | \"10111\" | \"10100\" | \"10101\" | \"10011\" | \"10001\"," << endl;
+//				vhdl << tab << tab << "\"110\" when \"11010\" | \"11011\" | \"11001\"," << endl;
+//				vhdl << tab << tab << "\"111\" when \"11100\" | \"11101\"," << endl;
+//				vhdl << tab << tab << "\"000\" when others;" << endl;
 				vhdl << endl;
 				vhdl << tab << "with " << qi.str() << " select" << endl;
 				vhdl << tab << tab << declare(qiTimesD.str(),wF+4) << " <= "<< endl ;

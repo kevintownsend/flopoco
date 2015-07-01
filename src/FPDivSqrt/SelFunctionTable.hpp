@@ -9,7 +9,7 @@ namespace flopoco
 	class SelFunctionTable : public Table
 	{
 		public:
-			SelFunctionTable(Target* target, float dmin, float dmax, int nbd, int nbw, int digit, int base);
+			SelFunctionTable(Target* target, float dmin, float dmax, int nbd, int nbw, int digit, int base, int wIn, int wOut);
 			virtual ~SelFunctionTable();
 			mpz_class function(int x);
 		protected:

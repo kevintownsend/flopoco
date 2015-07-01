@@ -5,7 +5,7 @@
 using namespace std;
 namespace flopoco
 {
-	SelFunctionTable::SelFunctionTable(Target* target, float dmin, float dmax, int nbd, int nbw, int digit, int base) : Table(target, 7, 5),
+	SelFunctionTable::SelFunctionTable(Target* target, float dmin, float dmax, int nbd, int nbw, int digit, int base, int wIn, int wOut) : Table(target, wIn, wOut),
 																														Dmin(dmin),
 																														Dmax(dmax),
 																														nbBitD(nbd),
@@ -129,7 +129,7 @@ namespace flopoco
 		if(decimalResult < 0)
 		{
 			decimalResult+=(pow(2, nbBitK)); //switch to two's complement
-			if(decimalResult != 9)
+			if(decimalResult != 9 && radix > 4)
 				decimalResult+=pow(2, nbBitK); //qa is negative
 		}
 		else if(decimalResult == 7)
