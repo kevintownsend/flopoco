@@ -110,7 +110,7 @@ namespace flopoco{
 			double srt4stepdelay =  2*target->lutDelay() + 2*target->localWireDelay() + target->adderDelay(wF+4);
 
 			SelFunctionTable* table;
-			table = new SelFunctionTable(target);
+			table = new SelFunctionTable(target, 0.75, 1.0, 2, 5, 7, 8);
 			addSubComponent(table);
 
 			for(i=nDigit-1; i>=1; i--) {
