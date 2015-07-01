@@ -200,6 +200,70 @@ namespace flopoco{
 		setCriticalPath(getMaxInputDelays(inputDelays));
 		addInput("X", wIn);
 		addOutput("R", wOut);
+
+#define WIP_FORGET 
+#ifdef WIP_FORGET
+		int* doSize;
+
+		FixRealKCMTable** t = createTables(
+				target,
+				diSize,
+				nbOfTables,
+				&doSize
+			);
+
+
+		setCriticalPath(getMaxInputDelays(inputDelays));
+
+		if(!target->plainVHDL())
+		{
+			//create the bitheap
+			bitHeap = new BitHeap(this, wOut+g);
+		}
+
+		manageCriticalPath(target->localWireDelay() + target->lutDelay());
+
+		for(int i = 0; i < nbOfTables; i++)
+		{
+			REPORT(DEBUG, "Adding bits for table " << i)
+				//manage the critical path
+				setCycleFromSignal(join("d",i));
+
+			inPortMap (t[i] , "X", join("d",i));
+			outPortMap(t[i] , "Y", join("pp",i));
+			vhdl << instance(t[i] , join("KCMTable_",i));
+
+			//manage the critical path
+			syncCycleFromSignal(join("pp",i));
+
+			//add the bits to the bit heap
+			for(int w=0; w<=doSize[i]-1; w++)
+			{
+				stringstream s;
+
+				//manage the critical path
+				manageCriticalPath(target->lutDelay());
+
+				if(negativeConstant != (w==(doSize[i]-1) && i==(nbOfTables-1)))
+					s << "not(pp" << i << of(w) << ")";
+				else
+					s << "pp" << i << of(w);
+
+				bitHeap->addBit(w, s.str());
+			}
+		}
+
+		//compress the bitheap and produce the result
+		bitHeap->generateCompressorVHDL();
+
+		//manage the critical path
+		syncCycleFromSignal(bitHeap->getSumName());
+
+		//because of final add in bit heap, add one more bit to the result
+		vhdl << declare("OutRes", wOut+g) << " <= " << 
+			bitHeap->getSumName() << range(wOut+g-1, 0) << ";" << endl;	
+
+#else
 		
 		if(wIn <= lutWidth+1) //Marche bien 
 		{
@@ -577,6 +641,7 @@ namespace flopoco{
 			vhdl << tab << "R <= OutRes" << range(wOut+g-1, g) << ";" << endl;
 			outDelayMap["R"] = getCriticalPath();
 		}
+#endif
 		delete[] diSize;
 	}
 	
@@ -796,6 +861,75 @@ namespace flopoco{
 		delete[] diSize;
 	}
 
+	FixRealKCMTable** FixRealKCM::createTables(
+			Target* target,
+			int* diSize,
+			int nbOfTables,
+			int** doSize_target	
+		)
+	{
+		FixRealKCMTable** t = new FixRealKCMTable*[nbOfTables]; 
+		int* doSize = new int[17*42];
+
+		//first split the input X into digits having lutWidth bits -> this
+		//is as generic as it gets :)
+		bool signedOutput = negativeConstant || signedInput;
+		bool last = true;
+		int highBit = wIn;
+		int tableDo = wOut+g;
+
+		//if constant is negative and input is unsigned then we need an
+		//extra bit for sign extension
+		int signBitExtension = (negativeConstant) ? 1 : 0;
+
+		for (int i=nbOfTables-1; i>=0; i--)
+		{
+			// The last table has to have wOut+g  bits.
+			// The previous one wOut+g-lastLutWidth
+			// the previous one wOut+g-anteLastLutWidth-lastlutWidth etc
+
+			vhdl << tab << declare( join("d",i), diSize[i] ) << " <= X" << 
+				range(highBit-1,   highBit - diSize[i]) << ";" << endl;
+			highBit -= diSize[i];
+			doSize[i] = tableDo + signBitExtension;
+			tableDo -= diSize[i];
+
+			REPORT(DEBUG, "Table i=" << i << ", input size=" << 
+					diSize[i] << ", output size=" << doSize[i]);
+
+			// Now produce the VHDL
+
+			// already updated 
+			t[i] = new FixRealKCMTable(
+					target, 
+					this, 
+					i, 
+					highBit, 
+					diSize[i], 
+					doSize[i], 
+					signedOutput, 
+					last 
+				);
+			useSoftRAM(t[i]);
+			addSubComponent(t[i]);
+
+			last = false;
+		}
+
+
+		if(doSize_target != nullptr)
+		{
+			*doSize_target = doSize;
+		}
+		else
+		{
+			delete[] doSize;
+		}
+
+		return t;
+
+	}
+
 	// To have MPFR work in fix point, we perform the multiplication in very
 	// large precision using RN, and the RU and RD are done only when converting
 	// to an int at the end.
@@ -841,6 +975,17 @@ namespace flopoco{
 		{
 			svRd = (mpz_class(1) << wOut) - svRd;
 			svRu = (mpz_class(1) << wOut) - svRu;
+		}
+
+		//Border cases
+		if(svRd > (mpz_class(1) << wOut) - 1 )
+		{
+			svRd = 0;
+		}
+
+		if(svRu > (mpz_class(1) << wOut) - 1 )
+		{
+			svRu = 0;
 		}
 
 		tc->addExpectedOutput("R", svRd);
@@ -893,7 +1038,7 @@ namespace flopoco{
 			int weight, 
 			int wIn, 
 			int wOut, 
-			bool signedInput, 
+			bool signedOutput, 
 			bool last, 
 			int pipeline
 		):
@@ -901,7 +1046,7 @@ namespace flopoco{
 			mother(mother), 
 			index(i), 
 			weight(weight), 
-			signedInput(signedInput), 
+			signedOutput(signedOutput), 
 			last(last)
 	{
 		ostringstream name; 
@@ -912,6 +1057,77 @@ namespace flopoco{
   
 	mpz_class FixRealKCMTable::function(int x0)
 	{
+#ifdef WIP_FORGET
+
+		int x;
+		bool negativeInput = false;
+		int extraSignedBit = (mother->negativeConstant && !mother->signedInput) 
+			? 1 : 0; 
+		// get rid of two's complement
+		x = x0;
+		//Only the last "digit" has a negative weight
+		if(mother->signedInput && last)
+		{
+			if ( x0 > ((1<<(wIn-1))-1) )
+			{
+				x = (1<<wIn) - x;
+				negativeInput = true;
+			}
+		}
+
+		mpz_class result;
+		mpfr_t mpR, mpX;
+
+		mpfr_init2(mpR, 10*wOut);
+		mpfr_init2(mpX, wIn);
+
+		if(x0 == 0)
+		{
+			mpfr_set_si(mpX, 0, GMP_RNDN); // should be exact
+		}
+		else
+		{
+			mpfr_set_si(mpX, x, GMP_RNDN); // should be exact
+			//Getting real weight
+			mpfr_mul_2si(mpX, mpX, weight, GMP_RNDN); //Exact
+
+			// do the mult in large precision
+			mpfr_mul(mpR, mpX, mother->absC, GMP_RNDN);
+			
+			// Result is integer*C, which is more or less what we need: just
+			// scale to add g bits.
+			mpfr_mul_2si(
+					mpR, 
+					mpR,
+					wOut - mother->msbC - weight - wIn,
+					GMP_RNDN
+				); //Exact
+
+			// Here is when we do the rounding
+			mpfr_get_z(result.get_mpz_t(), mpR, GMP_RNDN); // Should be exact
+
+				//Get the real sign
+			if(negativeInput != mother->negativeConstant)
+			{
+				result = (mpz_class(1) << wOut) - result;
+			}
+		}
+
+		//Msb toogling for fast sign extension
+		if(signedOutput && false)
+		{
+			mpz_class maxBit = mpz_class(1) << (wOut - 1);
+			if(result < maxBit)
+			{
+				result += maxBit;
+			}
+			else
+			{
+				result -= maxBit;
+			}
+		}
+
+#else
 		mpz_class result;
 		//If the table contains just two values
 		//To test
@@ -948,7 +1164,7 @@ namespace flopoco{
 			if(signedInput)
 			{
 				if ( x0 > ((1<<(wIn-1))-1) )
-					x = x - (1<<wIn);
+					x = (1<<wIn) - x;
 			}
 			// Cast x to mpfr 
 			mpfr_t mpX;
@@ -971,8 +1187,12 @@ namespace flopoco{
 
 			// Result is integer*C, which is more or less what we need: just
 			// scale to add g bits.
-			mpfr_mul_2si(mpR, mpR, mother->wOut - mother->wIn - mother->msbC +
-					mother->g, GMP_RNDN); //Exact
+			mpfr_mul_2si(
+					mpR, 
+					mpR, 
+					mother->wOut - mother->wIn - mother->msbC + mother->g,
+					GMP_RNDN
+				); //Exact
 
 			// and add the half-ulp of the result that turns truncation into
 			// rounding if g=0 (meaning either one table, or two tables+faithful
@@ -983,19 +1203,24 @@ namespace flopoco{
 			// Here is when we do the rounding
 			mpfr_get_z(result.get_mpz_t(), mpR, GMP_RNDN); // Should be exact
 
-			// Gimme back two's complement
 			
 		}
-			//Change number size only if input XOR cste is negative
+			//Change number sign only if input XOR cste is negative
 			if(
-					(signedInput && (x0 > (1<<(wIn-1))-1)) 
-					!=
-					mother->negativeConstant
-				)
+						(
+					 			(signedInput && (x0 > (1<<(wIn-1))-1)) 
+							!=
+								mother->negativeConstant
+						)
+					&& 
+					 	result != 0
+				) 
 			{
-					result = result + (mpz_class(1)<<wOut);
+					result = (mpz_class(1)<<wOut) - result;
 			}
 			return  result;
+#endif
+			return result;
 	}
 }
 

@@ -8,6 +8,7 @@
 namespace flopoco{
 
 
+	class FixRealKCMTable;
 
 	class FixRealKCM : public Operator
 	{
@@ -77,6 +78,12 @@ namespace flopoco{
 		
 		private:
 		void init();
+		FixRealKCMTable** createTables(
+				Target* target,
+				int* diSize,
+				int nbOfTables,
+				int** doSize_target
+			);
 		static int computeTableNumbers(
 			Target* target,
 			int wIn,
@@ -95,7 +102,9 @@ namespace flopoco{
 					int weight, 
 					int wIn, 
 					int wOut, 
-					bool signedInput, 
+					//if true, all outputs will be prepared for constant vector 
+					//sign extension (I.E. msb will be inverted)
+					bool signedOutput, 
 					bool last, 
 					int logicTable = 1
 					);
@@ -103,8 +112,9 @@ namespace flopoco{
 			mpz_class function(int x);
 			FixRealKCM* mother;
 			int index;
+			//Weight of input lsb
 			int weight;
-			bool signedInput;
+			bool signedOutput;
 			bool last;
 	};
 
