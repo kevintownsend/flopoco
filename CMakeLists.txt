@@ -308,6 +308,7 @@ src/Conversions/Fix2FP
  src/FPMultSquare/FPSquare
 
 # Floating-point dividers and square roots
+src/FPDivSqrt/SelfunctionTable
 src/FPDivSqrt/FPDiv
 src/FPDivSqrt/FPSqrt
 # src/FPDivSqrt/FPSqrtPoly # Resurrect some day?

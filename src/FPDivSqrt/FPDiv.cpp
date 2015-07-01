@@ -31,6 +31,7 @@
 #include "Operator.hpp"
 
 #include "FPDiv.hpp"
+#include "SelFunctionTable.hpp"
 
 using namespace std;
 
@@ -99,14 +100,6 @@ namespace flopoco{
 			vhdl << tab << tab << tab << "(\"000\" & partialFX) + (\"0\" & partialFX & \"00\") when \"01\","<<endl; /////////[5/8, 3/4[*5/4 => [25/32, 15/16[
 			vhdl << tab << tab << tab << "\"0\" & partialFX &\"00\" when others;"<<endl; /////////no prescaling
 
-			//TODO : remove that
-				vhdl << tab << " -- compute 3Y, 5Y, 7Y" << endl;
-				vhdl << tab << declare("fYTimes3",wF+6) << " <= (\"000\" & fY) + (\"00\" & fY & \"0\");" << endl; // TODO an IntAdder here
-				vhdl << tab << declare("fYTimes5",wF+6) << " <= (\"000\" & fY) + (\"0\" & fY & \"00\");" << endl;
-				vhdl << tab << declare("fYTimes6",wF+6) << " <= (\"00\" & fY & \"0\") + (\"0\" & fY & \"00\");" << endl;
-				vhdl << tab << declare("fYTimes7",wF+6) << " <= (fY & \"000\") - (\"000\" & fY);" << endl;
-			//TODO end
-
 			ostringstream wInit;
 			wInit << "w" << nDigit-1;
 			vhdl << tab << declare(wInit.str(), wF+6) << " <=  \"00\" & fX;" << endl; //TODO : review that
@@ -116,10 +109,14 @@ namespace flopoco{
 
 			double srt4stepdelay =  2*target->lutDelay() + 2*target->localWireDelay() + target->adderDelay(wF+4);
 
+			SelFunctionTable* table;
+			table = new SelFunctionTable(target);
+			addSubComponent(table);
+
 			for(i=nDigit-1; i>=1; i--) {
 				manageCriticalPath(srt4stepdelay);
 
-				ostringstream wi, qi, qa, qb, wim1, seli, qiaTimesD, qibTimesD, wipad, wim1full, wim1fulla;
+				ostringstream wi, qi, qa, qb, wim1, seli, qiaTimesD, qibTimesD, wipad, wim1full, wim1fulla, tInstance;
 				wi << "w" << i;						//actual partial remainder
 				qi << "q" << i;						//actual quotient digit, LUT's output
 				wim1 << "w" << i-1;					//partial remainder for the next iteration, = left shifted wim1full
@@ -129,75 +126,37 @@ namespace flopoco{
 				wipad << "w" << i << "pad";			//1-left-shifted wi
 				wim1full << "w" << i-1 << "full";	//partial remainder after this iteration, = wi+qi*D
 				wim1fulla << "w" << i-1 << "fulla";	//partial remainder after this iteration, = wi+qi*D
+				tInstance << "SelFunctionTable" << i;
 
-				//TODO : DONE 2 selections : qa in [-2, 2], qb in {-8,-4,-2,0,2,4,8}, then add in 2 steps
-				//TODO : Also instantiate a personal Table object (still to write)
-					vhdl << tab << declare(seli.str(),7) << " <= " << wi.str() << range( wF+5, wF+1)<<" & fY"<< range(wF, wF-1) <<";" << endl;
-					vhdl << tab << "with " << seli.str() << " select" << endl;
-					vhdl << tab << declare(qi.str(),5) << " <= " << endl;
-					vhdl << tab << tab << "\"00001\" when \"0000100\" | \"0000101\" | \"0000110\" | \"0000111\" | \"0001000\" | \"0001001\" | \"0001010\" | \"0001011\"," << endl;
-					vhdl << tab << tab << "\"00010\" when \"0001100\" | \"0001101\" | \"0001110\" | \"0001111\"," << endl;
-					vhdl << tab << tab << "\"00011\" when \"0010000\" | \"0010001\" | \"0010010\" | \"0010011\" | \"0010101\" | \"0010110\" | \"0010111\"," << endl;
-					vhdl << tab << tab << "\"00100\" when \"0010100\" | \"0011000\" | \"0011001\" | \"0011010\" | \"0011011\" | \"0011110\" | \"0011111\"," << endl;
-					vhdl << tab << tab << "\"00101\" when \"0011100\" | \"0011101\" | \"0100000\" | \"0100001\" | \"0100010\" | \"0100011\" | \"0100110\" | \"0100111\"," << endl;
-					vhdl << tab << tab << "\"00110\" when \"0100100\" | \"0100101\" | \"0101001\" | \"0101010\" | \"0101011\" | \"0101110\" | \"0101111\"," << endl;
-					vhdl << tab << tab << "\"10111\" when \"0101000\" | \"0101100\" | \"0101101\" | \"0110000\" | \"0110001\" | \"0110010\" | \"0110011\" | ";
-					vhdl << "\"0110101\" | \"0110110\" | \"0110111\" | \"0111010\" | \"0111011\" | \"0111111\"," << endl;
-
-					vhdl << tab << tab << "\"01001\" when \"1010100\" | \"1010000\" | \"1010001\" | \"1001100\" | \"1001101\" | \"1001110\" | \"1001111\" | ";
-					vhdl << "\"1001001\" | \"1001010\" | \"1001011\" | \"1000110\" | \"1000111\" | \"1000011\"," << endl;
-					vhdl << tab << tab << "\"11010\" when \"1011000\" | \"1011001\" | \"1010101\" | \"1010110\" | \"1010111\" | \"1010010\" | \"1010011\"," << endl;
-					vhdl << tab << tab << "\"11011\" when \"1100000\" | \"1100001\" | \"1011100\" | \"1011101\" | \"1011110\" | \"1011111\" | \"1011010\" | \"1011011\"," << endl;
-					vhdl << tab << tab << "\"11100\" when \"1101000\" | \"1100100\" | \"1100101\" | \"1100110\" | \"1100111\" | \"1100010\" | \"1100011\"," << endl;
-					vhdl << tab << tab << "\"11101\" when \"1101100\" | \"1101101\" | \"1101110\" | \"1101111\" | \"1101001\" | \"1101010\" | \"1101011\"," << endl;
-					vhdl << tab << tab << "\"11110\" when \"1110000\" | \"1110001\" | \"1110010\" | \"1110011\"," << endl;
-					vhdl << tab << tab << "\"11111\" when \"1111000\" | \"1111001\" | \"1111010\" | \"1111011\" | \"1110100\" | \"1110101\" | \"1110110\" | \"1110111\"," << endl;
-					vhdl << tab << tab << "\"10000\" when others;" << endl;
-					vhdl << endl;
-				//TODO end
-
-					vhdl << tab << "with " << qi.str() << range(3, 0) << " select" << endl;
-					vhdl << tab << tab << declare(qiaTimesD.str(), wF+7) << " <= "<< endl ;
-					vhdl << tab << tab << tab << "\"0000\" & fY            when \"0001\" | \"0011\" | \"0101\" | \"0111\" | \"1111\" | \"1101\" | \"1011\" | \"1001\"," << endl;
-					vhdl << tab << tab << tab << "\"000\" & fY & \"0\"           when \"0110\" | \"1010\"," << endl;
-					vhdl << tab << tab << tab << "(" << wF+6 << " downto 0 => '0')          when others;" << endl;
-
-					vhdl << tab << "with " << qi.str() << range(3, 0) << " select" << endl;
-					vhdl << tab << tab << declare(qibTimesD.str(), wF+7) << " <= "<< endl ;
-					vhdl << tab << tab << tab << "\"000\" & fY & \"0\"           when \"0010\" | \"0011\" | \"1110\" | \"1101\"," << endl;
-					vhdl << tab << tab << tab << "\"00\" & fY & \"00\"           when \"0100\" | \"0101\" | \"0110\" | \"1100\" | \"1011\" | \"1010\"," << endl;
-					vhdl << tab << tab << tab << "\"0\" & fY & \"000\"           when \"0111\" | \"1001\"," << endl;
-					vhdl << tab << tab << tab << "(" << wF+6 << " downto 0 => '0')          when others;" << endl;
-
-					vhdl << tab << declare(wipad.str(), wF+7) << " <= " << wi.str() << " & \"0\";" << endl;
-					vhdl << tab << "with " << qi.str() << of(4) << " select" << endl;
-					vhdl << tab << declare(wim1fulla.str(), wF+7 ) << " <= " << wipad.str() << " - " << qiaTimesD.str() << " when '0'," << endl;
-					vhdl << tab << "      " << wipad.str() << " + " << qiaTimesD.str() << " when others;" << endl;
-
-					vhdl << tab << "with " << qi.str() << of(3) << " select" << endl;
-					vhdl << tab << declare(wim1full.str(), wF+7) << " <= " << wim1fulla.str() << " - " << qibTimesD.str() << " when '0'," << endl;
-					vhdl << tab << "      " << wim1fulla.str() << " + " << qibTimesD.str() << " when others;" << endl;
+				vhdl << tab << declare(seli.str(),7) << " <= " << wi.str() << range( wF+5, wF+1)<<" & fY"<< range(wF, wF-1) <<";" << endl;
+				inPortMap (table , "X", seli.str());
+				outPortMap(table , "Y", qi.str());
+				vhdl << instance(table , tInstance.str());
 
 
-//					vhdl << tab << "with " << qi.str() << range(3, 0) << " select" << endl;
-//					vhdl << tab << tab << declare(qiaTimesD.str(),wF+7) << " <= "<< endl ;
-//					vhdl << tab << tab << tab << "\"0000\" & fY            when \"0001\" | \"1111\"," << endl;
-//					vhdl << tab << tab << tab << "\"000\" & fY & \"0\"       when \"0010\" | \"1110\"," << endl;
-//					vhdl << tab << tab << tab << "\"0\" & fYTimes3        when \"0011\" | \"1101\"," << endl;
-//					vhdl << tab << tab << tab << "\"00\" & fY & \"00\"        when \"0100\" | \"1100\"," << endl;
-//					vhdl << tab << tab << tab << "\"0\" & fYTimes5        when \"0101\" | \"1011\"," << endl;
-//					vhdl << tab << tab << tab << "\"0\" & fYTimes6        when \"0110\" | \"1010\"," << endl;
-//					vhdl << tab << tab << tab << "\"0\" & fYTimes7        when \"0111\" | \"1001\"," << endl;
-//					vhdl << tab << tab << tab << "(" << wF+6 << " downto 0 => '0')  when others;" << endl;
-//					vhdl << endl;
-//
-//
-//					vhdl << tab << declare(wipad.str(), wF+7) << " <= " << wi.str() << " & \"0\";" << endl;
-//					vhdl << tab << "with " << qi.str() << "(3) select" << endl;
-//					vhdl << tab << declare(wim1full.str(), wF+7 ) << " <= " << wipad.str() << " - " << qiaTimesD.str() << " when '0'," << endl;
-//					vhdl << tab << "      " << wipad.str() << " + " << qiaTimesD.str() << " when others;" << endl;
-					vhdl << endl;
-					vhdl << tab << declare(wim1.str(),wF+6) << " <= " << wim1full.str()<<range(wF+3,0)<<" & \"00\";" << endl;
+				vhdl << tab << "with " << qi.str() << range(3, 0) << " select" << endl;
+				vhdl << tab << tab << declare(qiaTimesD.str(), wF+7) << " <= "<< endl ;
+				vhdl << tab << tab << tab << "\"0000\" & fY            when \"0001\" | \"0011\" | \"0101\" | \"0111\" | \"1111\" | \"1101\" | \"1011\" | \"1001\"," << endl;
+				vhdl << tab << tab << tab << "\"000\" & fY & \"0\"           when \"0110\" | \"1010\"," << endl;
+				vhdl << tab << tab << tab << "(" << wF+6 << " downto 0 => '0')          when others;" << endl;
+
+				vhdl << tab << "with " << qi.str() << range(3, 0) << " select" << endl;
+				vhdl << tab << tab << declare(qibTimesD.str(), wF+7) << " <= "<< endl ;
+				vhdl << tab << tab << tab << "\"000\" & fY & \"0\"           when \"0010\" | \"0011\" | \"1110\" | \"1101\"," << endl;
+				vhdl << tab << tab << tab << "\"00\" & fY & \"00\"           when \"0100\" | \"0101\" | \"0110\" | \"1100\" | \"1011\" | \"1010\"," << endl;
+				vhdl << tab << tab << tab << "\"0\" & fY & \"000\"           when \"0111\" | \"1001\"," << endl;
+				vhdl << tab << tab << tab << "(" << wF+6 << " downto 0 => '0')          when others;" << endl;
+
+				vhdl << tab << declare(wipad.str(), wF+7) << " <= " << wi.str() << " & \"0\";" << endl;
+				vhdl << tab << "with " << qi.str() << of(4) << " select" << endl;
+				vhdl << tab << declare(wim1fulla.str(), wF+7 ) << " <= " << wipad.str() << " - " << qiaTimesD.str() << " when '0'," << endl;
+				vhdl << tab << "      " << wipad.str() << " + " << qiaTimesD.str() << " when others;" << endl;
+
+				vhdl << tab << "with " << qi.str() << of(3) << " select" << endl;
+				vhdl << tab << declare(wim1full.str(), wF+7) << " <= " << wim1fulla.str() << " - " << qibTimesD.str() << " when '0'," << endl;
+				vhdl << tab << "      " << wim1fulla.str() << " + " << qibTimesD.str() << " when others;" << endl;
+				vhdl << endl;
+				vhdl << tab << declare(wim1.str(),wF+6) << " <= " << wim1full.str()<<range(wF+3,0)<<" & \"00\";" << endl;
 			}
 
 			manageCriticalPath(srt4stepdelay);

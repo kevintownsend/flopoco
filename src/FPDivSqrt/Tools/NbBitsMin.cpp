@@ -53,10 +53,10 @@ int main (int argc, char** argv)
 		cout<<"Checking for better configurations..."<<endl<<endl;
 
 		//Optimized parameters for a digit set [-7,7] with a radix 8
-		delta = 3;
-		nbBit = 7;
-		radix = 8;
-		digitSet = 7;
+		//delta = 3;
+		//nbBit = 7;
+		//radix = 8;
+		//digitSet = 7;
 
 		if(checkDistrib(delta, nbBit-delta+1, radix, digitSet))
 		{
@@ -123,7 +123,7 @@ void plotPDDiagram(int delta, int t, int radix, int digitSet)
 	svg<<"<?xml version=\"1.0\"?>"<<endl;
 	svg<<"<!DOCTYPE  svg PUBLIC \"-//W3C//DTD SVG 1.1//EN\" \"http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd\">"<<endl;
 	svg<<"<svg xmlns=\"http://www.w3.org/2000/svg\" xmlns:xlink=\"http://www.w3.org/1999/xlink\" version=\"1.1\" >"<<endl;
-	svg<<"<text y=\"15\">Les cases incluent leurs bords haut et gauche</text>"<<endl;
+	svg<<"<text y=\"15\">Les cases incluent leurs bords bas et gauche</text>"<<endl;
 	svg<<"<text y=\"40\">		radix"<<radix<<", [-"<<digitSet<<","<<digitSet<<"]"<<"</text>"<<endl;
 
 	//Lk-Uk
