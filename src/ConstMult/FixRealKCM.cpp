@@ -211,57 +211,13 @@ namespace flopoco{
 		return nbOfTables;
 	}
 
-	//standalone operator
-	FixRealKCM::FixRealKCM(
-				Target* target, 
-				bool signedInput_, 
-				int msbIn_, 
-				int lsbIn_, 
-				int lsbOut_, 
-				string constant_, 
-				double targetUlpError_,
-				map<string, double> inputDelays 
-			):Operator(target, inputDelays), 
-			signedInput(signedInput_),
-			msbIn(msbIn_), 
-			lsbIn(lsbIn_), 
-			wIn(msbIn_-lsbIn_+1), 
-			lsbOut(lsbOut_), 
-			constant(constant_), 
-			targetUlpError(targetUlpError_)
+	void FixRealKCM::connectBitHeap(
+				FixRealKCMTable** t,
+				int* doSize,
+				int nbOfTables
+			)
 	{
-		init();		
-		
-		int* diSize;
-		int nbOfTables = computeTableNumbers(target, wIn, &diSize);
-		
-		REPORT(INFO, "Constant multiplication in "<< nbOfTables << " tables." <<
-				g << "guards bits are used.");
-		//manage the critical path
-		
-		setCriticalPath(getMaxInputDelays(inputDelays));
-		addInput("X", wIn);
-		addOutput("R", wOut);
-
-#ifdef WIP_FORGET
-		int* doSize;
-
-		FixRealKCMTable** t = createTables(
-				target,
-				diSize,
-				nbOfTables,
-				&doSize
-			);
-
-
-		setCriticalPath(getMaxInputDelays(inputDelays));
-
-		if(!target->plainVHDL())
-		{
-			//create the bitheap
-			bitHeap = new BitHeap(this, wOut+g);
-		}
-
+		Target* target = getTarget();
 		manageCriticalPath(target->localWireDelay() + target->lutDelay());
 
 		for(int i = 0; i < nbOfTables; i++)
@@ -312,8 +268,67 @@ namespace flopoco{
 		//because of final add in bit heap, add one more bit to the result
 		vhdl << declare("OutRes", wOut+g) << " <= " << 
 			bitHeap->getSumName() << range(wOut+g-1, 0) << ";" << endl;	
+	}
 
-#else
+	//standalone operator
+	FixRealKCM::FixRealKCM(
+				Target* target, 
+				bool signedInput_, 
+				int msbIn_, 
+				int lsbIn_, 
+				int lsbOut_, 
+				string constant_, 
+				double targetUlpError_,
+				map<string, double> inputDelays 
+			):Operator(target, inputDelays), 
+			signedInput(signedInput_),
+			msbIn(msbIn_), 
+			lsbIn(lsbIn_), 
+			wIn(msbIn_-lsbIn_+1), 
+			lsbOut(lsbOut_), 
+			constant(constant_), 
+			targetUlpError(targetUlpError_)
+	{
+		init();		
+		
+		int* diSize;
+		int nbOfTables = computeTableNumbers(target, wIn, &diSize);
+		
+		REPORT(INFO, "Constant multiplication in "<< nbOfTables << " tables." <<
+				g << "guards bits are used.");
+		//manage the critical path
+		
+		setCriticalPath(getMaxInputDelays(inputDelays));
+		addInput("X", wIn);
+		addOutput("R", wOut);
+
+#ifdef WIP_FORGET
+		int* doSize;
+
+		FixRealKCMTable** t = createTables(
+				target,
+				diSize,
+				nbOfTables,
+				&doSize
+			);
+
+
+		setCriticalPath(getMaxInputDelays(inputDelays));
+
+		if(!target->plainVHDL())
+		{
+			//create the bitheap
+			bitHeap = new BitHeap(this, wOut+g);
+			connectBitHeap(t, doSize, nbOfTables);
+			vhdl << tab << "R <= OutRes" << range(wOut+g-1, g) << ";" << endl;
+			outDelayMap["R"] = getCriticalPath();
+		}
+		else
+		{
+			throw string("PlainVHDL not supported yet ! :-D");
+		}
+
+		#else
 		
 		if(wIn <= lutWidth+1) //Marche bien 
 		{
@@ -692,8 +707,6 @@ namespace flopoco{
 			outDelayMap["R"] = getCriticalPath();
 		}
 #endif
-		vhdl << tab << "R <= OutRes" << range(wOut+g-1, g) << ";" << endl;
-		outDelayMap["R"] = getCriticalPath();
 		delete[] diSize;
 	}
 	

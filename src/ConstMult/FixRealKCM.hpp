@@ -78,6 +78,12 @@ namespace flopoco{
 		
 		private:
 		void init();
+		void connectBitHeap(
+				FixRealKCMTable** t,
+				int* doSize,
+				int nbOfTables
+			);
+
 		FixRealKCMTable** createTables(
 				Target* target,
 				int* diSize,
