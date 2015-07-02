@@ -88,7 +88,8 @@ namespace flopoco{
 				Target* target,
 				int* diSize,
 				int nbOfTables,
-				int** doSize_target
+				int** doSize_target,
+				string inputSignalName = "X"
 			);
 		static int computeTableNumbers(
 			Target* target,

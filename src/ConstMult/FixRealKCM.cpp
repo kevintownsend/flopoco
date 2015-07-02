@@ -259,6 +259,11 @@ namespace flopoco{
 			}
 		}
 
+		if(g > 0)
+		{
+			bitHeap->addConstantOneBit(g-1);
+		}
+
 		//compress the bitheap and produce the result
 		bitHeap->generateCompressorVHDL();
 
@@ -739,8 +744,6 @@ namespace flopoco{
 		
 		init();
 		
-		// -1 because the tools are able to pack LUT + addition in one LUT
-		int lutWidth = target->lutInputs(); 
 
 		// First set up all the sizes
 		int *diSize;
@@ -749,6 +752,9 @@ namespace flopoco{
 
 		REPORT(INFO, "Constant multiplication in "<< nbOfTables << " tables");		
 		
+#ifdef WIP_FORGET
+
+#else
 		//manage pipeline
 		parentOp->syncCycleFromSignal(multiplicandX->getName());
 
@@ -923,6 +929,7 @@ namespace flopoco{
 				
 			}
 		}
+#endif
 		delete[] diSize;
 	}
 
@@ -930,7 +937,8 @@ namespace flopoco{
 			Target* target,
 			int* diSize,
 			int nbOfTables,
-			int** doSize_target	
+			int** doSize_target,
+			string inputSignalName
 		)
 	{
 		FixRealKCMTable** t = new FixRealKCMTable*[nbOfTables]; 
@@ -948,8 +956,9 @@ namespace flopoco{
 			// The previous one wOut+g-lastLutWidth
 			// the previous one wOut+g-anteLastLutWidth-lastlutWidth etc
 			
-			vhdl << tab << declare( join("d",i), diSize[i] ) << " <= X" << 
-				range(highBit-1,   highBit - diSize[i]) << ";" << endl;
+			vhdl << tab << declare( join("d",i), diSize[i] ) << " <= " << 
+				inputSignalName << range(highBit-1, highBit - diSize[i]) << 
+				";" << endl;
 			highBit -= diSize[i];
 			doSize[i] = tableDo;
 			if(!(last && signedInput))
