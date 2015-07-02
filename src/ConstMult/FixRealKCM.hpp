@@ -52,7 +52,10 @@ namespace flopoco{
 		static int neededGuardBits(
 				Target* target, 
 				int wIn, 
-				double targetUlpError
+				double targetUlpError,
+				string constant,
+				int lsbIn,
+				int lsbOut
 			);
 
 		bool signedInput;
@@ -77,6 +80,10 @@ namespace flopoco{
 		Operator*	parentOp;
 		
 		private:
+		static int guardBitsFromTableNumber(
+					int nbTables,
+					double targetUlpError
+				);
 		void init();
 		void connectBitHeap(
 				FixRealKCMTable** t,
@@ -94,6 +101,10 @@ namespace flopoco{
 		static int computeTableNumbers(
 			Target* target,
 			int wIn,
+			int msbC, 
+			int lsbIn,
+			int lsbOut,
+			double targetUlpError,
 			int** disize_target = nullptr
 		);
 

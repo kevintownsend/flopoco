@@ -122,11 +122,39 @@ namespace flopoco {
 		int wInKCM_B = 1 -lsbOut;	//1 sign bit + p bit 
 		int lsbOutKCM = lsbOut-g;
 		double targetUlpError = 1.0;
-		int guardBitsKCM_B = FixRealKCM::neededGuardBits(target, wInKCM_B, targetUlpError);
 
 		int wInKCM_A = 1+1+msbOut-lsbOut+g;
-		int guardBitsKCM_A = FixRealKCM::neededGuardBits(target, wInKCM_A, targetUlpError);
+		int guardBitsKCM_A = 0;
+		int guardBitsKCM_B = 0;
+		for (int i=0; i<m; i++){
+			int gbtmpA = FixRealKCM::neededGuardBits(
+					target, 
+					wInKCM_A, 
+					targetUlpError, 
+					coeffa[i],
+					lsbOut,
+					lsbOutKCM
+				);
+			if(gbtmpA > guardBitsKCM_A)
+			{
+				guardBitsKCM_A = gbtmpA;
+			}
+		}
 
+		for (int i=0; i<n; i++){
+			int gbtmpB = FixRealKCM::neededGuardBits(
+					target, 
+					wInKCM_B, 
+					targetUlpError, 
+					coeffb[i],
+					lsbOut,
+					lsbOutKCM
+				);
+			if(gbtmpB > guardBitsKCM_B)
+			{
+				guardBitsKCM_B = gbtmpB;
+			}
+		}
 		int guardBitsKCM = max(guardBitsKCM_A, guardBitsKCM_B);
 
 		// size += guardBitsKCM; // sign + overflow  bits on the left, guard bits + guard bits from KCMs on the right
@@ -329,9 +357,6 @@ namespace flopoco {
 		//Adding one half ulp to obtain correct rounding
 		vhdl << tab << declare("R_int", wO+1) << " <= " <<  "Rtmp_d1" << range(size-1, g - 1) << " + (" << zg(wO) << " & \'1\');" << endl;
 		vhdl << tab << "R <= " <<  "R_int" << range(wO, 1) << ";" << endl;
-		
-
-
 
 	};
 

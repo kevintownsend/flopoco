@@ -163,10 +163,17 @@ namespace flopoco{
 		//compute the guard bits from the KCM mulipliers, and take the max
 		int guardBitsKCM = 0;
 		int lsbOutKCM = lsbOut-g; // we want each KCM to be faithful to this ulp
+		double targetUlpError = 1.0;
 		for(int i=0; i<n; i++)		{
 			int wInKCM = msbIn[i]-lsbIn[i]+1;	//p bits + 1 sign bit
-			double targetUlpError = 1.0;
-			int temp = FixRealKCM::neededGuardBits(getTarget(), wInKCM, targetUlpError);			
+			int temp = FixRealKCM::neededGuardBits(
+					getTarget(), 
+					wInKCM, 
+					targetUlpError,
+					coeff[i],
+					lsbIn[i],
+					lsbOut
+				);			
 			if(temp > guardBitsKCM)
 				guardBitsKCM = temp;
 		}

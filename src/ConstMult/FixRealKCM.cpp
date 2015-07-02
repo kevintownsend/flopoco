@@ -112,49 +112,99 @@ namespace flopoco{
 				")   wOut=" << wOut
 			);
 
-		g = neededGuardBits(getTarget(), wIn, targetUlpError);
+		g = neededGuardBits(
+				getTarget(), 
+				wIn, 
+				targetUlpError, 
+				constant, 
+				lsbIn, 
+				lsbOut
+			);
 	}
 	
-	int FixRealKCM::computeTableNumbers(
-			Target* target,
-			int wIn,
-			int** disize_target
+	int FixRealKCM::guardBitsFromTableNumber(
+			int nbOfTables,
+			double targetUlpError
 		)
 	{
-
-#ifdef WIP_FORGET
-		int lutWidth = target->lutInputs(); 
-		int* diSize = new int[17*42];		
-		if(wIn <= lutWidth)
+		int guardBits;
+		if(targetUlpError > 1.0 || targetUlpError <= 0.5)
 		{
-			diSize[0] = wIn;
-			if(disize_target != nullptr)
-			{
-				*disize_target = diSize;
-			}
-			else
-			{
-				delete[] diSize;
-			}
-
-			return 1;
+			cout << "ERREUR !!!!" << endl;
+			return -1; 
 		}
-
-		diSize[0] = lutWidth;
-		
-		int nbOfTables = 1 + ((wIn) - lutWidth) / (lutWidth - 1);
-		int remainingBits = (wIn - diSize[0]) % (lutWidth - 1);
-		for(int i = 1 ; i < nbOfTables ; i++)
-			diSize[i] = lutWidth - 1;
-
-		if(remainingBits <= lutWidth/2)
+				
+		if((nbOfTables <= 2 && targetUlpError==1.0) || nbOfTables == 1)
 		{
-			diSize[1] += remainingBits;
+			// specific case: two CR table make up a faithful sum
+			guardBits = 0; 
 		}
 		else
 		{
-			diSize[nbOfTables++] = remainingBits;
+			guardBits = ceil(log2((double)nbOfTables/(2*targetUlpError - 1)));
 		}
+			
+		return guardBits;
+	}
+
+	int FixRealKCM::computeTableNumbers(
+			Target* target,
+			int wIn,
+			int msbC,
+			int lsbIn,
+			int lsbOut,
+			double targetUlpError,
+			int** disize_target
+		)
+	{
+#ifdef WIP_FORGET
+		int lutWidth = target->lutInputs(); 
+
+		int* diSize = new int[17*42];		
+		int nbOfTables, guardBits;
+		int newWIn = wIn;
+		int newLsbIn = lsbIn;
+		//The loop is here to prevent neglictible input bits from being
+		//tabulated.
+		do
+		{ 
+			wIn = newWIn;
+			lsbIn = newLsbIn;
+
+			if(wIn <= lutWidth)
+			{
+				diSize[0] = wIn;
+				nbOfTables = 1;
+			}
+			else
+			{
+				diSize[0] = lutWidth;
+				nbOfTables = 1 + (wIn - lutWidth) / (lutWidth - 1);
+				int remainingBits = (wIn - diSize[0]) % (lutWidth - 1);
+				for(int i = 1 ; i < nbOfTables ; i++)
+				{
+					diSize[i] = lutWidth - 1;
+				}
+
+				if(remainingBits <= lutWidth/2)
+				{
+					diSize[1] += remainingBits;
+				}
+				else
+				{
+					diSize[nbOfTables++] = remainingBits;
+				}
+			}
+
+			guardBits = guardBitsFromTableNumber(nbOfTables, targetUlpError);
+			newLsbIn = lsbOut - guardBits - msbC;
+			newWIn = wIn - (newLsbIn - lsbIn);
+			cout << "GuardBits : "<< guardBits << endl << 
+				"LsbOut : " << lsbOut << endl << "LsbIN : " << 
+				lsbIn << endl << "NBTables :" << nbOfTables << endl <<
+				"newLsbIn : " << newLsbIn << endl << 
+				"Win : " << wIn << endl << "newWin : " << newWIn << endl;
+		}while(newLsbIn > lsbIn);
 
 #else
 		int lutWidth = target->lutInputs(); 
@@ -210,6 +260,7 @@ namespace flopoco{
 		}
 		return nbOfTables;
 	}
+	
 
 	void FixRealKCM::connectBitHeap(
 				FixRealKCMTable** t,
@@ -233,6 +284,8 @@ namespace flopoco{
 			//manage the critical path
 			syncCycleFromSignal(join("pp",i));
 
+
+			int bitheapSize = bitHeap->getMaxWeight()-bitHeap->getMinWeight();
 			//add the bits to the bit heap
 			int w;
 			for(w=0; w < doSize[i]; w++)
@@ -252,7 +305,7 @@ namespace flopoco{
 			//1 to each weight from table.msb to wOut - 1
 			if(negativeConstant && (i+1 != nbOfTables))
 			{	
-				for(w-- ; w < wOut + g ; w++)
+				for(w-- ; w < bitheapSize ; w++)
 				{
 					bitHeap->addConstantOneBit(w);
 				}
@@ -274,6 +327,8 @@ namespace flopoco{
 		vhdl << declare("OutRes", wOut+g) << " <= " << 
 			bitHeap->getSumName() << range(wOut+g-1, 0) << ";" << endl;	
 	}
+
+
 
 	//standalone operator
 	FixRealKCM::FixRealKCM(
@@ -297,7 +352,15 @@ namespace flopoco{
 		init();		
 		
 		int* diSize;
-		int nbOfTables = computeTableNumbers(target, wIn, &diSize);
+		int nbOfTables = computeTableNumbers(
+				target, 
+				wIn, 
+				msbC, 
+				lsbIn, 
+				lsbOut, 
+				targetUlpError, 
+				&diSize
+			);
 		
 		REPORT(INFO, "Constant multiplication in "<< nbOfTables << " tables." <<
 				g << "guards bits are used.");
@@ -743,12 +806,18 @@ namespace flopoco{
 	{
 		
 		init();
-		
 
 		// First set up all the sizes
 		int *diSize;
-		int nbOfTables = computeTableNumbers(target, wIn, &diSize);
-		
+		int nbOfTables = computeTableNumbers(
+				target, 
+				wIn, 
+				msbC, 
+				lsbIn, 
+				lsbOut, 
+				targetUlpError, 
+				&diSize
+			);
 
 		REPORT(INFO, "Constant multiplication in "<< nbOfTables << " tables");		
 		
@@ -1072,32 +1141,48 @@ namespace flopoco{
 	int FixRealKCM::neededGuardBits(
 			Target* target, 
 			int wIn, 
-			double targetUlpError
+			double targetUlpError,
+			string constant,
+			int lsbIn, 
+			int lsbOut
 		)
 	{
-		int guardBits;
-		int nbOfTables = computeTableNumbers(target, wIn, nullptr);
+		// Convert the input string into a sollya evaluation tree
+		sollya_obj_t node;
+		node = sollya_lib_parse_string(constant.c_str());	
+		/* If  parse error throw an exception */
+		if (sollya_lib_obj_is_error(node))
+		{
+				ostringstream error;
+				error << " neededGuardBits : Unable to parse string "<< 
+					constant << " as a numeric constant" <<endl;
+				throw error.str();
+		}
 
-		if(targetUlpError > 1.0 || targetUlpError <= 0.5)
-		{
-			cout << "ERREUR !!!!" << endl;
-			return -1; 
-		}
-				
-		if((nbOfTables <= 2 && targetUlpError==1.0) || nbOfTables == 1)
-		{
-			// specific case: two CR table make up a faithful sum
-			guardBits = 0; 
-		}
-		else
-		{
-			/* Since we want the output error to be strictly less than 
-			 * 2^(lsbout) * targetUlpError and we have 
-			 */ 
-			guardBits = ceil(log2((double)nbOfTables/(2*targetUlpError - 1)));
-		}
-			
-		return guardBits;
+		mpfr_t mpC, absC;
+
+		mpfr_init2(mpC, 10000);
+		mpfr_init2(absC, 10000);
+		sollya_lib_get_constant(mpC, node);
+
+		mpfr_abs(absC, mpC, GMP_RNDN);
+
+		mpfr_t log2C;
+		mpfr_init2(log2C, 100); // should be enough for anybody
+		mpfr_log2(log2C, absC, GMP_RNDN);
+		int msbC = mpfr_get_si(log2C, GMP_RNDU);
+		mpfr_clears(log2C, absC, mpC, NULL);
+
+		int nbOfTables = computeTableNumbers(
+				target, 
+				wIn, 
+				msbC, 
+				lsbIn, 
+				lsbOut,
+				targetUlpError, 
+				nullptr
+			);
+		return guardBitsFromTableNumber(nbOfTables, targetUlpError);
 	}
 
 
