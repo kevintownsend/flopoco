@@ -307,16 +307,6 @@ namespace flopoco{
 				outPortMap(table , "Y", qi.str());
 				vhdl << instance(table , tInstance.str());
 
-
-//				vhdl << tab << "with " << seli.str() << " select" << endl;
-//				vhdl << tab << declare(qi.str(),3) << " <= " << endl;
-//				vhdl << tab << tab << "\"001\" when \"00010\" | \"00011\"," << endl;
-//				vhdl << tab << tab << "\"010\" when \"00100\" | \"00101\" | \"00111\"," << endl;
-//				vhdl << tab << tab << "\"011\" when \"00110\" | \"01000\" | \"01001\" | \"01010\" | \"01011\" | \"01101\" | \"01111\"," << endl;
-//				vhdl << tab << tab << "\"101\" when \"11000\" | \"10110\" | \"10111\" | \"10100\" | \"10101\" | \"10011\" | \"10001\"," << endl;
-//				vhdl << tab << tab << "\"110\" when \"11010\" | \"11011\" | \"11001\"," << endl;
-//				vhdl << tab << tab << "\"111\" when \"11100\" | \"11101\"," << endl;
-//				vhdl << tab << tab << "\"000\" when others;" << endl;
 				vhdl << endl;
 				vhdl << tab << "with " << qi.str() << " select" << endl;
 				vhdl << tab << tab << declare(qiTimesD.str(),wF+4) << " <= "<< endl ;
