@@ -15,6 +15,10 @@ scp   flopoco_user_manual.html  scm.gforge.inria.fr:/home/groups/flopoco/htdocs/
 (etc)
 
 
+The operators.html page is generated from flopoco itself:
+./flopoco BuildHTMLDoc
+
+
 
 The html bibliography pages are generated using bibtex2html
 1/ edit doc/web/bib/flopoco.bib or doc/web/bib/flopoco-users.bib

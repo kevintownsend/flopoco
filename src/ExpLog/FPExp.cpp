@@ -979,13 +979,14 @@ namespace flopoco{
 
 	void FPExp::registerFactory(){
 		UserInterface::add("FPExp", // name
-											 "A faithful floating-point exponential function",
+											 "A faithful floating-point exponential function.",
 											 "operator; floating point; elementary function", // categories
 											 "wE(int): exponent size in bits; \
                         wF(int): mantissa size in bits;  \
                         d(int)=0: degree of the polynomial; \
-                        k(int)=0: input size to the range reduction table;\
+                        k(int)=0: input size to the range reduction table, should be between 5 and 15. 0 choses a sensible default.;\
                         g(int)=-1: number of guard bits",
+											 "Parameter d and k control the DSP/RamBlock tradeoff. In both cases, a value of 0 choses a sensible default. Parameter g is mostly for internal use.<br> For all the details, see <a href=\"bib/flopoco.html#DinechinPasca2010-FPT\">this article</a>.",
 											 FPExp::parseArguments
 											 ) ;
 		

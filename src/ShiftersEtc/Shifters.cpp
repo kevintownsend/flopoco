@@ -173,6 +173,7 @@ namespace flopoco{
 											 "A classical barrel shifter. The output size is computed.",
 											 "operator", // categories
 											 "wIn(int): input size in bits;   maxShift(int): maximum shift distance in bits;   dir(bool): 0=left, 1=right", // This string will be parsed
+											 "", // no particular extra doc needed
 											 Shifter::parseArguments
 											 ) ;
 		

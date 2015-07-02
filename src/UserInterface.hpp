@@ -47,6 +47,7 @@ namespace flopoco
 										string description, /**< for the HTML doc and the detailed help */ 
 										string categories,	/**<  semicolon-seperated list of categories */
 										string parameterList, /**<  semicolon-separated list of parameters, each being name(type)[=default]:short_description  */ 
+										string extraHTMLDoc, /**< Extra information to go to the HTML doc, for instance links to articles or details on the algorithms */ 
 										parser_func_t parser	);
 		
 		static unsigned getFactoryCount();
@@ -55,9 +56,11 @@ namespace flopoco
 
 
 		////////////////// Parsing-related ///////////////////////////////
-		static void parseGlobalOptions(vector<string> args);
-
 		static void parseAll(Target* target, int argc, char* argv[]);
+
+		static void parseGenericOptions(vector<string>& args);
+
+		
 		//		static param_map_t  parseArguments(string opName, const vector<string> &args);
 		static bool checkBoolean( vector<string>, string);
 		static int checkInt( vector<string>, string);
@@ -67,6 +70,8 @@ namespace flopoco
 		/** Provide a string with the full documentation. TODO: an HTML version*/
 		static string getFullDoc();
 		
+		/** Build operators.html directly into the doc directory. */
+		static void buildHTMLDoc();
 
 
 		/** add an operator to the global (first-level) list, which is stored in its Target (not really its place, sorry).
@@ -127,6 +132,7 @@ namespace flopoco
 		map<string,string> m_paramType;
 		map<string,string> m_paramDoc;
 		map<string,string> m_paramDefault; /* If equal to "", this parameter is mandatory (no default)*/
+		string m_extraHTMLDoc; 
 		parser_func_t m_parser;
 
 	public:
@@ -144,6 +150,7 @@ namespace flopoco
 						 string description, /**<  for the HTML doc and the detailed help */ 
 						 string categories,	/**<  semicolon-seperated list of categories */
 						 string parameters, /**<  semicolon-separated list of parameters, each being name(type)[=default]:short_description  */ 
+						 string extraHTMLDoc, /**< Extra information to go to the HTML doc, for instance links to articles or details on the algorithms */ 
 						 parser_func_t parser	);
 		
 		virtual const string &name() const
@@ -153,8 +160,10 @@ namespace flopoco
 		{ return m_categories; }
 		
 
-		/** Provide a string with the full documentation. TODO: an HTML version*/
+		/** Provide a string with the full documentation. */
 		string getFullDoc();
+		/** Provide a string with the full documentation in HTML. */
+		string getHTMLDoc();
 
 		/** get the default value associated to a parameter (empty string if there is no default)*/
 		string getDefaultVal(string& key);

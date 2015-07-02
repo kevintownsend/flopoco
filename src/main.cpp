@@ -62,9 +62,6 @@ int main(int argc, char* argv[] )
 
 	//	cout << UserInterface::getFactoryCount() << " factories registered " << endl ;
 
-	if (argc==1)
-		cout << UserInterface::getFullDoc();
-
 	UserInterface::parseAll(target, argc, argv);
 
 	//cout << "Successfuly built "<< UserInterface::globalOpList.size() << " operator(s)" << endl;

@@ -117,116 +117,12 @@ namespace flopoco
 	}
 
 
-	// Currently very rudimentary
-	string OperatorFactory::getFullDoc(){
-		ostringstream s;
-		s << name() << ": " << m_description << endl << "  Parameters:"<<endl;
-		for (unsigned i=0; i<m_paramNames.size(); i++) {
-			string pname = m_paramNames[i];
-			s << "    " << pname << " (" << m_paramType[pname] << "): " << m_paramDoc[pname] << "  ";
-			if("" != m_paramDefault[pname])
-				s << "  (optional, default value is " << m_paramDefault[pname] <<")";
-			s<< endl;			
-		}
-		return s.str();
-	}
-
-	
-	string OperatorFactory::getDefaultVal(string& key){
-		return  m_paramDefault[key];
-	}
 
 
 		
-
-	OperatorFactory::OperatorFactory(
-						 string name,
-						 string description, /**< only for the HTML doc and the detailed help */ 
-						 string categories,	/**<  semicolon-seperated list of categories */
-						 string parameters, /**<  semicolon-separated list of parameters, each being name(type)[=default]:short_description  */ 
-						 parser_func_t parser  )
-		: m_name(name), m_description(description), m_parser(parser)
-	{
-		// Parse the categories
-		int start=0;
-		while(start<(int)categories.size()){
-			int end=categories.find(';', start);
-			string part;
-			if(end==-1)
-				part=categories.substr(start, end);
-			else
-				part=categories.substr(start, end-start);
-			if(part.size()!=0)
-				m_categories.push_back(part);
-			if(end==-1)
-				break;
-			start=end+1;
-		}
-
-		// Parse the parameter description
-		// The internet says: this will remove newlines
-		parameters.erase (remove (parameters.begin(), parameters.end(), '\n'), parameters.end());
-		start=0;
-		while(start<(int)parameters.size()){
-			int end=parameters.find(';', start);
-			string part;
-			if(end==-1)
-				part=parameters.substr(start, end);
-			else
-				part=parameters.substr(start, end-start);
-			if(part.size()!=0) {
-				int nameEnd = part.find('(', 0);
-				string name=part.substr(0, nameEnd);
-				//cout << "Found parameter: {" << name<<"}";
-				m_paramNames.push_back(name);
-				
-				int typeEnd = part.find(')', 0);
-				string type=part.substr(nameEnd+1, typeEnd-nameEnd-1);
-				//cout << " of type  {" << type <<"}";
-				if(type=="bool" || type=="int" || type=="real" || type=="string")
-					m_paramType[name] = type;
-				else {
-					ostringstream s;
-					s << "OperatorFactory: Type (" << type << ")  not a supported type.";
-					throw s.str();
-				}
-				int j = typeEnd+1;
-				m_paramDefault[name]="";
-				if (part[j]=='=') {
-					//parse default value
-					j++;
-					int defaultValEnd = part.find(':', 0);
-					string defaultVal=part.substr(j, defaultValEnd-j);
-					//cout << " default to {" <<  defaultVal << "}  ";
-					m_paramDefault[name]=defaultVal;
-					j=defaultValEnd;
-				}
-				if(part[j]==':') {
-					// description
-					j++;
-					while (part[j]==' ') j++; // remove leading spaces
-					string description = part.substr(j, -1);
-					m_paramDoc[name] = description;
-					//cout << " :  {" << description <<"}" << endl;
-				}
-				else throw("OperatorFactory: Error parsing parameter description");
-			}
-			if(end==-1)
-				break;
-			start=end+1;
-			while (parameters[start]==' ') start++;
-		}
-	}
-	
-
-	void UserInterface::parseGlobalOptions(vector<string> args) {
-		cout << "parsing global options" << endl;
-	}
-
-
-	
 	// parseAll does:  while (something left){ 1/consumes global options, 2/ detects an operator name 3/ call the factory argument parser for this name}
 	void UserInterface::parseAll(Target* target, int argc, char* argv[]) {
+
 		// First convert the input arg to a vector of strings, for convenience
 		vector<string> args;
 		for(int i=1;i<argc;i++){ // skip the executable name
@@ -234,9 +130,18 @@ namespace flopoco
 		}
 		// Now the parsing itself. All the sub-parsers erase the data they consume from the string vectors
 		try {
+			if(args.size()==0) {
+				cerr << getFullDoc();
+				exit(EXIT_SUCCESS);
+			}
+			if(args.size()==1 && args[0]=="BuildHTMLDoc") {
+				buildHTMLDoc();
+				exit(EXIT_SUCCESS);
+			}
+
 			//cout << "args.size=" << args.size() <<endl;
 			while(args.size() > 0) { // This loop is over the Operators that are passed on the command line
-				parseGlobalOptions(args); 
+				parseGenericOptions(args); 
 				string opName = args[0];  // operator Name
 				vector<string> opParams;
 				opParams.push_back(args[0]); // place the operator name in position 0
@@ -266,11 +171,11 @@ namespace flopoco
 		}catch(std::string &s){
 			std::cerr<<"Error : "<<s<<"\n";
 			//factory->Usage(std::cerr);
-			exit(1);
+			exit(EXIT_FAILURE);
 		}catch(std::exception &s){
 			std::cerr<<"Exception : "<<s.what()<<"\n";
 			//factory->Usage(std::cerr);
-			exit(1);	
+			exit(EXIT_FAILURE);	
 		}
 
 
@@ -409,9 +314,10 @@ namespace flopoco
 	void UserInterface::add( string name,
 													 string description, /**< for the HTML doc and the detailed help */ 
 													 string categories,	/**< semicolon-seperated list of categories */
-													 string parameterList, /**< semicolon-separated list of parameters, each being name(type)[=default]:short_description  */ 
+													 string parameterList, /**< semicolon-separated list of parameters, each being name(type)[=default]:short_description  */
+													 string extraHTMLDoc, /**< Extra information to go to the HTML doc, for instance links to articles or details on the algorithms */ 
 													 parser_func_t parser	 ) {
-		OperatorFactoryPtr factory(new OperatorFactory(name, description, categories, parameterList, parser));
+		OperatorFactoryPtr factory(new OperatorFactory(name, description, categories, parameterList, extraHTMLDoc, parser));
 		UserInterface::registerFactory(factory);
 	}
 
@@ -425,6 +331,169 @@ namespace flopoco
 		}
 		return s.str();
 	}
+
+
+	void UserInterface::buildHTMLDoc(){
+		ofstream file;
+		file.open("doc/web/operators.html", ios::out);
+		file << "<!DOCTYPE html>" << endl;
+		file << "<html>" << endl;
+		file << "<head>" << endl;
+		file << "<link rel=\"stylesheet\" href=\"flopoco.css\">" << endl;
+		file << "<meta charset=\"utf-8\"> " << endl;
+		file << "<title>FloPoCo user manual</title>" << endl;
+		file << "</head>" << endl;
+		file << "<body>" << endl;
+
+		for(unsigned i = 0; i<getFactoryCount(); i++) {
+			OperatorFactoryPtr f =  UserInterface::getFactoryByIndex(i);
+			file << f -> getHTMLDoc();
+		}
+		file << "</body>" << endl;
+		file << "</html>" << endl;		
+		file.close();
+	}
+
+
+
+
+
+	////////////////// Operator factory /////////////////////////
+	// Currently very rudimentary
+
+	string OperatorFactory::getFullDoc(){
+		ostringstream s;
+		s << name() << ": " << m_description << endl << "  Parameters:"<<endl;
+		for (unsigned i=0; i<m_paramNames.size(); i++) {
+			string pname = m_paramNames[i];
+			s << "    " << pname << " (" << m_paramType[pname] << "): " << m_paramDoc[pname] << "  ";
+			if("" != m_paramDefault[pname])
+				s << "  (optional, default value is " << m_paramDefault[pname] <<")";
+			s<< endl;			
+		}
+		return s.str();
+	}
+
+
+	string OperatorFactory::getHTMLDoc(){
+		ostringstream s;
+		s << "<dl>"<<endl;
+		s << "<dt class=\"operatorname\">" <<  name() << "</dt>"<< endl
+			<< "<dd class=\"operatordescription\">"<< m_description << "</dd>" << endl
+			<< "<dd><em>Parameters:</em> <dl>" << endl;
+		for (unsigned i=0; i<m_paramNames.size(); i++) {
+			string pname = m_paramNames[i];
+			if("" != m_paramDefault[pname])
+				s << "<span class=\"optionalparam\"> " ;
+			s << "<dt> <code class=\"parametername\">" << pname << "</code>  (<code class=\"parametertype\">" << m_paramType[pname] << "</code>) " ;
+			if("" != m_paramDefault[pname])
+				s << "  (optional, default value is " << m_paramDefault[pname] <<")";
+			s << "</dt>";
+			s << "<dd>" << m_paramDoc[pname] << "</dd>";
+			if("" != m_paramDefault[pname])
+				s << " </span>";
+			s<< endl;			
+		}
+		s << "</dl></dd>"<<endl;
+		if("" != m_extraHTMLDoc)
+			s << "<dd>" << m_extraHTMLDoc << "</dd>"<<endl;
+		s << "</dl>"<<endl;
+		return s.str();
+	}
+
+	
+	string OperatorFactory::getDefaultVal(string& key){
+		return  m_paramDefault[key];
+	}
+
+
+		
+
+	OperatorFactory::OperatorFactory(
+						 string name,
+						 string description, /**< only for the HTML doc and the detailed help */ 
+						 string categories,	/**<  semicolon-seperated list of categories */
+						 string parameters, /**<  semicolon-separated list of parameters, each being name(type)[=default]:short_description  */ 
+						 string extraHTMLDoc, /**< Extra information to go to the HTML doc, for instance links to articles or details on the algorithms */ 
+						 parser_func_t parser  )
+		: m_name(name), m_description(description), m_extraHTMLDoc(extraHTMLDoc), m_parser(parser)
+	{
+		// Parse the categories
+		int start=0;
+		while(start<(int)categories.size()){
+			int end=categories.find(';', start);
+			string part;
+			if(end==-1)
+				part=categories.substr(start, end);
+			else
+				part=categories.substr(start, end-start);
+			if(part.size()!=0)
+				m_categories.push_back(part);
+			if(end==-1)
+				break;
+			start=end+1;
+		}
+
+		// Parse the parameter description
+		// The internet says: this will remove newlines
+		parameters.erase (remove (parameters.begin(), parameters.end(), '\n'), parameters.end());
+		start=0;
+		while(start<(int)parameters.size()){
+			int end=parameters.find(';', start);
+			string part;
+			if(end==-1)
+				part=parameters.substr(start, end);
+			else
+				part=parameters.substr(start, end-start);
+			if(part.size()!=0) {
+				int nameEnd = part.find('(', 0);
+				string name=part.substr(0, nameEnd);
+				//cout << "Found parameter: {" << name<<"}";
+				m_paramNames.push_back(name);
+				
+				int typeEnd = part.find(')', 0);
+				string type=part.substr(nameEnd+1, typeEnd-nameEnd-1);
+				//cout << " of type  {" << type <<"}";
+				if(type=="bool" || type=="int" || type=="real" || type=="string")
+					m_paramType[name] = type;
+				else {
+					ostringstream s;
+					s << "OperatorFactory: Type (" << type << ")  not a supported type.";
+					throw s.str();
+				}
+				int j = typeEnd+1;
+				m_paramDefault[name]="";
+				if (part[j]=='=') {
+					//parse default value
+					j++;
+					int defaultValEnd = part.find(':', 0);
+					string defaultVal=part.substr(j, defaultValEnd-j);
+					//cout << " default to {" <<  defaultVal << "}  ";
+					m_paramDefault[name]=defaultVal;
+					j=defaultValEnd;
+				}
+				if(part[j]==':') {
+					// description
+					j++;
+					while (part[j]==' ') j++; // remove leading spaces
+					string description = part.substr(j, -1);
+					m_paramDoc[name] = description;
+					//cout << " :  {" << description <<"}" << endl;
+				}
+				else throw("OperatorFactory: Error parsing parameter description");
+			}
+			if(end==-1)
+				break;
+			start=end+1;
+			while (parameters[start]==' ') start++;
+		}
+	}
+	
+
+	void UserInterface::parseGenericOptions(vector<string> &args) {
+		cout << "parsing global options" << endl;
+	}
+
 
 
 }; // flopoco
