@@ -265,7 +265,8 @@ namespace flopoco{
 	void FixRealKCM::connectBitHeap(
 				FixRealKCMTable** t,
 				int* doSize,
-				int nbOfTables
+				int nbOfTables,
+				Operator* op
 			)
 	{
 		Target* target = getTarget();
@@ -275,15 +276,15 @@ namespace flopoco{
 		{
 			REPORT(DEBUG, "Adding bits for table " << i)
 				//manage the critical path
-				setCycleFromSignal(join("d",i));
+			op->setCycleFromSignal(join("d", i, "_kcmMult_", getuid()));
+			op->manageCriticalPath(target->lutDelay());
 
-			inPortMap (t[i] , "X", join("d",i));
-			outPortMap(t[i] , "Y", join("pp",i));
-			vhdl << instance(t[i] , join("KCMTable_",i));
+			op->inPortMap (t[i] , "X", join("d",i, "_kcmMult_", getuid()));
+			op->outPortMap(t[i] , "Y", join("pp",i, "_kcmMult_", getuid()));
+			op->vhdl << op->instance(t[i] , join("KCMTable_",i));
 
 			//manage the critical path
-			syncCycleFromSignal(join("pp",i));
-
+			op->syncCycleFromSignal(join("pp",i,"_kcmMult_", getuid()));
 
 			int bitheapSize = bitHeap->getMaxWeight()-bitHeap->getMinWeight();
 			//add the bits to the bit heap
@@ -295,7 +296,7 @@ namespace flopoco{
 				//manage the critical path
 				manageCriticalPath(target->lutDelay());
 
-				s << "pp" << i << of(w);
+				s << join("pp",i, "_kcmMult_", getuid()) << of(w);
 
 				bitHeap->addBit(w, s.str());
 			} // w = table.msb + 1
@@ -317,15 +318,6 @@ namespace flopoco{
 			bitHeap->addConstantOneBit(g-1);
 		}
 
-		//compress the bitheap and produce the result
-		bitHeap->generateCompressorVHDL();
-
-		//manage the critical path
-		syncCycleFromSignal(bitHeap->getSumName());
-
-		//because of final add in bit heap, add one more bit to the result
-		vhdl << declare("OutRes", wOut+g) << " <= " << 
-			bitHeap->getSumName() << range(wOut+g-1, 0) << ";" << endl;	
 	}
 
 
@@ -377,24 +369,28 @@ namespace flopoco{
 				target,
 				diSize,
 				nbOfTables,
-				&doSize
+				&doSize,
+				this
 			);
 
 
 		setCriticalPath(getMaxInputDelays(inputDelays));
 
-		if(!target->plainVHDL())
-		{
-			//create the bitheap
-			bitHeap = new BitHeap(this, wOut+g);
-			connectBitHeap(t, doSize, nbOfTables);
-			vhdl << tab << "R <= OutRes" << range(wOut+g-1, g) << ";" << endl;
-			outDelayMap["R"] = getCriticalPath();
-		}
-		else
-		{
-			throw string("PlainVHDL not supported yet ! :-D");
-		}
+		//create the bitheap
+		bitHeap = new BitHeap(this, wOut+g);
+		connectBitHeap(t, doSize, nbOfTables, this);
+		vhdl << tab << "R <= OutRes" << range(wOut+g-1, g) << ";" << endl;
+		outDelayMap["R"] = getCriticalPath();
+
+		//compress the bitheap and produce the result
+		bitHeap->generateCompressorVHDL();
+
+		//manage the critical path
+		syncCycleFromSignal(bitHeap->getSumName());
+
+		//because of final add in bit heap, add one more bit to the result
+		vhdl << declare("OutRes", wOut+g) << " <= " << 
+			bitHeap->getSumName() << range(wOut+g-1, 0) << ";" << endl;	
 
 		#else
 		
@@ -822,6 +818,21 @@ namespace flopoco{
 		REPORT(INFO, "Constant multiplication in "<< nbOfTables << " tables");		
 		
 #ifdef WIP_FORGET
+		parentOp->syncCycleFromSignal(multiplicandX->getName());
+
+		int* doSize;
+
+		FixRealKCMTable** t = createTables(
+				target,
+				diSize,
+				nbOfTables,
+				&doSize,
+				parentOp,
+				multiplicandX->getName()
+			);
+		connectBitHeap(t, doSize, nbOfTables, parentOp);
+		vhdl << tab << "R <= OutRes" << range(wOut+g-1, g) << ";" << endl;
+		outDelayMap["R"] = getCriticalPath();
 
 #else
 		//manage pipeline
@@ -846,7 +857,7 @@ namespace flopoco{
 			parentOp->inPortMap (t , "X", multiplicandX->getName());
 			parentOp->outPortMap(t , "Y", join("Y_kcmMult_", getuid()));
 			parentOp->vhdl << 
-				parentOp->instance(t , join("KCMTable_kcmMult_", getuid()));
+			parentOp->instance(t , join("KCMTable_kcmMult_", getuid()));
 			
 			//manage pipeline
 			parentOp->syncCycleFromSignal(join("Y_kcmMult_", getuid()));
@@ -1007,6 +1018,7 @@ namespace flopoco{
 			int* diSize,
 			int nbOfTables,
 			int** doSize_target,
+			Operator* op,
 			string inputSignalName
 		)
 	{
@@ -1025,9 +1037,12 @@ namespace flopoco{
 			// The previous one wOut+g-lastLutWidth
 			// the previous one wOut+g-anteLastLutWidth-lastlutWidth etc
 			
-			vhdl << tab << declare( join("d",i), diSize[i] ) << " <= " << 
+			op-> vhdl << tab << 
+				op->declare(join("d",i,"_kcmMult_", getuid()), diSize[i]) << 
+				" <= " << 
 				inputSignalName << range(highBit-1, highBit - diSize[i]) << 
 				";" << endl;
+			cout << join("d", i) << " déclaré" << endl;
 			highBit -= diSize[i];
 			doSize[i] = tableDo;
 			if(!(last && signedInput))
@@ -1053,8 +1068,8 @@ namespace flopoco{
 					negativeConstant && !last, 
 					last 
 				);
-			useSoftRAM(t[i]);
-			addSubComponent(t[i]);
+			op->useSoftRAM(t[i]);
+			op->addSubComponent(t[i]);
 
 			last = false;
 		}

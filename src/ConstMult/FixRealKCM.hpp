@@ -88,7 +88,8 @@ namespace flopoco{
 		void connectBitHeap(
 				FixRealKCMTable** t,
 				int* doSize,
-				int nbOfTables
+				int nbOfTables,
+				Operator* op
 			);
 
 		FixRealKCMTable** createTables(
@@ -96,6 +97,7 @@ namespace flopoco{
 				int* diSize,
 				int nbOfTables,
 				int** doSize_target,
+				Operator* op,
 				string inputSignalName = "X"
 			);
 		static int computeTableNumbers(
