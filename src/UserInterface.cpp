@@ -1,8 +1,8 @@
 #include "UserInterface.hpp"
+#include "FloPoCo.hpp"
 #include <algorithm>
 #include <iostream>
 #include <iomanip>
-
 
 
 namespace flopoco
@@ -10,10 +10,21 @@ namespace flopoco
 
 
 	// Allocation of the global objects
-	string UserInterface::filename="flopoco.vhdl";
-	string UserInterface::cl_name=""; // used for the -name option
-	Target* UserInterface::target;
+	string UserInterface::outputFileName="flopoco.vhdl";
+	string UserInterface::entityName=""; // used for the -name option
 	int UserInterface::verbose;
+	string UserInterface::targetFPGA;
+	double UserInterface::targetFrequency;
+	bool UserInterface::pipeline;
+	bool UserInterface::clockEnable;
+	bool UserInterface::useHardMult;
+	bool UserInterface::plainVHDL;
+	bool UserInterface::generateFigures;
+	double UserInterface::unusedHardMultThreshold;
+	int UserInterface::resourceEstimation;
+	bool UserInterface::floorplanning;
+	bool UserInterface::reDebug;
+	bool UserInterface::flpDebug;
 	
 	// Global factory list TODO there should be only one.
 	vector<OperatorFactoryPtr> UserInterface::sm_factoriesByIndex;
@@ -24,13 +35,6 @@ namespace flopoco
 	
 	// This should be obsoleted soon. It is there only because random_main needs it
 	void addOperator(OperatorPtr op) {
-#if 0 // TODO will be done somewhere else
-		if(cl_name!="")	{
-			cerr << "Updating entity name to: " << cl_name << endl;
-			op->changeName(cl_name);
-			cl_name="";
-		}
-#endif
 		UserInterface::globalOpList.push_back(op);
 	}
 
@@ -91,7 +95,7 @@ namespace flopoco
 		for(auto i: globalOpList) {
 			i->outputFinalReport(s, 0);
 		}
-		cerr << "Output file: " << filename <<endl;
+		cerr << "Output file: " << outputFileName <<endl;
 
 	}
 
@@ -112,17 +116,25 @@ namespace flopoco
 		return sm_factoriesByIndex.at(i);
 	}
 
+	// TODO make this case-insensitive
 	OperatorFactoryPtr UserInterface::getFactoryByName(string operatorName)	{
 		return sm_factoriesByName[operatorName];
 	}
 
 
 
+	void UserInterface::initialize(){
+		// Initialize all the command-line options
+		verbose=1;
+		outputFileName="flopoco.vhdl";
+		targetFPGA="Virtex5";
+		targetFrequency=400e6;
+		useHardMult=true;
+	}
 
 		
-	// parseAll does:  while (something left){ 1/consumes global options, 2/ detects an operator name 3/ call the factory argument parser for this name}
-	void UserInterface::parseAll(Target* target, int argc, char* argv[]) {
-
+	void UserInterface::parseAll(int argc, char* argv[]) {
+		initialize();
 		// First convert the input arg to a vector of strings, for convenience
 		vector<string> args;
 		for(int i=1;i<argc;i++){ // skip the executable name
@@ -154,15 +166,45 @@ namespace flopoco
 					opParams.push_back(args[0]);
 					args.erase(args.begin());
 				}
-				// Now we have consumed the parameters and we are ready to start parsing next global option or operator.
+				// Now we have consumed the parameters and we are ready to start parsing next operator.
 
-				cout << "Passing the following vector to the factory:" << endl;
-				for (unsigned i=0; i< opParams.size(); i++)
-					cout << " {" << opParams[i] << "}";
-				cout << endl;
+				// but first build the Target for this operator, then build it
+
+				// cout << "Passing the following vector to the factory:" << endl;
+				// for (unsigned i=0; i< opParams.size(); i++)
+				// 	cout << " {" << opParams[i] << "}";
+				// cout << endl;
+
+				// make this option case-insensitive, too
+				std::transform(targetFPGA.begin(), targetFPGA.end(), targetFPGA.begin(), ::tolower);
+
+				Target* target;
+					// This could also be a factory but it is less critical
+				if(targetFPGA=="virtex4") target=new Virtex4();
+				else if (targetFPGA=="virtex5") target=new Virtex5();
+				else if (targetFPGA=="virtex6") target=new Virtex6();
+				else if (targetFPGA=="spartan3") target=new Spartan3();
+				else if (targetFPGA=="stratixii" || targetFPGA=="stratix2") target=new StratixII();
+				else if (targetFPGA=="stratixiii" || targetFPGA=="stratix3") target=new StratixIII();
+				else if (targetFPGA=="stratixiv" || targetFPGA=="stratix4") target=new StratixIV();
+				else if (targetFPGA=="stratixv" || targetFPGA=="stratix5") target=new StratixV();
+				else if (targetFPGA=="cycloneii" || targetFPGA=="cyclone2") target=new CycloneII();
+				else if (targetFPGA=="cycloneiii" || targetFPGA=="cyclone3") target=new CycloneIII();
+				else if (targetFPGA=="cycloneiv" || targetFPGA=="cyclone4") target=new CycloneIV();
+				else if (targetFPGA=="cyclonev" || targetFPGA=="cyclone5") target=new CycloneV();
+				else {
+					throw("ERROR: unknown target: " + targetFPGA);
+					}
+				target->setFrequency(targetFrequency);
+				if(pipeline) target->setPipelined(); else target->setPipelined();
+				target->setUseHardMultipliers(useHardMult);
+
+				// Now build the operator
 				OperatorFactoryPtr fp = getFactoryByName(opName);
 				OperatorPtr op = fp->parseArguments(target, opParams);
 				if(op!=NULL)	{// Some factories don't actually create an operator
+					op->changeName(entityName);
+					entityName="";
 					cout << "Adding operator" << endl;
 					addOperator(op);
 					cout << "... done" << endl;
@@ -178,22 +220,14 @@ namespace flopoco
 			exit(EXIT_FAILURE);	
 		}
 
-
-		
+		// Now output to file
+		ofstream file; 
+		file.open(outputFileName.c_str(), ios::out);
+		outputVHDLToFile(file); 
+		file.close();
 	}
 
 
-#if 0
-	/* Splits the arguments */
-	pair<string, string> splitKeyVal(string& arg) {
-		size_t eqPos = arg.find('=');
-		if(string::npos==eqPos || 0==eqPos)
-			throw ("This doesn't seem to be a key=value pair: " + arg);
-		string key= arg.substr(0,eqPos);
-		string val= arg.substr(eqPos+1, string::npos);
-		return make_pair<key, val>;
-	}
-#endif
 
 
 
@@ -231,7 +265,7 @@ namespace flopoco
 		string val=getVal(args, key);
 		if(val=="") {
 			// key not given, use default value
-			val = getFactoryByName(args[0])->getDefaultVal(key);
+			val = getFactoryByName(args[0])->getDefaultParamVal(key);
 			if (val=="") {
 				throw (args[0] +": argument " + key + " not provided, and there doesn't seem to be a default value."
 							 +"\n" +  getFactoryByName(args[0]) -> getFullDoc());
@@ -251,7 +285,7 @@ namespace flopoco
 		string val=getVal(args, key);
 		if(val=="") {
 			// key not given, use default value
-			val = getFactoryByName(args[0])->getDefaultVal(key);
+			val = getFactoryByName(args[0])->getDefaultParamVal(key);
 			if (val=="") {
 				throw (args[0] +" argument " + key + " not provided, and there doesn't seem to be a default value."
 							 +"\n" +  getFactoryByName(args[0]) -> getFullDoc());
@@ -269,7 +303,7 @@ namespace flopoco
 		string val=getVal(args, key);
 		if(val=="") {
 			// key not given, use default value
-			val = getFactoryByName(args[0])->getDefaultVal(key);
+			val = getFactoryByName(args[0])->getDefaultParamVal(key);
 			if (val=="") {
 				throw (args[0] +" argument " + key + " not provided, and there doesn't seem to be a default value."
 							 +"\n" +  getFactoryByName(args[0]) -> getFullDoc());
@@ -290,7 +324,7 @@ namespace flopoco
 		string val=getVal(args, key);
 		if(val=="") {
 			// key not given, use default value
-			val = getFactoryByName(args[0])->getDefaultVal(key);
+			val = getFactoryByName(args[0])->getDefaultParamVal(key);
 			if (val=="") {
 				throw (args[0] +" argument " + key + " not provided, and there doesn't seem to be a default value."
 							 +"\n" +  getFactoryByName(args[0]) -> getFullDoc());
@@ -310,6 +344,14 @@ namespace flopoco
 	
 
 
+	void UserInterface::parseGenericOptions(vector<string> &args) {
+		cout << "parsing generic options" << endl;
+		entityName=getVal(args, "name"); // will be used, and reset, after the operator parser 
+	}
+
+
+
+	
 	
 	void UserInterface::add( string name,
 													 string description, /**< for the HTML doc and the detailed help */ 
@@ -402,7 +444,7 @@ namespace flopoco
 	}
 
 	
-	string OperatorFactory::getDefaultVal(string& key){
+	string OperatorFactory::getDefaultParamVal(string& key){
 		return  m_paramDefault[key];
 	}
 
@@ -411,10 +453,10 @@ namespace flopoco
 
 	OperatorFactory::OperatorFactory(
 						 string name,
-						 string description, /**< only for the HTML doc and the detailed help */ 
-						 string categories,	/**<  semicolon-seperated list of categories */
-						 string parameters, /**<  semicolon-separated list of parameters, each being name(type)[=default]:short_description  */ 
-						 string extraHTMLDoc, /**< Extra information to go to the HTML doc, for instance links to articles or details on the algorithms */ 
+						 string description, /* for the HTML doc and the detailed help */ 
+						 string categories,	/*  semicolon-seperated list of categories */
+						 string parameters, /*  semicolon-separated list of parameters, each being name(type)[=default]:short_description  */ 
+						 string extraHTMLDoc, /* Extra information to go to the HTML doc, for instance links to articles or details on the algorithms */ 
 						 parser_func_t parser  )
 		: m_name(name), m_description(description), m_extraHTMLDoc(extraHTMLDoc), m_parser(parser)
 	{
@@ -489,11 +531,6 @@ namespace flopoco
 		}
 	}
 	
-
-	void UserInterface::parseGenericOptions(vector<string> &args) {
-		cout << "parsing global options" << endl;
-	}
-
 
 
 }; // flopoco

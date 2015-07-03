@@ -52,25 +52,17 @@ int main(int argc, char* argv[] )
 	sollya_lib_init();
 
 	
-	Target* target = new Virtex5(); // this also creates a global operator list TODO move it to the factory, or somewhere.
 
-	UserInterface::verbose=3;
-	UserInterface::filename="flopoco.vhdl";
-	UserInterface::cl_name="flopoco.vhdl";
 	Shifter::registerFactory();
 	FPExp::registerFactory();
 
 	//	cout << UserInterface::getFactoryCount() << " factories registered " << endl ;
 
-	UserInterface::parseAll(target, argc, argv);
+	UserInterface::parseAll(argc, argv);
 
 	//cout << "Successfuly built "<< UserInterface::globalOpList.size() << " operator(s)" << endl;
 
 	
-	ofstream file;
-	file.open(UserInterface::filename.c_str(), ios::out);
-	UserInterface::outputVHDLToFile(file); 
-	file.close();
 
 	UserInterface::finalReport(cerr); 
 
