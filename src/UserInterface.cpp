@@ -195,17 +195,6 @@ namespace flopoco
 			operatorSpecs.push_back(opSpec);
 		}
 	
-		cerr<< "Options:";
-		for (auto i : initialOptions) cerr << "{"<<i<<"} ";
-		cerr << endl;
-		cerr<< "Operators:";
-		cerr << endl;
-		for (auto i : operatorSpecs) {
-			for (auto j :i) 
-				cerr << "{"<<j<<"} ";
-			cerr << endl;
-		}
-		cerr << endl;
 
 		// Now we have organized our input: do the parsing itself. All the sub-parsers erase the data they consume from the string vectors
 		try {
@@ -213,7 +202,7 @@ namespace flopoco
 			initialOptions.erase(initialOptions.begin());
 			if(initialOptions.size()>0){
 				ostringstream s;
-				cerr<< "Don't know what to do with the following global option(s) :" <<endl ;
+				s << "Don't know what to do with the following global option(s) :" <<endl ;
 				for (auto i : initialOptions)
 					s << "  "<<i<<" ";
 				s << endl;
@@ -221,16 +210,10 @@ namespace flopoco
 			}
 			
 			for (auto opParams: operatorSpecs) {
-				cerr<< "parsing operator ";
-				for (auto j :opParams) 
-					cerr << "{"<<j<<"} ";
-				cerr << endl;
 
 				string opName = opParams[0];  // operator Name
 				// remove the generic options
-				cerr << endl << targetFrequency << endl; 
 				parseGenericOptions(opParams);
-				cerr << endl << targetFrequency << endl; 
 
 				// build the Target for this operator
 				Target* target;
@@ -504,14 +487,22 @@ namespace flopoco
 	////////////////// Operator factory /////////////////////////
 	// Currently very rudimentary
 
+	
+	// Colors from	https://github.com/Uduse/Escape-Sequence-Color-Header/blob/master/src/Escape_Sequences_Colors.h
+	const char COLOR_NORMAL[] = { 0x1b, '[', '0', ';', '3', '9', 'm', 0 };
+	const char COLOR_BOLD_BLUE_NORMAL[] = { 0x1b, '[', '1', ';', '3', '4', ';', '4', '9', 'm', 0 };
+	const char COLOR_BOLD[] = { 0x1b, '[', '1', 'm', 0 };
+	const char COLOR_RED_NORMAL[] = { 0x1b, '[', '3', '1', ';', '4', '9', 'm', 0 };
+	const char COLOR_BOLD_RED_NORMAL[] = { 0x1b, '[', '1', ';', '3', '1', ';', '4', '9', 'm', 0 };
+	
 	string OperatorFactory::getFullDoc(){
 		ostringstream s;
-		s << name() << ": " << m_description << endl << "  Parameters:"<<endl;
+		s <<COLOR_BOLD_BLUE_NORMAL << name() << COLOR_NORMAL <<": " << m_description << endl;
 		for (unsigned i=0; i<m_paramNames.size(); i++) {
 			string pname = m_paramNames[i];
-			s << "    " << pname << " (" << m_paramType[pname] << "): " << m_paramDoc[pname] << "  ";
+			s << "  " << ("" != m_paramDefault[pname]?COLOR_BOLD_RED_NORMAL:COLOR_BOLD) << pname <<COLOR_NORMAL<< " (" << m_paramType[pname] << "): " << m_paramDoc[pname] << "  ";
 			if("" != m_paramDefault[pname])
-				s << "  (optional, default value is " << m_paramDefault[pname] <<")";
+				s << COLOR_RED_NORMAL << "  (optional, default value is " << m_paramDefault[pname] <<")"<< COLOR_NORMAL;
 			s<< endl;			
 		}
 		return s.str();
