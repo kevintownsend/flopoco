@@ -23,7 +23,8 @@ namespace flopoco{
 		FixRealKCM(
 				Target* target, 
 				bool signedInput, 
-				int msbIn, int lsbIn, 
+				int msbIn, 
+				int lsbIn, 
 				int lsbOut, 
 				string constant, 
 				double targetUlpError = 1.0, 

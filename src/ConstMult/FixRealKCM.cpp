@@ -56,10 +56,13 @@ namespace flopoco{
 			THROWERROR("FixRealKCM: Error, targetUlpError="<<
 					targetUlpError<<"<0.5. Should be in ]0.5 ; 1]");
 		
+		//Output will need a sign bit
 		int signBit=0;
 		if(signedInput)
+		{
 			signBit=1;
-		wIn+=signBit;
+			wIn++;
+		}
 
 		// Convert the input string into a sollya evaluation tree
 		sollya_obj_t node;
@@ -103,8 +106,13 @@ namespace flopoco{
 		msbC = mpfr_get_si(log2C, GMP_RNDU);
 		mpfr_clears(log2C, NULL);
 
-		msbOut = msbC + msbIn;
-		wOut = msbOut + signBit - lsbOut+1;
+		if(!signedInput && negativeConstant)
+		{
+			signBit = 1;
+		}
+		msbOut = msbC + msbIn + signBit;
+
+		wOut = msbOut + lsbOut+1;
 
 		REPORT(DEBUG, "msbConstant=" << msbC  << "   (msbIn,lsbIn)=("<< 
 				msbIn << "," << lsbIn << ")   wIn=" << wIn << 
@@ -199,11 +207,6 @@ namespace flopoco{
 			guardBits = guardBitsFromTableNumber(nbOfTables, targetUlpError);
 			newLsbIn = lsbOut - guardBits - msbC;
 			newWIn = wIn - (newLsbIn - lsbIn);
-			cout << "GuardBits : "<< guardBits << endl << 
-				"LsbOut : " << lsbOut << endl << "LsbIN : " << 
-				lsbIn << endl << "NBTables :" << nbOfTables << endl <<
-				"newLsbIn : " << newLsbIn << endl << 
-				"Win : " << wIn << endl << "newWin : " << newWIn << endl;
 		}while(newLsbIn > lsbIn);
 
 #else
@@ -270,7 +273,6 @@ namespace flopoco{
 			)
 	{
 		Target* target = getTarget();
-		manageCriticalPath(target->localWireDelay() + target->lutDelay());
 
 		for(int i = 0; i < nbOfTables; i++)
 		{
@@ -281,7 +283,7 @@ namespace flopoco{
 
 			op->inPortMap (t[i] , "X", join("d",i, "_kcmMult_", getuid()));
 			op->outPortMap(t[i] , "Y", join("pp",i, "_kcmMult_", getuid()));
-			op->vhdl << op->instance(t[i] , join("KCMTable_",i));
+			op->vhdl << op->instance(t[i] , join("KCMTable_",i, "_kcmMult_", getuid()));
 
 			//manage the critical path
 			op->syncCycleFromSignal(join("pp",i,"_kcmMult_", getuid()));
@@ -315,6 +317,8 @@ namespace flopoco{
 
 		if(g > 0)
 		{
+			REPORT(INFO, "Adding one half ulp to transform truncation into"
+					" faithful rounding");
 			bitHeap->addConstantOneBit(g-1);
 		}
 
@@ -378,6 +382,7 @@ namespace flopoco{
 
 		//create the bitheap
 		bitHeap = new BitHeap(this, wOut+g);
+		manageCriticalPath(target->localWireDelay() + target->lutDelay());
 		connectBitHeap(t, doSize, nbOfTables, this);
 		vhdl << tab << "R <= OutRes" << range(wOut+g-1, g) << ";" << endl;
 		outDelayMap["R"] = getCriticalPath();
@@ -830,6 +835,7 @@ namespace flopoco{
 				parentOp,
 				multiplicandX->getName()
 			);
+
 		connectBitHeap(t, doSize, nbOfTables, parentOp);
 		vhdl << tab << "R <= OutRes" << range(wOut+g-1, g) << ";" << endl;
 		outDelayMap["R"] = getCriticalPath();
@@ -1042,10 +1048,13 @@ namespace flopoco{
 				" <= " << 
 				inputSignalName << range(highBit-1, highBit - diSize[i]) << 
 				";" << endl;
-			cout << join("d", i) << " déclaré" << endl;
 			highBit -= diSize[i];
 			doSize[i] = tableDo;
-			if(!(last && signedInput))
+			//cas ou on augmente artificiellement la taille de sortie : sous
+			//produits d'entrée par une constante negative
+			if(!(last && (signedInput || negativeConstant)) && 
+					!(!signedInput && negativeConstant)
+				)
 			{
 				doSize[i]++;
 			}

@@ -271,12 +271,8 @@ namespace flopoco{
 
 		/** get the parent operator */
 
-
-
 		/** @brief generate the final adder for the bit heap (when the columns height is maximum 2*/
 		void generateFinalAddVHDL(bool isXilinx);
-
-
 
 		/**
 		 * @brief Compress the bitheap using compressors
