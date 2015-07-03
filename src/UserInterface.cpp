@@ -4,9 +4,20 @@
 #include <iostream>
 #include <iomanip>
 
+// TODO check the hard mult threshold
 
 namespace flopoco
 {
+
+		
+	// Colors from	https://github.com/Uduse/Escape-Sequence-Color-Header/blob/master/src/Escape_Sequences_Colors.h
+	const char COLOR_NORMAL[] = { 0x1b, '[', '0', ';', '3', '9', 'm', 0 };
+	const char COLOR_BOLD_BLUE_NORMAL[] = { 0x1b, '[', '1', ';', '3', '4', ';', '4', '9', 'm', 0 };
+	const char COLOR_BOLD[] = { 0x1b, '[', '1', 'm', 0 };
+	const char COLOR_RED_NORMAL[] = { 0x1b, '[', '3', '1', ';', '4', '9', 'm', 0 };
+	const char COLOR_BLUE_NORMAL[] = { 0x1b, '[', '3', '4', ';', '4', '9', 'm', 0 };
+	const char COLOR_BOLD_RED_NORMAL[] = { 0x1b, '[', '1', ';', '3', '1', ';', '4', '9', 'm', 0 };
+	const char* defaultFPGA="Virtex5";
 
 
 	// Allocation of the global objects
@@ -29,8 +40,10 @@ namespace flopoco
 	void UserInterface::parseGenericOptions(vector<string> &args) {
 		parseString(args, "name", &entityName, true); // not sticky: will be used, and reset, after the operator parser
 		parseString(args, "outputFile", &outputFileName, true); // not sticky: will be used, and reset, after the operator parser
+		parseString(args, "target", &targetFPGA, true); // not sticky: will be used, and reset, after the operator parser
 		parsePositiveInt(args, "verbose", &verbose, true); // sticky option
 		parseFloat(args, "frequency", &targetFrequency, true); // sticky option
+		parseFloat(args, "hardMultThreshold", &unusedHardMultThreshold, true); // sticky option
 		parseBoolean(args, "useHardMult", &useHardMult, true);
 		parseBoolean(args, "plainVHDL", &plainVHDL, true);
 		parseBoolean(args, "generateFigures", &generateFigures, true);
@@ -121,6 +134,7 @@ namespace flopoco
 			throw string("OperatorFactory - Factory with name '"+factory->name()+" has already been registered.");
 		
 		sm_factoriesByName.insert(make_pair(factory->name(), factory));
+		sm_factoriesByIndex.push_back(factory);
 	}
 
 	unsigned UserInterface::getFactoryCount() {
@@ -142,9 +156,10 @@ namespace flopoco
 		// Initialize all the command-line options
 		verbose=1;
 		outputFileName="flopoco.vhdl";
-		targetFPGA="Virtex5";
+		targetFPGA=defaultFPGA;
 		targetFrequency=400e6;
 		useHardMult=true;
+		unusedHardMultThreshold=0.7;
 	}
 
 		
@@ -291,9 +306,9 @@ namespace flopoco
 			// convert to lower case
 			std::transform(key.begin(), key.end(), key.begin(), ::tolower);
 			if(key==keyArg) {
-				cerr <<"  found " << key << endl;
+				//cerr <<"  found " << key << endl;
 				string val= i->substr(eqPos+1, string::npos);
-				cerr <<"  val= " << val << endl;
+				//cerr <<"  val= " << val << endl;
 				// now remove this parameter from the args
 				args.erase(i);
 				return val;
@@ -450,9 +465,38 @@ namespace flopoco
 	}
 
 
+#if 0
+	const int outputToHTML=1;
+	const int outputToConsole=2;
+	
+	string colorParameter(string s, int techno, bool optional) {
+		string o
+		if (techno==outputToHTML)
+			o = "<code class=\"parametername\">" + s + "</code>";
+		else 	if (techno==outputToConsole)
+			o = (optional?COLOR_BOLD_RED_NORMAL:COLOR_BOLD) + s + COLOR_NORMAL;
+		return o;
+	}
+#endif
 
+	
 	string UserInterface::getFullDoc(){
-		ostringstream s; 
+		ostringstream s;
+		s << "Usage: " << COLOR_BOLD << "flopoco  [options]  OperatorName parameters  [OperatorName parameters]..." << COLOR_NORMAL << endl;
+		s << "  Both options and parameters are lists of " << COLOR_BOLD << "name=value" << COLOR_NORMAL << " pairs (with case-insensitive name)" << endl;
+		s << COLOR_BLUE_NORMAL<< "Example: " << COLOR_NORMAL << "flopoco  frequency=300 target=Virtex5   FPExp  wE=8 wF=23 name=SinglePrecisionFPExp" << endl;
+		s << "Generic options include:" << endl;
+		s << "  " << COLOR_BOLD << "name" << COLOR_NORMAL << "=<string>:        override the the default entity name "<<endl;
+		s << "  " << COLOR_BOLD << "outputFile" << COLOR_NORMAL << "=<string>:  override the the default output file name " << COLOR_RED_NORMAL << "(sticky option)" << COLOR_NORMAL <<endl;
+		s << "  " << COLOR_BOLD << "pipeline" << COLOR_NORMAL << "=<0|1>:       pipelined operator, or not " << COLOR_RED_NORMAL << "(sticky option)" << COLOR_NORMAL << endl;
+		s << "  " << COLOR_BOLD << "target" << COLOR_NORMAL << "=<string>:      target FPGA (default " << defaultFPGA << ") " << COLOR_RED_NORMAL << "(sticky option)" << COLOR_NORMAL<<endl;
+		s << "     Supported targets: Stratix2...5, Virtex2...6, Cyclone2...5,Spartan3"<<endl;
+		s << "  " << COLOR_BOLD << "frequency" << COLOR_NORMAL << "=<float>:    target frequency in MHz (default 400) " << COLOR_RED_NORMAL << "(sticky option)" << COLOR_NORMAL<<endl;
+		s << "  " << COLOR_BOLD << "plainVHDL" << COLOR_NORMAL << "=<0|1>:      use plain VHDL (default), or not " << COLOR_RED_NORMAL << "(sticky option)" << COLOR_NORMAL << endl;
+		s << "  " << COLOR_BOLD << "hardMultThreshold" << COLOR_NORMAL << "=<float>: unused hard mult threshold (O..1, default 0.7) " << COLOR_RED_NORMAL << "(sticky option)" << COLOR_NORMAL<<endl;
+		s << "  " << COLOR_BOLD << "generateFigures" << COLOR_NORMAL << "=<0|1>:generate SVG graphics (default off) " << COLOR_RED_NORMAL << "(sticky option)" << COLOR_NORMAL << endl;
+		s << "  " << COLOR_BOLD << "verbose" << COLOR_NORMAL << "=<int>:        verbosity level (0-4, default=1)" << COLOR_RED_NORMAL << "(sticky option)" << COLOR_NORMAL<<endl;
+		s << "Sticky options apply to the rest of the command line, unless changed again" <<endl;
 		for(unsigned i = 0; i<getFactoryCount(); i++) {
 			OperatorFactoryPtr f =  UserInterface::getFactoryByIndex(i);
 			s << f -> getFullDoc();
@@ -489,14 +533,6 @@ namespace flopoco
 	////////////////// Operator factory /////////////////////////
 	// Currently very rudimentary
 
-	
-	// Colors from	https://github.com/Uduse/Escape-Sequence-Color-Header/blob/master/src/Escape_Sequences_Colors.h
-	const char COLOR_NORMAL[] = { 0x1b, '[', '0', ';', '3', '9', 'm', 0 };
-	const char COLOR_BOLD_BLUE_NORMAL[] = { 0x1b, '[', '1', ';', '3', '4', ';', '4', '9', 'm', 0 };
-	const char COLOR_BOLD[] = { 0x1b, '[', '1', 'm', 0 };
-	const char COLOR_RED_NORMAL[] = { 0x1b, '[', '3', '1', ';', '4', '9', 'm', 0 };
-	const char COLOR_BOLD_RED_NORMAL[] = { 0x1b, '[', '1', ';', '3', '1', ';', '4', '9', 'm', 0 };
-	
 	string OperatorFactory::getFullDoc(){
 		ostringstream s;
 		s <<COLOR_BOLD_BLUE_NORMAL << name() << COLOR_NORMAL <<": " << m_description << endl;
