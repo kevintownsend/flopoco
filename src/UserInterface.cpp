@@ -120,7 +120,6 @@ namespace flopoco
 		if(sm_factoriesByName.find(factory->name())!=sm_factoriesByName.end())
 			throw string("OperatorFactory - Factory with name '"+factory->name()+" has already been registered.");
 		
-		sm_factoriesByIndex.push_back(factory);
 		sm_factoriesByName.insert(make_pair(factory->name(), factory));
 	}
 
@@ -243,6 +242,9 @@ namespace flopoco
 				target->setGenerateFigures(generateFigures);
 				// Now build the operator
 				OperatorFactoryPtr fp = getFactoryByName(opName);
+				if (fp==NULL){
+					throw( "Can't find the operator factory for " + opName) ;
+				}
 				OperatorPtr op = fp->parseArguments(target, opParams);
 				if(op!=NULL)	{// Some factories don't actually create an operator
 					if(entityName!="") {
