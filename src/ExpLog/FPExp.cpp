@@ -968,12 +968,13 @@ namespace flopoco{
 
 
 
-	OperatorPtr FPExp::parseArguments(Target *target, const vector<string> &args) {
-		int wE = UserInterface::checkStrictlyPositiveInt(args, "wE"); 
-		int wF = UserInterface::checkStrictlyPositiveInt(args, "wF");
-		int k = UserInterface::checkPositiveInt(args, "k");
-		int d = UserInterface::checkPositiveInt(args, "d");
-		int g = UserInterface::checkInt(args, "g");
+	OperatorPtr FPExp::parseArguments(Target *target, vector<string> &args) {
+		int wE, wF, k, d, g;
+		UserInterface::parseStrictlyPositiveInt(args, "wE", &wE); 
+		UserInterface::parseStrictlyPositiveInt(args, "wF", &wF);
+		UserInterface::parsePositiveInt(args, "k", &k);
+		UserInterface::parsePositiveInt(args, "d", &d);
+		UserInterface::parseInt(args, "g", &g);
 		return new FPExp(target, wE, wF, k, d, g);
 	}
 

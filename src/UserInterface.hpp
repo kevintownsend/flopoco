@@ -25,7 +25,7 @@ namespace flopoco
 {
 	
 		// Note: not using boost::function here, as it's likely to scare people, and also drags in quite a few header dependencies
-	typedef OperatorPtr (*parser_func_t)(Target *,const vector<string> &);	
+	typedef OperatorPtr (*parser_func_t)(Target *, vector<string> &);	
 	class OperatorFactory;
 	typedef shared_ptr<OperatorFactory> OperatorFactoryPtr;
 
@@ -62,11 +62,13 @@ namespace flopoco
 		static void parseGenericOptions(vector<string>& args);
 
 		
-		//		static param_map_t  parseArguments(string opName, const vector<string> &args);
-		static bool checkBoolean( vector<string>, string);
-		static int checkInt( vector<string>, string);
-		static int checkPositiveInt( vector<string>, string);
-		static int checkStrictlyPositiveInt(vector<string>, string);
+		static void throwMissingArgError(string opname, string key);
+		static void parseBoolean(vector<string> &args, string key, bool* variable, bool genericOption=false);
+		static void parseInt(vector<string> &args, string key, int* variable, bool genericOption=false);
+		static void parsePositiveInt(vector<string> &args, string key, int* variable, bool genericOption=false);
+		static void parseStrictlyPositiveInt(vector<string> &args, string key, int* variable, bool genericOption=false);
+		static void parseFloat(vector<string> &args, string key, double* variable, bool genericOption=false);
+		static void parseString(vector<string> &args, string key, string* variable, bool genericOption=false);
 
 		/** Provide a string with the full documentation. TODO: an HTML version*/
 		static string getFullDoc();
@@ -184,7 +186,7 @@ namespace flopoco
 			factory to check the types and whether there are enough.
 			\param consumed On exit, the factory indicates how many of the arguments are used up.
 		*/
-		virtual OperatorPtr parseArguments(Target* target,  const vector<string> &args	)const
+		virtual OperatorPtr parseArguments(Target* target, vector<string> &args	)
 		{
 			return m_parser(target, args);
 		}

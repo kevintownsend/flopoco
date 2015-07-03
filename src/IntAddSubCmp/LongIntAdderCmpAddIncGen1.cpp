@@ -208,7 +208,7 @@ exit(1);
 					vhdl<<tab<<declare(join("sX",j,"_0_l",l,"_One"))<< "  <= '1' when "<< join("sX",j,"_0_l",l-1)<< " >= not("<<join("sX",j,"_1_l",l-1)<<") else '0';"<<endl;
 #else 
 int tp = target->isPipelined();
-target->setNotPipelined();
+target->setPipelined(false);
 IntAdder *addZero = new IntAdder(target, cSize[j]+1);
 IntComparator *compOne = new IntComparator(target, cSize[j], 1, false, 0);
 

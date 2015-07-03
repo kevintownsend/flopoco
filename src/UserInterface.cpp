@@ -10,7 +10,7 @@ namespace flopoco
 
 
 	// Allocation of the global objects
-	string UserInterface::outputFileName="flopoco.vhdl";
+	string UserInterface::outputFileName;
 	string UserInterface::entityName=""; // used for the -name option
 	int UserInterface::verbose;
 	string UserInterface::targetFPGA;
@@ -25,6 +25,22 @@ namespace flopoco
 	bool UserInterface::floorplanning;
 	bool UserInterface::reDebug;
 	bool UserInterface::flpDebug;
+
+	void UserInterface::parseGenericOptions(vector<string> &args) {
+		parseString(args, "name", &entityName, true); // not sticky: will be used, and reset, after the operator parser
+		parseString(args, "outputFile", &outputFileName, true); // not sticky: will be used, and reset, after the operator parser
+		parsePositiveInt(args, "verbose", &verbose, true); // sticky option
+		parseFloat(args, "frequency", &targetFrequency, true); // sticky option
+		parseBoolean(args, "useHardMult", &useHardMult, true);
+		parseBoolean(args, "plainVHDL", &plainVHDL, true);
+		parseBoolean(args, "generateFigures", &generateFigures, true);
+		parseBoolean(args, "floorplanning", &floorplanning, true);
+		parseBoolean(args, "reDebug", &reDebug, true );
+		parseBoolean(args, "pipeline", &pipeline, true );
+		//	parseBoolean(args, "", &  );
+	}
+
+
 	
 	// Global factory list TODO there should be only one.
 	vector<OperatorFactoryPtr> UserInterface::sm_factoriesByIndex;
@@ -135,50 +151,92 @@ namespace flopoco
 		
 	void UserInterface::parseAll(int argc, char* argv[]) {
 		initialize();
-		// First convert the input arg to a vector of strings, for convenience
-		vector<string> args;
-		for(int i=1;i<argc;i++){ // skip the executable name
-			args.push_back(string(argv[i]));
+
+		// manage trivial cases
+		if(argc==1) {
+			cerr << getFullDoc();
+			exit(EXIT_SUCCESS);
 		}
-		// Now the parsing itself. All the sub-parsers erase the data they consume from the string vectors
-		try {
-			if(args.size()==0) {
-				cerr << getFullDoc();
-				exit(EXIT_SUCCESS);
-			}
-			if(args.size()==1 && args[0]=="BuildHTMLDoc") {
-				buildHTMLDoc();
-				exit(EXIT_SUCCESS);
-			}
+		if(argc==2 && string(argv[1])=="BuildHTMLDoc") {
+			buildHTMLDoc();
+			exit(EXIT_SUCCESS);
+		}
 
-			//cout << "args.size=" << args.size() <<endl;
-			while(args.size() > 0) { // This loop is over the Operators that are passed on the command line
-				parseGenericOptions(args); 
-				string opName = args[0];  // operator Name
-				vector<string> opParams;
-				opParams.push_back(args[0]); // place the operator name in position 0
+		// First convert for convenience the input arg list into
+		// 1/ a (possibly empty) vector of global args / initial options,
+		// 2/ a vector of operator specification, each being itself a vector of strings 
+		vector<string> initialOptions;
+		vector<vector<string>> operatorSpecs;
+
+
+		vector<string> args;
+		// convert all the char* to strings
+		for (int i=1; i<argc; i++) // start with 1 to skip executable name
+			args.push_back(string(argv[i]));
+
+		// Build the global option list
+		initialOptions.push_back("$$initialOptions$$");
+		while(args.size() > 0 // there remains something to parse
+					&& args[0].find("=") !=string::npos) {// and it is an option
+			initialOptions.push_back(args[0]);
+			args.erase(args.begin());
+		}
+
+		// Now there should be at least one operator specification
+		while(args.size() > 0) { // This loop is over the Operators that are passed on the command line
+			vector<string> opSpec;
+			opSpec.push_back(string(args[0]));  // operator Name
+			args.erase(args.begin());
+			while(args.size() > 0 // there remains something to parse
+						&& args[0].find("=") !=string::npos) {// and it is an option
+				opSpec.push_back(args[0]);
 				args.erase(args.begin());
-				// First build the tentative param list: it removes complexity from the operator-level parser
-				while(args.size()>0                        // there remains something to parse
-							&& args[0].find("=") !=string::npos  // and it is a pair key=value
-							&& args[0].front() != '-'              // and it is not a global option
-						 ) {
-					opParams.push_back(args[0]);
-					args.erase(args.begin());
-				}
-				// Now we have consumed the parameters and we are ready to start parsing next operator.
+			}
+			operatorSpecs.push_back(opSpec);
+		}
+	
+		cerr<< "Options:";
+		for (auto i : initialOptions) cerr << "{"<<i<<"} ";
+		cerr << endl;
+		cerr<< "Operators:";
+		cerr << endl;
+		for (auto i : operatorSpecs) {
+			for (auto j :i) 
+				cerr << "{"<<j<<"} ";
+			cerr << endl;
+		}
+		cerr << endl;
 
-				// but first build the Target for this operator, then build it
+		// Now we have organized our input: do the parsing itself. All the sub-parsers erase the data they consume from the string vectors
+		try {
+			parseGenericOptions(initialOptions);
+			initialOptions.erase(initialOptions.begin());
+			if(initialOptions.size()>0){
+				ostringstream s;
+				cerr<< "Don't know what to do with the following global option(s) :" <<endl ;
+				for (auto i : initialOptions)
+					s << "  "<<i<<" ";
+				s << endl;
+				throw s.str();
+			}
+			
+			for (auto opParams: operatorSpecs) {
+				cerr<< "parsing operator ";
+				for (auto j :opParams) 
+					cerr << "{"<<j<<"} ";
+				cerr << endl;
 
-				// cout << "Passing the following vector to the factory:" << endl;
-				// for (unsigned i=0; i< opParams.size(); i++)
-				// 	cout << " {" << opParams[i] << "}";
-				// cout << endl;
+				string opName = opParams[0];  // operator Name
+				// remove the generic options
+				cerr << endl << targetFrequency << endl; 
+				parseGenericOptions(opParams);
+				cerr << endl << targetFrequency << endl; 
 
+				// build the Target for this operator
+				Target* target;
 				// make this option case-insensitive, too
 				std::transform(targetFPGA.begin(), targetFPGA.end(), targetFPGA.begin(), ::tolower);
 
-				Target* target;
 					// This could also be a factory but it is less critical
 				if(targetFPGA=="virtex4") target=new Virtex4();
 				else if (targetFPGA=="virtex5") target=new Virtex5();
@@ -195,19 +253,21 @@ namespace flopoco
 				else {
 					throw("ERROR: unknown target: " + targetFPGA);
 					}
-				target->setFrequency(targetFrequency);
-				if(pipeline) target->setPipelined(); else target->setPipelined();
+				target->setPipelined(pipeline);
+				target->setFrequency(1e6*targetFrequency);
 				target->setUseHardMultipliers(useHardMult);
-
+				target->setPlainVHDL(plainVHDL);
+				target->setGenerateFigures(generateFigures);
 				// Now build the operator
 				OperatorFactoryPtr fp = getFactoryByName(opName);
 				OperatorPtr op = fp->parseArguments(target, opParams);
 				if(op!=NULL)	{// Some factories don't actually create an operator
-					op->changeName(entityName);
-					entityName="";
-					cout << "Adding operator" << endl;
+					if(entityName!="") {
+						op->changeName(entityName);
+						entityName="";
+					}
+					//cerr << "Adding operator" << endl;
 					addOperator(op);
-					cout << "... done" << endl;
 				}
 			}
 		}catch(std::string &s){
@@ -236,7 +296,7 @@ namespace flopoco
 		// convert to lower case. not efficient to do this each time but hey, this is a user interface.
 		std::transform(keyArg.begin(), keyArg.end(), keyArg.begin(), ::tolower);
 		vector<string>::iterator i = args.begin();
-		string opName=*i;
+		// string opName=*i;
 		i++;
 		while (i != args.end()){
 			size_t eqPos = i->find('=');
@@ -245,10 +305,15 @@ namespace flopoco
 			string key= i->substr(0,eqPos);
 			// convert to lower case
 			std::transform(key.begin(), key.end(), key.begin(), ::tolower);
-			for (auto c:key) c=tolower(c);
 			if(key==keyArg) {
+				cerr <<"  found " << key << endl;
 				string val= i->substr(eqPos+1, string::npos);
-				return val;}
+				cerr <<"  val= " << val << endl;
+				// now remove this parameter from the args
+				args.erase(i);
+				return val;
+				cerr <<"  val= " << val << endl;
+			}
 			i++;
 		}
 		return ""; // not found
@@ -259,75 +324,116 @@ namespace flopoco
 	// Beware, args[0] is the operator name, so that we may look up the doc in the factories etc.
 
 
+	void UserInterface::throwMissingArgError(string opname, string key){
+				throw (opname +": argument " + key + " not provided, and there doesn't seem to be a default value."
+							 +"\n" +  getFactoryByName(opname) -> getFullDoc());
 
-	
-	bool UserInterface::checkBoolean(vector<string> args, string key){
+	}
+
+	void UserInterface::parseString(vector<string> &args, string key, string* variable, bool genericOption){
 		string val=getVal(args, key);
 		if(val=="") {
+			if(genericOption)
+				return; // do nothing
 			// key not given, use default value
 			val = getFactoryByName(args[0])->getDefaultParamVal(key);
-			if (val=="") {
-				throw (args[0] +": argument " + key + " not provided, and there doesn't seem to be a default value."
-							 +"\n" +  getFactoryByName(args[0]) -> getFullDoc());
-			}
+			if (val=="")
+				throwMissingArgError(args[0], key);
+		}
+		*variable = val;
+	}
+
+	void UserInterface::parseBoolean(vector<string>& args, string key, bool* variable, bool genericOption){
+		string val=getVal(args, key);
+		if(val=="") {
+			if(genericOption)
+				return; // do nothing
+			// key not given, use default value
+			val = getFactoryByName(args[0])->getDefaultParamVal(key);
+			if (val=="")
+				throwMissingArgError(args[0], key);
 		}
 		if(val=="1" || val=="yes" || val=="true" || val=="Yes" || val=="True")
-			return true;
+			*variable= true;
 		else if(val=="0" || val=="no" || val=="false" || val=="No" || val=="False")
-			return false;
+			*variable= false;
 		else
-				throw (args[0] +": expected boolean for argument " + key + ", got" + val);
+				throw (args[0] +": expected boolean for argument " + key + ", got " + val);
+	}
+
+	void UserInterface::parseFloat(vector<string>& args, string key, double* variable, bool genericOption){
+		string val=getVal(args, key);
+		if(val=="") {
+			if(genericOption)
+				return; // do nothing
+			// key not given, use default value
+			val = getFactoryByName(args[0])->getDefaultParamVal(key);
+			if (val=="")
+				throwMissingArgError(args[0], key);
+		}
+		size_t end;
+		int intval=stod(val, &end);
+		if (val.length() == 0 || val.length() != end)
+			throw (args[0] +": expecting a float for parameter " + key + ", got "+val);
+		*variable= intval;
 	}
 
 
 	
-	int UserInterface::checkInt(vector<string> args, string key){
+	void UserInterface::parseInt(vector<string>& args, string key, int* variable, bool genericOption){
 		string val=getVal(args, key);
 		if(val=="") {
+			if(genericOption)
+				return; // do nothing
 			// key not given, use default value
 			val = getFactoryByName(args[0])->getDefaultParamVal(key);
-			if (val=="") {
-				throw (args[0] +" argument " + key + " not provided, and there doesn't seem to be a default value."
-							 +"\n" +  getFactoryByName(args[0]) -> getFullDoc());
-			}
+			if (val=="")
+				throwMissingArgError(args[0], key);
 		}
 		size_t end;
 		int intval=stoi(val, &end);
 		if (val.length() == 0 || val.length() != end)
 			throw (args[0] +": expecting an int for parameter " + key + ", got "+val);
-		return intval;
+		*variable= intval;
 	}
 
 
-	int UserInterface::checkPositiveInt(vector<string> args, string key){
+	
+	void UserInterface::parsePositiveInt(vector<string> &args, string key, int* variable, bool genericOption){
 		string val=getVal(args, key);
 		if(val=="") {
-			// key not given, use default value
-			val = getFactoryByName(args[0])->getDefaultParamVal(key);
-			if (val=="") {
-				throw (args[0] +" argument " + key + " not provided, and there doesn't seem to be a default value."
-							 +"\n" +  getFactoryByName(args[0]) -> getFullDoc());
+			if(genericOption) {
+				return; // option not found, but it was an option, so do nothing
 			}
+			else {			// key not given, use default value
+				val = getFactoryByName(args[0])->getDefaultParamVal(key);
+				if (val=="")
+					throwMissingArgError(args[0], key);
+ 			}
 		}
 		size_t end;
+		
 		int intval=stoi(val, &end);
 		if (val.length() == 0 || val.length() != end)
 			throw (args[0] +": expecting an int for parameter " + key + ", got "+val);
 		if(intval>=0)
-			return intval;
+			*variable = intval;
 		else
 			throw (args[0] +": expecting strictly positive value for " + key + ", got " + val );
+	
 	}
 
 
-	int UserInterface::checkStrictlyPositiveInt(vector<string> args, string key){
+	void UserInterface::parseStrictlyPositiveInt(vector<string> &args, string key, int* variable, bool genericOption){
 		string val=getVal(args, key);
 		if(val=="") {
-			// key not given, use default value
-			val = getFactoryByName(args[0])->getDefaultParamVal(key);
-			if (val=="") {
-				throw (args[0] +" argument " + key + " not provided, and there doesn't seem to be a default value."
-							 +"\n" +  getFactoryByName(args[0]) -> getFullDoc());
+			if(genericOption)
+				return; // do nothing
+			// key not given, use default value (except if it is an initial option)
+			if(args[0] != "$$initialOptions$$") {
+					val = getFactoryByName(args[0])->getDefaultParamVal(key);
+					if (val=="")
+						throwMissingArgError(args[0], key);
 			}
 		}
 		size_t end;
@@ -335,7 +441,7 @@ namespace flopoco
 		if (val.length() == 0 || val.length() != end)
 			throw (args[0] +": expecting an int for parameter " + key + ", got "+val);
 		if(intval>0)
-			return intval;
+			*variable = intval;
 		else
 			throw (args[0] +": expecting strictly positive value for " + key + ", got " + val );
 	}
@@ -343,11 +449,6 @@ namespace flopoco
 
 	
 
-
-	void UserInterface::parseGenericOptions(vector<string> &args) {
-		cout << "parsing generic options" << endl;
-		entityName=getVal(args, "name"); // will be used, and reset, after the operator parser 
-	}
 
 
 
