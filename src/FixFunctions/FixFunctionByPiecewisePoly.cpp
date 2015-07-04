@@ -6,7 +6,7 @@
 
   This file is part of the FloPoCo project
 	launched by the Arénaire/AriC team of Ecole Normale Superieure de Lyon
-  currently developed by the Socrate team at INSA de Lyon
+  currently developed by the Socrate team at CITILab/INSA de Lyon
  
   Initial software.
   Copyright © ENS-Lyon, INSA-Lyon, INRIA, CNRS, UCBL,  
@@ -196,6 +196,35 @@ namespace flopoco{
 		emulate(tc);
 		tcl->add(tc);
 
+	}
+
+
+
+	
+	OperatorPtr FixFunctionByPiecewisePoly::parseArguments(Target *target, vector<string> &args) {
+		int lsbIn, msbOut, lsbOut, d;
+		string f;
+		UserInterface::parseString(args, "f", &f); 
+		UserInterface::parseInt(args, "lsbIn", &lsbIn);
+		UserInterface::parseInt(args, "msbOut", &msbOut);
+		UserInterface::parseInt(args, "lsbOut", &lsbOut);
+		UserInterface::parsePositiveInt(args, "d", &d);
+		return new FixFunctionByPiecewisePoly(target, f, lsbIn, msbOut, lsbOut, d);
+	}
+
+	void FixFunctionByPiecewisePoly::registerFactory(){
+		UserInterface::add("FixFunctionByPiecewisePoly", // name
+											 "Evaluator of function f on [0,1), using a piecewise polynomial of degree d with Horner scheme.",
+											 "fixed-point function evaluator; fixed-point", // categories
+											 "f(string): function to be evaluated between double-quotes, for instance \"exp(x*x)\";\
+                        lsbIn(int): weight of input LSB, for instance -8 for an 8-bit input;\
+                        msbOut(int): weight of output MSB;\
+                        lsbOut(int): weight of output LSB;\
+                        d(int): degree of the polynomial",
+											 "This operator uses a table for coefficients, and Horner evaluation with truncated multipliers sized just right.<br>For more details, see <a href=\"bib/flopoco.html#DinJolPas2010-poly\">this article</a>.",
+											 FixFunctionByPiecewisePoly::parseArguments
+											 ) ;
+		
 	}
 
 }

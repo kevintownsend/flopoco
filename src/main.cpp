@@ -55,8 +55,8 @@ int main(int argc, char* argv[] )
 
 	Shifter::registerFactory();
 	FPExp::registerFactory();
-
-		cout << UserInterface::getFactoryCount() << " factories registered " << endl ;
+	FixFunctionByPiecewisePoly::registerFactory();
+	cout << UserInterface::getFactoryCount() << " factories registered " << endl ;
 
 	UserInterface::parseAll(argc, argv);
 
