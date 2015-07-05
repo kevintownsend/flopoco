@@ -298,6 +298,7 @@ src/Conversions/Fix2FP
 
 
 # Floating-point adders and subtracters -----------------------------
+ src/FPAddSub/FPAdd
  src/FPAddSub/FPAddDualPath
  src/FPAddSub/FPAddSinglePath
  src/FPAddSub/FPAdd3Input

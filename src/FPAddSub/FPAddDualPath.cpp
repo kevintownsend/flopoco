@@ -42,60 +42,62 @@ namespace flopoco{
 #define DEBUGVHDL 0
 
 
-	FPAddDualPath::FPAddDualPath(Target* target, int wEX, int wFX, int wEY, int wFY, int wER, int wFR) :
-		Operator(target), wEX(wEX), wFX(wFX), wEY(wEY), wFY(wFY), wER(wER), wFR(wFR) {
+	FPAddDualPath::FPAddDualPath(Target* target, int wE, int wF, bool sub) :
+		Operator(target), wE(wE), wF(wF),  sub(sub){
 
 		ostringstream name, synch, synch2;
 
 		srcFileName="FPAddDualPath";
-		name<<"FPAddDualPath_"<<wEX<<"_"<<wFX<<"_"<<wEY<<"_"<<wFY<<"_"<<wER<<"_"<<wFR; 
-		if(target->isPipelined()) 
-			name << target->frequencyMHz() ;
+		if(sub)
+			name<<"FPSub_";
 		else
-			name << "comb";
-		setName(name.str()); 
+			name<<"FPAdd_";
+		name<<wE<<"_"<<wF; 
+		setNameWithFreq(name.str());
 
 		setCopyrightString("Bogdan Pasca, Florent de Dinechin (2008)");		
 
-		//parameter set up
-		wF = wFX;
-		wE = wEX;
-	
 		sizeRightShift = intlog2(wF+3);
 
 		/* Set up the IO signals */
-		/* Inputs: 2b(Exception) + 1b(Sign) + wEX bits (Exponent) + wFX bits(Fraction) */
+		/* Inputs: 2b(Exception) + 1b(Sign) + wE bits (Exponent) + wF bits(Fraction) */
 		// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-		addFPInput ("X", wEX, wFX);
-		addFPInput ("Y", wEY, wFY);
-		addFPOutput("R", wER, wFR);
+		addFPInput ("X", wE, wF);
+		addFPInput ("Y", wE, wF);
+		addFPOutput("R", wE, wF);
 
 		//=========================================================================|
 		//                          Swap/Difference                                |
 		// ========================================================================|
+
 		vhdl<<"-- Exponent difference and swap  --"<<endl;
 		vhdl<<tab<<declare("inX",wE+wF+3) << " <= X;"<<endl;
 		vhdl<<tab<<declare("inY",wE+wF+3) << " <= Y;"<<endl;
 		// signal which indicates whether or not the exception bits of X are greater or equal than/to the exception bits of Y		  
-		vhdl<<tab<<declare("exceptionXSuperiorY") << " <= '1' when inX("<<wEX+wFX+2<<" downto "<<wEX+wFX+1<<") >= inY("<<wEY+wFY+2<<" downto "<<wEY+wF+1<<") else '0';"<<endl;
+		vhdl<<tab<<declare("exceptionXSuperiorY") << " <= '1' when inX("<<wE+wF+2<<" downto "<<wE+wF+1<<") >= inY("<<wE+wF+2<<" downto "<<wE+wF+1<<") else '0';"<<endl;
 		
 		// signal which indicates whether or not the exception bits of X are equal to the exception bits of Y		  
-		vhdl<<tab<<declare("exceptionXEqualY") << " <= '1' when inX("<<wEX+wFX+2<<" downto "<<wEX+wFX+1<<") = inY("<<wEY+wFY+2<<" downto "<<wEY+wFY+1<<") else '0';"<<endl;
+		vhdl<<tab<<declare("exceptionXEqualY") << " <= '1' when inX("<<wE+wF+2<<" downto "<<wE+wF+1<<") = inY("<<wE+wF+2<<" downto "<<wE+wF+1<<") else '0';"<<endl;
 	
 		// make the difference between the exponents of X and Y; expX - expY = expX + not(expY) + 1
 		// pad exponents with sign bit
-		vhdl<<tab<<declare("signedExponentX",wE+1) << " <= \"0\" & inX("<<wEX+wFX-1<<" downto "<<wFX<<");"<<endl;
-		vhdl<<tab<<declare("signedExponentY",wE+1) << " <= \"0\" & inY("<<wEX+wFX-1<<" downto "<<wFX<<");"<<endl;
+		vhdl<<tab<<declare("signedExponentX",wE+1) << " <= \"0\" & inX("<<wE+wF-1<<" downto "<<wF<<");"<<endl;
+		vhdl<<tab<<declare("signedExponentY",wE+1) << " <= \"0\" & inY("<<wE+wF-1<<" downto "<<wF<<");"<<endl;
 		vhdl<<tab<<declare("exponentDifferenceXY",wE+1) << " <= signedExponentX - signedExponentY ;"<<endl;
 		vhdl<<tab<<declare("exponentDifferenceYX",wE) << " <= signedExponentY("<<wE-1<<" downto 0) - signedExponentX("<<wE-1<<" downto 0);"<<endl;
 	
 		// SWAP when: [excX=excY and expY>expX] or [excY>excX]
 		vhdl<<tab<<declare("swap") << " <= (exceptionXEqualY and exponentDifferenceXY("<<wE<<")) or (not(exceptionXSuperiorY));"<<endl;
 	
+		string pmY="inY";
+		if ( sub ) {
+			vhdl << tab << declare("mY",wE+wF+3)   << " <= inY" << range(wE+wF+2,wE+wF+1) << " & not(inY"<<of(wE+wF)<<") & inY" << range(wE+wF-1,0) << ";"<<endl;
+			pmY = "mY";
+		}
 
 		// depending on the value of swap, assign the corresponding values to the newX and newY signals 
-		vhdl<<tab<<declare("newX",wE+wF+3) << " <= inY when swap = '1' else inX;"<<endl;
-		vhdl<<tab<<declare("newY",wE+wF+3) << " <= inX when swap = '1' else inY;"<<endl;
+		vhdl<<tab<<declare("newX",wE+wF+3) << " <= " << pmY << " when swap = '1' else inX;"<<endl;
+		vhdl<<tab<<declare("newY",wE+wF+3) << " <= inX when swap = '1' else " << pmY << ";"<<endl;
 		vhdl<<tab<<declare("exponentDifference",wE) << " <= " << "exponentDifferenceYX" 
 			 << " when swap = '1' else exponentDifferenceXY("<<wE-1<<" downto 0);"<<endl;
 	
@@ -120,7 +122,7 @@ namespace flopoco{
 		if (wE>sizeRightShift) {
 			vhdl << "exponentDifference("<< sizeRightShift-1<<" downto 0)"
 				  << " when shiftedOut='0'"<<endl
-				  <<tab << tab << "    else CONV_STD_LOGIC_VECTOR("<<wFX+3<<","<<sizeRightShift<<") ;" << endl; 
+				  <<tab << tab << "    else CONV_STD_LOGIC_VECTOR("<<wF+3<<","<<sizeRightShift<<") ;" << endl; 
 		}		
 		else if (wE==sizeRightShift) {
 			vhdl<<tab<<"exponentDifference;" << endl ;
@@ -133,11 +135,11 @@ namespace flopoco{
 
 		// compute EffSub as (signA xor signB) at cycle 1
 		manageCriticalPath(2 * target->lutDelay() + 2*target-> localWireDelay());
-		vhdl<<tab<<declare("EffSub") << " <= newX("<<wEX+wFX<<") xor newY("<<wEY+wFY<<");"<<endl;
+		vhdl<<tab<<declare("EffSub") << " <= newX("<<wE+wF<<") xor newY("<<wE+wF<<");"<<endl;
 		
 		// compute the close/far path selection signal at cycle1 
 		// the close path is considered only when (signA!=signB) and |exponentDifference|<=1 
-		vhdl<<tab<<declare("selectClosePath") << " <= EffSub when exponentDifference("<<wER-1<<" downto "<<1<<") = ("<<wER-1<<" downto "<<1<<" => '0') else '0';"<<endl;
+		vhdl<<tab<<declare("selectClosePath") << " <= EffSub when exponentDifference("<<wE-1<<" downto "<<1<<") = ("<<wE-1<<" downto "<<1<<" => '0') else '0';"<<endl;
 		
 
 		// sdExnXY is a concatenation of the exception bits of X and Y, after swap, so exnX > exnY
@@ -156,7 +158,7 @@ namespace flopoco{
 	
 		// build the fraction signals
 		// padding: [sign bit][inplicit "1"][fracX][guard bit]
-		vhdl<<tab<<declare("fracXClose1",wF+3) << " <= \"01\" & newX("<<wFX-1<<" downto "<<0<<") & '0';"<<endl;
+		vhdl<<tab<<declare("fracXClose1",wF+3) << " <= \"01\" & newX("<<wF-1<<" downto "<<0<<") & '0';"<<endl;
 	
 		// the close path is considered when the |exponentDifference|<=1, so 
 		// the alignment of fracY is of at most 1 position
@@ -184,9 +186,9 @@ namespace flopoco{
 		nextCycle();////////////////////////////////////////////////////////////////////////////////////
 
 		vhdl<<tab<< declare("fracSignClose") << " <= fracRClosexMy("<<wF+2<<");"<<endl;
-		vhdl<<tab<< declare("fracRClose1",wFX+2) << " <= fracRClosexMy("<<wF+1<<" downto 0) when fracSignClose='0' else fracRCloseyMx("<<wF+1<<" downto 0);"<<endl;
+		vhdl<<tab<< declare("fracRClose1",wF+2) << " <= fracRClosexMy("<<wF+1<<" downto 0) when fracSignClose='0' else fracRCloseyMx("<<wF+1<<" downto 0);"<<endl;
 
-		if (wFX>40) //SP does not need this level
+		if (wF>40) //SP does not need this level
 			nextCycle();////////////////////////////////////////////////////////////////////////////////////
 				
 		//TODO check the test if significand is all zero is useful. 
@@ -197,7 +199,7 @@ namespace flopoco{
 	
 		// LZC + Shifting. The number of leading zeros are returned together with the shifted input
 		REPORT(DETAILED, "Building close path LZC + shifter");	
-		lzocs = new LZOCShifterSticky(target, wFX+2, wFX+2, intlog2(wFX+2), false, 0);
+		lzocs = new LZOCShifterSticky(target, wF+2, wF+2, intlog2(wF+2), false, 0);
 
 		lzocs->changeName(getName()+"_LZCShifter");
 		oplist.push_back(lzocs);
@@ -225,7 +227,7 @@ namespace flopoco{
 		// add two bits in order to absorb exceptions: 
 		// the second 0 will become a 1 in case of overflow, 
 		// the first 0 will become a 1 in case of underflow (negative biased exponent)
-		vhdl<<tab<< declare("exponentResultClose",wEX+2) << " <= (\"00\" & "
+		vhdl<<tab<< declare("exponentResultClose",wE+2) << " <= (\"00\" & "
 			 << "newX("<<wE+wF-1<<" downto "<<wF<<")) "
 			 <<"- (CONV_STD_LOGIC_VECTOR(0,"<<wE-lzocs->getCountWidth()+2<<") & nZerosNew);"
 			 <<endl;
@@ -256,7 +258,7 @@ namespace flopoco{
 	
 		// shift right the significand of new Y with as many positions as the exponent difference suggests (alignment) 
 		REPORT(DETAILED, "Building far path right shifter");	
-		rightShifter = new Shifter(target,wFX+1,wFX+3, Shifter::Right);
+		rightShifter = new Shifter(target,wF+1,wF+3, Shifter::Right);
 		rightShifter->changeName(getName()+"_RightShifter");
 		oplist.push_back(rightShifter);
 		inPortMap  (rightShifter, "X", "fracNewY");
@@ -464,21 +466,23 @@ namespace flopoco{
 		/* Get I/O values */
 		mpz_class svX = tc->getInputValue("X");
 		mpz_class svY = tc->getInputValue("Y");
-
+	
 		/* Compute correct value */
-		FPNumber fpx(wEX, wFX), fpy(wEY, wFY);
-		fpx = svX;
-		fpy = svY;
+		FPNumber fpx(wE, wF, svX);
+		FPNumber fpy(wE, wF, svY);
 		mpfr_t x, y, r;
-		mpfr_init2(x, 1+wFX);
-		mpfr_init2(y, 1+wFY);
-		mpfr_init2(r, 1+wFR); 
+		mpfr_init2(x, 1+wF);
+		mpfr_init2(y, 1+wF);
+		mpfr_init2(r, 1+wF); 
 		fpx.getMPFR(x);
 		fpy.getMPFR(y);
-		mpfr_add(r, x, y, GMP_RNDN);
+		if(sub)
+			mpfr_sub(r, x, y, GMP_RNDN);
+		else
+			mpfr_add(r, x, y, GMP_RNDN);
 
 		// Set outputs 
-		FPNumber  fpr(wER, wFR, r);
+		FPNumber  fpr(wE, wF, r);
 		mpz_class svR = fpr.getSignalValue();
 		tc->addExpectedOutput("R", svR);
 
