@@ -45,11 +45,7 @@ namespace flopoco{
 			name << "IntDualAddSub_";
 		}
 		name << wIn;
-		if(target->isPipelined()) 
-			name << "_"<<target->frequencyMHz() ;
-		else
-			name << "comb";
-		setName(name.str());
+		setNameWithFreq(name.str());
 
 	
 		// Set up the IO signals
@@ -185,7 +181,7 @@ namespace flopoco{
 			} 
 		}else{
 			vhdl << tab << "RxMy <= X + not(Y) + '1';" <<endl;
-			vhdl << tab << "R"<<son_<<" <= "<< (opType_==0?"not(X)":"X")<<" + Y"<<(opType_==0?"":" + '1'")<<";"<<endl;
+			vhdl << tab << "R"<<son_<<" <= "<< (opType_==0 ? "not(X) + Y + '1'" : "X+Y")<<";"<<endl;
 		}
 	}
 
