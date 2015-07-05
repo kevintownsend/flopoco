@@ -24,15 +24,9 @@ Copyright © INSA-Lyon, ENS-Lyon, INRIA, CNRS, UCBL,
 namespace flopoco
 {
 	
-		// Note: not using boost::function here, as it's likely to scare people, and also drags in quite a few header dependencies
 	typedef OperatorPtr (*parser_func_t)(Target *, vector<string> &);	
 	class OperatorFactory;
 	typedef shared_ptr<OperatorFactory> OperatorFactoryPtr;
-
-
-
-
-
 
 	
 	/** This is the class that manages a list of OperatorFactories, and the overall command line and documentation.
@@ -40,14 +34,29 @@ namespace flopoco
 	class UserInterface
 	{
 	public:
-		static void registerFactory(OperatorFactoryPtr factory);
-		/**a helper factory function*/ 
+		/** The function that does it all */
+		static void main(int argc, char* argv[]);
+
+
+		/**  main initialization function */
+		static	void initialize();
+		/** parse all the operators passed on the command-line */
+		static void buildAll(int argc, char* argv[]);
+
+		/** generates the code to the default file */
+		static void outputVHDL();
+
+		/** generates a report for operators in globalOpList, and all their subcomponents */
+		static void finalReport(ostream & s);
+		
+
+		/**a helper factory function. For the parameter documentation, see the OperatorFactory constructor */ 
 		static void add(
 										string name,
-										string description, /**< for the HTML doc and the detailed help */ 
-										string categories,	/**<  semicolon-seperated list of categories */
-										string parameterList, /**<  semicolon-separated list of parameters, each being name(type)[=default]:short_description  */ 
-										string extraHTMLDoc, /**< Extra information to go to the HTML doc, for instance links to articles or details on the algorithms */ 
+										string description, 
+										string categories,	
+										string parameterList, 
+										string extraHTMLDoc,  
 										parser_func_t parser	);
 		
 		static unsigned getFactoryCount();
@@ -55,14 +64,8 @@ namespace flopoco
 		static OperatorFactoryPtr getFactoryByName(string operatorName);
 
 
-		////////////////// Parsing-related ///////////////////////////////
-		static	void initialize();
-		static void parseAll(int argc, char* argv[]);
 
-		static void parseGenericOptions(vector<string>& args);
-
-		
-		static void throwMissingArgError(string opname, string key);
+		////////////////// Helper parsing functions to be used in each Operator parser ///////////////////////////////
 		static void parseBoolean(vector<string> &args, string key, bool* variable, bool genericOption=false);
 		static void parseInt(vector<string> &args, string key, int* variable, bool genericOption=false);
 		static void parsePositiveInt(vector<string> &args, string key, int* variable, bool genericOption=false);
@@ -70,11 +73,9 @@ namespace flopoco
 		static void parseFloat(vector<string> &args, string key, double* variable, bool genericOption=false);
 		static void parseString(vector<string> &args, string key, string* variable, bool genericOption=false);
 
-		/** Provide a string with the full documentation. TODO: an HTML version*/
+		/** Provide a string with the full documentation.*/
 		static string getFullDoc();
 		
-		/** Build operators.html directly into the doc directory. */
-		static void buildHTMLDoc();
 
 
 		/** add an operator to the global (first-level) list, which is stored in its Target (not really its place, sorry).
@@ -87,17 +88,24 @@ namespace flopoco
 
 		static void addToGlobalOpList(OperatorPtr op);
 
-		
+		/** generates the code for operators in oplist, and all their subcomponents */
+		static void outputVHDLToFile(vector<OperatorPtr> &oplist, ofstream& file);
 
 		/** generates the code for operators in globalOpList, and all their subcomponents */
 		static void outputVHDLToFile(ofstream& file);
 		
-		/** generates a report for operators in globalOpList, and all their subcomponents */
-		static void finalReport(ostream & s);
-		
-		/** generates the code for operators in oplist, and all their subcomponents */
-		static void outputVHDLToFile(vector<OperatorPtr> &oplist, ofstream& file);
 
+	private:
+		/** register a factory */
+		static void registerFactory(OperatorFactoryPtr factory);
+
+		/** error reporting */
+		static void throwMissingArgError(string opname, string key);
+		/** parse all the generic options such as name, target, verbose, etc. */
+		static void parseGenericOptions(vector<string>& args);
+
+		/** Build operators.html directly into the doc directory. */
+		static void buildHTMLDoc();
 		
 		
 	public:
@@ -138,32 +146,32 @@ namespace flopoco
 
 	private:
 		
-		string m_name;
-		string m_description;
-		vector<string> m_categories;
-		vector<string> m_paramNames;
-		map<string,string> m_paramType;
-		map<string,string> m_paramDoc;
-		map<string,string> m_paramDefault; /* If equal to "", this parameter is mandatory (no default)*/
+		string m_name; /**< see constructor doc */ 
+		string m_description;  /**< see constructor doc */
+		vector<string> m_categories;  /**< see constructor doc */
+		vector<string> m_paramNames;  /**< list of paramater names */
+		map<string,string> m_paramType;  /**< type of parameters listed in m_paramNames */
+		map<string,string> m_paramDoc;  /**< description of parameters listed in m_paramNames */
+		map<string,string> m_paramDefault; /* If equal to "", this parameter is mandatory (no default). Otherwise, default value (as a string, to be parsed) */
 		string m_extraHTMLDoc; 
 		parser_func_t m_parser;
 
 	public:
 		
 		/** Implements a no-frills factory
-				\param name Name for the operator. The factory will only respond for this name (case sensitive)
-				\param description The short documentation
-				\param categories A semi-colon seperated list of categories that the operator belongs to. Used to sort the doc.
-				\param parameters A semicolon-separated list of parameter description, each being name(type)[=default]:short_description
-				\param parser A function that can parse a vector of string arguments into an Operator instance
-				\param testParameters Zero or more sets of arguments that the operator can be tested with.
+				\param name         Name for the operator. 
+				\param description  The short documentation
+				\param categories   A semi-colon seperated list of categories that the operator belongs to. The first is ued to sort the doc.
+				\param parameters   A semicolon-separated list of parameter description, each being name(type)[=default]:short_description
+				\param parser       A function that can parse a vector of string arguments into an Operator instance
+				\param extraHTMLDoc Extra information to go to the HTML doc, for instance links to articles or details on the algorithms 
 		**/
 		OperatorFactory(
 						 string name,
-						 string description, /**<  for the HTML doc and the detailed help */ 
-						 string categories,	/**<  semicolon-seperated list of categories */
-						 string parameters, /**<  semicolon-separated list of parameters, each being name(type)[=default]:short_description  */ 
-						 string extraHTMLDoc, /**< Extra information to go to the HTML doc, for instance links to articles or details on the algorithms */ 
+						 string description, 
+						 string categories,	
+						 string parameters,  
+						 string extraHTMLDoc,  
 						 parser_func_t parser	);
 		
 		virtual const string &name() const

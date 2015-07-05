@@ -23,19 +23,36 @@ namespace flopoco
 	// Allocation of the global objects
 	string UserInterface::outputFileName;
 	string UserInterface::entityName=""; // used for the -name option
-	int UserInterface::verbose;
+	int    UserInterface::verbose;
 	string UserInterface::targetFPGA;
 	double UserInterface::targetFrequencyMHz;
-	bool UserInterface::pipeline;
-	bool UserInterface::clockEnable;
-	bool UserInterface::useHardMult;
-	bool UserInterface::plainVHDL;
-	bool UserInterface::generateFigures;
+	bool   UserInterface::pipeline;
+	bool   UserInterface::clockEnable;
+	bool   UserInterface::useHardMult;
+	bool   UserInterface::plainVHDL;
+	bool   UserInterface::generateFigures;
 	double UserInterface::unusedHardMultThreshold;
-	int UserInterface::resourceEstimation;
-	bool UserInterface::floorplanning;
-	bool UserInterface::reDebug;
-	bool UserInterface::flpDebug;
+	int    UserInterface::resourceEstimation;
+	bool   UserInterface::floorplanning;
+	bool   UserInterface::reDebug;
+	bool   UserInterface::flpDebug;
+
+
+		
+		
+	void UserInterface::main(int argc, char* argv[]) {
+		sollya_lib_init();
+		initialize();
+		buildAll(argc, argv);
+		outputVHDL();
+		finalReport(cerr); 
+		sollya_lib_close();
+	}
+	
+
+
+
+
 
 	void UserInterface::parseGenericOptions(vector<string> &args) {
 		parseString(args, "name", &entityName, true); // not sticky: will be used, and reset, after the operator parser
@@ -188,9 +205,9 @@ namespace flopoco
 		unusedHardMultThreshold=0.7;
 	}
 
-		
-	void UserInterface::parseAll(int argc, char* argv[]) {
-		initialize();
+
+
+	void UserInterface::buildAll(int argc, char* argv[]) {
 
 		// manage trivial cases
 		if(argc==1) {
@@ -305,8 +322,10 @@ namespace flopoco
 			//factory->Usage(std::cerr);
 			exit(EXIT_FAILURE);	
 		}
+	}
 
-		// Now output to file
+
+	void UserInterface::outputVHDL() {
 		ofstream file; 
 		file.open(outputFileName.c_str(), ios::out);
 		outputVHDLToFile(file); 

@@ -32,6 +32,29 @@
 using namespace std;
 using namespace flopoco;
 
+
+
+
+int main(int argc, char* argv[] )
+{
+
+
+	Shifter::registerFactory();
+	FPExp::registerFactory();
+	FixFunctionByPiecewisePoly::registerFactory();
+	TestBench::registerFactory();
+	// cout << UserInterface::getFactoryCount() << " factories registered " << endl ;
+
+	UserInterface::main(argc, argv);
+	
+	return 0;
+}
+
+
+
+	
+		
+#if 0
 	
 	//------------ Resource Estimation --------------------------------
 	int reLevel;
@@ -44,35 +67,6 @@ using namespace flopoco;
 	ostringstream floorplanMessages;
 	//-----------------------------------------------------------------
 
-
-
-
-int main(int argc, char* argv[] )
-{
-	sollya_lib_init();
-
-	
-
-	Shifter::registerFactory();
-	FPExp::registerFactory();
-	FixFunctionByPiecewisePoly::registerFactory();
-	TestBench::registerFactory();
-	cout << UserInterface::getFactoryCount() << " factories registered " << endl ;
-
-	UserInterface::parseAll(argc, argv);
-
-	//cout << "Successfuly built "<< UserInterface::globalOpList.size() << " operator(s)" << endl;
-
-	
-
-	UserInterface::finalReport(cerr); 
-
-
-
-
-	
-		
-#if 0
 
 	//------------------------ Resource Estimation ---------------------
 	for (vector<Operator*>::iterator it = oplist->begin(); it!=oplist->end(); ++it) {
@@ -92,10 +86,6 @@ int main(int argc, char* argv[] )
 	//------------------------------------------------------------------
 #endif
 
-	sollya_lib_close();
-
-	return 0;
-}
 
 
 
