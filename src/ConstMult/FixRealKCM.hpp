@@ -123,9 +123,14 @@ namespace flopoco{
 					int weight, 
 					int wIn, 
 					int wOut, 
-					//if true, all outputs will be prepared for fast sign
-					//sign extension (I.E. msb will be inverted)
-					bool fastSignExtend, 
+					//if true, table result will be input*C - 1 in order to
+					//avoid bit wasting for sign bit
+					//e.g. : if cste is -2 and input is 0001 result will be 
+					// 11101.
+					// For sign extension if output width is 9 we need to add
+					// 111100001 and that way we doesn't waste a useless sign bit
+					// (as we know that se subproduct sign is the constant sign)
+					bool negativeSubproduct, 
 					bool last, 
 					int logicTable = 1
 					);
@@ -135,7 +140,7 @@ namespace flopoco{
 			int index;
 			//Weight of input lsb
 			int weight;
-			bool fastSignExtend;
+			bool negativeSubproduct;
 			bool last;
 	};
 
