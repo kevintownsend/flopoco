@@ -107,7 +107,7 @@ namespace flopoco
 		static string outputFileName;
 		static string entityName;
 		static string targetFPGA;
-		static double targetFrequency;
+		static double targetFrequencyMHz;
 		static bool   pipeline;
 		static bool   clockEnable;
 		static bool   useHardMult;

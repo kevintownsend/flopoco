@@ -25,7 +25,7 @@ namespace flopoco
 	string UserInterface::entityName=""; // used for the -name option
 	int UserInterface::verbose;
 	string UserInterface::targetFPGA;
-	double UserInterface::targetFrequency;
+	double UserInterface::targetFrequencyMHz;
 	bool UserInterface::pipeline;
 	bool UserInterface::clockEnable;
 	bool UserInterface::useHardMult;
@@ -42,7 +42,7 @@ namespace flopoco
 		parseString(args, "outputFile", &outputFileName, true); // not sticky: will be used, and reset, after the operator parser
 		parseString(args, "target", &targetFPGA, true); // not sticky: will be used, and reset, after the operator parser
 		parsePositiveInt(args, "verbose", &verbose, true); // sticky option
-		parseFloat(args, "frequency", &targetFrequency, true); // sticky option
+		parseFloat(args, "frequency", &targetFrequencyMHz, true); // sticky option
 		parseFloat(args, "hardMultThreshold", &unusedHardMultThreshold, true); // sticky option
 		parseBoolean(args, "useHardMult", &useHardMult, true);
 		parseBoolean(args, "plainVHDL", &plainVHDL, true);
@@ -125,7 +125,33 @@ namespace flopoco
 			i->outputFinalReport(s, 0);
 		}
 		cerr << "Output file: " << outputFileName <<endl;
-
+		
+		// Messages for testbenches. Only works if you have only one TestBench
+		Operator* op = globalOpList.back();
+		if(op->getSrcFileName() == "TestBench"){
+			cerr << "To run the simulation using ModelSim, type the following in 'vsim -c':" <<endl;
+			cerr << tab << "vdel -all -lib work" <<endl;
+			cerr << tab << "vlib work" <<endl;
+			cerr << tab << "vcom " << outputFileName <<endl;
+			cerr << tab << "vsim " << op->getName() <<endl;
+			cerr << tab << "add wave -r *" <<endl;
+			cerr << tab << "run " << ((TestBench*)op)->getSimulationTime() << "ns" << endl;
+			cerr << "To run the simulation using gHDL, type the following in a shell prompt:" <<endl;
+			string simlibs;
+#if 0
+			if(op->getStdLibType()==0 || op->getStdLibType()==-1)
+				simlibs="--ieee=synopsys ";
+			if(op->getStdLibType()==1)
+				simlibs="--ieee=standard ";
+#else
+				simlibs="--ieee=standard --ieee=synopsys ";
+#endif
+			cerr <<  "ghdl -a " << simlibs << "-fexplicit "<< outputFileName <<endl;
+			cerr <<  "ghdl -e " << simlibs << "-fexplicit " << op->getName() <<endl;
+			cerr <<  "ghdl -r " << simlibs << op->getName() << " --vcd=" << op->getName() << ".vcd --stop-time=" << ((TestBench*)op)->getSimulationTime() << "ns" <<endl;
+			cerr <<  "gtkwave " << op->getName() << ".vcd" << endl;
+		}
+		
 	}
 
 	
@@ -157,7 +183,7 @@ namespace flopoco
 		verbose=1;
 		outputFileName="flopoco.vhdl";
 		targetFPGA=defaultFPGA;
-		targetFrequency=400e6;
+		targetFrequencyMHz=400;
 		useHardMult=true;
 		unusedHardMultThreshold=0.7;
 	}
@@ -251,7 +277,7 @@ namespace flopoco
 					throw("ERROR: unknown target: " + targetFPGA);
 					}
 				target->setPipelined(pipeline);
-				target->setFrequency(1e6*targetFrequency);
+				target->setFrequency(1e6*targetFrequencyMHz);
 				target->setUseHardMultipliers(useHardMult);
 				target->setPlainVHDL(plainVHDL);
 				target->setGenerateFigures(generateFigures);

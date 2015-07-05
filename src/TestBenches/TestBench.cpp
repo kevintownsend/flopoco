@@ -645,4 +645,32 @@ namespace flopoco{
 			return simulationTime;
 		}
 
+
+
+	
+	
+	OperatorPtr TestBench::parseArguments(Target *target, vector<string> &args) {
+		int n;
+		bool file;
+		if(UserInterface::globalOpList.empty()){
+			throw("ERROR: TestBench has no operator to wrap (it should come after the operator it wraps)");		
+		}
+		UserInterface::parseInt(args, "n", &n);
+		UserInterface::parseBoolean(args, "file", &file);
+		Operator* toWrap = UserInterface::globalOpList.back();
+		return new TestBench(target, toWrap, n, file);
+	}
+
+	void TestBench::registerFactory(){
+		UserInterface::add("TestBench", // name
+											 "Behavorial test bench for the preceding operator.",
+											 "fixed-point function evaluator; fixed-point", // categories
+											 "n(int)=-2: number of random tests. If n=-2, an exhaustive test is generated (use only for small operators);\
+                        file(bool)=true:Inputs and outputs are stored in file test.input (lower VHDL compilation time). If false, they are stored in the VHDL;",
+											 "",
+											 TestBench::parseArguments
+											 ) ;
+		
+	}
+
 }
