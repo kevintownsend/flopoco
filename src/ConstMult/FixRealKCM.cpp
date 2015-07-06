@@ -163,6 +163,8 @@ namespace flopoco{
 			int** disize_target
 		)
 	{
+		int optimalTableInputWidth = target->lutInputs()-1; /** will be target->lutInputs() or target->lutInputs()-1  */
+		// TODO get rid of lutWidth
 		int lutWidth = target->lutInputs(); 
 
 		int* diSize = new int[17*42];		

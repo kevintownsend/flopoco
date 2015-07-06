@@ -86,6 +86,8 @@ namespace flopoco{
 					double targetUlpError
 				);
 		void init();
+
+		// TODO rename to connectTablesToBitHeap
 		void connectBitHeap(
 				FixRealKCMTable** t,
 				int* doSize,
@@ -101,6 +103,8 @@ namespace flopoco{
 				Operator* op,
 				string inputSignalName = "X"
 			);
+
+		
 		static int computeTableNumbers(
 			Target* target,
 			int wIn,
