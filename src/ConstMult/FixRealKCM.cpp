@@ -690,7 +690,7 @@ namespace flopoco{
 			mpfr_get_z(result.get_mpz_t(), mpR, GMP_RNDN); // Should be exact
 
 			//Get the real sign
-			if(negativeInput != mother->negativeConstant)
+			if(negativeInput != mother->negativeConstant && result != 0)
 			{
 				result = (mpz_class(1) << wOut) - result;
 			}
