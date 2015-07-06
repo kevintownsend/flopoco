@@ -500,7 +500,7 @@ namespace flopoco{
 	
 		sXOverflow = xOvf;
 	
-		if (verbose==1)
+		if (UserInterface::verbose==1)
 			cout<<" i="         << currentIteration
 #ifdef  _WIN32	
 				 <<",a=" << mpz2string(AccValue_);
@@ -514,7 +514,7 @@ namespace flopoco{
 			else
 				AccValue_ = AccValue_ - mapFP2Acc(fpX);
 		}
-		if (verbose==1){
+		if (UserInterface::verbose==1){
 			if (fpX.getExceptionSignalValue()!=0)
 #ifdef  _WIN32
 				cout<< (fpX.getSignSignalValue()==0?" + ":" - ")<< mpz2string(mapFP2Acc(fpX)) << " = "<<mpz2string(AccValue_)<<";"; 

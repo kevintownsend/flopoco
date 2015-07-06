@@ -43,8 +43,8 @@ namespace flopoco{
 				
 				
 				if (false){
-					if (verbose)
-						cout << "The maximum input delay is "<<	maxInputDelay<<endl;
+					// if (verbose)
+					// 	cout << "The maximum input delay is "<<	maxInputDelay<<endl;
 					
 					cSize = new int[2000];
 					REPORT(3, "-- The new version: direct mapping without 0/1 padding, IntAdders instantiated");

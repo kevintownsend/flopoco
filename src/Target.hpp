@@ -49,7 +49,7 @@ namespace flopoco{
 		virtual ~Target() {}
 
 
-		vector<Operator*> * getGlobalOpListRef();
+		//obsolete		vector<Operator*> * getGlobalOpListRef();
 
 		/** Returns ID of instantiated target. This ID is represented by the name
 		 * @return the ID
@@ -675,7 +675,6 @@ namespace flopoco{
 																		1 means: any sub-multiplier, even very small ones, go to DSP*/  
 		bool   plainVHDL_;     /**< True if we want the VHDL code to be concise and readable, with + and * instead of optimized FloPoCo operators. */
 		bool   generateFigures_;  /**< If true, some operators may generate some figures in SVG format */
-		vector<Operator*>  globalOpList;  /**< A list of sub-operators that should be shared with most operators. Semantically it shouldn't be here but it makes code simpler */
 
 	};
 

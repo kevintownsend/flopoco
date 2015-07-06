@@ -55,7 +55,7 @@ namespace flopoco{
 		fpMaxFloat.getMPFR(maxExpIn);
 		mpfr_log(maxExpIn, maxExpIn, GMP_RNDU);
 		mpfr_mul(r,r,maxExpIn, GMP_RNDN);
-		if(verbose) mpfr_out_str (stderr, 10, 30, maxExpIn, GMP_RNDN); cerr << " ";
+		if(UserInterface::verbose) mpfr_out_str (stderr, 10, 30, maxExpIn, GMP_RNDN); cerr << " ";
 
 		// then take the exp
 		mpfr_exp(r,r, GMP_RNDN);

@@ -55,6 +55,14 @@ namespace flopoco{
 		int getShiftInWidth(){
 			return wShiftIn_;
 		}
+
+
+		/** Factory method */
+		static OperatorPtr parseArguments(Target *target ,const std::vector<std::string> &args);
+
+		/** Adding this operator to the big factory */
+		static void registerFactory();
+
 	protected:
 		int wIn_;          /**< the width of the input*/
 		int maxShift_;     /**< the maximum shift amount*/
@@ -64,7 +72,14 @@ namespace flopoco{
 	private:
 		ShiftDirection direction_;  /**< determines the shift direction. can be Left or Right */
 		double maxInputDelay_;      /**< the maximum delay found in the input map */
+
 	};
+
+
+
+
 }
+
+
 
 #endif

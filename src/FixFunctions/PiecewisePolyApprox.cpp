@@ -134,7 +134,7 @@ namespace flopoco{
 					// First build g_i(x) = f(2^-alpha*x + i*2^-alpha)
 					sollya_obj_t giS = buildSubIntervalFunction(fS, alpha, ii);
 
-					if(DEBUG <= verbose)
+					if(DEBUG <= UserInterface::verbose)
 						sollya_lib_printf("> PiecewisePolyApprox: alpha=%d, ii=%d, testing  %b \n", alpha, ii, giS);
 					// Now what degree do we need to approximate gi?
 					int degreeInf, degreeSup;
