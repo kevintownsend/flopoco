@@ -88,7 +88,8 @@ namespace flopoco {
 		bool extraSignBitRe = !signedInput && (constantReNeg || !constantImNeg);
 		bool extraSignBitIm = !signedInput && (constantReNeg || constantImNeg);
 
-		int msbout_re = msbout_im = msb_in + constantMaxMSB;
+		int msbout_re, msbout_im; 
+		msbout_re = msbout_im = msb_in + constantMaxMSB;
 		if(extraSignBitRe)
 		{
 			msbout_re++;
@@ -136,12 +137,14 @@ namespace flopoco {
 		addOutput("ReOut", outputre_width);
 		addOutput("ImOut", outputim_width);
 
-		int kcmImGuardBits = FixRealKCM::neededGuardBits(
-
-				);
+//		int kcmImGuardBits = FixRealKCM::neededGuardBits(
+//					targ
+//				);
 
 		// basic message
 		REPORT(INFO,"Declaration of FixComplexKCM\n");
+
+		int output_width = 7;
 
 		BitHeap* bitheapRe = new BitHeap(this, guard_bits + output_width);
 		BitHeap* bitheapIm = new BitHeap(this, guard_bits + output_width);
@@ -282,6 +285,7 @@ namespace flopoco {
 				NULL
 			);
 
+		int output_width = 7;
 		mpfr_inits2(5 * output_width + 1, reOut, imOut, NULL);
 
 		// c_r * x_r -> re_prod

@@ -15,10 +15,7 @@ namespace flopoco{
 	public:
 
 		/**
-		 * @brief Input size will be msbIn-lsbIn+1 if unsigned, msbIn-lsbIn+2 if
-		 * signed.  
-		 * \todo this is not the standard interface. msbIn should be
-		 * the sign bit if signed. Fix this some day
+		 * @brief Input size will be msbIn-lsbIn+1
 		 */
 		FixRealKCM(
 				Target* target, 

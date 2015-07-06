@@ -57,12 +57,6 @@ namespace flopoco{
 			THROWERROR("FixRealKCM: Error, targetUlpError="<<
 					targetUlpError<<"<0.5. Should be in ]0.5 ; 1]");
 		
-		if(signedInput)
-		{
-			msbIn++;
-			wIn++;
-		}
-
 		// Convert the input string into a sollya evaluation tree
 		sollya_obj_t node;
 		node = sollya_lib_parse_string(constant.c_str());	

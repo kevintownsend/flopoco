@@ -66,7 +66,7 @@ namespace flopoco {
 			int msbim_out;
 			int input_width;
 			int outputre_width;
-			int outputim_Width;
+			int outputim_width;
 			int constantReMsb;
 			int constantImMsb;
 			bool constantReNeg;
