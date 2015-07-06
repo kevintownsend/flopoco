@@ -21,7 +21,7 @@ namespace flopoco{
 		 * @param[in]		wE			the width of the exponent for the f-p number X
 		 * @param[in]		wF			the width of the fraction for the f-p number X
 		 */
-		FPDiv(Target* target, int wE, int wF);
+		FPDiv(Target* target, int wE, int wF, bool newVersion);
 
 		/**
 		 * FPDiv destructor
@@ -37,6 +37,11 @@ namespace flopoco{
 
 		/* Overloading the Operator method */
 		void buildStandardTestCases(TestCaseList* tcl);
+
+		// User-interface stuff
+		/** Factory method */
+		static OperatorPtr parseArguments(Target *target, const vector<string> &args);
+		static void registerFactory();
 
 
 	private:

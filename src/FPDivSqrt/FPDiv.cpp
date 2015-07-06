@@ -40,7 +40,7 @@ namespace flopoco{
 #define DEBUGVHDL 0
 
 
-	FPDiv::FPDiv(Target* target, int wE, int wF) :
+	FPDiv::FPDiv(Target* target, int wE, int wF, bool newVersion) :
 		Operator(target), wE(wE), wF(wF) {
 
 		int i;
@@ -50,8 +50,6 @@ namespace flopoco{
 		name<<"FPDiv_"<<wE<<"_"<<wF;
 		uniqueName_ = name.str();
 
-		bool newVersion = true ;	    //false : radix 4, qi [-3,3], no prescaling
-										//true  : radix 8, qi [-7,7], prescaling     porbably faster
 
 		if(newVersion)
 		{
@@ -446,6 +444,26 @@ namespace flopoco{
 		emulate(tc);
 		tcl->add(tc);
 
+
+	}
+
+	OperatorPtr FPDiv::parseArguments(Target *target, const vector<string> &args) {
+		int wE = UserInterface::checkStrictlyPositiveInt(args, "wE");
+		int wF = UserInterface::checkStrictlyPositiveInt(args, "wF");
+		bool radix8 = UserInterface::checkBoolean(args, "radix8");
+		return new FPDiv(target, wE, wF, radix8);
+	}
+
+	void FPDiv::registerFactory(){
+		UserInterface::add("FPDiv", // name
+											 "A correctly rounded floating-point division.",
+											 "operator; floating point; dividers and square roots", // categories
+											 "wE(int): exponent size in bits; \
+wF(int): mantissa size in bits; \
+radix8 (bool): if true, the division will be implemented in radix 8, if false in radix 4;",
+											  "The algorithm used here is the division by digit recurrence. For more details, check <a href=\"http://www.cs.ucla.edu/digital_arithmetic/files/ch5.pdf\">this pdf.</a>",
+                        					 FPDiv::parseArguments
+											 ) ;
 
 	}
 
