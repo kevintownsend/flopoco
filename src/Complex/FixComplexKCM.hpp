@@ -56,15 +56,21 @@ namespace flopoco {
 			void buildStandardTestCases(TestCaseList* tcl);
 		
 		private:
+			void init();
+
 			bool signedInput;
 			int msb_in;
 			int lsb_in;
 			int lsb_out;
-			int msb_out;
+			int msbre_out;
+			int msbim_out;
 			int input_width;
-			int output_width;
+			int outputre_width;
+			int outputim_Width;
 			int constantReMsb;
 			int constantImMsb;
+			bool constantReNeg;
+			bool constantImNeg;
 
 			string constant_re;
 			string constant_im;

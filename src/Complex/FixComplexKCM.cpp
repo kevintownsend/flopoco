@@ -10,22 +10,7 @@
 using namespace std;
 namespace flopoco {
 
-	FixComplexKCM::FixComplexKCM(
-			Target* target,
-			bool signedInput,
-			int msb_in, 
-			int lsb_in, 
-			int lsb_out,
-			string constant_re,
-			string constant_im
-		): 	
-			Operator(target),
-			signedInput(signedInput),
-			msb_in(msb_in),
-			lsb_in(lsb_in),
-			lsb_out(lsb_out),
-			constant_re(constant_re),
-			constant_im(constant_im)
+	void FixComplexKCM::init()
 	{
 		if(lsb_in>msb_in) 
 		{
@@ -80,6 +65,9 @@ namespace flopoco {
 		sollya_lib_get_constant(mpfr_constant_re, nodeRe);
 		sollya_lib_get_constant(mpfr_constant_im, nodeIm);
 
+		constantReNeg = (mpfr_sgn(mpfr_constant_re) < 0);
+		constantImNeg = (mpfr_sgn(mpfr_constant_im) < 0);
+
 		mpfr_t log2C;
 		mpfr_init2(log2C, 100); 
 		
@@ -94,32 +82,63 @@ namespace flopoco {
 		//Free
 		mpfr_clear(log2C);
 
-		int constantMaxMsb = (constantImMsb > constantReMsb) ? 	constantImMsb :
-																constantReMsb;
-		//Since it's a sum of two products
-		msb_out =  msb_in + constantMaxMsb + 1;
+		int constantMaxMSB = max(constantReMsb, constantImMsb);	
 
-		if(msb_out < lsb_out)
+		//Do we need an extra sign bit ?
+		bool extraSignBitRe = !signedInput && (constantReNeg || !constantImNeg);
+		bool extraSignBitIm = !signedInput && (constantReNeg || constantImNeg);
+
+		int msbout_re = msbout_im = msb_in + constantMaxMSB;
+		if(extraSignBitRe)
 		{
-			throw string(
-					"FixComplexKCM: Error, the result computed "
-					"would always be zero (msb_out < lsb_out)"
-					);
+			msbout_re++;
+		}
+		if(extraSignBitIm)
+		{
+			msbout_im++;
+		}
+		
+		outputre_width = msbout_re - lsb_out + 1;
+		outputim_width = msbout_im - lsb_out + 1;
+
+		if(outputre_width < 0 || outputim_width < 0)
+		{
+			THROWERROR("Computed msb will be lower than asked lsb."
+					" Result would always be zero ");
 		}
 
-		output_width = msb_out - lsb_out + 1;
+	}
+
+
+
+	FixComplexKCM::FixComplexKCM(
+			Target* target,
+			bool signedInput,
+			int msb_in, 
+			int lsb_in, 
+			int lsb_out,
+			string constant_re,
+			string constant_im
+		): 	
+			Operator(target),
+			signedInput(signedInput),
+			msb_in(msb_in),
+			lsb_in(lsb_in),
+			lsb_out(lsb_out),
+			constant_re(constant_re),
+			constant_im(constant_im)
+	{
+		init();
 
 		int guard_bits = 1;
 
-		if(!signedInput)
-		{
-			output_width ++;
-		}
-
 		// declaring output
-		addOutput("ReOut", output_width);
-		addOutput("ImOut", output_width);
+		addOutput("ReOut", outputre_width);
+		addOutput("ImOut", outputim_width);
 
+		int kcmImGuardBits = FixRealKCM::neededGuardBits(
+
+				);
 
 		// basic message
 		REPORT(INFO,"Declaration of FixComplexKCM\n");
@@ -132,6 +151,7 @@ namespace flopoco {
 		if(signedInput)
 		{
 			declared_msb_in--;
+
 		}
 
 		//Add 1/2 ulp

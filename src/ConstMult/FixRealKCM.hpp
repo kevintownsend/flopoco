@@ -50,6 +50,8 @@ namespace flopoco{
 
 		void emulate(TestCase* tc);
 
+		// /!\ Warning /!\ : wIn should be real input width : e.g. with KCM 
+		// 					 convention msb_in - lsb_in + 2 if signed input
 		static int neededGuardBits(
 				Target* target, 
 				int wIn, 

@@ -2996,10 +2996,12 @@ namespace flopoco
 					bool hasNonVoidColumn = false;
 
 					while(wInt<bits.size() && !hasNonVoidColumn)
+					{
 						if(currentHeight(wInt) != 0)
 							hasNonVoidColumn = true;
 						else
 							wInt++;
+					}
 					if(!hasNonVoidColumn || (wInt == bits.size()))
 						THROWERROR("All LSB columns cannot be void!");
 

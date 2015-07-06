@@ -4,15 +4,14 @@
  * This file is part of the FloPoCo project developed by the Arenaire
  * team at Ecole Normale Superieure de Lyon
  * 
- * Author : Florent de Dinechin, Florent.de.Dinechin@ens-lyon.fr
+ * Authors : Florent de Dinechin, Florent.de.Dinechin@ens-lyon.fr
+ * 			 3IF-Dev-Team-2015
  *
  * Initial software.
- * Copyright © ENS-Lyon, INRIA, CNRS, UCBL,  
+ * Copyright © ENS-Lyon, INRIA, CNRS, UCBL, 
  * 2008-2011.
  * All rights reserved.
  */
-
-// TODO the first table should have lutSize input bits!
 
 #include "../Operator.hpp"
 
@@ -42,7 +41,9 @@ namespace flopoco{
 	*/
 	void FixRealKCM::init()
 	{
-	srcFileName="FixRealKCM";
+		srcFileName="FixRealKCM";
+
+		setCopyrightString("Florent de Dinechin (2007-2011-?), 3IF Dev Team 2015");
 
 		if(lsbIn>msbIn) 
 			throw string("FixRealKCM: Error, lsbIn>msbIn");
@@ -638,6 +639,7 @@ namespace flopoco{
 		srcFileName="FixRealKCM";
 		name << mother->getName() << "_Table_" << index;
 		setName(name.str());
+		setCopyrightString("Florent de Dinechin (2007-2011-?), 3IF Dev Team"); 
 	}
   
 	mpz_class FixRealKCMTable::function(int x0)
