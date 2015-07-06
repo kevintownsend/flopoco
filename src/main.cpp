@@ -1446,7 +1446,7 @@ bool parseCommandLine(int argc, char* argv[]){
 				int lsbOut = atoi(argv[i++]);
 				string re_constant = argv[i++];
 				string im_constant = argv[i++];
-				op = new FixComplexKCM(target, signedInput, msbIn, lsbIn, lsbOut, re_constant, im_constant);
+				//op = new FixComplexKCM(target, signedInput, msbIn, lsbIn, lsbOut, re_constant, im_constant);
 				addOperator(op);
 			}
 		}

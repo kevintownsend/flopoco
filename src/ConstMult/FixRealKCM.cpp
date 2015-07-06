@@ -271,6 +271,13 @@ namespace flopoco{
 					bitHeap->addConstantOneBit(w);
 				}
 				bitHeap->addConstantOneBit(0);
+			} 
+			else if (i == nbOfTables - 1 && signedInput)
+			{
+				for(w-- ; w < bitheapSize ; w++)
+				{
+					bitHeap->addConstantOneBit(w);
+				}
 			}
 		}
 
@@ -699,6 +706,8 @@ namespace flopoco{
 				result = (mpz_class(1) << wOut) - result;
 			}
 		}
+
+		//Result is result -1 in order to avoid to waste a sign bit
 		if(negativeSubproduct)
 		{
 			if(result == 0)
@@ -706,6 +715,22 @@ namespace flopoco{
 			else
 				result -= 1;
 		}
+
+		//In case of global bitHeap, we need to invert msb for signedInput
+		//last bit for fast sign extension.
+		if(last && mother->signedInput)
+		{
+			mpz_class shiffter = mpz_class(1) << (wOut - 1);
+			if(result < shiffter )
+			{
+				result += shiffter;
+			}
+			else
+			{
+				result -= shiffter;
+			}
+		}
+
 
 		return result;
 	}

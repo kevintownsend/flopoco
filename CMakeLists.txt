@@ -293,7 +293,7 @@ src/Conversions/Fix2FP
  src/IntMult/IntSquarer
 
 # Complex numbers ---------------------------------------------------
-src/Complex/FixComplexKCM
+#src/Complex/FixComplexKCM
 
 
 # Floating-point adders and subtracters -----------------------------
