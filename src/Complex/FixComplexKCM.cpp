@@ -89,7 +89,7 @@ namespace flopoco {
 		bool extraSignBitIm = !signedInput && (constantReNeg || constantImNeg);
 
 		int msbout_re, msbout_im; 
-		msbout_re = msbout_im = msb_in + constantMaxMSB;
+		msbout_re = msbout_im = msb_in + constantMaxMSB +1;
 		if(extraSignBitRe)
 		{
 			msbout_re++;
@@ -119,7 +119,8 @@ namespace flopoco {
 			int lsb_in, 
 			int lsb_out,
 			string constant_re,
-			string constant_im
+			string constant_im,
+			double targetUlpError
 		): 	
 			Operator(target),
 			signedInput(signedInput),
@@ -137,25 +138,41 @@ namespace flopoco {
 		addOutput("ReOut", outputre_width);
 		addOutput("ImOut", outputim_width);
 
-//		int kcmImGuardBits = FixRealKCM::neededGuardBits(
-//					targ
-//				);
+		int kcmImGuardBits = FixRealKCM::neededGuardBits(
+				target,
+				input_width,
+				targetUlpError,
+				constant_im,
+				lsb_in,
+				lsb_out
+			);
+
+		int kcmMImGuardBits = FixRealKCM::neededGuardBits(
+				target,
+				input_width,
+				targetUlpError,
+				"-1*" + constant_im,
+				lsb_in,
+				lsb_out
+			);
+
+		int kcmReGuardBits = FixRealKCM::neededGuardBits(
+				target,
+				input_width,
+				targetUlpError,
+				constant_re,
+				lsb_in,
+				lsb_out
+			);
 
 		// basic message
 		REPORT(INFO,"Declaration of FixComplexKCM\n");
 
-		int output_width = 7;
+		int guardBits_re = max(kcmReGuardBits, kcmMImGuardBits);
+		int guardBits_im = max(kcmReGuardBits, kcmImGuardBits);
 
-		BitHeap* bitheapRe = new BitHeap(this, guard_bits + output_width);
-		BitHeap* bitheapIm = new BitHeap(this, guard_bits + output_width);
-
-		/* Workaround for non standard interface of FixRealKCM */
-		int declared_msb_in = msb_in;
-		if(signedInput)
-		{
-			declared_msb_in--;
-
-		}
+		BitHeap* bitheapRe = new BitHeap(this, guardBits_re + outputre_width);
+		BitHeap* bitheapIm = new BitHeap(this, guard_bits + outputim_width);
 
 		//Add 1/2 ulp
 		bitheapIm->addConstantOneBit(0);
@@ -167,7 +184,7 @@ namespace flopoco {
 				target,
 				getSignalByName("ReIN"),
 				signedInput,
-				declared_msb_in,
+				msb_in,
 				lsb_in,
 				lsb_out - guard_bits,
 				constant_re,
@@ -179,7 +196,7 @@ namespace flopoco {
 				target, 
 				getSignalByName("ImIN"),
 				signedInput,
-				declared_msb_in,
+				msb_in,
 				lsb_in,
 				lsb_out - guard_bits,
 				"-1 * " + constant_im,
@@ -194,7 +211,7 @@ namespace flopoco {
 				target,
 				getSignalByName("ImIN"),
 				signedInput,
-				declared_msb_in,
+				msb_in,
 				lsb_in,
 				lsb_out - guard_bits,
 				constant_re,
@@ -206,7 +223,7 @@ namespace flopoco {
 				target, 
 				getSignalByName("ReIN"),
 				signedInput,
-				declared_msb_in,
+				msb_in,
 				lsb_in,
 				lsb_out - guard_bits,
 				constant_im,
@@ -218,10 +235,10 @@ namespace flopoco {
 		bitheapRe->generateCompressorVHDL();
 
 		vhdl << "ImOut" << " <= " << 
-			bitheapIm->getSumName(output_width, guard_bits) << ";" << endl;
+			bitheapIm->getSumName(outputim_width, guardBits_im) << ";" << endl;
 
 		vhdl << "ReOut" << " <= " << 
-			bitheapRe->getSumName(output_width, guard_bits) << ";" << endl;
+			bitheapRe->getSumName(outputre_width, guardBits_re) << ";" << endl;
 
 	};
 
