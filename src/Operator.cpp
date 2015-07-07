@@ -255,6 +255,7 @@ namespace flopoco{
 			}
 
 			if(success) {
+				//cout << "**** Stripped " << name << " into " << n << endl;
 				name=n;
 			}
 		}

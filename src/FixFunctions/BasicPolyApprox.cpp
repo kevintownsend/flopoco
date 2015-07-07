@@ -270,7 +270,7 @@ namespace flopoco{
 		sollya_lib_get_constant_as_double(& approxErrorBound, supNormS);
 		sollya_lib_clear_obj(supNormS);
 
-		REPORT(DEBUG, "Polynomial accuracy is " << approxErrorBound);
+		REPORT(DETAILED, "Polynomial accuracy is " << approxErrorBound);
 		// Please leave the memory in the state you would like to find it when entering
 	  sollya_lib_clear_obj(degreeS);
 	}
@@ -343,7 +343,7 @@ namespace flopoco{
 									<< setw(bitwidth + lsb0-lsb) << coeff[i]->getBitVector()
 									<< "  " << setw(10) << printMPFR(coeff[i]->fpValue) ;
 		}
-		REPORT(DEBUG, debugstring.str());
+		REPORT(DETAILED, debugstring.str());
 	}
 
 } //namespace

@@ -221,7 +221,8 @@ namespace flopoco{
 		vhdl<<tab<< declare("roundClose0") << " <= shiftedFrac(0) and shiftedFrac(1);"<<endl;
 		// Is the result zero? 
 		vhdl<<tab<< declare("resultCloseIsZero0") << " <= '1' when nZerosNew" 
-			 << " = CONV_STD_LOGIC_VECTOR(" << wF+2 << ", " << lzocs->getCountWidth() 
+				<< " = CONV_STD_LOGIC_VECTOR(" << (1<< lzocs->getCountWidth())-1 // Should be wF+2 but this is a bug of LZOCShifterSticky: for all zeroes it returns this value
+				<< ", " << lzocs->getCountWidth() 
 			 << ") else '0';" << endl;
 
 		// add two bits in order to absorb exceptions: 
