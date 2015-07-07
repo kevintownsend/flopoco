@@ -981,7 +981,8 @@ namespace flopoco{
 	void FPExp::registerFactory(){
 		UserInterface::add("FPExp", // name
 											 "A faithful floating-point exponential function.",
-											 "operator; floating point; elementary function", // categories
+											 UserInterface::ElementaryFunctions,
+											 "", // seeAlso
 											 "wE(int): exponent size in bits; \
                         wF(int): mantissa size in bits;  \
                         d(int)=0: degree of the polynomial; \

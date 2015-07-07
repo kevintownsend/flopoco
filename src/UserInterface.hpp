@@ -9,7 +9,7 @@ Author : David Thomas, Florent de Dinechin
 Initial software.
 Copyright © INSA-Lyon, ENS-Lyon, INRIA, CNRS, UCBL,  
 2015-.
-  All rights reserved.
+  All rights reserved.S
 
 */
 #ifndef UserInterface_hpp
@@ -34,6 +34,24 @@ namespace flopoco
 	class UserInterface
 	{
 	public:
+
+		typedef enum {
+			ShiftersLZOCs,
+			BasicInteger,
+			BasicFixPoint,
+			BasicFloatingPoint,
+			CompositeFloatingPoint,
+			ElementaryFunctions,
+			FunctionApproximation,
+			ComplexFixPoint,
+			ComplexFloatingPoint,
+			LNS,
+			Conversions,
+			TestBenches,
+			Miscellanous
+		} DocumentationCategory;
+
+
 		/** The function that does it all */
 		static void main(int argc, char* argv[]);
 
@@ -54,7 +72,8 @@ namespace flopoco
 		static void add(
 										string name,
 										string description, 
-										string categories,	
+										DocumentationCategory category,
+										string seeAlso,
 										string parameterList, 
 										string extraHTMLDoc,  
 										parser_func_t parser	);
@@ -148,7 +167,8 @@ namespace flopoco
 		
 		string m_name; /**< see constructor doc */ 
 		string m_description;  /**< see constructor doc */
-		vector<string> m_categories;  /**< see constructor doc */
+		UserInterface::DocumentationCategory m_category;  /**< see constructor doc */
+		string m_seeAlso; /**< see constructor doc */
 		vector<string> m_paramNames;  /**< list of paramater names */
 		map<string,string> m_paramType;  /**< type of parameters listed in m_paramNames */
 		map<string,string> m_paramDoc;  /**< description of parameters listed in m_paramNames */
@@ -161,7 +181,7 @@ namespace flopoco
 		/** Implements a no-frills factory
 				\param name         Name for the operator. 
 				\param description  The short documentation
-				\param categories   A semi-colon seperated list of categories that the operator belongs to. The first is ued to sort the doc.
+				\param category     A category used to organize the doc.
 				\param parameters   A semicolon-separated list of parameter description, each being name(type)[=default]:short_description
 				\param parser       A function that can parse a vector of string arguments into an Operator instance
 				\param extraHTMLDoc Extra information to go to the HTML doc, for instance links to articles or details on the algorithms 
@@ -169,18 +189,15 @@ namespace flopoco
 		OperatorFactory(
 						 string name,
 						 string description, 
-						 string categories,	
+						 UserInterface::DocumentationCategory category,
+						 string seeAlso,
 						 string parameters,  
 						 string extraHTMLDoc,  
 						 parser_func_t parser	);
-		
-		virtual const string &name() const
-		{ return m_name; }
-		
-		virtual const vector<string> &categories() const
-		{ return m_categories; }
-		
 
+		virtual const string &name() const // You can see in this prototype that it was not written by Florent
+		{ return m_name; } 
+		
 		/** Provide a string with the full documentation. */
 		string getFullDoc();
 		/** Provide a string with the full documentation in HTML. */

@@ -193,8 +193,38 @@ namespace flopoco
 		return sm_factoriesByName[operatorName];
 	}
 
-
-
+	string categoryString(UserInterface::DocumentationCategory c){
+		switch(c) {
+		case UserInterface::ShiftersLZOCs:
+			return "Shifters, Leading Zero Counters, etc";
+		case UserInterface::BasicInteger:
+			return "Basic Integer operators (pipelined)";
+		case UserInterface::BasicFixPoint:
+			return "Basic Fixed-point Operators";
+		case UserInterface::BasicFloatingPoint:
+			return "Basic Floating-point Operators";
+		case UserInterface::CompositeFloatingPoint:
+			return "Composite Floating-point Operators";
+		case UserInterface::ElementaryFunctions:
+			return "Elementary Functions in Fixed- or Floating-Point";
+		case UserInterface::FunctionApproximation:
+			return "Arbitrary Function Approximators";
+		case UserInterface::ComplexFixPoint:
+			return "Complex Fixed-Point Arithmetic Operators";
+		case UserInterface::ComplexFloatingPoint:
+			return "Complex Floating-Point Arithmetic Operators";
+		case UserInterface::LNS:
+			return "Logarithm Number System Operators";
+		case UserInterface::Conversions:
+			return "Conversions Between Various Number Formats";
+		case UserInterface::TestBenches:
+			return "Test Benches";
+		case UserInterface::Miscellanous:
+		return "Miscellanous";
+		default: return"";
+		}
+	}
+	
 	void UserInterface::initialize(){
 		// Initialize all the command-line options
 		verbose=1;
@@ -501,11 +531,12 @@ namespace flopoco
 	
 	void UserInterface::add( string name,
 													 string description, /**< for the HTML doc and the detailed help */ 
-													 string categories,	/**< semicolon-seperated list of categories */
+													 DocumentationCategory category,
+													 string seeAlso,
 													 string parameterList, /**< semicolon-separated list of parameters, each being name(type)[=default]:short_description  */
 													 string extraHTMLDoc, /**< Extra information to go to the HTML doc, for instance links to articles or details on the algorithms */ 
 													 parser_func_t parser	 ) {
-		OperatorFactoryPtr factory(new OperatorFactory(name, description, categories, parameterList, extraHTMLDoc, parser));
+		OperatorFactoryPtr factory(new OperatorFactory(name, description, category, seeAlso, parameterList, extraHTMLDoc, parser));
 		UserInterface::registerFactory(factory);
 	}
 
@@ -629,28 +660,14 @@ namespace flopoco
 	OperatorFactory::OperatorFactory(
 						 string name,
 						 string description, /* for the HTML doc and the detailed help */ 
-						 string categories,	/*  semicolon-seperated list of categories */
+						 UserInterface::DocumentationCategory category,
+						 string seeAlso,
 						 string parameters, /*  semicolon-separated list of parameters, each being name(type)[=default]:short_description  */ 
 						 string extraHTMLDoc, /* Extra information to go to the HTML doc, for instance links to articles or details on the algorithms */ 
 						 parser_func_t parser  )
-		: m_name(name), m_description(description), m_extraHTMLDoc(extraHTMLDoc), m_parser(parser)
+		: m_name(name), m_description(description), m_category(category), m_seeAlso(seeAlso), m_extraHTMLDoc(extraHTMLDoc), m_parser(parser)
 	{
-		// Parse the categories
-		int start=0;
-		while(start<(int)categories.size()){
-			int end=categories.find(';', start);
-			string part;
-			if(end==-1)
-				part=categories.substr(start, end);
-			else
-				part=categories.substr(start, end-start);
-			if(part.size()!=0)
-				m_categories.push_back(part);
-			if(end==-1)
-				break;
-			start=end+1;
-		}
-
+		int start;
 		// Parse the parameter description
 		// The internet says: this will remove newlines
 		parameters.erase (remove (parameters.begin(), parameters.end(), '\n'), parameters.end());
