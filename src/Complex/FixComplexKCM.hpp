@@ -39,8 +39,7 @@ namespace flopoco {
 					int lsb_in, 
 					int lsb_out,
 					string constant_re,
-					string constant_im,
-					double targetUlpError = 1.0
+					string constant_im
 				);
 
 			virtual ~FixComplexKCM();

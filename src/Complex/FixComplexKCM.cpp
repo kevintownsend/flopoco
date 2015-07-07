@@ -119,8 +119,7 @@ namespace flopoco {
 			int lsb_in, 
 			int lsb_out,
 			string constant_re,
-			string constant_im,
-			double targetUlpError
+			string constant_im
 		): 	
 			Operator(target),
 			signedInput(signedInput),
@@ -133,6 +132,7 @@ namespace flopoco {
 		init();
 
 		int guard_bits = 1;
+		double targetUlpError = 1.0;
 
 		// declaring output
 		addOutput("ReOut", outputre_width);
@@ -235,10 +235,10 @@ namespace flopoco {
 		bitheapRe->generateCompressorVHDL();
 
 		vhdl << "ImOut" << " <= " << 
-			bitheapIm->getSumName(outputim_width, guardBits_im) << ";" << endl;
+			bitheapIm->getSumName(outputim_width, guardBits_im+guard_bits) << ";" << endl;
 
 		vhdl << "ReOut" << " <= " << 
-			bitheapRe->getSumName(outputre_width, guardBits_re) << ";" << endl;
+			bitheapRe->getSumName(outputre_width, guardBits_re+guard_bits) << ";" << endl;
 
 	};
 
@@ -286,7 +286,7 @@ namespace flopoco {
 		mpfr_set_z(reIn_mpfr, reIn.get_mpz_t(), GMP_RNDN); 
 		mpfr_set_z(imIn_mpfr, imIn.get_mpz_t(), GMP_RNDN);
 
-		//Exact
+		//Scaling : Exact
 		mpfr_mul_2si(reIn_mpfr, reIn_mpfr, lsb_in, GMP_RNDN);
 		mpfr_mul_2si(imIn_mpfr, imIn_mpfr, lsb_in, GMP_RNDN);
 
@@ -302,8 +302,7 @@ namespace flopoco {
 				NULL
 			);
 
-		int output_width = 7;
-		mpfr_inits2(5 * output_width + 1, reOut, imOut, NULL);
+		mpfr_inits2(5 * max(outputim_width, outputre_width) + 1, reOut, imOut, NULL);
 
 		// c_r * x_r -> re_prod
 		mpfr_mul(re_prod, reIn_mpfr, mpfr_constant_re, GMP_RNDN);
@@ -351,7 +350,7 @@ namespace flopoco {
 		}
 
 		//Scale back (Exact)
-		mpfr_mul_2si(reOut, reOut, -lsb_out, GMP_RNDN);
+		mpfr_mul_2si(reOut, reOut, -lsb_out,  GMP_RNDN);
 		mpfr_mul_2si(imOut, imOut, -lsb_out, GMP_RNDN);
 
 		//Get bits vector
@@ -366,33 +365,33 @@ namespace flopoco {
 		//If result was negative, compute 2's complement
 		if(reOutNeg)
 		{
-			reUp = (mpz_class(1) << output_width) - reUp;
-			reDown = (mpz_class(1) << output_width) - reDown;
+			reUp = (mpz_class(1) << outputre_width) - reUp;
+			reDown = (mpz_class(1) << outputre_width) - reDown;
 		}
 
 		if(imOutNeg)
 		{
-			imUp = (mpz_class(1) << output_width) - imUp;
-			imDown = (mpz_class(1) << output_width) - imDown;
+			imUp = (mpz_class(1) << outputim_width) - imUp;
+			imDown = (mpz_class(1) << outputim_width) - imDown;
 		}
 
 		//Handle border cases
-		if(imUp > (mpz_class(1) << output_width) - 1 )
+		if(imUp > (mpz_class(1) << outputim_width) - 1 )
 		{
 			imUp = 0;
 		}
 
-		if(reUp > (mpz_class(1) << output_width) - 1)
+		if(reUp > (mpz_class(1) << outputre_width) - 1)
 		{
 			reUp = 0;
 		}
 
-		if(imDown > (mpz_class(1) << output_width) - 1 )
+		if(imDown > (mpz_class(1) << outputim_width) - 1 )
 		{
 			imDown = 0;
 		}
 
-		if(reDown > (mpz_class(1) << output_width) - 1)
+		if(reDown > (mpz_class(1) << outputre_width) - 1)
 		{
 			reDown = 0;
 		}
@@ -468,3 +467,4 @@ namespace flopoco {
 
 	}
 }//namespace
+
