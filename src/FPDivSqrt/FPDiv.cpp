@@ -52,15 +52,16 @@ namespace flopoco{
 
 
 		if(newVersion)
+
 		{
 			int extraBit = 0;
 			extraBit+=2; //Here we'll prescale by 5/4 => 2 right extra bits
 			extraBit+=1; //The sticky bit
 			extraBit+=1; //The result will be in [1/2, 2[ => 1 more bit (2^0)
 			extraBit+=2; //To round correctly the result
-			extraBit+=3; //floor() and the bits cut to get a result depending on wF instead of nDigit (cf. the last step before normalization)
+			extraBit+=1; //floor() and the bits cut to get a result depending on wF instead of nDigit (cf. last step before normalization)
 
-			nDigit = floor(((double)(wF + extraBit))/3);
+			nDigit = ceil(((double)(wF + extraBit))/3);
 
 			addFPInput ("X", wE, wF);
 			addFPInput ("Y", wE, wF);
@@ -131,13 +132,11 @@ namespace flopoco{
 				outPortMap(table , "Y", qi.str());
 				vhdl << instance(table , tInstance.str());
 
-
 				vhdl << tab << "with " << qi.str() << range(3, 0) << " select" << endl;
 				vhdl << tab << tab << declare(qiaTimesD.str(), wF+7) << " <= "<< endl ;
 				vhdl << tab << tab << tab << "\"0000\" & fY            when \"0001\" | \"0011\" | \"0101\" | \"0111\" | \"1111\" | \"1101\" | \"1011\" | \"1001\"," << endl;
 				vhdl << tab << tab << tab << "\"000\" & fY & \"0\"           when \"0110\" | \"1010\"," << endl;
 				vhdl << tab << tab << tab << "(" << wF+6 << " downto 0 => '0')          when others;" << endl;
-
 				vhdl << tab << "with " << qi.str() << range(3, 0) << " select" << endl;
 				vhdl << tab << tab << declare(qibTimesD.str(), wF+7) << " <= "<< endl ;
 				vhdl << tab << tab << tab << "\"000\" & fY & \"0\"           when \"0010\" | \"0011\" | \"1110\" | \"1101\"," << endl;
@@ -229,7 +228,7 @@ namespace flopoco{
 			vhdl << tab << tab << tab << "exnR0  when others;" <<endl;
 			vhdl << tab << "R <= exnRfinal & sR & "
 				 << "expfracR(" << wE+wF-1 << " downto 0);" <<endl;
-		}
+			}
 
 
 		else //TODO : the old version is using 5-input's LUTs, try to fit in 4-input's LUTs (same as above : select qA and qB and make a 2-levels addition)
@@ -286,7 +285,7 @@ namespace flopoco{
 				tInstance << "SelFunctionTable" << i;
 
 				/*
-					Detailed algorithm :
+						Detailed algorithm :
 					*	building seli for the selection function
 						seli = wi (25 downto 22) & fY(22), i.e. the first 4 digits of the remainder and the first useful digit of the divisor
 					*	deducing the value of qi out of seli
@@ -461,8 +460,8 @@ namespace flopoco{
 											 "wE(int): exponent size in bits; \
 wF(int): mantissa size in bits; \
 radix8(bool)=true: if true, the division will be implemented in radix 8, if false in radix 4;",
-											  "The algorithm used here is the division by digit recurrence. For more details, check <a href=\"http://www.cs.ucla.edu/digital_arithmetic/files/ch5.pdf\">this pdf.</a>",
-                        					 FPDiv::parseArguments
+											"The algorithm used here is the division by digit recurrence. For more details, check <a href=\"http://www.cs.ucla.edu/digital_arithmetic/files/ch5.pdf\">this pdf.</a>",
+											FPDiv::parseArguments
 											 ) ;
 
 	}
