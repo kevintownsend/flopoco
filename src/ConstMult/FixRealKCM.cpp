@@ -151,7 +151,7 @@ namespace flopoco{
 		return guardBits;
 	}
 
-	int FixRealKCM::computeTableNumbers(
+	int FixRealKCM::computeTablesNumber(
 			Target* target,
 			int wIn,
 			int msbC,
@@ -229,7 +229,7 @@ namespace flopoco{
 	}
 	
 
-	void FixRealKCM::connectBitHeap(
+	void FixRealKCM::connectTablesToBitHeap(
 				FixRealKCMTable** t,
 				int* doSize,
 				int nbOfTables,
@@ -320,7 +320,7 @@ namespace flopoco{
 		init();		
 		
 		int* diSize;
-		int nbOfTables = computeTableNumbers(
+		int nbOfTables = computeTablesNumber(
 				target, 
 				wIn, 
 				msbC, 
@@ -341,7 +341,6 @@ namespace flopoco{
 		int* doSize;
 
 		FixRealKCMTable** t = createTables(
-				target,
 				diSize,
 				nbOfTables,
 				&doSize,
@@ -354,7 +353,7 @@ namespace flopoco{
 		//create the bitheap
 		bitHeap = new BitHeap(this, wOut+g);
 		manageCriticalPath(target->localWireDelay() + target->lutDelay());
-		connectBitHeap(t, doSize, nbOfTables, this);
+		connectTablesToBitHeap(t, doSize, nbOfTables, this);
 		vhdl << tab << "R <= OutRes" << range(wOut+g-1, g) << ";" << endl;
 		outDelayMap["R"] = getCriticalPath();
 
@@ -402,7 +401,7 @@ namespace flopoco{
 
 		// First set up all the sizes
 		int *diSize;
-		int nbOfTables = computeTableNumbers(
+		int nbOfTables = computeTablesNumber(
 				target, 
 				wIn, 
 				msbC, 
@@ -418,7 +417,6 @@ namespace flopoco{
 		int* doSize;
 
 		FixRealKCMTable** t = createTables(
-				target,
 				diSize,
 				nbOfTables,
 				&doSize,
@@ -426,7 +424,7 @@ namespace flopoco{
 				multiplicandX->getName()
 			);
 
-		connectBitHeap(t, doSize, nbOfTables, parentOp);
+		connectTablesToBitHeap(t, doSize, nbOfTables, parentOp);
 		vhdl << tab << "R <= OutRes" << range(wOut+g-1, g) << ";" << endl;
 		outDelayMap["R"] = getCriticalPath();
 
@@ -434,7 +432,6 @@ namespace flopoco{
 	}
 
 	FixRealKCMTable** FixRealKCM::createTables(
-			Target* target,
 			int* diSize,
 			int nbOfTables,
 			int** doSize_target,
@@ -442,6 +439,7 @@ namespace flopoco{
 			string inputSignalName
 		)
 	{
+		Target* target = getTarget();
 		FixRealKCMTable** t = new FixRealKCMTable*[nbOfTables]; 
 		int* doSize = new int[17*42];
 
@@ -613,7 +611,7 @@ namespace flopoco{
 		int msbC = mpfr_get_si(log2C, GMP_RNDU);
 		mpfr_clears(log2C, absC, mpC, NULL);
 
-		int nbOfTables = computeTableNumbers(
+		int nbOfTables = computeTablesNumber(
 				target, 
 				wIn, 
 				msbC, 

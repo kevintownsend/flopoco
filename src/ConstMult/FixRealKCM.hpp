@@ -15,7 +15,26 @@ namespace flopoco{
 	public:
 
 		/**
-		 * @brief Input size will be msbIn-lsbIn+1
+		 * @brief Standalone version of KCM. Input size will be msbIn-lsbIn+1
+		 * @param target : target on which we want the KCM to run
+		 * @param signedInput : true if input are considered as 2'complemented
+		 * 						relative fixed point numbers
+		 * 						false if they are considered as positive number
+		 * @param msbin : power of two associated with input msb. For unsigned 
+		 * 				  input, msb weight will be 2^msb, for signed input, it
+		 * 				  will be -2^msb
+		 * 	@param lsbIn : power of two of input least significant bit
+		 * 	@param lsbOut : desired output precision i.e. output least 
+		 * 					significant bit has a weight of 2^lsbOut
+		 * 	@param constant : string that describes the constant with sollya
+		 * 					  syntax
+		 * 	@param targetUlpError : exiged error bound on result. Difference
+		 * 							between result and real value should be
+		 * 							lesser than targetUlpError * 2^lsbOut.
+		 * 							Value has to be in ]0.5 ; 1] (if 0.5 wanted,
+		 * 							please consider to create a one bit more
+		 * 							precise KCM with a targetUlpError of 1 and
+		 * 							truncate the result
 		 */
 		FixRealKCM(
 				Target* target, 
@@ -28,6 +47,31 @@ namespace flopoco{
 				map<string, double> inputDelays = emptyDelayMap
 			);
 
+		/**
+		 * @brief Incorporated version of KCM. 
+		 * @param parentOp : operator frow which the KCM is a subentity
+		 * @param target : target on which we want the KCM to run
+		 * @param multiplicandX : signal which will be KCM input
+		 * @param signedInput : true if input are considered as 2'complemented
+		 * 						relative fixed point numbers
+		 * 						false if they are considered as positive number
+		 * @param msbin : power of two associated with input msb. For unsigned 
+		 * 				  input, msb weight will be 2^msb, for signed input, it
+		 * 				  will be -2^msb
+		 * 	@param lsbIn : power of two of input least significant bit
+		 * 	@param lsbOut : desired output precision i.e. output least 
+		 * 					significant bit has a weight of 2^lsbOut
+		 * 	@param constant : string that describes the constant with sollya
+		 * 					  syntax
+		 * 	@param bitHeap : bit heap on which the KCM should throw is result
+		 * 	@param targetUlpError : exiged error bound on result. Difference
+		 * 							between result and real value should be
+		 * 							lesser than targetUlpError * 2^lsbOut.
+		 * 							Value has to be in ]0.5 ; 1] (if 0.5 wanted,
+		 * 							please consider to create a one bit more
+		 * 							precise KCM with a targetUlpError of 1 and
+		 * 							truncate the result
+		 */
 		FixRealKCM(
 				Operator* parentOp, 
 				Target* target, 
@@ -47,8 +91,15 @@ namespace flopoco{
 
 		void emulate(TestCase* tc);
 
-		// /!\ Warning /!\ : wIn should be real input width : e.g. with KCM 
-		// 					 convention msb_in - lsb_in + 2 if signed input
+		/**
+		 * @brief determine how many guards bits will be needed for the KCM to
+		 * 			compute result with asked precision
+		 * @param wIn : input width
+		 * @param targetUlpError : asked precision
+		 * @param constant : string describing the constant with sollya syntax
+		 * @param lsbIn : weight of input lsb
+		 * @param lsbOur : weight of output lsb
+		 */
 		static int neededGuardBits(
 				Target* target, 
 				int wIn, 
@@ -84,18 +135,39 @@ namespace flopoco{
 					int nbTables,
 					double targetUlpError
 				);
+
+		/**
+		 * @brief handle operator initialisation and constant parsing
+		 */
 		void init();
 
-		// TODO rename to connectTablesToBitHeap
-		void connectBitHeap(
+		/**
+		 * @brief branch table output to bitHeap
+		 * @param t : table array
+		 * @param doSize : array of table output width such that t[i] has an
+		 * output width of doSize[i]
+		 * @param op : operator from which vhdl stream will be used as output
+		 * stream
+		 */
+		void connectTablesToBitHeap(
 				FixRealKCMTable** t,
 				int* doSize,
 				int nbOfTables,
 				Operator* op
 			);
 
+
+		/**
+		 * @brief create KCM Tables
+		 * @param diSize : precomputed array of table input width
+		 * @param nbOfTables : precomputed number of tables
+		 * @param doSize_target : where data output width should be located when
+		 * 					      function return
+		 * @param op : operator from which tables are subentities
+		 * @param inputSignalName : name of KCM input signal
+		 * @return an array of KCM tables
+		 */
 		FixRealKCMTable** createTables(
-				Target* target,
 				int* diSize,
 				int nbOfTables,
 				int** doSize_target,
@@ -103,8 +175,19 @@ namespace flopoco{
 				string inputSignalName = "X"
 			);
 
-		
-		static int computeTableNumbers(
+		/**
+		 * @brief compute the number of FixRealKCMTable that will be created by
+		 * a KCM
+		 * @param target : the target FPGA
+		 * @param wIn : Input width
+		 * @param msbC : constant most significant bit weight 
+		 * @param lsbIn : input lsb weight
+		 * @param lsbOut : output lsb weight (result precision)
+		 * @param targetUlpError : required precision
+		 * @param disize_target : where chunck sizes should be located when
+		 * function return
+		 */
+		static int computeTablesNumber(
 			Target* target,
 			int wIn,
 			int msbC, 
