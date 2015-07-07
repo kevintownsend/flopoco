@@ -1,5 +1,9 @@
 TODO file for FloPoCo
 
+Generate the file 
+tools/BashCompletion/flopoco
+on the model of ./flopoo BuildHTMLDoc
+
 * Release-critical (current regressions):
 ** FPPipeline
 ** 
