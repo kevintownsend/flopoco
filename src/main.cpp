@@ -56,6 +56,7 @@ int main(int argc, char* argv[] )
 	Shifter::registerFactory();
 	FPExp::registerFactory();
 	FPDiv::registerFactory();	
+	FPSqrt::registerFactory();
 
 	//	cout << UserInterface::getFactoryCount() << " factories registered " << endl ;
 

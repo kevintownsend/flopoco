@@ -460,7 +460,7 @@ namespace flopoco{
 											 "operator; floating point; dividers and square roots", // categories
 											 "wE(int): exponent size in bits; \
 wF(int): mantissa size in bits; \
-radix8 (bool): if true, the division will be implemented in radix 8, if false in radix 4;",
+radix8(bool)=true: if true, the division will be implemented in radix 8, if false in radix 4;",
 											  "The algorithm used here is the division by digit recurrence. For more details, check <a href=\"http://www.cs.ucla.edu/digital_arithmetic/files/ch5.pdf\">this pdf.</a>",
                         					 FPDiv::parseArguments
 											 ) ;
