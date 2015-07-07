@@ -131,8 +131,11 @@ namespace flopoco{
 		int guardBits;
 		if(targetUlpError > 1.0 || targetUlpError <= 0.5)
 		{
-			cout << "ERREUR !!!!" << endl;
-			return -1; 
+			cerr << "WARNING : Target ulp error should be in ]0.5 ; 1]. " <<
+					"Value provided : " << targetUlpError << 
+					"Will be considered as 1.0. Please, considere this"
+					" warning as a bug.";
+			targetUlpError = 1.0; 
 		}
 				
 		if((nbOfTables <= 2 && targetUlpError==1.0) || nbOfTables == 1)
@@ -158,14 +161,13 @@ namespace flopoco{
 			int** disize_target
 		)
 	{
-		int optimalTableInputWidth = target->lutInputs()-1; /** will be target->lutInputs() or target->lutInputs()-1  */
-		// TODO get rid of lutWidth
-		int lutWidth = target->lutInputs(); 
-
+		/** will be target->lutInputs() or target->lutInputs()-1  */
+		int optimalTableInputWidth = target->lutInputs()-1;
 		int* diSize = new int[17*42];		
 		int nbOfTables, guardBits;
 		int newWIn = wIn;
 		int newLsbIn = lsbIn;
+
 		//The loop is here to prevent neglictible input bits from being
 		//tabulated.
 		do
@@ -173,32 +175,42 @@ namespace flopoco{
 			wIn = newWIn;
 			lsbIn = newLsbIn;
 
-			if(wIn <= lutWidth)
-			{
-				diSize[0] = wIn;
-				nbOfTables = 1;
-			}
-			else
-			{
-				diSize[0] = lutWidth;
-				int nbOfTablesPlus = (wIn - lutWidth) / (lutWidth - 1);
-				int remainingBits = (wIn - diSize[0]) % (lutWidth - 1);
-				for(int i = 1 ; i <= nbOfTablesPlus ; i++)
-				{
-					diSize[i] = lutWidth - 1;
-				}
+			int offset = 0;
+			int nbTablesEntieres = wIn / optimalTableInputWidth;
+			int remainingBits = wIn % optimalTableInputWidth;
+			nbOfTables = nbTablesEntieres;
 
-				if(remainingBits <= lutWidth/2)
+			if(remainingBits != 0)
+			{ 
+				//On each case we will need to handle first table in width size
+				//separately
+				offset++;
+
+				int guardBits_extendedTable = 
+					guardBitsFromTableNumber(nbTablesEntieres, targetUlpError);
+				int guardBits_extraTable =
+					guardBitsFromTableNumber(nbTablesEntieres + 1, targetUlpError);
+				//Cost for extended table is nb  of extra tables * output width
+				int lutCost_extendedTable = ((1 << remainingBits) - 1) * (
+						optimalTableInputWidth + remainingBits -lsbOut);
+				//TODO measure bitheap impact 
+				//(here cost is only extraguardbits * nbOfTables) 
+				int lutCost_extraTable = 
+					(guardBits_extendedTable - guardBits_extraTable) * 
+					(nbTablesEntieres + 1);
+				if(lutCost_extraTable < lutCost_extendedTable)
 				{
-					int addIdx = min(nbOfTablesPlus, 1);
-					diSize[addIdx] += remainingBits;
+					nbOfTables++;
+					diSize[0] = remainingBits;
 				}
 				else
 				{
-					diSize[1+nbOfTablesPlus++] = remainingBits;
+					diSize[0] = remainingBits + optimalTableInputWidth;
 				}
-				nbOfTables = nbOfTablesPlus + 1;
 			}
+			cout << "Nb tables : " << nbOfTables << endl;
+			for(int i = offset ; i < nbOfTables ; diSize[i++] = optimalTableInputWidth);
+			
 
 			guardBits = guardBitsFromTableNumber(nbOfTables, targetUlpError);
 			newLsbIn = lsbOut - guardBits - msbC;
@@ -462,12 +474,7 @@ namespace flopoco{
 
 			highBit -= diSize[i];
 			offset -= diSize[i];
-			REPORT(DEBUG, "Table i=" << i << ", input size=" << 
-					diSize[i] << ", output size=" << doSize[i] << 
-					", weight= " << highBit);
-
-			// Now produce the VHDL
-
+			
 			// already updated 
 			t[i] = new FixRealKCMTable(
 					target, 
@@ -481,6 +488,9 @@ namespace flopoco{
 				);
 
 			doSize[i] = tableDo;
+			REPORT(DEBUG, "Table i=" << i << ", input size=" << 
+					diSize[i] << ", output size=" << doSize[i] << 
+					", weight= " << highBit);
 
 			op->useSoftRAM(t[i]);
 			op->addSubComponent(t[i]);
@@ -666,7 +676,7 @@ namespace flopoco{
 		mpfr_t mpR, mpX;
 
 		mpfr_init2(mpR, 10*wOut);
-		mpfr_init2(mpX, wIn);
+		mpfr_init2(mpX, 2*wIn); //To avoid mpfr bug if wIn = 1
 
 		if(x == 0)
 		{
