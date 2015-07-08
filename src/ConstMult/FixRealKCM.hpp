@@ -82,6 +82,9 @@ namespace flopoco{
 				int lsbOut, 
 				string constant,
 				BitHeap* bitheap,
+				//TODO : default value is here for compilation purpose but
+				//should be removed soon
+				int bitheapLsb=3,
 				double targetUlpError = 1.0, 
 				map<string, double> inputDelays = emptyDelayMap
 			);
@@ -142,6 +145,13 @@ namespace flopoco{
 		void init();
 
 		/**
+		 *	@brief optimise KCM if constant is zero or a power of 2
+		 *	@return true if a special case was handled (i.e. there is no need to 
+		 *	create tables)
+		 */
+		bool handleSpecialConstant(Operator* op, string inputName = "X");
+
+		/**
 		 * @brief branch table output to bitHeap
 		 * @param t : table array
 		 * @param doSize : array of table output width such that t[i] has an
@@ -196,6 +206,8 @@ namespace flopoco{
 			double targetUlpError,
 			int** disize_target = nullptr
 		);
+
+		int bitheaplsb;
 
 	};
 

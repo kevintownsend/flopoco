@@ -122,6 +122,94 @@ namespace flopoco{
 				lsbOut
 			);
 	}
+
+
+	bool FixRealKCM::handleSpecialConstant(Operator* op, string inputName)
+	{
+		//If constant is 0
+		if(mpfr_zero_p(mpC) != 0)
+		{
+			REPORT(DEBUG, "Constant is 0, constant null vector will be added" 
+					" to bitHeap");
+			op->vhdl << tab << 
+				op->declare(join("kcm_", getuid(), "_cstZeroRes"), 1) << 
+				" <= " << zg(1,0) << ";" << endl;
+			op->setCycleFromSignal(inputName);
+
+			bitHeap->addUnsignedBitVector(
+					0,
+					join("kcm_", getuid(), "_cstZeroRes"),
+					1
+				);
+
+			return true;
+		}
+		//If constant is a power of 2
+		else if(mpfr_cmp_ui_2exp(absC, 1, msbC) == 0)
+		{
+			REPORT(DEBUG, "Constant is a power of two. " 
+					"Simple shift will be used instead of tables");
+
+			int shiffterWidth = msbC + msbIn - lsbOut + 1;
+			int copyLength = min(wIn, shiffterWidth) - 1;
+			int shifStart = shiffterWidth - 1;
+			int shifStop = shifStart - copyLength;
+
+			op->setCycleFromSignal(inputName);
+			op->vhdl << tab << 
+				op->declare(join("kcm_", getuid(), "_shiffter"), shiffterWidth)<<	
+				range(shifStart, shifStop) << " <= " << 
+				inputName << range(wIn - 1, wIn - 1 - copyLength) << ";" << endl;
+			if(wIn < shiffterWidth)
+			{
+				op->vhdl << tab << join("kcm_", getuid(), "_shiffter") << 
+					range (shiffterWidth - wIn - 1 , 0) << " <= " << 
+					zg(shiffterWidth - wIn, 0) << ";" << endl;
+			}
+
+			if(signedInput)
+			{
+				if(negativeConstant)
+				{
+					bitHeap->subtractSignedBitVector(
+							lsbOut - bitheaplsb,
+							join("kcm_", getuid(), "_shiffter"),
+							shiffterWidth
+						);
+				}
+				else
+				{
+					bitHeap->addSignedBitVector(
+							lsbOut - bitheaplsb,
+							join("kcm_", getuid(), "_shiffter"),
+							shiffterWidth	
+						);
+				}
+			}
+			else
+			{
+				if(negativeConstant)
+				{
+					bitHeap->subtractUnsignedBitVector(
+							lsbOut - bitheaplsb,
+							join("kcm_", getuid(), "_shiffter"),
+							shiffterWidth	
+						);
+				}
+				else
+				{
+					bitHeap->addUnsignedBitVector(
+							lsbOut - bitheaplsb,
+							join("kcm_", getuid(), "_shiffter"),
+							shiffterWidth	
+						);
+				}
+			}
+
+			return true;
+		}
+		return false;
+	}
 	
 	int FixRealKCM::guardBitsFromTableNumber(
 			int nbOfTables,
@@ -208,7 +296,6 @@ namespace flopoco{
 					diSize[0] = remainingBits + optimalTableInputWidth;
 				}
 			}
-			cout << "Nb tables : " << nbOfTables << endl;
 			for(int i = offset ; i < nbOfTables ; diSize[i++] = optimalTableInputWidth);
 			
 
@@ -319,45 +406,49 @@ namespace flopoco{
 	{
 		init();		
 		
-		int* diSize;
-		int nbOfTables = computeTablesNumber(
-				target, 
-				wIn, 
-				msbC, 
-				lsbIn, 
-				lsbOut, 
-				targetUlpError, 
-				&diSize
-			);
-		
-		REPORT(INFO, "Constant multiplication in "<< nbOfTables << " tables." <<
-				g << "guards bits are used.");
-		//manage the critical path
-		
-		setCriticalPath(getMaxInputDelays(inputDelays));
+		//create the bitheap
+		bitHeap = new BitHeap(this, wOut+g);
+		bitheaplsb = lsbOut - g;
 		addInput("X", wIn);
 		addOutput("R", wOut);
 
-		int* doSize;
+		if(!handleSpecialConstant(this))
+		{
+			int* diSize;
+			int nbOfTables = computeTablesNumber(
+					target, 
+					wIn, 
+					msbC, 
+					lsbIn, 
+					lsbOut, 
+					targetUlpError, 
+					&diSize
+				);
+		
+			REPORT(INFO, "Constant multiplication in "<< nbOfTables << " tables." <<
+					g << "guards bits are used.");
+			//manage the critical path
 
-		FixRealKCMTable** t = createTables(
-				diSize,
-				nbOfTables,
-				&doSize,
-				this
-			);
+			setCriticalPath(getMaxInputDelays(inputDelays));
 
+			int* doSize;
 
-		setCriticalPath(getMaxInputDelays(inputDelays));
+			setCriticalPath(getMaxInputDelays(inputDelays));
+			manageCriticalPath(target->localWireDelay() + target->lutDelay());
 
-		//create the bitheap
-		bitHeap = new BitHeap(this, wOut+g);
-		manageCriticalPath(target->localWireDelay() + target->lutDelay());
-		connectTablesToBitHeap(t, doSize, nbOfTables, this);
-		vhdl << tab << "R <= OutRes" << range(wOut+g-1, g) << ";" << endl;
-		outDelayMap["R"] = getCriticalPath();
+			FixRealKCMTable** t = createTables(
+					diSize,
+					nbOfTables,
+					&doSize,
+					this
+				);
 
-		//compress the bitheap and produce the result
+			connectTablesToBitHeap(t, doSize, nbOfTables, this);
+
+			delete[] diSize;
+		}
+
+				//compress the bitheap and produce the result
 		bitHeap->generateCompressorVHDL();
 
 		//manage the critical path
@@ -367,7 +458,8 @@ namespace flopoco{
 		vhdl << declare("OutRes", wOut+g) << " <= " << 
 			bitHeap->getSumName() << range(wOut+g-1, 0) << ";" << endl;	
 
-		delete[] diSize;
+		vhdl << tab << "R <= OutRes" << range(wOut+g-1, g) << ";" << endl;
+		outDelayMap["R"] = getCriticalPath();
 	}
 	
 	
@@ -382,7 +474,8 @@ namespace flopoco{
 			int lsbIn_, 
 			int lsbOut_, 
 			string constant_, 
-			BitHeap* bitHeap_, 
+			BitHeap* bitHeap_,
+			int bitheapLsb,
 			double targetUlpError_, 
 			map<string, double> inputDelays
 		):	
@@ -394,7 +487,8 @@ namespace flopoco{
 			lsbOut(lsbOut_), 
 			constant(constant_), 
 			targetUlpError(targetUlpError_), 
-			bitHeap(bitHeap_)
+			bitHeap(bitHeap_),
+			bitheaplsb(bitheapLsb)
 	{
 		
 		init();
@@ -425,8 +519,6 @@ namespace flopoco{
 			);
 
 		connectTablesToBitHeap(t, doSize, nbOfTables, parentOp);
-		vhdl << tab << "R <= OutRes" << range(wOut+g-1, g) << ";" << endl;
-		outDelayMap["R"] = getCriticalPath();
 
 		delete[] diSize;
 	}
@@ -609,6 +701,13 @@ namespace flopoco{
 		mpfr_init2(log2C, 100); // should be enough for anybody
 		mpfr_log2(log2C, absC, GMP_RNDN);
 		int msbC = mpfr_get_si(log2C, GMP_RNDU);
+
+		//Special cases : constant is 0 or a power of two
+		if(mpfr_cmp_ui_2exp(absC, 1, msbC) == 0 || mpfr_zero_p(mpC) != 0)
+		{
+			mpfr_clears(log2C, absC, mpC, NULL);
+			return 0;
+		}
 		mpfr_clears(log2C, absC, mpC, NULL);
 
 		int nbOfTables = computeTablesNumber(
