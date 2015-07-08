@@ -1,14 +1,14 @@
 /*
   the FloPoCo command-line interface
-  
+
   This file is part of the FloPoCo project
   developed by the Arenaire team at Ecole Normale Superieure de Lyon
-  
+
   Authors : Florent de Dinechin, Florent.de.Dinechin@ens-lyon.fr
-            Bogdan Pasca, Bogdan.Pasca@ens-lyon.org
+			Bogdan Pasca, Bogdan.Pasca@ens-lyon.org
 
   Initial software.
-  Copyright © ENS-Lyon, INRIA, CNRS, UCBL, INSA-Lyon  
+  Copyright © ENS-Lyon, INRIA, CNRS, UCBL, INSA-Lyon
   2008-2014.
   All rights reserved.
 
@@ -43,25 +43,26 @@ int main(int argc, char* argv[] )
 	FPAdd::registerFactory();
 	FPExp::registerFactory();
 	FixFunctionByPiecewisePoly::registerFactory();
+	FixFunctionByTable::registerFactory();
 	TestBench::registerFactory();
 	// cout << UserInterface::getFactoryCount() << " factories registered " << endl ;
 
 	UserInterface::main(argc, argv);
-	
+
 	return 0;
 }
 
 
 
-	
-		
+
+
 #if 0
-	
+
 	//------------ Resource Estimation --------------------------------
 	int reLevel;
 	bool resourceEstimationDebug = false;
 	//-----------------------------------------------------------------
-	
+
 	//------------------ Floorplanning --------------------------------
 	bool floorplanning = false;
 	bool floorplanningDebug = false;
@@ -72,7 +73,7 @@ int main(int argc, char* argv[] )
 	//------------------------ Resource Estimation ---------------------
 	for (vector<Operator*>::iterator it = oplist->begin(); it!=oplist->end(); ++it) {
 		Operator* op = *it;
-		
+
 		if(reLevel!=0){
 			if(op->reActive)
 				cerr << op->generateStatistics(reLevel);
@@ -82,7 +83,7 @@ int main(int argc, char* argv[] )
 		}
 	}
 	//------------------------------------------------------------------
-	
+
 
 	//------------------------------------------------------------------
 #endif
