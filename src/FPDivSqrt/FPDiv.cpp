@@ -59,9 +59,9 @@ namespace flopoco{
 			extraBit+=1; //The sticky bit
 			extraBit+=1; //The result will be in [1/2, 2[ => 1 more bit (2^0)
 			extraBit+=2; //To round correctly the result
-			extraBit+=1; //floor() and the bits cut to get a result depending on wF instead of nDigit (cf. last step before normalization)
+			extraBit+=3; //floor() and the bits cut to get a result depending on wF instead of nDigit (cf. last step before normalization)
 
-			nDigit = ceil(((double)(wF + extraBit))/3);
+			nDigit = floor(((double)(wF + extraBit))/3);
 
 			addFPInput ("X", wE, wF);
 			addFPInput ("Y", wE, wF);
@@ -86,17 +86,20 @@ namespace flopoco{
 
 
 			/////////////////////////////////////////////////////////////////////////Prescaling
+			//TODO : maybe we can reduce fX and fY
+			setCriticalPath(0);
+			manageCriticalPath(target->adderDelay(wF+3));
 			vhdl << tab << " -- Prescaling" << endl;
 			vhdl << tab << "with partialFY " << range(wF-1, wF-2) << " select" << endl;
 			vhdl << tab << tab << declare("fY", wF+3) << " <= " << endl; //potentially *5/4 => we need 2 more bits
-			vhdl << tab << tab << tab << "(\"0\" & partialFY & \"0\") + (partialFY & \"00\") when \"00\","<<endl; /////////[1/2, 5/8[*3/2 => [3/4, 15/16[
-			vhdl << tab << tab << tab << "(\"00\" & partialFY) + (partialFY & \"00\") when \"01\","<<endl; /////////[5/8, 3/4[*5/4 => [25/32, 15/16[
+			vhdl << tab << tab << tab << "(\"0\" & partialFY & \"0\") + (partialFY & \"00\") when \"00\","<<endl; /////////[1/2, 5/8[ * 3/2 => [3/4, 15/16[
+			vhdl << tab << tab << tab << "(\"00\" & partialFY) + (partialFY & \"00\") when \"01\","<<endl; ////////////////[5/8, 3/4[ * 5/4 => [25/32, 15/16[
 			vhdl << tab << tab << tab << "partialFY &\"00\" when others;"<<endl; /////////no prescaling
 
 			vhdl << tab << "with partialFY " << range(wF-1, wF-2) << " select" << endl;
 			vhdl << tab << tab << declare("fX", wF+4) << " <= " << endl;
 			vhdl << tab << tab << tab << "(\"00\" & partialFX & \"0\") + (\"0\" & partialFX & \"00\") when \"00\","<<endl; /////////[1/2, 5/[*3/2 => [3/4, 15/16[
-			vhdl << tab << tab << tab << "(\"000\" & partialFX) + (\"0\" & partialFX & \"00\") when \"01\","<<endl; /////////[5/8, 3/4[*5/4 => [25/32, 15/16[
+			vhdl << tab << tab << tab << "(\"000\" & partialFX) + (\"0\" & partialFX & \"00\") when \"01\","<<endl; ////////////////[5/8, 3/4[*5/4 => [25/32, 15/16[
 			vhdl << tab << tab << tab << "\"0\" & partialFX &\"00\" when others;"<<endl; /////////no prescaling
 
 			ostringstream wInit;
@@ -104,9 +107,9 @@ namespace flopoco{
 			vhdl << tab << declare(wInit.str(), wF+6) << " <=  \"00\" & fX;" << endl; //TODO : review that
 
 			nextCycle();/////////////////////////////////////////////////////////////
-			setCriticalPath(0);
 
-			double srt4stepdelay =  2*target->lutDelay() + 2*target->localWireDelay() + target->adderDelay(wF+4);
+
+			double srt4stepdelay =  2*target->lutDelay() + 2*target->localWireDelay() + target->adderDelay(wF+7);
 
 			SelFunctionTable* table;
 			table = new SelFunctionTable(target, 0.75, 1.0, 2, 5, 7, 8, 7, 5);

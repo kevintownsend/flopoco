@@ -1,5 +1,6 @@
 #include "UserInterface.hpp"
 #include "FloPoCo.hpp"
+#include "FPDivSqrt/Tools/NbBitsMin.hpp"
 #include <algorithm>
 #include <iostream>
 #include <iomanip>
@@ -25,14 +26,14 @@ namespace flopoco
 	bool UserInterface::floorplanning;
 	bool UserInterface::reDebug;
 	bool UserInterface::flpDebug;
-	
+
 	// Global factory list TODO there should be only one.
 	vector<OperatorFactoryPtr> UserInterface::sm_factoriesByIndex;
 	map<string,OperatorFactoryPtr> UserInterface::sm_factoriesByName;
 
 	vector<OperatorPtr>  UserInterface::globalOpList;  /**< Level-0 operators. Each of these can have sub-operators */
 
-	
+
 	// This should be obsoleted soon. It is there only because random_main needs it
 	void addOperator(OperatorPtr op) {
 		UserInterface::globalOpList.push_back(op);
@@ -52,13 +53,13 @@ namespace flopoco
 			if(!alreadyPresent)
 				globalOpList.push_back(op);
 	}
-	
+
 
 	void UserInterface::outputVHDLToFile(ofstream& file){
 		outputVHDLToFile(globalOpList, file);
 	}
 
-	
+
 	/* The recursive method */
 	void UserInterface::outputVHDLToFile(vector<OperatorPtr> &oplist, ofstream& file){
 		string srcFileName = "Operator.cpp"; // for REPORT
@@ -89,7 +90,7 @@ namespace flopoco
 	}
 
 
-	
+
 	void UserInterface::finalReport(ostream& s){
 		s << endl<<"Final report:"<<endl;
 		for(auto i: globalOpList) {
@@ -99,11 +100,11 @@ namespace flopoco
 
 	}
 
-	
+
 	void UserInterface::registerFactory(OperatorFactoryPtr factory)	{
 		if(sm_factoriesByName.find(factory->name())!=sm_factoriesByName.end())
 			throw string("OperatorFactory - Factory with name '"+factory->name()+" has already been registered.");
-		
+
 		sm_factoriesByIndex.push_back(factory);
 		sm_factoriesByName.insert(make_pair(factory->name(), factory));
 	}
@@ -132,7 +133,7 @@ namespace flopoco
 		useHardMult=true;
 	}
 
-		
+
 	void UserInterface::parseAll(int argc, char* argv[]) {
 		initialize();
 		// First convert the input arg to a vector of strings, for convenience
@@ -150,10 +151,14 @@ namespace flopoco
 				buildHTMLDoc();
 				exit(EXIT_SUCCESS);
 			}
+			if(args.size()==3 && args[0]=="NbBitsMin") {
+				computeNbBit(atoi(args[1].c_str()), atoi(args[2].c_str()));
+				exit(EXIT_SUCCESS);
+			}
 
 			//cout << "args.size=" << args.size() <<endl;
 			while(args.size() > 0) { // This loop is over the Operators that are passed on the command line
-				parseGenericOptions(args); 
+				parseGenericOptions(args);
 				string opName = args[0];  // operator Name
 				vector<string> opParams;
 				opParams.push_back(args[0]); // place the operator name in position 0
@@ -217,13 +222,13 @@ namespace flopoco
 		}catch(std::exception &s){
 			std::cerr<<"Exception : "<<s.what()<<"\n";
 			//factory->Usage(std::cerr);
-			exit(EXIT_FAILURE);	
+			exit(EXIT_FAILURE);
 		}
 
 		// Now output to file
-		ofstream file; 
+		ofstream file;
 		file.open(outputFileName.c_str(), ios::out);
-		outputVHDLToFile(file); 
+		outputVHDLToFile(file);
 		file.close();
 	}
 
@@ -253,14 +258,14 @@ namespace flopoco
 		}
 		return ""; // not found
 	}
-	
+
 	// The following are helper functions to make implementation of factory parsers trivial
 	// The code is not efficient but who cares: it is simple to maintain.
 	// Beware, args[0] is the operator name, so that we may look up the doc in the factories etc.
 
 
 
-	
+
 	bool UserInterface::checkBoolean(vector<string> args, string key){
 		string val=getVal(args, key);
 		if(val=="") {
@@ -280,7 +285,7 @@ namespace flopoco
 	}
 
 
-	
+
 	int UserInterface::checkInt(vector<string> args, string key){
 		string val=getVal(args, key);
 		if(val=="") {
@@ -341,23 +346,23 @@ namespace flopoco
 	}
 
 
-	
+
 
 
 	void UserInterface::parseGenericOptions(vector<string> &args) {
 		cout << "parsing generic options" << endl;
-		entityName=getVal(args, "name"); // will be used, and reset, after the operator parser 
+		entityName=getVal(args, "name"); // will be used, and reset, after the operator parser
 	}
 
 
 
-	
-	
+
+
 	void UserInterface::add( string name,
-													 string description, /**< for the HTML doc and the detailed help */ 
+													 string description, /**< for the HTML doc and the detailed help */
 													 string categories,	/**< semicolon-seperated list of categories */
 													 string parameterList, /**< semicolon-separated list of parameters, each being name(type)[=default]:short_description  */
-													 string extraHTMLDoc, /**< Extra information to go to the HTML doc, for instance links to articles or details on the algorithms */ 
+													 string extraHTMLDoc, /**< Extra information to go to the HTML doc, for instance links to articles or details on the algorithms */
 													 parser_func_t parser	 ) {
 		OperatorFactoryPtr factory(new OperatorFactory(name, description, categories, parameterList, extraHTMLDoc, parser));
 		UserInterface::registerFactory(factory);
@@ -366,7 +371,7 @@ namespace flopoco
 
 
 	string UserInterface::getFullDoc(){
-		ostringstream s; 
+		ostringstream s;
 		for(unsigned i = 0; i<getFactoryCount(); i++) {
 			OperatorFactoryPtr f =  UserInterface::getFactoryByIndex(i);
 			s << f -> getFullDoc();
@@ -392,7 +397,7 @@ namespace flopoco
 			file << f -> getHTMLDoc();
 		}
 		file << "</body>" << endl;
-		file << "</html>" << endl;		
+		file << "</html>" << endl;
 		file.close();
 	}
 
@@ -411,7 +416,7 @@ namespace flopoco
 			s << "    " << pname << " (" << m_paramType[pname] << "): " << m_paramDoc[pname] << "  ";
 			if("" != m_paramDefault[pname])
 				s << "  (optional, default value is " << m_paramDefault[pname] <<")";
-			s<< endl;			
+			s<< endl;
 		}
 		return s.str();
 	}
@@ -434,7 +439,7 @@ namespace flopoco
 			s << "<dd>" << m_paramDoc[pname] << "</dd>";
 			if("" != m_paramDefault[pname])
 				s << " </span>";
-			s<< endl;			
+			s<< endl;
 		}
 		s << "</dl></dd>"<<endl;
 		if("" != m_extraHTMLDoc)
@@ -443,20 +448,20 @@ namespace flopoco
 		return s.str();
 	}
 
-	
+
 	string OperatorFactory::getDefaultParamVal(string& key){
 		return  m_paramDefault[key];
 	}
 
 
-		
+
 
 	OperatorFactory::OperatorFactory(
 						 string name,
-						 string description, /* for the HTML doc and the detailed help */ 
+						 string description, /* for the HTML doc and the detailed help */
 						 string categories,	/*  semicolon-seperated list of categories */
-						 string parameters, /*  semicolon-separated list of parameters, each being name(type)[=default]:short_description  */ 
-						 string extraHTMLDoc, /* Extra information to go to the HTML doc, for instance links to articles or details on the algorithms */ 
+						 string parameters, /*  semicolon-separated list of parameters, each being name(type)[=default]:short_description  */
+						 string extraHTMLDoc, /* Extra information to go to the HTML doc, for instance links to articles or details on the algorithms */
 						 parser_func_t parser  )
 		: m_name(name), m_description(description), m_extraHTMLDoc(extraHTMLDoc), m_parser(parser)
 	{
@@ -492,7 +497,7 @@ namespace flopoco
 				string name=part.substr(0, nameEnd);
 				//cout << "Found parameter: {" << name<<"}";
 				m_paramNames.push_back(name);
-				
+
 				int typeEnd = part.find(')', 0);
 				string type=part.substr(nameEnd+1, typeEnd-nameEnd-1);
 				//cout << " of type  {" << type <<"}";
@@ -530,7 +535,7 @@ namespace flopoco
 			while (parameters[start]==' ') start++;
 		}
 	}
-	
+
 
 
 }; // flopoco
