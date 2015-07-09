@@ -61,6 +61,7 @@ int main(int argc, char* argv[] )
 	FPAddDualPath::registerFactory();
 	FPAdd3Input::registerFactory();
 	FPAddSinglePath::registerFactory();
+	FPMult::registerFactory();
 	NbBitsMinRegisterFactory();
 
 	//	cout << UserInterface::getFactoryCount() << " factories registered " << endl ;
