@@ -310,7 +310,7 @@ namespace flopoco{
 		ts -> counter++;
 	}
 
-		OperatorPtr FPMult::parseArguments(Target *target, const vector<string> &args) {
+	OperatorPtr FPMult::parseArguments(Target *target, const vector<string> &args) {
 		int wE = UserInterface::checkStrictlyPositiveInt(args, "wE");
 		int wF_in = UserInterface::checkStrictlyPositiveInt(args, "wF_in");
 		int wF_out = UserInterface::checkStrictlyPositiveInt(args, "wF_out");

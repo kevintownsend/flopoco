@@ -8,12 +8,12 @@
 #include "Operator.hpp"
 
 namespace flopoco {
-	
+
 #define LOGIC      0
 #define REGISTER   1
 #define SLICE      2
 #define LATENCY    3
-	
+
 	/** The IntAdder class for experimenting with adders.
 	 */
 	class IntAdder : public Operator {
@@ -24,13 +24,13 @@ namespace flopoco {
 		 * @param[in] target           the target device
 		 * @param[in] wIn              the with of the inputs and output
 		 * @param[in] inputDelays      the delays for each input
-		 * @param[in] ambiguity        this variable isn't actually useful. It is used to 
+		 * @param[in] ambiguity        this variable isn't actually useful. It is used to
 		 *                             select this constructor when called from IntAdderClassical ...
-		 **/		
+		 **/
 		IntAdder (Target* target, int wIn, map<string, double> inputDelays, bool ambiguiy):
 			Operator(target, inputDelays), wIn_(wIn){
 		}
-	
+
 		/**
 		 * The IntAdder constructor
 		 * @param[in] target           the target device
@@ -48,13 +48,19 @@ namespace flopoco {
 		 *  Destructor
 		 */
 		~IntAdder();
-		
+
 		/**
 		 * The emulate function.
 		 * @param[in] tc               a list of test-cases
 		 */
 		void emulate ( TestCase* tc );
-				
+
+		// User-interface stuff
+		/** Factory method */
+		static OperatorPtr parseArguments(Target *target ,const vector<string> &args);
+
+		static void registerFactory();
+
 	protected:
 		/**
 		* Updates the parameters needed of architecture implementation: wIn is taken from class attributes
@@ -64,7 +70,7 @@ namespace flopoco {
 		* @param[out] k                 the number of chunks
 		*/
 		void updateParameters ( Target* target, int &alpha, int &beta, int &k ) {
-		
+
 		target->suggestSlackSubaddSize ( alpha , wIn_, target->ffDelay() + target->localWireDelay() ); /* chunk size */
 			if ( wIn_ == alpha ) { /* addition requires one chunk */
 				beta = 0;
@@ -74,7 +80,7 @@ namespace flopoco {
 				k    = ( wIn_ % alpha == 0 ? wIn_ / alpha : int ( ceil ( double ( wIn_ ) / double ( alpha ) ) ) );
 			}
 		};
-	
+
 		/**
 		* Updates the parameters needed of architecture implementation: wIn is taken from class attributes
 		* @param[in]  target            the target device
@@ -96,15 +102,15 @@ namespace flopoco {
 				if (wIn_ - gamma > 0) { //more than 1 chunk
 					target->suggestSlackSubaddSize (alpha, wIn_-gamma, target->ffDelay() + target->localWireDelay());
 					if (wIn_ - gamma == alpha)
-						typeOfChunks++; 
+						typeOfChunks++;
 					else
 						typeOfChunks+=2; /* beta will have to be computed as well */
-					
+
 					if (typeOfChunks == 3)
 						beta = ( (wIn_-gamma) % alpha == 0 ? alpha : ( wIn_-gamma ) % alpha );
 					else
 						beta = alpha;
-					
+
 					if ( typeOfChunks==2 )
 						k = 2;
 					else
@@ -115,7 +121,7 @@ namespace flopoco {
 					k     = 1;
 				}
 		};
-	
+
 		/**
 		* Updates the parameters needed of architecture implementation: wIn is taken from class attributes
 		* @param[in]  target            the target device
@@ -139,7 +145,7 @@ namespace flopoco {
 					beta = ( wIn_ % alpha == 0 ? alpha : wIn_ % alpha );
 					k    = ( wIn_ % alpha == 0 ? wIn_ / alpha : int ( ceil ( double ( wIn_ ) / double ( alpha ) ) ) );
 				}
-			
+
 		}
 
 		int wIn_;                                    /**< the width for X, Y and R*/
@@ -147,6 +153,6 @@ namespace flopoco {
 		vector<Operator*> addImplementationList;     /**< this list will be populated with possible adder architectures*/
 		int selectedVersion;                         /**< the selected version from the addImplementationList */
 	};
-	
+
 }
 #endif

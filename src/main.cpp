@@ -27,7 +27,7 @@
 #include "FloPoCo.hpp"
 #include "utils.hpp"
 #include "main.hpp"
-#include "src/FPDivSqrt/Tools/NbBitsMin.cpp"
+#include "FPDivSqrt/Tools/NbBitsMin.cpp"
 
 using namespace std;
 using namespace flopoco;
@@ -55,6 +55,7 @@ int main(int argc, char* argv[] )
 
 	Shifter::registerFactory();
 	FPExp::registerFactory();
+	NbBitsMinRegisterFactory();
 	FPDiv::registerFactory();
 	FPSqrt::registerFactory();
 	FPAddSub::registerFactory();	
@@ -62,7 +63,9 @@ int main(int argc, char* argv[] )
 	FPAdd3Input::registerFactory();
 	FPAddSinglePath::registerFactory();
 	FPMult::registerFactory();
-	NbBitsMinRegisterFactory();
+	//FPMultKaratsuba::registerFactory();
+	FPSquare::registerFactory();
+	IntAdder::registerFactory();
 
 	//	cout << UserInterface::getFactoryCount() << " factories registered " << endl ;
 
