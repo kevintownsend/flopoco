@@ -37,8 +37,6 @@ using namespace flopoco;
 
 int main(int argc, char* argv[] )
 {
-
-try{
 	Shifter::registerFactory();
 	FPAdd::registerFactory();
 	FPExp::registerFactory();
@@ -49,11 +47,6 @@ try{
 	// cout << UserInterface::getFactoryCount() << " factories registered " << endl ;
 
 	UserInterface::main(argc, argv);
-}
-	catch(string s)
-	{
-		cerr << s << endl;
-	}
 
 	return 0;
 }
