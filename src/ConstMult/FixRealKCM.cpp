@@ -31,7 +31,7 @@ using namespace std;
 #define WIP_FORGET
 #ifdef WIP_LFORGET
 #pragma message("Version du FixRealKCM en cours de développement")
-#pragma message("Statut : Fonctionne globalement bien mais n'est pas encore optimisé")
+#pragma message("Statut : Standalone correcte mais embeddable en cours d'adaptation")
 #endif
 
 namespace flopoco{
@@ -341,6 +341,7 @@ namespace flopoco{
 
 			int bitheapSize = bitHeap->getMaxWeight()-bitHeap->getMinWeight();
 			//add the bits to the bit heap
+			int offset = lsbOut-g-bitheaplsb;
 			int w;
 			for(w=0; w < doSize[i]; w++)
 			{
@@ -350,8 +351,8 @@ namespace flopoco{
 				manageCriticalPath(target->lutDelay());
 
 				s << join("pp",i, "_kcmMult_", getuid()) << of(w);
+				bitHeap->addBit(w+offset, s.str());
 
-				bitHeap->addBit(w, s.str());
 			} // w = table.msb + 1
 	
 			//Negative subproduct sign extension :
@@ -359,6 +360,7 @@ namespace flopoco{
 			//1 to each weight from table.msb to wOut - 1
 			if(t[i]->negativeSubproduct)
 			{	
+				REPORT(DEBUG, "Negative subproduct sign extension for table "<<i);
 				for(; w < bitheapSize ; w++)
 				{
 					bitHeap->addConstantOneBit(w);
@@ -367,6 +369,7 @@ namespace flopoco{
 			} 
 			else if (i == nbOfTables - 1 && signedInput)
 			{
+				REPORT(DEBUG, "Sign extension for signed input msb table");
 				for(w-- ; w < bitheapSize ; w++)
 				{
 					bitHeap->addConstantOneBit(w);
@@ -573,7 +576,7 @@ namespace flopoco{
 					highBit, 
 					diSize[i], 
 					tableDo, 
-					negativeConstant && !last, 
+					negativeConstant && (!last || !signedInput), 
 					last 
 				);
 
@@ -735,7 +738,7 @@ namespace flopoco{
 			int wIn, 
 			int wOut, 
 			bool negativeSubproduct, 
-			bool last, 
+			bool last,
 			int pipeline
 		):
 			Table(target, wIn, wOut, 0, -1, pipeline), 
@@ -836,6 +839,7 @@ namespace flopoco{
 		return result;
 	}
 }
+
 
 
 

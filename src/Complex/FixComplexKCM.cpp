@@ -131,6 +131,7 @@ namespace flopoco {
 	{
 		init();
 
+		//For final rounding precision
 		int guard_bits = 1;
 		double targetUlpError = 1.0;
 
@@ -144,7 +145,7 @@ namespace flopoco {
 				targetUlpError,
 				constant_im,
 				lsb_in,
-				lsb_out
+				lsb_out - guard_bits
 			);
 
 		int kcmMImGuardBits = FixRealKCM::neededGuardBits(
@@ -153,7 +154,7 @@ namespace flopoco {
 				targetUlpError,
 				"-1*" + constant_im,
 				lsb_in,
-				lsb_out
+				lsb_out - guard_bits
 			);
 
 		int kcmReGuardBits = FixRealKCM::neededGuardBits(
@@ -162,7 +163,7 @@ namespace flopoco {
 				targetUlpError,
 				constant_re,
 				lsb_in,
-				lsb_out
+				lsb_out - guard_bits
 			);
 
 		// basic message
@@ -171,8 +172,14 @@ namespace flopoco {
 		int guardBits_re = max(kcmReGuardBits, kcmMImGuardBits);
 		int guardBits_im = max(kcmReGuardBits, kcmImGuardBits);
 
-		BitHeap* bitheapRe = new BitHeap(this, guardBits_re + outputre_width);
-		BitHeap* bitheapIm = new BitHeap(this, guard_bits + outputim_width);
+		BitHeap* bitheapRe = new BitHeap(
+				this,
+				guardBits_re + outputre_width + guard_bits
+			);
+		BitHeap* bitheapIm = new BitHeap(
+				this, 
+				guardBits_im + outputim_width + guard_bits
+			);
 
 		//Add 1/2 ulp
 		bitheapIm->addConstantOneBit(0);
@@ -188,7 +195,8 @@ namespace flopoco {
 				lsb_in,
 				lsb_out - guard_bits,
 				constant_re,
-				bitheapRe
+				bitheapRe,
+				lsb_out - guardBits_re - guard_bits 
 			);
 
 		new FixRealKCM(
@@ -200,11 +208,11 @@ namespace flopoco {
 				lsb_in,
 				lsb_out - guard_bits,
 				"-1 * " + constant_im,
-				bitheapRe
+				bitheapRe,
+				lsb_out - guard_bits - guardBits_re
 			);
 
 		//--- Imaginary part computation --------------------------------------
-		
 
 		new FixRealKCM(
 				this,
@@ -215,7 +223,8 @@ namespace flopoco {
 				lsb_in,
 				lsb_out - guard_bits,
 				constant_re,
-				bitheapIm
+				bitheapIm,
+				lsb_out - guard_bits - guardBits_im
 			);
 
 		new FixRealKCM(
@@ -227,7 +236,8 @@ namespace flopoco {
 				lsb_in,
 				lsb_out - guard_bits,
 				constant_im,
-				bitheapIm
+				bitheapIm,
+				lsb_out - guard_bits - guardBits_im
 			);
 
 		//BitHeap management
@@ -235,10 +245,12 @@ namespace flopoco {
 		bitheapRe->generateCompressorVHDL();
 
 		vhdl << "ImOut" << " <= " << 
-			bitheapIm->getSumName(outputim_width, guardBits_im+guard_bits) << ";" << endl;
+			bitheapIm->getSumName(outputim_width, guardBits_im+guard_bits) << 
+			";" << endl;
 
 		vhdl << "ReOut" << " <= " << 
-			bitheapRe->getSumName(outputre_width, guardBits_re+guard_bits) << ";" << endl;
+			bitheapRe->getSumName(outputre_width, guardBits_re+guard_bits) <<
+			";" << endl;
 
 	};
 
