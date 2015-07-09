@@ -12,6 +12,19 @@ using namespace std;
 
 namespace flopoco
 {
+
+	void NbBitsMinRegisterFactory(){
+		UserInterface::add("NbBitsMin", // name
+											 "A tool for FPDiv to compute where to truncate both partial remainder and divider.",
+											 "tools; floating point; dividers and square roots", // categories
+											 "radix(int): It has to be 2^n; \
+digitSet(int): the range you allow for each digit [-digitSet, digitSet]",
+											 "",
+											 NULL
+											 ) ;
+
+	}
+
 	void computeNbBit (int radix, int digitSet)
 	{
 

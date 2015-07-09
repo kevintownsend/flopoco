@@ -635,10 +635,10 @@ FPAddSub::FPAddSub(Target* target, int wEX, int wFX, int wEY, int wFY, int wER, 
 
 	void FPAddSub::registerFactory(){
 		UserInterface::add("FPAddSub", // name
-											 "A floating-point adder-subtracter.",
+											 "A fused floating-point adder and subtracter, computes both a+b and a-b.",
 											 "operator; floating point; floating-point adders", // categories
 											 "wE(int): exponent size in bits; \
-                        wF(int): mantissa size in bits;",
+wF(int): mantissa size in bits;",
 											 "",
 											 FPAddSub::parseArguments
 											 ) ;

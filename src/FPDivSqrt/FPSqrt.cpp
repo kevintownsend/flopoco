@@ -220,7 +220,7 @@ namespace flopoco{
 												 "A correctly rounded floating-point square root function.",
 												 "operator; floating point; dividers and square roots", // categories
 												 "wE(int): exponent size in bits; \
-							wF(int): mantissa size in bits",
+wF(int): mantissa size in bits",
 												 "",
 												 FPSqrt::parseArguments
 												 ) ;
