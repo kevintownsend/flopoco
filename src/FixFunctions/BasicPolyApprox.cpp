@@ -16,8 +16,13 @@
 */
 
 #include "BasicPolyApprox.hpp"
+#include "../UserInterface.hpp"
+#include <string>
 #include <sstream>
 #include <iomanip>
+#include <iostream>
+
+using namespace std;
 
 namespace flopoco{
 
@@ -127,6 +132,37 @@ namespace flopoco{
 		sollya_lib_clear_obj(degreeIntervalS);
 	  sollya_lib_clear_obj(degreeInfS);
 	  sollya_lib_clear_obj(degreeSupS);
+	}
+
+	OperatorPtr BasicPolyApprox::parseArguments(Target *target, vector<string> &args)
+	{
+		string f;
+		double ta;
+		int g;
+
+		UserInterface::parseString(args, "f", &f);
+		UserInterface::parseFloat(args, "targetAcc", &ta);
+		UserInterface::parseInt(args, "g", &g);
+
+		BasicPolyApprox *bpa = new BasicPolyApprox(f, ta, g);
+		cout << "Computed degree is " << bpa->degree;
+		cout << "Accuracy is " << bpa->approxErrorBound << " ("<< log2(bpa->approxErrorBound) << " bits)";
+
+		return NULL;
+	}
+
+	void BasicPolyApprox::registerFactory()
+	{
+		UserInterface::add("BasicPolyApprox", // name
+											 "Helper/Debug feature, does not generate VHDL. Polynomial approximation of function f, accurate to targetAcc on [0,1)",
+											 UserInterface::FunctionApproximation,
+											 "",
+											 "f(string): function to be evaluated between double-quotes, for instance \"exp(x*x)\";\
+targetAcc(real): the target accuracy of the function output;\
+g(int): the number of guardbits added. use -1 for sensible default;",
+											 "",
+											 BasicPolyApprox::parseArguments
+											 ) ;
 	}
 
 
