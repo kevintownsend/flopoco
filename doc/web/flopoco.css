@@ -14,3 +14,4 @@ h1                               { color: black; text-align: center;}
 h2                               { background: #FFFF73; font-style: italic; }
 h2 a:link, h2 a:visited          { color: #000073; }
 
+kbd {background: #CCFFFF; font-size:120%;}
