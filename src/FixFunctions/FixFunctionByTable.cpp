@@ -65,13 +65,15 @@ namespace flopoco{
 
 	OperatorPtr FixFunctionByTable::parseArguments(Target *target, vector<string> &args)
 	{
+		bool signedIn;
 		int lsbIn, msbOut, lsbOut;
 		string f;
 		UserInterface::parseString(args, "f", &f);
+		UserInterface::parseBoolean(args, "signedIn", &signedIn);
 		UserInterface::parseInt(args, "lsbIn", &lsbIn);
 		UserInterface::parseInt(args, "msbOut", &msbOut);
 		UserInterface::parseInt(args, "lsbOut", &lsbOut);
-		return new FixFunctionByTable(target, f, lsbIn, msbOut, lsbOut);
+		return new FixFunctionByTable(target, f, signedIn, lsbIn, msbOut, lsbOut);
 	}
 
 	void FixFunctionByTable::registerFactory()
