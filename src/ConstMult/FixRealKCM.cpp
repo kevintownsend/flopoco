@@ -249,20 +249,20 @@ namespace flopoco{
 			int** disize_target
 		)
 	{
+		int oldWIn = wIn;
 		/** will be target->lutInputs() or target->lutInputs()-1  */
 		int optimalTableInputWidth = target->lutInputs()-1;
 		int* diSize = new int[17*42];		
 		int nbOfTables, guardBits;
-		int newWIn = wIn;
-		int newLsbIn = lsbIn;
+		int wOut = wIn - 1 + lsbIn + msbC - lsbOut + 1;
+		cout << wOut << endl;
+		int newWIn = wOut;
+		int newGuardBits = 0;
 
 		//The loop is here to prevent neglictible input bits from being
 		//tabulated.
-		do
-		{ 
-			wIn = newWIn;
-			lsbIn = newLsbIn;
-
+		if(wIn <= wOut)
+		{
 			int offset = 0;
 			int nbTablesEntieres = wIn / optimalTableInputWidth;
 			int remainingBits = wIn % optimalTableInputWidth;
@@ -278,15 +278,9 @@ namespace flopoco{
 					guardBitsFromTableNumber(nbTablesEntieres, targetUlpError);
 				int guardBits_extraTable =
 					guardBitsFromTableNumber(nbTablesEntieres + 1, targetUlpError);
-				//Cost for extended table is nb  of extra tables * output width
-				int lutCost_extendedTable = ((1 << remainingBits) - 1) * (
-						optimalTableInputWidth + remainingBits -lsbOut);
-				//TODO measure bitheap impact 
-				//(here cost is only extraguardbits * nbOfTables) 
-				int lutCost_extraTable = 
-					(guardBits_extendedTable - guardBits_extraTable) * 
-					(nbTablesEntieres + 1);
-				if(lutCost_extraTable < lutCost_extendedTable)
+
+				//TODO : compute more accurately costs and compare them
+				if	(	guardBits_extraTable == guardBits_extendedTable )
 				{
 					nbOfTables++;
 					diSize[0] = remainingBits;
@@ -297,12 +291,47 @@ namespace flopoco{
 				}
 			}
 			for(int i = offset ; i < nbOfTables ; diSize[i++] = optimalTableInputWidth);
-			
+		}
+		else
+		{
+			do
+			{ 
+				wIn = newWIn;
+				guardBits = newGuardBits;
 
-			guardBits = guardBitsFromTableNumber(nbOfTables, targetUlpError);
-			newLsbIn = lsbOut - guardBits - msbC;
-			newWIn = wIn - (newLsbIn - lsbIn);
-		}while(newLsbIn > lsbIn);
+				int offset = 0;
+				int nbTablesEntieres = wIn / optimalTableInputWidth;
+				int remainingBits = wIn % optimalTableInputWidth;
+				nbOfTables = nbTablesEntieres;
+
+				if(remainingBits != 0)
+				{ 
+					//On each case we will need to handle first table in width size
+					//separately
+					offset++;
+
+					int guardBits_extendedTable = 
+						guardBitsFromTableNumber(nbTablesEntieres, targetUlpError);
+					int guardBits_extraTable =
+						guardBitsFromTableNumber(nbTablesEntieres + 1, targetUlpError);
+					
+					//TODO : compute more accurately costs and compare them
+					if	(	guardBits_extraTable == guardBits_extendedTable )
+					{
+						nbOfTables++;
+						diSize[0] = remainingBits;
+					}
+					else
+					{
+						diSize[0] = remainingBits + optimalTableInputWidth;
+					}
+				}
+				for(int i = offset ; i < nbOfTables ; diSize[i++] = optimalTableInputWidth);
+				
+				newGuardBits = guardBitsFromTableNumber(nbOfTables, targetUlpError);
+				newWIn = wIn + newGuardBits - guardBits;
+			}while(newWIn > wIn && wIn <= oldWIn);
+		}
 
 		if(disize_target != nullptr)
 		{
