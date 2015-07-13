@@ -71,6 +71,12 @@ namespace flopoco{
 		 * 							please consider to create a one bit more
 		 * 							precise KCM with a targetUlpError of 1 and
 		 * 							truncate the result
+		 *
+		 *  /!\ /!\ /!\ /!\ /!\ /!\ /!\ /!\ /!\ /!\ /!\ /!\ /!\ /!\ /!\ /!\ /!\
+		 * 	WARNING : nothing is added to the bitHeap when constant is set to
+		 * 	zero. Your bitHeap must have been fed with another signal despite of
+		 * 	what it will not produce an output signal (bitHeap problem)
+		 *  /!\ /!\ /!\ /!\ /!\ /!\ /!\ /!\ /!\ /!\ /!\ /!\ /!\ /!\ /!\ /!\ /!\
 		 */
 		FixRealKCM(
 				Operator* parentOp, 

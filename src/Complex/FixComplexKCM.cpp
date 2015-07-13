@@ -130,7 +130,6 @@ namespace flopoco {
 			constant_im(constant_im)
 	{
 		init();
-
 		//For final rounding precision
 		int guard_bits = 1;
 		double targetUlpError = 1.0;
@@ -139,122 +138,132 @@ namespace flopoco {
 		addOutput("ReOut", outputre_width);
 		addOutput("ImOut", outputim_width);
 
-		int kcmImGuardBits = FixRealKCM::neededGuardBits(
-				target,
-				input_width,
-				targetUlpError,
-				constant_im,
-				lsb_in,
-				lsb_out - guard_bits
-			);
+		if(mpfr_zero_p(mpfr_constant_im) != 0 && mpfr_zero_p(mpfr_constant_re) != 0)
+		{
+			vhdl << tab << "ReOut" << " <= " << zg(outputre_width, 0) << ";" <<
+				endl;
+			vhdl << tab << "ImOut" << " <= " << zg(outputim_width, 0) << ";" <<
+				endl;
+		}
+		else
+		{
+			int kcmImGuardBits = FixRealKCM::neededGuardBits(
+					target,
+					input_width,
+					targetUlpError,
+					constant_im,
+					lsb_in,
+					lsb_out - guard_bits
+				);
 
-		int kcmMImGuardBits = FixRealKCM::neededGuardBits(
-				target,
-				input_width,
-				targetUlpError,
-				"-1*" + constant_im,
-				lsb_in,
-				lsb_out - guard_bits
-			);
+			int kcmMImGuardBits = FixRealKCM::neededGuardBits(
+					target,
+					input_width,
+					targetUlpError,
+					"-1*" + constant_im,
+					lsb_in,
+					lsb_out - guard_bits
+				);
 
-		int kcmReGuardBits = FixRealKCM::neededGuardBits(
-				target,
-				input_width,
-				targetUlpError,
-				constant_re,
-				lsb_in,
-				lsb_out - guard_bits
-			);
+			int kcmReGuardBits = FixRealKCM::neededGuardBits(
+					target,
+					input_width,
+					targetUlpError,
+					constant_re,
+					lsb_in,
+					lsb_out - guard_bits
+				);
 
-		// basic message
-		REPORT(INFO,"Declaration of FixComplexKCM\n");
+			// basic message
+			REPORT(INFO,"Declaration of FixComplexKCM\n");
 
-		int guardBits_re = max(kcmReGuardBits, kcmMImGuardBits);
-		int guardBits_im = max(kcmReGuardBits, kcmImGuardBits);
+			int guardBits_re = max(kcmReGuardBits, kcmMImGuardBits);
+			int guardBits_im = max(kcmReGuardBits, kcmImGuardBits);
 
-		BitHeap* bitheapRe = new BitHeap(
-				this,
-				guardBits_re + outputre_width + guard_bits
-			);
-		BitHeap* bitheapIm = new BitHeap(
-				this, 
-				guardBits_im + outputim_width + guard_bits
-			);
+			BitHeap* bitheapRe = new BitHeap(
+					this,
+					guardBits_re + outputre_width + guard_bits
+				);
+			BitHeap* bitheapIm = new BitHeap(
+					this, 
+					guardBits_im + outputim_width + guard_bits
+				);
 
-		//Add 1/2 ulp
-		bitheapIm->addConstantOneBit(0);
-		bitheapRe->addConstantOneBit(0);
+			//Add 1/2 ulp
+			bitheapIm->addConstantOneBit(0);
+			bitheapRe->addConstantOneBit(0);
 
-		//---- Real part computation ------------------------------------------
-		new FixRealKCM(
-				this,
-				target,
-				getSignalByName("ReIN"),
-				signedInput,
-				msb_in,
-				lsb_in,
-				lsb_out - guard_bits,
-				constant_re,
-				bitheapRe,
-				lsb_out - guardBits_re - guard_bits 
-			);
+			//---- Real part computation ------------------------------------------
+			new FixRealKCM(
+					this,
+					target,
+					getSignalByName("ReIN"),
+					signedInput,
+					msb_in,
+					lsb_in,
+					lsb_out - guard_bits,
+					constant_re,
+					bitheapRe,
+					lsb_out - guardBits_re - guard_bits 
+				);
 
-		new FixRealKCM(
-				this, 
-				target, 
-				getSignalByName("ImIN"),
-				signedInput,
-				msb_in,
-				lsb_in,
-				lsb_out - guard_bits,
-				"-1 * " + constant_im,
-				bitheapRe,
-				lsb_out - guard_bits - guardBits_re
-			);
+			new FixRealKCM(
+					this, 
+					target, 
+					getSignalByName("ImIN"),
+					signedInput,
+					msb_in,
+					lsb_in,
+					lsb_out - guard_bits,
+					"-1 * " + constant_im,
+					bitheapRe,
+					lsb_out - guard_bits - guardBits_re
+				);
 
-		//--- Imaginary part computation --------------------------------------
+			//--- Imaginary part computation --------------------------------------
 
-		new FixRealKCM(
-				this,
-				target,
-				getSignalByName("ImIN"),
-				signedInput,
-				msb_in,
-				lsb_in,
-				lsb_out - guard_bits,
-				constant_re,
-				bitheapIm,
-				lsb_out - guard_bits - guardBits_im
-			);
+			new FixRealKCM(
+					this,
+					target,
+					getSignalByName("ImIN"),
+					signedInput,
+					msb_in,
+					lsb_in,
+					lsb_out - guard_bits,
+					constant_re,
+					bitheapIm,
+					lsb_out - guard_bits - guardBits_im
+				);
 
-		new FixRealKCM(
-				this, 
-				target, 
-				getSignalByName("ReIN"),
-				signedInput,
-				msb_in,
-				lsb_in,
-				lsb_out - guard_bits,
-				constant_im,
-				bitheapIm,
-				lsb_out - guard_bits - guardBits_im
-			);
+			new FixRealKCM(
+					this, 
+					target, 
+					getSignalByName("ReIN"),
+					signedInput,
+					msb_in,
+					lsb_in,
+					lsb_out - guard_bits,
+					constant_im,
+					bitheapIm,
+					lsb_out - guard_bits - guardBits_im
+				);
 
-		//BitHeap management
-		bitheapIm->generateCompressorVHDL();
-		bitheapRe->generateCompressorVHDL();
+			//BitHeap management
+			bitheapIm->generateCompressorVHDL();
+			bitheapRe->generateCompressorVHDL();
 
-		vhdl << "ImOut" << " <= " << 
-			bitheapIm->getSumName(
-					outputim_width+guardBits_im+guard_bits -1,
-					guardBits_im+guard_bits
-				) << ";" << endl;
+			vhdl << "ImOut" << " <= " << 
+				bitheapIm->getSumName(
+						outputim_width+guardBits_im+guard_bits -1,
+						guardBits_im+guard_bits
+					) << ";" << endl;
 
-		vhdl << "ReOut" << " <= " << 
-			bitheapRe->getSumName(
-					outputre_width + guardBits_re + guard_bits - 1,
-					guardBits_re+guard_bits
-				) << ";" << endl;
+			vhdl << "ReOut" << " <= " << 
+				bitheapRe->getSumName(
+						outputre_width + guardBits_re + guard_bits - 1,
+						guardBits_re+guard_bits
+					) << ";" << endl;
+		}
 
 	};
 

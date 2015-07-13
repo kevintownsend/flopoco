@@ -425,7 +425,7 @@ namespace flopoco{
 		if(mpfr_zero_p(mpC) != 0)
 		{
 			vhdl << tab << "R" << range(wOut - 1, 0) << " <= " << zg(wOut, 0) <<
-				";";
+				";" << endl;
 		} else { //NonZero constant
 
 			//create the bitheap
