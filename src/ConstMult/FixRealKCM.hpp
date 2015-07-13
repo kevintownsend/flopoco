@@ -145,7 +145,7 @@ namespace flopoco{
 		void init();
 
 		/**
-		 *	@brief optimise KCM if constant is zero or a power of 2
+		 *	@brief optimise KCM if constant is or a power of 2
 		 *	@return true if a special case was handled (i.e. there is no need to 
 		 *	create tables)
 		 */

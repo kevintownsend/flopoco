@@ -245,12 +245,16 @@ namespace flopoco {
 		bitheapRe->generateCompressorVHDL();
 
 		vhdl << "ImOut" << " <= " << 
-			bitheapIm->getSumName(outputim_width, guardBits_im+guard_bits) << 
-			";" << endl;
+			bitheapIm->getSumName(
+					outputim_width+guardBits_im+guard_bits -1,
+					guardBits_im+guard_bits
+				) << ";" << endl;
 
 		vhdl << "ReOut" << " <= " << 
-			bitheapRe->getSumName(outputre_width, guardBits_re+guard_bits) <<
-			";" << endl;
+			bitheapRe->getSumName(
+					outputre_width + guardBits_re + guard_bits - 1,
+					guardBits_re+guard_bits
+				) << ";" << endl;
 
 	};
 
