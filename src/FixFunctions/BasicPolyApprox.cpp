@@ -138,14 +138,16 @@ namespace flopoco{
 	{
 		string f;
 		double ta;
+		bool signedIn;
 		int g;
 
 		UserInterface::parseString(args, "f", &f);
 		UserInterface::parseFloat(args, "targetAcc", &ta);
+		UserInterface::parseBoolean(args, "signedIn", &signedIn);
 		UserInterface::parseInt(args, "g", &g);
 
-		BasicPolyApprox *bpa = new BasicPolyApprox(f, ta, g);
-		cout << "Computed degree is " << bpa->degree;
+		BasicPolyApprox *bpa = new BasicPolyApprox(f, ta, g, signedIn);
+		cout << "Computed degree is " << bpa->degree <<endl; 
 		cout << "Accuracy is " << bpa->approxErrorBound << " ("<< log2(bpa->approxErrorBound) << " bits)";
 
 		return NULL;
@@ -159,7 +161,8 @@ namespace flopoco{
 											 "",
 											 "f(string): function to be evaluated between double-quotes, for instance \"exp(x*x)\";\
 targetAcc(real): the target accuracy of the function output;\
-g(int): the number of guardbits added. use -1 for sensible default;",
+signedIn(bool)=true: defines the input range : [0,1) if false, and [-1,1) otherwise;\
+g(int)=-1: the number of guardbits added. Using -1 gives sensible default",
 											 "",
 											 BasicPolyApprox::parseArguments
 											 ) ;
