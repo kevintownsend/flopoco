@@ -142,7 +142,7 @@ namespace flopoco{
 			vhdl << tab << "Y <= YR;" << endl; 
 		}
 		else{
-			if(degree==1){ // This is a simple table
+			if(degree==1){ // For degree 1, MultiPartite could work better
 			REPORT(INFO, "Degree 1: You should consider using FixFunctionByMultipartiteTable");
 			}
 			// Build the polynomial approximation
@@ -166,9 +166,11 @@ namespace flopoco{
 			} 
 			REPORT(DETAILED, "Poly table input size  = " << alpha);
 			REPORT(DETAILED, "Poly table output size = " << polyTableOutputSize);
-			REPORT(DETAILED, "Max approximation error = " << polyApprox->approxErrorBound);
-			// redoing the error analysis: two truncations at each degree if plainVHDL=yes, 
-			REPORT(DETAILED, "Overall error should be bounded by " << polyApprox->approxErrorBound + 2*degree*(exp2(polyApprox->LSB)) << " while target error bound is " << exp2(lsbOut));
+
+			double roundingErrorBudget=exp2(lsbOut-1)-polyApprox->approxErrorBound;
+			REPORT(DETAILED, "Overall error budget = " << exp2(lsbOut) << "  of which approximation error = " << polyApprox->approxErrorBound
+						 << "   hence rounding error budget = "<< roundingErrorBudget );
+		 
 
 			
 			// This is where we add the final rounding bit
@@ -193,8 +195,10 @@ namespace flopoco{
 				currentShift +=  polyApprox->MSB[i] - polyApprox->LSB +1;
 			}
 
+			// Here I wish I could plug more parallel evaluators. Hence the interface.
+			
 			// This builds an architecture such as eps_finalround < 2^(lsbOut-1) and eps_round<2^(lsbOut-2)
-			FixHornerEvaluator* horner = new FixHornerEvaluator(target, lsbIn+alpha+1, msbOut, lsbOut, degree, polyApprox->MSB, polyApprox->LSB, true, true);		
+			FixHornerEvaluator* horner = new FixHornerEvaluator(target, lsbIn+alpha+1, msbOut, lsbOut, degree, polyApprox->MSB, polyApprox->LSB);		
 			addSubComponent(horner);
 
 			inPortMap(horner, "X", "Zs");

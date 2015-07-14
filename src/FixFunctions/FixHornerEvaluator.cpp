@@ -63,11 +63,11 @@ using namespace std;
 
 namespace flopoco{
 
-/** This builds an architecture such as eps_finalround < 2^(lsbOut-1) and eps_round<2^(lsbOut-2)
- */
   FixHornerEvaluator::FixHornerEvaluator(Target* target,
 																				 int lsbIn_, int msbOut_, int lsbOut_,
-																				 int degree_, vector<int> msbCoeff_, int lsbCoeff_, bool signedXandCoeffs_,
+																				 int degree_, vector<int> msbCoeff_, int lsbCoeff_,
+																				 double roundingErrorBudget,
+																				 bool signedXandCoeffs_,
 																				 bool finalRounding_, map<string, double> inputDelays)
 	: Operator(target), degree(degree_), lsbIn(lsbIn_), msbOut(msbOut_), lsbOut(lsbOut_),
 			msbCoeff(msbCoeff_), lsbCoeff(lsbCoeff_), signedXandCoeffs(signedXandCoeffs_),
