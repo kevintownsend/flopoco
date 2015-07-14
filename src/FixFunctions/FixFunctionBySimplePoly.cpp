@@ -202,10 +202,11 @@ namespace flopoco{
 						   UserInterface::FunctionApproximation,
 						   "",
 						   "f(string): function to be evaluated between double-quotes, for instance \"exp(x*x)\";\
-						   signedIn(bool): defines the input range : [0,1) if false, and [-1,1) otherwise;\
 lsbIn(int): weight of input LSB, for instance -8 for an 8-bit input;\
 msbOut(int): weight of output MSB;\
-lsbOut(int): weight of output LSB;",
+lsbOut(int): weight of output LSB;\
+signedIn(bool)=true: defines the input range : [0,1) if false, and [-1,1) otherwise\
+",
 						   "This operator uses a table for coefficients, and Horner evaluation with truncated multipliers sized just right.<br>For more details, see <a href=\"bib/flopoco.html#DinJolPas2010-poly\">this article</a>.",
 						   FixFunctionBySimplePoly::parseArguments
 							);

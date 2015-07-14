@@ -36,6 +36,38 @@ using namespace std;
 
 namespace flopoco{
 
+	/* Error analysis:
+		 Target error is exp2(lsbOut).
+		 Final rounding may entail up to exp2(lsbOut-1).
+		 So approximation+rounding error budget is  exp2(lsbOut-1).
+		 We call PiecewisePolyApprox with approximation target error bound exp2(lsbOut-2).
+		 It reports polyApprox->LSB: may be lsbOut-2, may be up to lsbOut-2- intlog2(degree) 
+		 It also reports polyApprox->approxErrorBound
+		 so rounding error budget is  exp2(lsbOut-1) - polyApprox->approxErrorBound
+
+		 Now each Horner step may entail up to two errors: one when truncating X to Xtrunc, one when rounding/truncating the product. 
+		 step i rounds to lsbMult[i], such that lsbMult[i] <=  polyApprox->LSB
+		 Heuristic to determine lsbMult[i] is as follows:
+		 - set them all to polyApprox->LSB.
+		 - Compute the cumulated rounding error (as per the procedure below)
+		 - while it exceeds the rounding error budget, decrease lsbMult[i], starting with the higher degrees (which will have the lowest area/perf impact)
+		 - when we arrive to degree 1, increase again.
+
+		 The error of one step is the sum of two terms: the truncation of X, and the truncation of the product.
+		 The first is sometimes only present in lower-degree steps (for later steps, X may be used untruncated
+		 For the second, two cases:
+		 * If plainVHDL is true, we 
+		   - get the full product, 
+			 - truncate it to lsbMult[i]-1, 
+			 - add it to the coefficient, appended with a rounding bit in position lsbMult[i]-1
+			 - truncate the result to lsbMult[i], so we have effectively performed a rounding to nearest to lsbMult[i]:
+			 epsilonMult = exp2(lsbMult[i]-1)
+		 * If plainVHDL is false, we use a FixMultAdd faithful to lsbMult[i], so the mult rounding error is twice as high as in the plainVHDL case:
+			 epsilonMult = exp2(lsbMult[i])
+			 
+	 */
+
+	
 #define DEBUGVHDL 0
 
 	FixFunctionByPiecewisePoly::CoeffTable::CoeffTable(Target* target, int wIn, int wOut, PiecewisePolyApprox* polyApprox_, bool addFinalRoundBit_, int finalRoundBitPos_) :
@@ -110,7 +142,9 @@ namespace flopoco{
 			vhdl << tab << "Y <= YR;" << endl; 
 		}
 		else{
-
+			if(degree==1){ // This is a simple table
+			REPORT(INFO, "Degree 1: You should consider using FixFunctionByMultipartiteTable");
+			}
 			// Build the polynomial approximation
 			REPORT(DETAILED, "Computing polynomial approximation for target precision "<< lsbOut-2);
 			double targetAcc= pow(2, lsbOut-2);
@@ -132,7 +166,11 @@ namespace flopoco{
 			} 
 			REPORT(DETAILED, "Poly table input size  = " << alpha);
 			REPORT(DETAILED, "Poly table output size = " << polyTableOutputSize);
+			REPORT(DETAILED, "Max approximation error = " << polyApprox->approxErrorBound);
+			// redoing the error analysis: two truncations at each degree if plainVHDL=yes, 
+			REPORT(DETAILED, "Overall error should be bounded by " << polyApprox->approxErrorBound + 2*degree*(exp2(polyApprox->LSB)) << " while target error bound is " << exp2(lsbOut));
 
+			
 			// This is where we add the final rounding bit
 			FixFunctionByPiecewisePoly::CoeffTable* coeffTable = new CoeffTable(target, alpha, polyTableOutputSize, polyApprox,
 																					finalRounding, lsbOut-1 /*position of the round bit*/) ;

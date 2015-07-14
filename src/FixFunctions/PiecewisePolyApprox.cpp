@@ -108,11 +108,7 @@ namespace flopoco{
 			sollya_obj_t fS = f->fS; // no need to free this one
 			sollya_obj_t rangeS;
 
-#if 0
-			rangeS  = sollya_lib_parse_string("[0;1]");
-#else
 			rangeS  = sollya_lib_parse_string("[-1;1]");
-#endif
 			// TODO test with [-1,1] which is the whole point of current refactoring.
 			// There needs to be a bit of logic here because rangeS should be [-1,1] by default to exploit signed arith,
 			// except in the case when alpha=0 because then rangeS should be f->rangeS (and should not be freed)
@@ -193,7 +189,7 @@ namespace flopoco{
 						approxErrorBound = p->approxErrorBound;
 					}
 
-					// Now compute the englobing MSB and LSB for each coefficient
+					// Now compute the englobing MSB for each coefficient
 					for (int j=0; j<=degree; j++) {
 						// if the coeff is zero, we can set its MSB to anything, so we exclude this case
 						if (  (!p->coeff[j]->isZero())  &&  (p->coeff[j]->MSB > MSB[j])  )

@@ -35,6 +35,7 @@ on the model of ./flopoo BuildHTMLDoc
 using setName(), getuid(), etc. Model: src/FPAddSub/FPAdderSinglePath.cpp 
 *** add more  newComponentAndInstance() on the model of FixMultAdd
 
+*** rename pow2, intpow2 etc as exp2
 
 * Bit heap and multipliers
 ** rewrite BitHeap with fixed-point support and better compression (see Kumm papers and uni_kassel branch)
