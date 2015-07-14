@@ -447,10 +447,10 @@ namespace flopoco
 				throwMissingArgError(args[0], key);
 		}
 		size_t end;
-		int intval=stod(val, &end);
+		double dval=stod(val, &end);
 		if (val.length() == 0 || val.length() != end)
 			throw (args[0] +": expecting a float for parameter " + key + ", got "+val);
-		*variable= intval;
+		*variable= dval;
 	}
 
 
