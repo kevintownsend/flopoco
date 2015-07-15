@@ -45,7 +45,7 @@ namespace flopoco{
 			 This would require quite a lot of work for non-trivial functions (isolating roots of the derivative etc).
 			 So this is currently left to the user.
 		 */
-		FixFunctionByPiecewisePoly(Target* target, string func, int lsbIn, int msbOut, int lsbOut, int degree, bool finalRounding = true,  map<string, double> inputDelays = emptyDelayMap);
+		FixFunctionByPiecewisePoly(Target* target, string func, int lsbIn, int msbOut, int lsbOut, int degree, bool finalRounding = true,  double approxErrorBudget=0.25, map<string, double> inputDelays = emptyDelayMap);
 
 		/**
 		 * FixFunctionByPiecewisePoly destructor
@@ -67,6 +67,7 @@ namespace flopoco{
 		PiecewisePolyApprox *polyApprox;
 		FixFunction *f; 
 		bool finalRounding;
+		double approxErrorBudget;
 	};
 
 }

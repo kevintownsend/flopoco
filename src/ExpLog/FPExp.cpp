@@ -600,6 +600,7 @@ namespace flopoco{
 																						-wF-g+2*k-1, // lsbOut // was -wF-g 
 																						d, // degree
 																						true, // finalRounding
+																						0.25, // approxErrorBudget, default
 																						inDelayMap("X", target->localWireDelay() + getCriticalPath()) );
 				addSubComponent(fe);
 				inPortMap(fe, "X", "Zhigh");
