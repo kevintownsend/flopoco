@@ -88,9 +88,7 @@ namespace flopoco{
 				int lsbOut, 
 				string constant,
 				BitHeap* bitheap,
-				//TODO : default value is here for compilation purpose but
-				//should be removed soon
-				int bitheapLsb=3,
+				int bitheapLsb,
 				double targetUlpError = 1.0, 
 				map<string, double> inputDelays = emptyDelayMap
 			);
