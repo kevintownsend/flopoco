@@ -39,7 +39,6 @@ namespace flopoco{
 		TestCase* buildRandomTestCase(int i);
 
 
-
 	private:
 		/** The width of the exponent */
 		int wE; 

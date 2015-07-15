@@ -25,16 +25,21 @@ namespace flopoco{
 		 * FixFunctionByTable destructor
 		 */
 		~FixFunctionByTable();
-	
+
 		mpz_class function(int x); // overloading Table method
 		void emulate(TestCase * tc);
 
+		/** Factory method that parses arguments and calls the constructor */
+		static OperatorPtr parseArguments(Target *target , vector<string> &args);
+
+		/** Factory register method */
+		static void registerFactory();
 
 	protected:
 
 		FixFunction *f;
 		unsigned wR;
-		
+
 	};
 
 }

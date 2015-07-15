@@ -89,28 +89,13 @@ namespace flopoco{
 
 
 
-	void Operator::addSubComponent(Operator* op) {
+	void Operator::addSubComponent(OperatorPtr op) {
 		oplist.push_back(op);
 	}
 
 
 
 
-	void Operator::addToGlobalOpList() {
-		bool alreadyPresent=false;
-		// We assume all the operators added to GlobalOpList are unpipelined.
-
-		vector<Operator*> * globalOpListRef=target_->getGlobalOpListRef();
-			for (unsigned i=0; i<globalOpListRef->size(); i++){
-					if( getName() == (*globalOpListRef)[i]->getName() ){
-					alreadyPresent=true;
-					REPORT(DEBUG,"Operator::addToGlobalOpListRef(): " << uniqueName_ <<" already present in globalOpList");
-				}
-			}
-			if(!alreadyPresent)
-				globalOpListRef->push_back(this);
-
-	}
 
 
 
@@ -270,7 +255,7 @@ namespace flopoco{
 			}
 
 			if(success) {
-				 cout << "**** Stripped " << name << " into " << n << endl;
+				//cout << "**** Stripped " << name << " into " << n << endl;
 				name=n;
 			}
 		}
@@ -566,21 +551,20 @@ namespace flopoco{
 		pipelineDepth_ = d;
 	}
 
-	void Operator::outputFinalReport(int level) {
-
+	void Operator::outputFinalReport(ostream&s, int level) {
 		if (getIndirectOperator()!=NULL){ // interface operator
 			if(getOpList().size()!=1){
 				ostringstream o;
 				o << "!?! Operator " << getUniqueName() << " is an interface operator with " << getOpList().size() << "children";
 				throw o.str();
 			}
-			getOpListR()[0]->outputFinalReport(level);
+			getOpList()[0]->outputFinalReport(s, level);
 		}
 
 		else{ // Hard operator
-			for (unsigned i=0; i< getOpList().size(); i++)
-				if (! getOpListR().empty())
-					getOpListR()[i]->outputFinalReport(level+1);
+			if (! getOpList().empty())
+				for (auto i: getOpList())
+					i->outputFinalReport(s,level+1);
 
 			ostringstream tabs, ctabs;
 			for (int i=0;i<level-1;i++){
@@ -593,11 +577,11 @@ namespace flopoco{
 				ctabs << "|" << tab;
 			}
 
-			cerr << tabs.str() << "Entity " << uniqueName_ << endl;
+			s << tabs.str() << "Entity " << uniqueName_ << endl;
 			if(this->getPipelineDepth()!=0)
-				cerr << ctabs.str() << tab << "Pipeline depth = " << getPipelineDepth() << endl;
+				s << ctabs.str() << tab << "Pipeline depth = " << getPipelineDepth() << endl;
 			else
-				cerr << ctabs.str() << tab << "Not pipelined"<< endl;
+				s << ctabs.str() << tab << "Not pipelined"<< endl;
 		}
 	}
 
@@ -1811,53 +1795,23 @@ namespace flopoco{
 
 
 
-	void Operator::outputVHDLToFile(vector<Operator*> &oplist, ofstream& file){
-		string srcFileName = "Operator.cpp"; // for REPORT
-		for(unsigned i=0; i<oplist.size(); i++) {
-			try {
-				REPORT(FULL, "---------------OPERATOR: "<<oplist[i]->getName() <<"-------------");
-				REPORT(FULL, "  DECLARE LIST" << printMapContent(oplist[i]->getDeclareTable()));
-				REPORT(FULL, "  USE LIST" << printVectorContent(  (oplist[i]->getFlopocoVHDLStream())->getUseTable()) );
-
-				// check for subcomponents
-				if (! oplist[i]->getOpListR().empty() ){
-					//recursively call to print subcomponent
-					outputVHDLToFile(oplist[i]->getOpListR(), file);
-				}
-				oplist[i]->getFlopocoVHDLStream()->flush();
-
-				/* second parse is only for sequential operators */
-				if (oplist[i]->isSequential()){
-					REPORT (FULL, "  2nd PASS");
-					oplist[i]->parse2();
-				}
-				oplist[i]->outputVHDL(file);
-
-			} catch (std::string s) {
-					cerr << "Exception while generating '" << oplist[i]->getName() << "': " << s <<endl;
-			}
-		}
-	}
 
 
-
-
-#if 1
+#if 0 // Unplugged, this was a static method in disguise
+	
 	void Operator::outputVHDLToFile(ofstream& file){
 		vector<Operator*> oplist;
 
-		REPORT(DEBUG, "outputVHDLToFile");
+		REPORT(DEBUG, "Entering outputVHDLToFile");
 
 		//build a copy of the global oplist hidden in Target (if it exists):
-		vector<Operator*> *goplist = target_->getGlobalOpListRef();
-		for (unsigned i=0; i<goplist->size(); i++)
-			oplist.push_back((*goplist)[i]);
+		for (unsigned i=0; i<UserInterface::globalOpList.size(); i++)
+			oplist.push_back(UserInterface::globalOpList[i]);
 		// add self (and all its subcomponents) to this list
 		oplist.push_back(this);
 		// generate the code
 		Operator::outputVHDLToFile(oplist, file);
 	}
-
 #endif
 
 	/////////////////////////////////////////////////////////////////////////////////////////////////
@@ -2147,7 +2101,7 @@ namespace flopoco{
 		indirectOperator_           = op->getIndirectOperator();
 		hasDelay1Feedbacks_         = op->hasDelay1Feedbacks();
 
-		oplist                      = op->getOpList();
+		oplist                      = op->oplist;
 	}
 
 	/**

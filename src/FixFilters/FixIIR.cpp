@@ -197,7 +197,7 @@ namespace flopoco {
 		setCycle(0);
 
 
-		target->setNotPipelined(); //the following parts of the circuit will be combinatorial
+		target->setPipelined(false); //the following parts of the circuit will be combinatorial
 		setCombinatorial();
 
 		

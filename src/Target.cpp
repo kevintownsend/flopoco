@@ -43,9 +43,9 @@ namespace flopoco{
 		//VIDE
 	}
 
-	vector<Operator*> *  Target::getGlobalOpListRef(){
-		return & globalOpList;
-	}
+	// vector<Operator*> *  Target::getGlobalOpListRef(){
+	// 	return & globalOpList;
+	// }
 
 	string Target::getID(){
 		return id_;
@@ -56,13 +56,10 @@ namespace flopoco{
 		}
 
 
-	void Target::setPipelined() {
-		pipeline_=true;
+	void Target::setPipelined(bool v) {
+		pipeline_=v;
 	}
 
-	void Target::setNotPipelined() {
-		pipeline_=false;
-	}
 
 	bool Target::isPipelined() {
 		return pipeline_;

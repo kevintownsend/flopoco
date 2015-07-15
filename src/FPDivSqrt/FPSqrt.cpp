@@ -103,7 +103,7 @@ namespace flopoco{
 		  // Pipeline management
 		  double stageDelay= target->adderDelay(step) + target->localWireDelay() + 2*target->lutDelay();
 		  delay += stageDelay;
-		  if (verbose>=2) {
+		  if (UserInterface::verbose>=2) {
 		    cout << "estimated delay for stage "<< step << " is " << stageDelay << "s" << endl;
 		    cout << "   cumulated delay would be " << delay << "s,   target is " << 1/target->frequency()<< endl;
 		  }
@@ -111,7 +111,7 @@ namespace flopoco{
 		    // insert a pipeline register and reset the cumulated delay
 		    nextCycle();
 		    delay= target->ffDelay() + stageDelay;
-		    if (verbose>=2) 
+		    if (UserInterface::verbose>=2) 
 		      cout << "----inserted a register level" << endl;
 		  }
 		}

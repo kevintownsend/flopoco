@@ -37,6 +37,7 @@ namespace flopoco{
 			 @param    degree  degree of the polynomial
 			 @param    msbCoeff vector (of size degree+1) holding the MSB of the polynomial coefficients
 			 @param    lsbCoeff vector (of size degree+1) holding the LSB of the polynomial coefficients
+			 @param    roundingErrorBudget The rounding error budget, excluding final rounding. If -1, will be set to 2^(lsbOut-2) 
 			 @param    signedXandCoeffs  true if the coefficients are signed numbers (usually true)
 			 @param   finalRounding: if false, the operator outputs its guard bits as well, saving the half-ulp rounding error. 
 			                 This makes sense in situations that further process the result with further guard bits.
@@ -49,7 +50,8 @@ namespace flopoco{
 											 int lsbOut,
 											 int degree, 
 											 vector<int> msbCoeff, 
-											 int lsbCoeff, 
+											 int lsbCoeff,
+											 double roundingErrorBudget=-1,
 											 bool signedXandCoeffs=true, 
 											 bool finalRounding=true,
 											 map<string, double> inputDelays = emptyDelayMap);

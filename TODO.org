@@ -1,5 +1,9 @@
 TODO file for FloPoCo
 
+Generate the file 
+tools/BashCompletion/flopoco
+on the model of ./flopoo BuildHTMLDoc
+
 * Release-critical (current regressions):
 ** FPPipeline
 ** 
@@ -26,19 +30,12 @@ TODO file for FloPoCo
 ** clean up Target
 
 * Janitoring
-*** Deduplication of Target object
-There is a Target declared in Operator, and one redeclared in many of the Operators. 
-The latter should be removed as it can be inherited from Operator::target_
-Example: see src/Table.hpp
+*** TargetFactory
 *** uniformize name construction 
 using setName(), getuid(), etc. Model: src/FPAddSub/FPAdderSinglePath.cpp 
-*** get rid of all C++11 warnings
-*** systematic remove all code from the .hpp
-Very small functions, typically getters and setters, have their code in the .hpp
-This code should be moved to the corresponding cpp.
 *** add more  newComponentAndInstance() on the model of FixMultAdd
-*** Doxygen
-*** systematic check of the consistency between user manual and online help
+
+*** rename pow2, intpow2 etc as exp2
 
 * Bit heap and multipliers
 ** rewrite BitHeap with fixed-point support and better compression (see Kumm papers and uni_kassel branch)

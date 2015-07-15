@@ -45,11 +45,11 @@ namespace flopoco{
 		addInput("Cin");
 		addOutput("R"  , wIn_);
 
-		if (verbose){
-			cout <<"delay for X is   "<< inputDelays["X"]<<endl;	
-			cout <<"delay for Y is   "<< inputDelays["Y"]<<endl;
-			cout <<"delay for Cin is "<< inputDelays["Cin"]<<endl;
-		}
+		// if (verbose){
+		// 	cout <<"delay for X is   "<< inputDelays["X"]<<endl;	
+		// 	cout <<"delay for Y is   "<< inputDelays["Y"]<<endl;
+		// 	cout <<"delay for Cin is "<< inputDelays["Cin"]<<endl;
+		// }
 
 		if (isSequential()){
 
@@ -59,8 +59,8 @@ namespace flopoco{
 				
 				
 				if (false){
-					if (verbose)
-						cout << "The maximum input delay is "<<	maxInputDelay<<endl;
+					// if (verbose)
+					// 	cout << "The maximum input delay is "<<	maxInputDelay<<endl;
 					
 					cSize = new int[2000];
 					REPORT(3, "-- The new version: direct mapping without 0/1 padding, IntAdders instantiated");
@@ -269,7 +269,7 @@ exit(1);
 #ifdef XILINX_OPTIMIZATION
 					{ //code for adder instantiation to stop ise from "optimizing"
 					int tp = target->isPipelined();
-					target->setNotPipelined();
+					target->setPipelined(false);
 					IntAdder *adder = new IntAdder(target, cSize[j]+1);
 					oplist.push_back(adder);
 					if (tp) target->setPipelined();
@@ -473,7 +473,7 @@ exit(1);
 #ifdef XILINX_OPTIMIZATION
 	// the xst synthetsies x+y and x+y+1 slower if this optimization is not used				
 					bool pipe = target->isPipelined();
-					target->setNotPipelined();
+					target->setPipelined(false);
 
 					IntAdder *adder = new IntAdder(target, cSize[j]+1);
 					ostringstream a;
@@ -515,7 +515,7 @@ exit(1);
 					if (pipe)
 						target->setPipelined();
 					else
-						target->setNotPipelined();
+						target->setPipelined(false);
 					}else{
 						vhdl << tab << "-- the carry resulting from the addition of the chunk + Cin is obtained directly" << endl;
 						vhdl << tab << declare(dnameCin.str(),cSize[j]+1) << "  <= (\"0\" & "<< use(uname1.str())<<range(cSize[j]-1,0) <<") +  (\"0\" & "<< use(uname2.str())<<range(cSize[j]-1,0)<<") + scIn;"<<endl;

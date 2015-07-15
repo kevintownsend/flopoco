@@ -6,7 +6,7 @@
 
   This file is part of the FloPoCo project
 	launched by the Arénaire/AriC team of Ecole Normale Superieure de Lyon
-  currently developed by the Socrate team at INSA de Lyon
+  currently developed by the Socrate team at CITILab/INSA de Lyon
  
   Initial software.
   Copyright © ENS-Lyon, INSA-Lyon, INRIA, CNRS, UCBL,  
@@ -36,6 +36,38 @@ using namespace std;
 
 namespace flopoco{
 
+	/* Error analysis:
+		 Target error is exp2(lsbOut).
+		 Final rounding may entail up to exp2(lsbOut-1).
+		 So approximation+rounding error budget is  exp2(lsbOut-1).
+		 We call PiecewisePolyApprox with approximation target error bound exp2(lsbOut-2).
+		 It reports polyApprox->LSB: may be lsbOut-2, may be up to lsbOut-2- intlog2(degree) 
+		 It also reports polyApprox->approxErrorBound
+		 so rounding error budget is  exp2(lsbOut-1) - polyApprox->approxErrorBound
+
+		 Now each Horner step may entail up to two errors: one when truncating X to Xtrunc, one when rounding/truncating the product. 
+		 step i rounds to lsbMult[i], such that lsbMult[i] <=  polyApprox->LSB
+		 Heuristic to determine lsbMult[i] is as follows:
+		 - set them all to polyApprox->LSB.
+		 - Compute the cumulated rounding error (as per the procedure below)
+		 - while it exceeds the rounding error budget, decrease lsbMult[i], starting with the higher degrees (which will have the lowest area/perf impact)
+		 - when we arrive to degree 1, increase again.
+
+		 The error of one step is the sum of two terms: the truncation of X, and the truncation of the product.
+		 The first is sometimes only present in lower-degree steps (for later steps, X may be used untruncated
+		 For the second, two cases:
+		 * If plainVHDL is true, we 
+		   - get the full product, 
+			 - truncate it to lsbMult[i]-1, 
+			 - add it to the coefficient, appended with a rounding bit in position lsbMult[i]-1
+			 - truncate the result to lsbMult[i], so we have effectively performed a rounding to nearest to lsbMult[i]:
+			 epsilonMult = exp2(lsbMult[i]-1)
+		 * If plainVHDL is false, we use a FixMultAdd faithful to lsbMult[i], so the mult rounding error is twice as high as in the plainVHDL case:
+			 epsilonMult = exp2(lsbMult[i])
+			 
+	 */
+
+	
 #define DEBUGVHDL 0
 
 	FixFunctionByPiecewisePoly::CoeffTable::CoeffTable(Target* target, int wIn, int wOut, PiecewisePolyApprox* polyApprox_, bool addFinalRoundBit_, int finalRoundBitPos_) :
@@ -110,7 +142,9 @@ namespace flopoco{
 			vhdl << tab << "Y <= YR;" << endl; 
 		}
 		else{
-
+			if(degree==1){ // For degree 1, MultiPartite could work better
+			REPORT(INFO, "Degree 1: You should consider using FixFunctionByMultipartiteTable");
+			}
 			// Build the polynomial approximation
 			REPORT(DETAILED, "Computing polynomial approximation for target precision "<< lsbOut-2);
 			double targetAcc= pow(2, lsbOut-2);
@@ -133,6 +167,12 @@ namespace flopoco{
 			REPORT(DETAILED, "Poly table input size  = " << alpha);
 			REPORT(DETAILED, "Poly table output size = " << polyTableOutputSize);
 
+			double roundingErrorBudget=exp2(lsbOut-1)-polyApprox->approxErrorBound;
+			REPORT(DETAILED, "Overall error budget = " << exp2(lsbOut) << "  of which approximation error = " << polyApprox->approxErrorBound
+						 << "   hence rounding error budget = "<< roundingErrorBudget );
+		 
+
+			
 			// This is where we add the final rounding bit
 			FixFunctionByPiecewisePoly::CoeffTable* coeffTable = new CoeffTable(target, alpha, polyTableOutputSize, polyApprox,
 																					finalRounding, lsbOut-1 /*position of the round bit*/) ;
@@ -155,8 +195,10 @@ namespace flopoco{
 				currentShift +=  polyApprox->MSB[i] - polyApprox->LSB +1;
 			}
 
+			// Here I wish I could plug more parallel evaluators. Hence the interface.
+			
 			// This builds an architecture such as eps_finalround < 2^(lsbOut-1) and eps_round<2^(lsbOut-2)
-			FixHornerEvaluator* horner = new FixHornerEvaluator(target, lsbIn+alpha+1, msbOut, lsbOut, degree, polyApprox->MSB, polyApprox->LSB, true, true);		
+			FixHornerEvaluator* horner = new FixHornerEvaluator(target, lsbIn+alpha+1, msbOut, lsbOut, degree, polyApprox->MSB, polyApprox->LSB);		
 			addSubComponent(horner);
 
 			inPortMap(horner, "X", "Zs");
@@ -196,6 +238,36 @@ namespace flopoco{
 		emulate(tc);
 		tcl->add(tc);
 
+	}
+
+
+
+	
+	OperatorPtr FixFunctionByPiecewisePoly::parseArguments(Target *target, vector<string> &args) {
+		int lsbIn, msbOut, lsbOut, d;
+		string f;
+		UserInterface::parseString(args, "f", &f); 
+		UserInterface::parseInt(args, "lsbIn", &lsbIn);
+		UserInterface::parseInt(args, "msbOut", &msbOut);
+		UserInterface::parseInt(args, "lsbOut", &lsbOut);
+		UserInterface::parsePositiveInt(args, "d", &d);
+		return new FixFunctionByPiecewisePoly(target, f, lsbIn, msbOut, lsbOut, d);
+	}
+
+	void FixFunctionByPiecewisePoly::registerFactory(){
+		UserInterface::add("FixFunctionByPiecewisePoly", // name
+											 "Evaluator of function f on [0,1), using a piecewise polynomial of degree d with Horner scheme.",
+											 UserInterface::FunctionApproximation,
+											 "",
+											 "f(string): function to be evaluated between double-quotes, for instance \"exp(x*x)\";\
+                        lsbIn(int): weight of input LSB, for instance -8 for an 8-bit input;\
+                        msbOut(int): weight of output MSB;\
+                        lsbOut(int): weight of output LSB;\
+                        d(int): degree of the polynomial",
+											 "This operator uses a table for coefficients, and Horner evaluation with truncated multipliers sized just right.<br>For more details, see <a href=\"bib/flopoco.html#DinJolPas2010-poly\">this article</a>.",
+											 FixFunctionByPiecewisePoly::parseArguments
+											 ) ;
+		
 	}
 
 }

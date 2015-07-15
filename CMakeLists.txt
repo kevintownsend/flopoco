@@ -177,6 +177,7 @@ ADD_LIBRARY(FloPoCoLib STATIC
 
  src/FloPoCo.hpp
  src/Operator
+ src/UserInterface
  src/Signal
  src/utils
  src/FlopocoStream
@@ -297,6 +298,7 @@ src/Complex/FixComplexKCM
 
 
 # Floating-point adders and subtracters -----------------------------
+ src/FPAddSub/FPAdd
  src/FPAddSub/FPAddDualPath
  src/FPAddSub/FPAddSinglePath
  src/FPAddSub/FPAdd3Input

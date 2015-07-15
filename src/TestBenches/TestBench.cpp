@@ -116,7 +116,7 @@ namespace flopoco{
 			else if (s->type() == Signal::in) inputSignalVector.push_back(s);
 		};
 
-		// decleration of test time
+		// declration of test time
 		int currentOutputTime = 0;
 
 		// In order to generate the file containing inputs and expected output in a correct order
@@ -190,8 +190,8 @@ namespace flopoco{
 		vhdl << tab << tab << tab << " -- verifying the corresponding output" << endl;
 		vhdl << tab << tab << tab << "process" << endl;
 		/* Variable declaration */
-		vhdl << tab << tab << "variable inline : line; " << endl;                    // variable to read a line
 		vhdl << tab << tab << "variable inline0 : line; " << endl;                    // variable to read a line
+		vhdl << tab << tab << "variable inline : line; " << endl;                    // variable to read a line
 		vhdl << tab << tab << "variable counter : integer := 1;" << endl;
 		vhdl << tab << tab << "variable errorCounter : integer := 0;" << endl;
 		vhdl << tab << tab << "variable possibilityNumber : integer := 0;" << endl;
@@ -202,13 +202,13 @@ namespace flopoco{
 		
 		
 		/* Variable to store value for inputs and expected outputs*/
-		for(int i=0; i < op_->getIOListSize(); i++){
-			Signal* s = op_->getIOListSignal(i);
+		for(Signal* s: outputSignalVector){
 			vhdl << tab << tab << "variable V_" << s->getName();
 			if ((s->width() != 1) || (s->isBus())) vhdl << " : bit_vector("<< s->width() - 1 << " downto 0);" << endl;
 			else  vhdl << " : bit;" << endl;
-
-        }
+			vhdl << tab << tab << "variable expected_"  << s->getName() << ": string (1 to 1000);" << endl; // will be a copy of inline
+			vhdl << tab << tab << "variable expected_size_"  << s->getName() << " : integer;" << endl;
+		}
 
 		/* Process Beginning */
 		vhdl << tab << "begin" << endl;
@@ -234,52 +234,34 @@ namespace flopoco{
 		vhdl << tab << tab << tab << "readline(inputsFile,inline);" << endl;
 
 		// vhdl << tab << tab << tab << "wait for "<< op_->getPipelineDepth()*10 <<" ns; -- wait for pipeline to flush" <<endl;
-		for(unsigned int i=0; i < outputSignalVector.size(); i++){
-			Signal* s = outputSignalVector[i];
+		for(Signal* s: outputSignalVector){
 			vhdl << tab << tab << tab << "read(inline, possibilityNumber);" << endl;
 			vhdl << tab << tab << tab << "localErrorCounter := 0;" << endl;
 			vhdl << tab << tab << tab << "read(inline,tmpChar);" << endl; // we consume the character after output list
+			vhdl << tab << tab << tab << "expected_size_"<< s->getName() << " := inline'Length;"<< endl; // the remainder is the vector of expected outputs: remember how long it is
+			vhdl << tab << tab << tab << "expected_"<< s->getName() << " := inline.all & (expected_size_"<< s->getName() << "+1 to 1000 => ' ');"<< endl; // because we have to pad it to 1000 chars
+			string expectedString = "expected_" +  s->getName() + "(1 to expected_size_" + s->getName() + ")"; //  will be used several times below, so better have a Single Source of Bug
 			vhdl << tab << tab << tab << "if possibilityNumber = 0 then" << endl; 
 			vhdl << tab << tab << tab << tab << "localErrorCounter := 0;" << endl;//read(inline,tmpChar);" << endl; // we consume the character between each outputs
 			vhdl << tab << tab << tab << "elsif possibilityNumber = 1 then " << endl;
 			vhdl << tab << tab << tab << tab << "read(inline ,V_"<< s->getName() << ");" << endl;
+			vhdl << tab << tab << tab << tab << "if ";
 			if (s->isFP()) { 
-			    vhdl << tab << tab << tab << tab << "if not fp_equal(fp"<< s->width() << "'(" << s->getName() << ") ,to_stdlogicvector(V_" <<  s->getName() << ")) then " << endl;
-			    vhdl << tab << tab << tab << tab << tab << " errorCounter := errorCounter + 1;" << endl;
-					// TODO better aligned reporting: see model below
-			    vhdl << tab << tab << tab << tab << tab << "assert false report(\"Incorrect output for " << s->getName() 
-							 <<      ", expected value: \" & str(to_stdlogicvector(V_" << s->getName() 
-							 << ")) & \" result: \" & str(" << s->getName() 
-							 << ")) &  \"|| line : \" & integer'image(counter) & \" of input file \" ;"<< endl;                        
-			    vhdl << tab << tab << tab << tab << "end if;" << endl;
+ 			vhdl << "not fp_equal(fp"<< s->width() << "'(" << s->getName() << ") ,to_stdlogicvector(V_" <<  s->getName() << "))";
 			} else if (s->isIEEE()) {  
-			    vhdl << tab << tab << tab << tab << "if not fp_equal_ieee(" << s->getName() << " ,to_stdlogicvector(V_" <<  s->getName() << "),"<<s->wE()<<" , "<<s->wF()<<") then " << endl;
-			    vhdl << tab << tab << tab << tab << tab << "assert false report(\"Incorrect output for " << s->getName() 
-							 <<         ", expected value: \" & str(to_stdlogicvector(V_" << s-> getName() 
-							 << ")) & \" , result: \" & str(" 
-							 << s->getName()  << ")) &  \"|| line : \" & integer'image(counter) & \" of input file \" ;"<< endl;               
-			    vhdl << tab << tab << tab << tab << tab << " errorCounter := errorCounter + 1; " << endl;                                                                 
-			    vhdl << tab << tab << tab << tab << "end if;" << endl;
+			    vhdl << "not fp_equal_ieee(" << s->getName() << " ,to_stdlogicvector(V_" <<  s->getName() << "),"<<s->wE()<<" , "<<s->wF()<<")";
 			} else if ((s->width() == 1) && (!s->isBus())) { 
-			    vhdl << tab << tab << tab << tab << "if not (" << s->getName() << "= to_stdlogic(V_" << s->getName() << ")) then " << endl;
-					// TODO better aligned reporting: see model below
-			    vhdl << tab << tab << tab << tab << tab << "assert false report(\"Incorrect output for " << s->getName() 
-							 <<        ",expected value: \" & str(to_stdlogic(V_" << s->getName() 
-							 << ")) & \", result: \" & str(" 
-							 << s->getName() <<")) &  \"|| line : \" & integer'image(counter) & \" of input file \" ;"<< endl;  
-			    vhdl << tab << tab << tab << tab << tab << " errorCounter := errorCounter + 1;" << endl;                                                                 
-			    vhdl << tab << tab << tab << tab << "end if;" << endl;
-						
-						} else {
-			    vhdl << tab << tab << tab << tab << "if not (" << s->getName() << "= to_stdlogicvector(V_" << s->getName() << ")) then " << endl;
-					// TODO better aligned reporting: see model below
-			    vhdl << tab << tab << tab << tab << tab << "assert false report(\"Incorrect output for " << s->getName() 
-							 <<        ",expected value: \" & str(to_stdlogicvector(V_" << s->getName() 
-							 << ")) & \", result: \" & str(" 
-							 << s->getName() <<")) &  \"|| line : \" & integer'image(counter) & \" of input file \" ;"<< endl;  
-			    vhdl << tab << tab << tab << tab << tab << " errorCounter := errorCounter + 1;" << endl;                                                                 
-			    vhdl << tab << tab << tab << tab << "end if;" << endl;
-			};
+				vhdl << "not (" << s->getName() << "= to_stdlogic(V_" << s->getName() << "))";
+			} else {
+				vhdl << "not (" << s->getName() << "= to_stdlogicvector(V_" << s->getName() << "))";
+			}
+			vhdl << " then " << endl;
+			vhdl << tab << tab << tab << tab << tab << "assert false report(\"Line \" & integer'image(counter) & \" of input file, incorrect output for " 
+					 << s->getName() << ": \" & lf & ";
+			vhdl << "\"  expected value: \" & "  << expectedString;
+			vhdl << " & lf & \"          result: \" & str(" << s->getName() <<")) ;"<< endl;  
+			vhdl << tab << tab << tab << tab << "end if;" << endl;
+
 
 			vhdl << tab << tab << tab << "else" << endl; 
 			vhdl << tab << tab << tab << tab << "for i in possibilityNumber downto 1 loop " << endl;
@@ -301,11 +283,8 @@ namespace flopoco{
 			// **** better aligned reporting here ****
 			vhdl << tab << tab << tab << tab << tab << "assert false report(\"Line \" & integer'image(counter) & \" of input file, incorrect output for " 
 					 << s->getName() << ": \" & lf & ";
-			if ((s->width() == 1) && ( !s->isBus()))
-				vhdl << "\"  expected value: \" & str(to_stdlogic(V_" << s->getName() << ")) ";
-			else 
-				vhdl <<      "\"  expected value: \" & str(to_stdlogicvector(V_" << s->getName() << ")) ";
-			vhdl << "& lf & \"          result: \" & str(" << s->getName() <<")) ;"<< endl;  
+			vhdl << "\" expected values: \" & "  << expectedString;
+			vhdl << " & lf & \"          result: \" & str(" << s->getName() <<")) ;"<< endl;  
 
 			vhdl << tab << tab << tab << tab << "end if;" << endl;
 			vhdl << tab << tab << tab << "end if;" << endl;
@@ -644,5 +623,34 @@ namespace flopoco{
 		int TestBench::getSimulationTime(){
 			return simulationTime;
 		}
+
+
+
+	
+	
+	OperatorPtr TestBench::parseArguments(Target *target, vector<string> &args) {
+		int n;
+		bool file;
+		if(UserInterface::globalOpList.empty()){
+			throw("ERROR: TestBench has no operator to wrap (it should come after the operator it wraps)");		
+		}
+		UserInterface::parseInt(args, "n", &n);
+		UserInterface::parseBoolean(args, "file", &file);
+		Operator* toWrap = UserInterface::globalOpList.back();
+		return new TestBench(target, toWrap, n, file);
+	}
+
+	void TestBench::registerFactory(){
+		UserInterface::add("TestBench", // name
+											 "Behavorial test bench for the preceding operator.",
+											 UserInterface::TestBenches,
+											 "fixed-point function evaluator; fixed-point", // categories
+											 "n(int)=-2: number of random tests. If n=-2, an exhaustive test is generated (use only for small operators);\
+                        file(bool)=true:Inputs and outputs are stored in file test.input (lower VHDL compilation time). If false, they are stored in the VHDL;",
+											 "",
+											 TestBench::parseArguments
+											 ) ;
+		
+	}
 
 }

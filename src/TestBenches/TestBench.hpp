@@ -42,6 +42,14 @@ namespace flopoco{
 		/** Return the total simulation time*/
 		int getSimulationTime();
 
+
+		/** Factory method that parses arguments and calls the constructor */
+		static OperatorPtr parseArguments(Target *target , vector<string> &args);
+
+		/** Factory register method */ 
+		static void registerFactory();
+
+		
 	private:
 		Operator *op_; /**< The unit under test UUT */
 		int       n_;   /**< The parameter from the constructor */

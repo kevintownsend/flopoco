@@ -44,11 +44,11 @@ namespace flopoco{
 		addInput("Cin");
 		addOutput("R"  , wIn_);
 
-		if (verbose){
-			cout <<"delay for X is   "<< inputDelays["X"]<<endl;	
-			cout <<"delay for Y is   "<< inputDelays["Y"]<<endl;
-			cout <<"delay for Cin is "<< inputDelays["Cin"]<<endl;
-		}
+		// if (verbose){
+		// 	cout <<"delay for X is   "<< inputDelays["X"]<<endl;	
+		// 	cout <<"delay for Y is   "<< inputDelays["Y"]<<endl;
+		// 	cout <<"delay for Cin is "<< inputDelays["Cin"]<<endl;
+		// }
 
 		if (isSequential()){
 			
@@ -57,8 +57,8 @@ namespace flopoco{
 			
 			
 			if (false){
-			if (verbose)
-				cout << "The maximum input delay is "<<	maxInputDelay<<endl;
+			// if (verbose)
+			// 	cout << "The maximum input delay is "<<	maxInputDelay<<endl;
 			
 			cSize = new int[2000];
 			REPORT(3, "-- The new version: direct mapping without 0/1 padding, IntAdders instantiated");
@@ -267,7 +267,7 @@ exit(1);
 					vhdl<<tab<<declare(join("sX",j,"_0_l",l,"_One"))<< "  <= '1' when "<< join("sX",j,"_0_l",l-1)<< " >= not("<<join("sX",j,"_1_l",l-1)<<") else '0';"<<endl;
 #else
 int tp = target->isPipelined();
-target->setNotPipelined();
+target->setPipelined(false);
 IntComparator *compZero = new IntComparator(target, cSize[j], 2, false, 0);
 oplist.push_back(compZero);
 IntComparator *compOne = new IntComparator(target, cSize[j], 1, false, 0);

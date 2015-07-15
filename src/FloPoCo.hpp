@@ -10,6 +10,7 @@
 #endif
 
 #include "Operator.hpp"
+#include "UserInterface.hpp"
 #include "FlopocoStream.hpp"
 
 /* operator pipeline work* ------------------------------------ */
@@ -86,6 +87,7 @@
 
 
 /* Floating-point adder variants ----------------------------- */
+#include "FPAddSub/FPAdd.hpp"
 #include "FPAddSub/FPAddDualPath.hpp"
 #include "FPAddSub/FPAddSinglePath.hpp"
 #include "FPAddSub/FPAdd3Input.hpp"

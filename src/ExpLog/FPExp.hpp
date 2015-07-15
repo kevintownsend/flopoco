@@ -26,16 +26,14 @@ class Fragment;
 
 namespace flopoco{
 
-
+	
 	class FPExp : public Operator
 	{
 	public:
-
 		/** @brief The magic dual table, that holds either (e^A, e^Z-1) or (e^A, e^Z-Z-1)
 			   |.....e^A....||...expZpart.....|
 			   <--sizeExpA--><--sizeExpZPart-->
 		*/
-
 		class magicTable: public DualTable {
 		public:
 			magicTable(Target* target, int sizeExpA_, int sizeExpZPart_, bool storeExpZmZm1_);
@@ -79,11 +77,17 @@ namespace flopoco{
 
 		// Overloading the virtual functions of Operator
 		// void outputVHDL(std::ostream& o, std::string name);
-
 		void emulate(TestCase * tc);
 		void buildStandardTestCases(TestCaseList* tcl);
 		TestCase* buildRandomTestCase(int i);
 
+		/** Factory method that parses arguments and calls the constructor */
+		static OperatorPtr parseArguments(Target *target , vector<string> &args);
+
+		/** Factory register method */ 
+		static void registerFactory();
+		
+		
 	private:
 		int wE; /**< Exponent size */
 		int wF; /**< Fraction size */
@@ -91,6 +95,5 @@ namespace flopoco{
 		int d;  /**< Degree of the polynomial approximation */
 		int g;  /**< Number of guard bits */
 	};
-
 }
 #endif
