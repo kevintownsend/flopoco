@@ -87,6 +87,8 @@ namespace flopoco{
 	// split into smaller and smaller intervals until the function can be approximated by a polynomial of degree degree.
 	void PiecewisePolyApprox::build() {
 
+		int nbIntervals;
+
 		ostringstream cacheFileName;
 		cacheFileName << "PiecewisePoly_"<<vhdlize(f->description) << "_" << degree << "_" << targetAccuracy << ".cache";
 
@@ -112,8 +114,6 @@ namespace flopoco{
 			// TODO test with [-1,1] which is the whole point of current refactoring.
 			// There needs to be a bit of logic here because rangeS should be [-1,1] by default to exploit signed arith,
 			// except in the case when alpha=0 because then rangeS should be f->rangeS (and should not be freed)
-
-			int nbIntervals;
 
 			// Limit alpha to 24, because alpha will be the number of bits input to a table
 			// it will take too long before that anyway
@@ -235,17 +235,6 @@ namespace flopoco{
 			}
 			// TODO? In the previous loop we could also check if one of the coeffs is always positive or negative, and optimize generated code accordingly
 
-			// A bit of reporting
-			REPORT(INFO,"Final report: ");
-			REPORT(INFO,"  Degree=" << degree	<< "      maxApproxErrorBound=" << approxErrorBound);
-			int totalOutputSize=0;
-			for (int j=0; j<=degree; j++) {
-				int size = MSB[j]-LSB +1;
-				totalOutputSize += size ;
-				REPORT(INFO,"      MSB["<<j<<"] = " << MSB[j] << "  size=" << size);
-			}
-			REPORT(INFO, "  Total size of the table is " << nbIntervals << " x " << totalOutputSize << " bits");
-
 			// Write the cache file
 			REPORT(INFO, "Writing to cache file: " << cacheFileName.str());
 			file.open(cacheFileName.str().c_str(), ios::out);
@@ -275,6 +264,7 @@ namespace flopoco{
 			getline(file, line); // ignore the second line which is a comment
 			file >> degree;
 			file >> alpha;
+			nbIntervals=1<<alpha;
 			file >> LSB;
 
 			for (int j=0; j<=degree; j++) {
@@ -295,6 +285,17 @@ namespace flopoco{
 				poly.push_back(p);
 			}
 		} // end if cache
+		// A bit of reporting
+		REPORT(INFO,"Parameters of the approximation polynomials: ");
+		REPORT(INFO,"  Degree=" << degree	<< "  alpha=" << alpha	<< "    maxApproxErrorBound=" << approxErrorBound  << "    common coeff LSB="  << LSB);
+		int totalOutputSize=0;
+		for (int j=0; j<=degree; j++) {
+			int size = MSB[j]-LSB +1;
+			totalOutputSize += size ;
+			REPORT(INFO,"      MSB["<<j<<"] = \t" << MSB[j] << "\t size=" << size);
+		}
+		REPORT(INFO, "  Total size of the table is " << nbIntervals << " x " << totalOutputSize << " bits");
+
 	}
 
 

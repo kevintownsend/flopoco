@@ -247,7 +247,7 @@ namespace flopoco{
                         msbOut(int): weight of output MSB;\
                         lsbOut(int): weight of output LSB;\
                         d(int): degree of the polynomial;\
-                        approxErrorBudget(float)=0.25: error budget in ulp for the approximation.",                        
+                        approxErrorBudget(real)=0.25: error budget in ulp for the approximation.",                        
 											 "This operator uses a table for coefficients, and Horner evaluation with truncated multipliers sized just right.<br>For more details, see <a href=\"bib/flopoco.html#DinJolPas2010-poly\">this article</a>.",
 											 FixFunctionByPiecewisePoly::parseArguments
 											 ) ;
