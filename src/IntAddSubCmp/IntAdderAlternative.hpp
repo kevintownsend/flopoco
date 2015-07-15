@@ -8,7 +8,7 @@
 #include "../Operator.hpp"
 #include "IntAdder.hpp"
 namespace flopoco {
-	
+
 #define LOGIC      0
 #define REGISTER   1
 #define SLICE      2
@@ -16,7 +16,7 @@ namespace flopoco {
 
 #define PINF 16384
 #define XILINX_OPTIMIZATION 1
-	
+
 	/** The IntAdderAlternative class for experimenting with adders.
 	*/
 	class IntAdderAlternative : public IntAdder {
@@ -33,7 +33,7 @@ namespace flopoco {
 			* @param[in] srl              optimize for use of shift registers
 			**/
 			IntAdderAlternative ( Target* target, int wIn, map<string, double> inputDelays = emptyDelayMap, int optimizeType = 2, bool srl = true);
-			
+
 			/**
 			* Returns the cost in LUTs of the Alternative implementation
 			* @param[in] target            the target device
@@ -43,7 +43,7 @@ namespace flopoco {
 			* @return                      the number of LUTS
 			*/
 			int getLutCostAlternative ( Target* target, int wIn, map<string, double> inputDelays, bool srl );
-			
+
 			/**
 			* Returns the cost in Registers of the Alternative implementation
 			* @param[in] target            the target device
@@ -53,7 +53,7 @@ namespace flopoco {
 			* @return                      the number of Registers
 			*/
 			int getRegCostAlternative ( Target* target, int wIn, map<string, double> inputDelays, bool srl );
-			
+
 			/**
 			* Returns the cost in Slices of the Alternative implementation
 			* @param[in] target            the target device
@@ -63,15 +63,21 @@ namespace flopoco {
 			* @return                      the number of Slices
 			*/
 			int getSliceCostAlternative ( Target* target, int wIn, map<string, double> inputDelays, bool srl );
-			
+
 			/**
 			*  Destructor
 			*/
 			~IntAdderAlternative();
-				
+
+			// User-interface stuff
+			/** Factory method */
+			static OperatorPtr parseArguments(Target *target ,const vector<string> &args);
+
+			static void registerFactory();
+
 		protected:
 			int wIn_;                         /**< the width for X, Y and R*/
-			
+
 		private:
 			double maxInputDelay;             /**< the maximum delay between the inputs present in the map*/
 			int *cSize;                       /**< array containing the chunk sizes for all nbOfChunks*/
@@ -84,10 +90,10 @@ namespace flopoco {
 			int k;                            /**< the number of chunks */
 			int w;                            /**< the addition width */
 			int alternativeSlackVersion;      /**< for the slack case, two architectures are possible in the alternative case. */
-			
+
 			double objectivePeriod;           /**< the inverse of the frequency */
-			bool inputsGotRegistered; 
+			bool inputsGotRegistered;
 	};
-	
+
 }
 #endif

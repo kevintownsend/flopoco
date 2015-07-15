@@ -33,67 +33,6 @@ namespace flopoco
         int wneg = (w >> (nbBitW-1)) << (nbBitW-1); //getting the sign bit
         w -= 2*wneg; //switching from two's complement to decimal representation, more convenient for upcoming computation
 
-//		if((w>=16 && w<=19) || (w==20 && d<=1) || (w==21 && d==0))
-//		{
-//			result = mpz_class("01001", 2);
-//		}
-//		else if ((w==20 && d>=2) || (w==21 && d>=1) || (w==22 && d<=1))
-//		{
-//			result = mpz_class("11010", 2);
-//		}
-//		else if ((w==22 && d>=2) || (w==23) || (w==24 && d<=1))
-//		{
-//			result = mpz_class("11011", 2);
-//		}
-//		else if ((w==24 && d>=2) || (w==25) || (w==26 && d==0))
-//		{
-//			result = mpz_class("11100", 2);
-//		}
-//		else if ((w==26 && d>=1) || (w==27))
-//		{
-//			result = mpz_class("11101", 2);
-//		}
-//		else if (w==28)
-//		{
-//			result = mpz_class("11110", 2);
-//		}
-//		else if (w==29 || w==30)
-//		{
-//			result = mpz_class("11111", 2);
-//		}
-//		else if (w==0 || w==31)
-//		{
-//			result = mpz_class("00000", 2);
-//		}
-//		else if (w==1 || w==2)
-//		{
-//			result = mpz_class("00001", 2);
-//		}
-//		else if (w==3)
-//		{
-//			result = mpz_class("00010", 2);
-//		}
-//		else if ((w==5 && d>=1) || (w==4))
-//		{
-//			result = mpz_class("00011", 2);
-//		}
-//		else if ((w==5 && d==0) || (w==6) || (w==7 && d>=2))
-//		{
-//			result = mpz_class("00100", 2);
-//		}
-//		else if ((w==7 && d<=1) || (w==8) || (w==9 && d>=2))
-//		{
-//			result = mpz_class("00101", 2);
-//		}
-//		else if ((w==9 && d<=1) || (w==10 && d>=1) || (w==11 && d>=2))
-//		{
-//			result = mpz_class("00110", 2);
-//		}
-//		else if ((w==10 && d==0) || (w==11 && d<=1) || (w>=12 && w<=15))
-//		{
-//			result = mpz_class("10111", 2);
-//		}
-
 		int decimalResult;
 		int nbBitK = ceil(log2(digitSet)+1); //Nb of bit for the entire part of w
 		float realw = w/pow(2, nbBitW-nbBitK);
@@ -118,26 +57,44 @@ namespace flopoco
 
 			if((realw+vPitch <= wMax && realw >= wMin) || (k == digitSet && realw >= wMin) || (k == -digitSet && realw+vPitch <= wMax))
 			{
-				//cout << realw << " " << d << " qui donne qi = "  << k << endl;
-				//cout << " parce que evidemment on est entre " << wMin << " et " << wMax << endl;
 				decimalResult = k;
 				break;
 			}
 		}
 
+		int qa = 0;
+		if(qa % 2 == 1)
+			qa = 1;
+		if(decimalResult == 6 || decimalResult == 10)
+			qa = 2;
+		if((decimalResult < 0 && decimalResult != -7) || decimalResult == 7)
+			qa += 4;
 
+		int qb = 0;
+		if(decimalResult == 2 || decimalResult == 3 || decimalResult == -2 || decimalResult == -3)
+			qb = 1;
+		else if((decimalResult >= 4 && decimalResult == 6) || (decimalResult <= -4 && decimalResult >= -6))
+			qb = 2;
+		else if(decimalResult >= 7 || decimalResult <= -7)
+			qb = 3;
 		if(decimalResult < 0)
-		{
-			decimalResult+=(pow(2, nbBitK)); //switch to two's complement
-			if(decimalResult != 9 && radix > 4)
-				decimalResult+=pow(2, nbBitK); //qa is negative
-		}
-		else if(decimalResult == 7)
-		{
-			decimalResult+=pow(2, nbBitK); //qa is negative
-		}
+			qb += 4;
 
-		result = mpz_class(decimalResult);
+		result = mpz_class((qa << 3) + qb);
+
+
+//		if(decimalResult < 0)
+//		{
+//			decimalResult+=(pow(2, nbBitK)); //switch to two's complement
+//			if(decimalResult != 9 && radix > 4)
+//				decimalResult+=pow(2, nbBitK); //qa is negative
+//		}
+//		else if(decimalResult == 7)
+//		{
+//			decimalResult+=pow(2, nbBitK); //qa is negative
+//		}
+//
+//		result = mpz_class(decimalResult);
 		return result;
 	}
 }

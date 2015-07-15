@@ -101,6 +101,79 @@ namespace flopoco {
 //		REPORT(DEBUG, "Finished implementing the adder");
 	}
 
+
+	void IntAdder::updateParameters ( Target* target, int &alpha, int &beta, int &k )
+	{
+		target->suggestSlackSubaddSize ( alpha , wIn_, target->ffDelay() + target->localWireDelay() ); /* chunk size */
+		if ( wIn_ == alpha )
+		{ /* addition requires one chunk */
+			beta = 0;
+			k    = 1;
+		}
+		else
+		{
+			beta = ( wIn_ % alpha == 0 ? alpha : wIn_ % alpha );
+			k    = ( wIn_ % alpha == 0 ? wIn_ / alpha : int ( ceil ( double ( wIn_ ) / double ( alpha ) ) ) );
+		}
+	}
+
+	void IntAdder::updateParameters ( Target* target, map<string, double> inputDelays, int &alpha, int &beta, int &gamma, int &k )
+	{
+		int typeOfChunks = 1;
+		bool status = target->suggestSlackSubaddSize ( gamma , wIn_, getMaxInputDelays(inputDelays) ); // the first chunk size
+		if (!status){ /* well, it will not work in this case, we will have to register the inputs */
+			k     = -1;
+			alpha =  0;
+			beta  =  0;
+			gamma =  0;
+		}
+		else if (wIn_ - gamma > 0)
+		{ //more than 1 chunk
+			target->suggestSlackSubaddSize (alpha, wIn_-gamma, target->ffDelay() + target->localWireDelay());
+			if (wIn_ - gamma == alpha)
+				typeOfChunks++;
+			else
+				typeOfChunks+=2; /* beta will have to be computed as well */
+
+			if (typeOfChunks == 3)
+				beta = ( (wIn_-gamma) % alpha == 0 ? alpha : ( wIn_-gamma ) % alpha );
+			else
+				beta = alpha;
+
+			if ( typeOfChunks==2 )
+				k = 2;
+			else
+				k = 2 + int ( ceil ( double ( wIn_ - beta - gamma ) / double ( alpha ) ) );
+		}
+		else
+		{ /* in thiis case there is only one chunk type: gamma */
+			alpha = 0;
+			beta  = 0;
+			k     = 1;
+		}
+	}
+
+	void IntAdder::updateParameters ( Target* target, map<string, double> inputDelays, int &alpha, int &beta, int &k )
+	{
+		bool status = target->suggestSlackSubaddSize ( alpha , wIn_,  getMaxInputDelays ( inputDelays ) ); /* chunk size */
+		if ( !status ) {
+			k=-1;
+			alpha=0;
+			beta=0;
+		}
+		else if ( wIn_ == alpha )
+		{
+			/* addition requires one chunk */
+			beta = 0;
+			k    = 1;
+		}
+		else
+		{
+			beta = ( wIn_ % alpha == 0 ? alpha : wIn_ % alpha );
+			k    = ( wIn_ % alpha == 0 ? wIn_ / alpha : int ( ceil ( double ( wIn_ ) / double ( alpha ) ) ) );
+		}
+	}
+
 	/**************************************************************************/
 	IntAdder::~IntAdder() {
 	}
