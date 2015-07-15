@@ -41,12 +41,17 @@ namespace flopoco
 		
 		
 	void UserInterface::main(int argc, char* argv[]) {
-		sollya_lib_init();
-		initialize();
-		buildAll(argc, argv);
-		outputVHDL();
-		finalReport(cerr); 
-		sollya_lib_close();
+		try {
+			sollya_lib_init();
+			initialize();
+			buildAll(argc, argv);
+			outputVHDL();
+			finalReport(cerr); 
+			sollya_lib_close();
+		}
+		catch (string e) {
+			cerr << endl << e;
+		}
 	}
 	
 
@@ -709,7 +714,7 @@ namespace flopoco
 				if(part[j]==':') {
 					// description
 					j++;
-					while (part[j]==' ') j++; // remove leading spaces
+					while (part[j]==' ' || part[j]=='\t') j++; // remove leading spaces and tabs
 					string description = part.substr(j, -1);
 					m_paramDoc[name] = description;
 					//cout << " :  {" << description <<"}" << endl;

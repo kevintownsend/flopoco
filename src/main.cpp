@@ -37,14 +37,20 @@ using namespace flopoco;
 
 int main(int argc, char* argv[] )
 {
-	Shifter::registerFactory();
-	FPAdd::registerFactory();
-	FPExp::registerFactory();
-	BasicPolyApprox::registerFactory();
-	FixFunctionBySimplePoly::registerFactory();
-	FixFunctionByPiecewisePoly::registerFactory();
-	FixFunctionByTable::registerFactory();
-	TestBench::registerFactory();
+	try {
+		Shifter::registerFactory();
+		FPAdd::registerFactory();
+		FPExp::registerFactory();
+		BasicPolyApprox::registerFactory();
+		FixFunctionBySimplePoly::registerFactory();
+		FixFunctionByPiecewisePoly::registerFactory();
+		FixFunctionByTable::registerFactory();
+		TestBench::registerFactory();
+	}
+	catch (std::string s) {
+		cerr << "Error while registering factories: " << s <<endl;
+		exit(EXIT_FAILURE);
+	}
 	// cout << UserInterface::getFactoryCount() << " factories registered " << endl ;
 
 	UserInterface::main(argc, argv);
