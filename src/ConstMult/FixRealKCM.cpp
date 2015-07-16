@@ -752,7 +752,52 @@ namespace flopoco{
 		return guardBitsFromTableNumber(nbOfTables, targetUlpError);
 	}
 
+	OperatorPtr FixRealKCM::parseArguments(
+			Target* target, 
+			std::vector<std::string> &args
+		)
+	{
+		int lsbIn, lsbOut, msbIn;
+		bool signedInput;
+		double targetUlpError;
+		string constant;
+		UserInterface::parseInt(args, "lsbIn", &lsbIn);
+		UserInterface::parseString(args, "constant", &constant);
+		UserInterface::parseInt(args, "lsbOut", &lsbOut);
+		UserInterface::parseInt(args, "msbIn", &msbIn);
+		UserInterface::parseBoolean(args, "signedInput", &signedInput);
+		UserInterface::parseFloat(args, "targetUlpError", &targetUlpError);	
+		return new FixRealKCM(
+				target, 
+				signedInput,
+				msbIn,
+				lsbIn,
+				lsbOut,
+				constant, 
+				targetUlpError
+			);
+	}
 
+	void FixRealKCM::registerFactory()
+	{
+		UserInterface::add(
+				"FixRealKCM",
+				"Table based real multiplier. Output size is computed",
+				UserInterface::BasicFixPoint,
+				"",
+				"signedInput(bool): 0=unsigned, 1=signed; \
+msbIn(int): weight associated to most significant bit (including \
+sign bit);\
+lsbIn(int): weight associated to least significant bit;\
+lsbOut(int): weight associated to output least significant bit; \
+constant(string): constant expressed in sollya formalism; \
+targetUlpError(real)=1.0: required precision on last bit. Should be strictly greater than 0.5 and lesser than 1;",
+				"For constants like 0 or powers of two, the KCM will \
+				automatically use a more efficient computation based on shiffts \
+				 and padd/truncate.",
+				FixRealKCM::parseArguments		
+			);
+	}
 
 	/************************** The FixRealKCMTable class ********************/
 
@@ -760,11 +805,11 @@ namespace flopoco{
 	FixRealKCMTable::FixRealKCMTable(
 			Target* target, 
 			FixRealKCM* mother, 
-			int i, 
-			int weight, 
-			int wIn, 
-			int wOut, 
-			bool negativeSubproduct, 
+			int i,
+			int weight,
+			int wIn,
+			int wOut,
+			bool negativeSubproduct,
 			bool last,
 			int pipeline
 		):

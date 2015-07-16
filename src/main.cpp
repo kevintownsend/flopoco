@@ -44,6 +44,7 @@ int main(int argc, char* argv[] )
 	FixFunctionBySimplePoly::registerFactory();
 	FixFunctionByPiecewisePoly::registerFactory();
 	FixFunctionByTable::registerFactory();
+	FixRealKCM::registerFactory();
 	TestBench::registerFactory();
 	// cout << UserInterface::getFactoryCount() << " factories registered " << endl ;
 

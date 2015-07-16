@@ -209,18 +209,20 @@ namespace flopoco {
 
 			for (int i=0; i<n; i++) 
 			{
-				// TODO possible mem leak here? The pointer is lost, do we keep pointers to the subtables?
-				// Multiplication: instantiating a KCM object. It will add bits also to the right of lsbOutKCM
+				// TODO possible mem leak here? The pointer is lost, do we keep
+				// pointers to the subtables?  Multiplication: instantiating a
+				// KCM object. It will add bits also to the right of lsbOutKCM
 				new FixRealKCM(this,				// the envelopping operator
-														target, 	// the target FPGA
-														getSignalByName(join("Yb",i)),
-														true, 		// signed
-														-1, 		// input MSB, but one sign bit will be added
-														lsbOut, 		// input LSB weight
-														lsbOutKCM, 		// output LSB weight -- the output MSB is computed out of the constant
-														coeffb[i], 	// pass the string unmodified
-														bitHeapB		// pass the reference to the bitheap that will accumulate the intermediary products
-													);
+					target, 	// the target FPGA
+					getSignalByName(join("Yb",i)),
+					true, 		// signed
+					-1, 		// input MSB, but one sign bit will be added
+					lsbOut, 	// input LSB weight
+					lsbOutKCM, 	// output LSB weight -- the output MSB is computed out of the constant
+					coeffb[i], 	// pass the string unmodified
+					bitHeapB,	// pass the reference to the bitheap that will accumulate the intermediary products
+					lsbOutKCM - guardBitsKCM_B
+				);
 			}
 
 
@@ -228,15 +230,16 @@ namespace flopoco {
 			{
 				// Multiplication: instantiating a KCM object. It will add bits also to the right of lsbOutKCM
 				new FixRealKCM(this,				// the envelopping operator
-														target, 	// the target FPGA
-														getSignalByName(join("Ya",i)),
-														true, 		// signed
-														msbOut, 		// input MSB, but one sign bit will be added
-														lsbOut-g, 		// input LSB weight
-														lsbOutKCM, 		// output LSB weight -- the output MSB is computed out of the constant
-														coeffa[i], 	// pass the string unmodified
-														bitHeapA		// pass the reference to the bitheap that will accumulate the intermediary products
-													);
+						target, 	// the target FPGA
+						getSignalByName(join("Ya",i)),
+						true, 		// signed
+						msbOut, 		// input MSB, but one sign bit will be added
+						lsbOut-g, 		// input LSB weight
+						lsbOutKCM, 		// output LSB weight -- the output MSB is computed out of the constant
+						coeffa[i], 	// pass the string unmodified
+						bitHeapA,		// pass the reference to the bitheap that will accumulate the intermediary products
+						lsbOutKCM - guardBitsKCM_A
+					);
 			}
 
 
@@ -355,7 +358,8 @@ namespace flopoco {
 		nextCycle();
 
 		//Adding one half ulp to obtain correct rounding
-		vhdl << tab << declare("R_int", wO+1) << " <= " <<  "Rtmp_d1" << range(size-1, g - 1) << " + (" << zg(wO) << " & \'1\');" << endl;
+		vhdl << tab << declare("R_int", wO+1) << " <= " <<  "Rtmp_d1" << 
+			range(size-1, g - 1) << " + (" << zg(wO) << " & \'1\');" << endl;
 		vhdl << tab << "R <= " <<  "R_int" << range(wO, 1) << ";" << endl;
 
 	};

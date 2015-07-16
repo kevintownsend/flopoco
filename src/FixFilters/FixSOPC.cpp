@@ -86,7 +86,8 @@ namespace flopoco{
 		name << "FixSOPC_uid" << getNewUId(); 
 		setName(name.str()); 
 	
-		setCopyrightString("Matei Istoan, Louis Besème, Florent de Dinechin (2013-2015)");
+		setCopyrightString("Matei Istoan, Louis Besème,"
+				" Florent de Dinechin (2013-2015)");
 		
 		for (int i=0; i< n; i++)
 		{
@@ -99,7 +100,8 @@ namespace flopoco{
 		{
 			clist << "    " << coeff[i] << ", ";
 		}
-		REPORT(INFO, "Building a " << n << "-tap FIR; lsbOut=" << lsbOut << " for coefficients " << clist.str());
+		REPORT(INFO, "Building a " << n << "-tap FIR; lsbOut=" << lsbOut << 
+				" for coefficients " << clist.str());
 
 
 		if(computeGuardBits) {
@@ -117,7 +119,8 @@ namespace flopoco{
 				// If conversion did not succeed (i.e. parse error)
 				if(node == 0)	{
 						ostringstream error;
-						error << srcFileName << ": Unable to parse string " << coeff[i] << " as a numeric constant" << endl;
+						error << srcFileName << ": Unable to parse string " << 
+							coeff[i] << " as a numeric constant" << endl;
 						throw error.str();
 					}
 				
@@ -197,7 +200,8 @@ namespace flopoco{
 						 lsbIn[i], 		// input LSB weight
 						 lsbOutKCM, 		// output LSB weight -- the output MSB is computed out of the constant
 						 coeff[i], 	// pass the string unmodified
-						 bitHeap		// pass the reference to the bitheap that will accumulate the intermediary products
+						 bitHeap,	// pass the reference to the bitheap that will accumulate the intermediary products
+						 lsbOutKCM - guardBitsKCM
 					 );
 			}
 			

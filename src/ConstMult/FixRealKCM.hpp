@@ -98,6 +98,13 @@ namespace flopoco{
 
 		void emulate(TestCase* tc);
 
+		static OperatorPtr parseArguments(
+				Target* target,
+				vector<string>& args
+			);
+
+		static void registerFactory();
+
 		/**
 		 * @brief determine how many guards bits will be needed for the KCM to
 		 * 			compute result with asked precision
@@ -136,6 +143,8 @@ namespace flopoco{
 
 		/* The operator which envelops this constant multiplier */
 		Operator*	parentOp;
+
+
 		
 		private:
 		static int guardBitsFromTableNumber(

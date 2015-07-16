@@ -235,8 +235,6 @@ namespace flopoco
 		unusedHardMultThreshold=0.7;
 	}
 
-
-
 	void UserInterface::buildAll(int argc, char* argv[]) {
 
 		// manage trivial cases
@@ -529,14 +527,27 @@ namespace flopoco
 
 	
 	
-	void UserInterface::add( string name,
-													 string description, /**< for the HTML doc and the detailed help */ 
-													 DocumentationCategory category,
-													 string seeAlso,
-													 string parameterList, /**< semicolon-separated list of parameters, each being name(type)[=default]:short_description  */
-													 string extraHTMLDoc, /**< Extra information to go to the HTML doc, for instance links to articles or details on the algorithms */ 
-													 parser_func_t parser	 ) {
-		OperatorFactoryPtr factory(new OperatorFactory(name, description, category, seeAlso, parameterList, extraHTMLDoc, parser));
+	void UserInterface::add( 
+			string name,
+			string description, /**< for the HTML doc and the detailed help */ 
+			DocumentationCategory category,
+			string seeAlso,
+			string parameterList, /**< semicolon-separated list of parameters, each being name(type)[=default]:short_description  */
+			string extraHTMLDoc, /**< Extra information to go to the HTML doc, for instance links to articles or details on the algorithms */ 
+			parser_func_t parser	 ) 
+	{
+		cout << name << endl;
+		OperatorFactoryPtr factory(
+				new OperatorFactory(
+						name, 
+						description, 
+						category, 
+						seeAlso, 
+						parameterList, 
+						extraHTMLDoc, 
+						parser
+					)
+			);
 		UserInterface::registerFactory(factory);
 	}
 
