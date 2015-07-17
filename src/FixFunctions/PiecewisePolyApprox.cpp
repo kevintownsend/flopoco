@@ -285,6 +285,20 @@ namespace flopoco{
 				poly.push_back(p);
 			}
 		} // end if cache
+
+		// Check if all the coefficients of a given degree are of the same sign
+		for (int j=0; j<=degree; j++) {
+			mpz_class mpzsign = (poly[0]->coeff[j]->getBitVectorAsMPZ()) >> (MSB[j]-LSB);
+			coeffSigns.push_back((mpzsign==0?+1:-1));
+			for (int i=1; i<(1<<alpha); i++) {
+				mpzsign = (poly[i]->coeff[j]->getBitVectorAsMPZ()) >> (MSB[j]-LSB);
+				int sign = (mpzsign==0 ? 1 : -1);
+				if (sign != coeffSigns[j])
+					coeffSigns[j] = 0;
+			}
+		}
+		
+		
 		// A bit of reporting
 		REPORT(INFO,"Parameters of the approximation polynomials: ");
 		REPORT(INFO,"  Degree=" << degree	<< "  alpha=" << alpha	<< "    maxApproxErrorBound=" << approxErrorBound  << "    common coeff LSB="  << LSB);
@@ -292,7 +306,7 @@ namespace flopoco{
 		for (int j=0; j<=degree; j++) {
 			int size = MSB[j]-LSB +1;
 			totalOutputSize += size ;
-			REPORT(INFO,"      MSB["<<j<<"] = \t" << MSB[j] << "\t size=" << size);
+			REPORT(INFO,"      MSB["<<j<<"] = \t" << MSB[j] << "\t size=" << size  << (coeffSigns[j]==0? "\t variable sign " : "\t constant sign ") << coeffSigns[j]);
 		}
 		REPORT(INFO, "  Total size of the table is " << nbIntervals << " x " << totalOutputSize << " bits");
 

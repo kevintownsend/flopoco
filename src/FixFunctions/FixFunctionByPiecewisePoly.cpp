@@ -66,7 +66,12 @@ namespace flopoco{
 		mpz_class z=0;
 		int currentShift=0;
 		for(int i=polyApprox->degree; i>=0; i--) {
-			z += (polyApprox-> getCoeff(x, i)) << currentShift; // coeff of degree i from poly number x
+			mpz_class coeff = polyApprox-> getCoeff(x, i); // coeff of degree i from poly number x
+			if (polyApprox->coeffSigns[i] != 0) {// sign is constant among all the coefficients: remove it from here, it will be added back as a constant in the VHDL
+				mpz_class mask = (mpz_class(1)<<(polyApprox->MSB[i] - polyApprox->LSB) ) - 1; // size is msb-lsb+1
+				coeff = coeff & mask; 
+			}
+			z += coeff << currentShift; // coeff of degree i from poly number x
 			// REPORT(DEBUG, "i=" << i << "   z=" << unsignedBinary(z, 64));
 			if(i==0 && addFinalRoundBit){ // coeff of degree 0
 				z += mpz_class(1)<<(currentShift + finalRoundBitPos - polyApprox->LSB); // add the round bit
@@ -76,7 +81,7 @@ namespace flopoco{
 				z = z & ((mpz_class(1)<<wOut) -1);
 				// REPORT(INFO, "Adding final round bit at position " << finalRoundBitPos-polyApprox->LSB);
 			}
-			currentShift +=  polyApprox->MSB[i] - polyApprox->LSB +1;
+			currentShift +=  polyApprox->MSB[i] - polyApprox->LSB + (polyApprox->coeffSigns[i]==0? 1: 0);
 		}
 		return z;
 	}
@@ -143,7 +148,7 @@ namespace flopoco{
 			// Store it in a table
 			int polyTableOutputSize=0;
 			for (int i=0; i<=degree; i++) {
-				polyTableOutputSize += polyApprox->MSB[i] - polyApprox->LSB +1;
+				polyTableOutputSize += polyApprox->MSB[i] - polyApprox->LSB + (polyApprox->coeffSigns[i]==0? 1 : 0);
 			} 
 			REPORT(DETAILED, "Poly table input size  = " << alpha);
 			REPORT(DETAILED, "Poly table output size = " << polyTableOutputSize);
@@ -171,9 +176,13 @@ namespace flopoco{
 
 			int currentShift=0;
 			for(int i=polyApprox->degree; i>=0; i--) {
+				int actualSize = polyApprox->MSB[i] - polyApprox->LSB + (polyApprox->coeffSigns[i]==0 ? 1 : 0);
 				vhdl << tab << declare(join("A",i), polyApprox->MSB[i] - polyApprox->LSB +1)
-						<< " <= Coeffs" << range(currentShift + (polyApprox->MSB[i] - polyApprox->LSB), currentShift) << ";" << endl;
-				currentShift +=  polyApprox->MSB[i] - polyApprox->LSB +1;
+						 << " <= ";
+				if (polyApprox->coeffSigns[i]!=0) // add constant sign back
+					vhdl << (polyApprox->coeffSigns[i]==1? "\"0\"" :  "\"1\"") << " & " ;				
+				vhdl << "Coeffs" << range(currentShift + actualSize-1, currentShift) << ";" << endl;
+				currentShift += actualSize;
 			}
 
 			// Here I wish I could plug more parallel evaluators. Hence the interface.
