@@ -304,7 +304,7 @@ namespace flopoco{
 		REPORT(INFO,"  Degree=" << degree	<< "  alpha=" << alpha	<< "    maxApproxErrorBound=" << approxErrorBound  << "    common coeff LSB="  << LSB);
 		int totalOutputSize=0;
 		for (int j=0; j<=degree; j++) {
-			int size = MSB[j]-LSB +1;
+			int size = MSB[j]-LSB + (coeffSigns[j]==0? 1 : 0);
 			totalOutputSize += size ;
 			REPORT(INFO,"      MSB["<<j<<"] = \t" << MSB[j] << "\t size=" << size  << (coeffSigns[j]==0? "\t variable sign " : "\t constant sign ") << coeffSigns[j]);
 		}
