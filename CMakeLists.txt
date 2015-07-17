@@ -388,13 +388,14 @@ TARGET_LINK_LIBRARIES(
 	${FLOPOCO_LIB}
   )
 
-ADD_EXECUTABLE(flopoco_soaktest
- src/main_soaktest
-)
-TARGET_LINK_LIBRARIES(
-  flopoco_soaktest  
-	${FLOPOCO_LIB}
-)
+# unplugged for now to speed up compilation, to revive some day
+#ADD_EXECUTABLE(flopoco_soaktest
+# src/main_soaktest
+#)
+#TARGET_LINK_LIBRARIES(
+#  flopoco_soaktest  
+#	${FLOPOCO_LIB}
+#)
 
 
 
