@@ -153,11 +153,10 @@ namespace flopoco{
 				REPORT(DETAILED, " Found alpha=" << alpha << " OK");
 
 			// Compute the LSB of each coefficient. Minimum value is:
-			LSB = floor(log2(targetAccuracy));
-			REPORT(DEBUG, "To obtain target accuracy " << targetAccuracy << " with a degree-"<<degree <<" polynomial, we compute coefficients accurate to " << targetAccuracy/degree
-						 << " (LSB="<<LSB<<")");
+			LSB = floor(log2(targetAccuracy*degree));
+			REPORT(DEBUG, "To obtain target accuracy " << targetAccuracy << " with a degree-"<<degree <<" polynomial, we compute coefficients accurate to LSB="<<LSB);
 			// It is pretty sure that adding intlog2(degree) bits is enough for FPMinimax.
-			int lsbAttemptsMax = intlog2(degree);
+			int lsbAttemptsMax = intlog2(degree)+1;
 			int lsbAttempts=0; // a counter of attempts to move the LSB down, caped by lsbAttemptsMax
 
 
@@ -170,12 +169,11 @@ namespace flopoco{
 				approxErrorBound = 0.0;
 				BasicPolyApprox *p;
 
-				REPORT(DETAILED, " Now computing the actual polynomials ");
+				REPORT(DETAILED, "Computing the actual polynomials ");
 				// initialize the vector of MSB weights
 				for (int j=0; j<=degree; j++) {
 					MSB.push_back(INT_MIN);
 				}
-
 
 				for (int i=0; i<nbIntervals; i++) {
 					REPORT(DETAILED, " ... computing polynomial approx for interval " << i << " / "<< nbIntervals);
@@ -187,6 +185,9 @@ namespace flopoco{
 					if (approxErrorBound < p->approxErrorBound){
 						REPORT(DEBUG, "   new approxErrorBound=" << p->approxErrorBound );
 						approxErrorBound = p->approxErrorBound;
+					}
+					if (approxErrorBound>targetAccuracy){
+						break;
 					}
 
 					// Now compute the englobing MSB for each coefficient
@@ -204,22 +205,23 @@ namespace flopoco{
 					success=true;
 				}
 				else {
-						REPORT(INFO, "So far measured approx error:" << approxErrorBound << " is larger than target accuracy: " << targetAccuracy << ". Thank you for your patience");
+					REPORT(INFO, "Measured approx error:" << approxErrorBound << " is larger than target accuracy: " << targetAccuracy << ". Increasing LSB and starting over. Thank you for your patience");
 					//empty poly
-					for (int i=0; i<nbIntervals; i++) {
-						free(poly.back());
+					for (auto i:poly) 
+						free(i);
+					while(!poly.empty())
 						poly.pop_back();
-					}
+					
 					if(lsbAttempts<=lsbAttemptsMax) {
 						lsbAttempts++;
 						LSB--;
 					}
 					else {
-						REPORT(INFO, "guessDegree mislead us, increasing alpha and starting over");
 						LSB+=lsbAttempts;
 						lsbAttempts=0;
 						alpha++;
 						nbIntervals=1<<alpha;
+						REPORT(INFO, "guessDegree mislead us, increasing alpha to " << alpha << " and starting over");
 					}
 				}
 			} // end while(!success)

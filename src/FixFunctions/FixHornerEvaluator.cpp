@@ -96,7 +96,7 @@ namespace flopoco{
 				// One input to the mult will be sigma[i+1], of size msbSigma[i+1]-lsbSigma[i+1]+1
 				// The other will be X, of size 0-lsbIn+1;  truncate it to the same size:
 				lsbXTrunc[i] = max(lsbIn, lsbSigma[i+1]-msbSigma[i+1]);
-				REPORT(DETAILED, "... lsbXTrunc[" << i<< "]=" << lsbXTrunc[i]);
+				//REPORT(DETAILED, "... lsbXTrunc[" << i<< "]=" << lsbXTrunc[i]);
 				if(lsbXTrunc[i]!=lsbIn) // there has been some truncation
 					error += exp2(lsbSigma[i]);
 				// otherwise no truncation, no error...

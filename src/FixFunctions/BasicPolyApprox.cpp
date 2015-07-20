@@ -230,7 +230,7 @@ g(int)=-1: the number of guardbits added. Using -1 gives sensible default",
 				if(degree==degreeSup || (degree<degreeSup && tryReducingLSB <= maxAttemptsReducingLSB)) {
 					LSB--;
 					tryReducingLSB++;
-					REPORT(DETAILED, "  ... pushing LSB to " << LSB << " and starting over (attempt #" << tryReducingLSB << " of " << maxAttemptsReducingLSB << ")");
+					REPORT(DETAILED, "  ... pushing LSB to " << LSB << " and starting over (attempt #" << tryReducingLSB << ")");
 				}
 				else { // OK, we tried pushing LSB thrice and it didn't work. Besides guessDegree didn't seem so sure of the degree.  Maybe we should increase degree?
 					// restore LSB
@@ -240,7 +240,8 @@ g(int)=-1: the number of guardbits added. Using -1 gives sensible default",
 					degree++;
 					sollya_lib_clear_obj(degreeS);
 					degreeS = sollya_lib_constant_from_int(degree);
-				}
+					REPORT(DETAILED, "Reducing LSB doesn't seem to work. Now trying increasing degree to  " << degree );
+ 				}
 			}
 		} // exit from the while loop... hopefully
 
@@ -379,7 +380,7 @@ g(int)=-1: the number of guardbits added. Using -1 gives sensible default",
 			int lsb= coeff[i]->LSB;
 			int msb= coeff[i]->MSB;
 			debugstring <<  endl << "> coeff" << right << setw(2) << i << ": "
-									<< " (" << setw(2)<< msb << ", " << setw(3)<< lsb << ")   "
+									<< " (" << setw(3)<< msb << ", " << setw(3)<< lsb << ")   "
 									<< setw(bitwidth + lsb0-lsb) << coeff[i]->getBitVector()
 									<< "  " << setw(10) << printMPFR(coeff[i]->fpValue) ;
 		}
