@@ -536,7 +536,6 @@ namespace flopoco
 			string extraHTMLDoc, /**< Extra information to go to the HTML doc, for instance links to articles or details on the algorithms */ 
 			parser_func_t parser	 ) 
 	{
-		cout << name << endl;
 		OperatorFactoryPtr factory(
 				new OperatorFactory(
 						name, 
