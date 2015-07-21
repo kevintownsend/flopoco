@@ -52,13 +52,10 @@ namespace flopoco{
 		}
 
 
-	void Target::setPipelined() {
-		pipeline_=true;
+	void Target::setPipelined(bool v) {
+		pipeline_=v;
 	}
 
-	void Target::setNotPipelined() {
-		pipeline_=false;
-	}
 
 	bool Target::isPipelined() {
 		return pipeline_;

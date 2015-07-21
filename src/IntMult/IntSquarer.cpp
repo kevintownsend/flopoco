@@ -198,7 +198,7 @@ namespace flopoco{
 			
 			bool tempPipelineStatus = target->isPipelined();
 			bool tempDSPStatus = target->hasHardMultipliers();
-			target->setNotPipelined();
+			target->setPipelined(false);
 			target->setUseHardMultipliers(false);
 			
 			if (tempPipelineStatus) 

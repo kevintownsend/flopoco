@@ -57,10 +57,10 @@ namespace flopoco{
 		}
 
 
-		/** Factory method */
-		static OperatorPtr parseArguments(Target *target ,const std::vector<std::string> &args);
+		/** Factory method that parses arguments and calls the constructor */
+		static OperatorPtr parseArguments(Target *target , vector<string> &args);
 
-		/** Adding this operator to the big factory */
+		/** Factory register method */ 
 		static void registerFactory();
 
 	protected:

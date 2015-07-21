@@ -158,10 +158,12 @@ namespace flopoco{
 
 	
 
-	OperatorPtr Shifter::parseArguments(Target *target ,const std::vector<std::string> &args) {
-		int wIn = UserInterface::checkStrictlyPositiveInt(args, "wIn");
-		int maxShift = UserInterface::checkStrictlyPositiveInt(args, "maxShift");
-		bool dirArg = UserInterface::checkBoolean(args, "dir");
+	OperatorPtr Shifter::parseArguments(Target *target, std::vector<std::string> &args) {
+		int wIn, maxShift;
+		bool dirArg;
+		UserInterface::parseStrictlyPositiveInt(args, "wIn", &wIn);
+		UserInterface::parseStrictlyPositiveInt(args, "maxShift", &maxShift);
+		UserInterface::parseBoolean(args, "dir", &dirArg);
 		ShiftDirection dir = (dirArg?Shifter::Right:Shifter::Left);		
 		return new Shifter(target, wIn, maxShift, dir);
 	}
@@ -171,7 +173,8 @@ namespace flopoco{
 	void Shifter::registerFactory(){
 		UserInterface::add("Shifter", // name
 											 "A classical barrel shifter. The output size is computed.",
-											 "operator", // categories
+											 UserInterface::ShiftersLZOCs,
+											 "",
 											 "wIn(int): input size in bits;   maxShift(int): maximum shift distance in bits;   dir(bool): 0=left, 1=right", // This string will be parsed
 											 "", // no particular extra doc needed
 											 Shifter::parseArguments

@@ -74,10 +74,10 @@ namespace flopoco{
 		void buildStandardTestCases(TestCaseList* tcl);
 		TestCase* buildRandomTestCase(int i);
 
-		// User-interface stuff
-		/** Factory method */
-		static OperatorPtr parseArguments(Target *target ,const vector<string> &args);
-		
+		/** Factory method that parses arguments and calls the constructor */
+		static OperatorPtr parseArguments(Target *target , vector<string> &args);
+
+		/** Factory register method */ 
 		static void registerFactory();
 		
 		

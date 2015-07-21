@@ -505,5 +505,9 @@ wF(int): mantissa size in bits;",
 											 FPAddSinglePath::parseArguments
 											 ) ;
 
+<<<<<<< HEAD
 	}
+=======
+
+>>>>>>> origin/newCLI
 }

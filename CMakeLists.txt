@@ -298,6 +298,7 @@ src/Conversions/Fix2FP
 
 
 # Floating-point adders and subtracters -----------------------------
+ src/FPAddSub/FPAdd
  src/FPAddSub/FPAddDualPath
  src/FPAddSub/FPAddSinglePath
  src/FPAddSub/FPAdd3Input
@@ -389,13 +390,14 @@ TARGET_LINK_LIBRARIES(
 	${FLOPOCO_LIB}
   )
 
-ADD_EXECUTABLE(flopoco_soaktest
- src/main_soaktest
-)
-TARGET_LINK_LIBRARIES(
-  flopoco_soaktest  
-	${FLOPOCO_LIB}
-)
+# unplugged for now to speed up compilation, to revive some day
+#ADD_EXECUTABLE(flopoco_soaktest
+# src/main_soaktest
+#)
+#TARGET_LINK_LIBRARIES(
+#  flopoco_soaktest  
+#	${FLOPOCO_LIB}
+#)
 
 
 

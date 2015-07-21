@@ -97,7 +97,7 @@ namespace flopoco {
 					#ifdef XILINX_OPTIMIZATION
 					// the xst synthetsies x+y and x+y+1 slower if this optimization is not used
 					bool pipe = target->isPipelined();
-					target->setNotPipelined();
+					target->setPipelined(false);
 					
 
 					
@@ -146,7 +146,7 @@ namespace flopoco {
 					if ( pipe )
 						target->setPipelined();
 					else
-						target->setNotPipelined();
+						target->setPipelined(false);
 					
 					#else
 					if ( j>0 ) { //for all chunks greater than zero we perform this additions

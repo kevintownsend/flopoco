@@ -87,6 +87,7 @@
 
 
 /* Floating-point adder variants ----------------------------- */
+#include "FPAddSub/FPAdd.hpp"
 #include "FPAddSub/FPAddDualPath.hpp"
 #include "FPAddSub/FPAddSinglePath.hpp"
 #include "FPAddSub/FPAdd3Input.hpp"

@@ -600,6 +600,7 @@ namespace flopoco{
 																						-wF-g+2*k-1, // lsbOut // was -wF-g 
 																						d, // degree
 																						true, // finalRounding
+																						0.25, // approxErrorBudget, default
 																						inDelayMap("X", target->localWireDelay() + getCriticalPath()) );
 				addSubComponent(fe);
 				inPortMap(fe, "X", "Zhigh");
@@ -968,19 +969,21 @@ namespace flopoco{
 
 
 
-	OperatorPtr FPExp::parseArguments(Target *target, const vector<string> &args) {
-		int wE = UserInterface::checkStrictlyPositiveInt(args, "wE"); 
-		int wF = UserInterface::checkStrictlyPositiveInt(args, "wF");
-		int k = UserInterface::checkPositiveInt(args, "k");
-		int d = UserInterface::checkPositiveInt(args, "d");
-		int g = UserInterface::checkInt(args, "g");
+	OperatorPtr FPExp::parseArguments(Target *target, vector<string> &args) {
+		int wE, wF, k, d, g;
+		UserInterface::parseStrictlyPositiveInt(args, "wE", &wE); 
+		UserInterface::parseStrictlyPositiveInt(args, "wF", &wF);
+		UserInterface::parsePositiveInt(args, "k", &k);
+		UserInterface::parsePositiveInt(args, "d", &d);
+		UserInterface::parseInt(args, "g", &g);
 		return new FPExp(target, wE, wF, k, d, g);
 	}
 
 	void FPExp::registerFactory(){
 		UserInterface::add("FPExp", // name
 											 "A faithful floating-point exponential function.",
-											 "operator; floating point; elementary function", // categories
+											 UserInterface::ElementaryFunctions,
+											 "", // seeAlso
 											 "wE(int): exponent size in bits; \
                         wF(int): mantissa size in bits;  \
                         d(int)=0: degree of the polynomial; \

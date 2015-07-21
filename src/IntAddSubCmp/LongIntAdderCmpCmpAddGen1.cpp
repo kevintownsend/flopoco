@@ -267,7 +267,7 @@ exit(1);
 					vhdl<<tab<<declare(join("sX",j,"_0_l",l,"_One"))<< "  <= '1' when "<< join("sX",j,"_0_l",l-1)<< " >= not("<<join("sX",j,"_1_l",l-1)<<") else '0';"<<endl;
 #else
 int tp = target->isPipelined();
-target->setNotPipelined();
+target->setPipelined(false);
 IntComparator *compZero = new IntComparator(target, cSize[j], 2, false, 0);
 oplist.push_back(compZero);
 IntComparator *compOne = new IntComparator(target, cSize[j], 1, false, 0);

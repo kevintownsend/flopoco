@@ -5,7 +5,7 @@
   developed by the Arenaire team at Ecole Normale Superieure de Lyon
 
   Authors : Florent de Dinechin, Florent.de.Dinechin@ens-lyon.fr
-            Bogdan Pasca, Bogdan.Pasca@ens-lyon.org
+			Bogdan Pasca, Bogdan.Pasca@ens-lyon.org
 
   Initial software.
   Copyright © ENS-Lyon, INRIA, CNRS, UCBL, INSA-Lyon
@@ -32,6 +32,7 @@
 using namespace std;
 using namespace flopoco;
 
+<<<<<<< HEAD
 
 	//------------ Resource Estimation --------------------------------
 	int reLevel;
@@ -44,11 +45,14 @@ using namespace flopoco;
 	ostringstream floorplanMessages;
 	//-----------------------------------------------------------------
 
+=======
+>>>>>>> origin/newCLI
 
 
 
 int main(int argc, char* argv[] )
 {
+<<<<<<< HEAD
 	sollya_lib_init();
 
 
@@ -66,23 +70,57 @@ int main(int argc, char* argv[] )
 	//FPMultKaratsuba::registerFactory();
 	FPSquare::registerFactory();
 	IntAdder::registerFactory();
+=======
+	try {
+		Shifter::registerFactory();
+		FPAdd::registerFactory();
+		FPExp::registerFactory();
+		BasicPolyApprox::registerFactory();
+		FixFunctionBySimplePoly::registerFactory();
+		FixFunctionByPiecewisePoly::registerFactory();
+		FixFunctionByTable::registerFactory();
+		TestBench::registerFactory();
+	}
+	catch (std::string s) {
+		cerr << "Error while registering factories: " << s <<endl;
+		exit(EXIT_FAILURE);
+	}
+	// cout << UserInterface::getFactoryCount() << " factories registered " << endl ;
 
-	//	cout << UserInterface::getFactoryCount() << " factories registered " << endl ;
+	UserInterface::main(argc, argv);
+>>>>>>> origin/newCLI
 
-	UserInterface::parseAll(argc, argv);
+	return 0;
+}
 
-	//cout << "Successfuly built "<< UserInterface::globalOpList.size() << " operator(s)" << endl;
 
 
+
+<<<<<<< HEAD
 
 	UserInterface::finalReport(cerr);
 
 
-
-
-
+=======
+>>>>>>> origin/newCLI
 
 #if 0
+
+	//------------ Resource Estimation --------------------------------
+	int reLevel;
+	bool resourceEstimationDebug = false;
+	//-----------------------------------------------------------------
+
+	//------------------ Floorplanning --------------------------------
+	bool floorplanning = false;
+	bool floorplanningDebug = false;
+	ostringstream floorplanMessages;
+	//-----------------------------------------------------------------
+
+<<<<<<< HEAD
+#if 0
+=======
+>>>>>>> origin/newCLI
 
 	//------------------------ Resource Estimation ---------------------
 	for (vector<Operator*>::iterator it = oplist->begin(); it!=oplist->end(); ++it) {
@@ -102,10 +140,6 @@ int main(int argc, char* argv[] )
 	//------------------------------------------------------------------
 #endif
 
-	sollya_lib_close();
-
-	return 0;
-}
 
 
 

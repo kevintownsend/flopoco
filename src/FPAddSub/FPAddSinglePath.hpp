@@ -45,7 +45,6 @@ namespace flopoco{
 		static void registerFactory();
 
 
-
 	private:
 		/** The width of the exponent */
 		int wE;

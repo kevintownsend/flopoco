@@ -87,6 +87,8 @@ namespace flopoco{
 	// split into smaller and smaller intervals until the function can be approximated by a polynomial of degree degree.
 	void PiecewisePolyApprox::build() {
 
+		int nbIntervals;
+
 		ostringstream cacheFileName;
 		cacheFileName << "PiecewisePoly_"<<vhdlize(f->description) << "_" << degree << "_" << targetAccuracy << ".cache";
 
@@ -108,16 +110,10 @@ namespace flopoco{
 			sollya_obj_t fS = f->fS; // no need to free this one
 			sollya_obj_t rangeS;
 
-#if 0
-			rangeS  = sollya_lib_parse_string("[0;1]");
-#else
 			rangeS  = sollya_lib_parse_string("[-1;1]");
-#endif
 			// TODO test with [-1,1] which is the whole point of current refactoring.
 			// There needs to be a bit of logic here because rangeS should be [-1,1] by default to exploit signed arith,
 			// except in the case when alpha=0 because then rangeS should be f->rangeS (and should not be freed)
-
-			int nbIntervals;
 
 			// Limit alpha to 24, because alpha will be the number of bits input to a table
 			// it will take too long before that anyway
@@ -157,11 +153,10 @@ namespace flopoco{
 				REPORT(DETAILED, " Found alpha=" << alpha << " OK");
 
 			// Compute the LSB of each coefficient. Minimum value is:
-			LSB = floor(log2(targetAccuracy));
-			REPORT(DEBUG, "To obtain target accuracy " << targetAccuracy << " with a degree-"<<degree <<" polynomial, we compute coefficients accurate to " << targetAccuracy/degree
-						 << " (LSB="<<LSB<<")");
+			LSB = floor(log2(targetAccuracy*degree));
+			REPORT(DEBUG, "To obtain target accuracy " << targetAccuracy << " with a degree-"<<degree <<" polynomial, we compute coefficients accurate to LSB="<<LSB);
 			// It is pretty sure that adding intlog2(degree) bits is enough for FPMinimax.
-			int lsbAttemptsMax = intlog2(degree);
+			int lsbAttemptsMax = intlog2(degree)+1;
 			int lsbAttempts=0; // a counter of attempts to move the LSB down, caped by lsbAttemptsMax
 
 
@@ -174,12 +169,11 @@ namespace flopoco{
 				approxErrorBound = 0.0;
 				BasicPolyApprox *p;
 
-				REPORT(DETAILED, " Now computing the actual polynomials ");
+				REPORT(DETAILED, "Computing the actual polynomials ");
 				// initialize the vector of MSB weights
 				for (int j=0; j<=degree; j++) {
 					MSB.push_back(INT_MIN);
 				}
-
 
 				for (int i=0; i<nbIntervals; i++) {
 					REPORT(DETAILED, " ... computing polynomial approx for interval " << i << " / "<< nbIntervals);
@@ -192,8 +186,11 @@ namespace flopoco{
 						REPORT(DEBUG, "   new approxErrorBound=" << p->approxErrorBound );
 						approxErrorBound = p->approxErrorBound;
 					}
+					if (approxErrorBound>targetAccuracy){
+						break;
+					}
 
-					// Now compute the englobing MSB and LSB for each coefficient
+					// Now compute the englobing MSB for each coefficient
 					for (int j=0; j<=degree; j++) {
 						// if the coeff is zero, we can set its MSB to anything, so we exclude this case
 						if (  (!p->coeff[j]->isZero())  &&  (p->coeff[j]->MSB > MSB[j])  )
@@ -208,22 +205,23 @@ namespace flopoco{
 					success=true;
 				}
 				else {
-						REPORT(INFO, "So far measured approx error:" << approxErrorBound << " is larger than target accuracy: " << targetAccuracy << ". Thank you for your patience");
+					REPORT(INFO, "Measured approx error:" << approxErrorBound << " is larger than target accuracy: " << targetAccuracy << ". Increasing LSB and starting over. Thank you for your patience");
 					//empty poly
-					for (int i=0; i<nbIntervals; i++) {
-						free(poly.back());
+					for (auto i:poly) 
+						free(i);
+					while(!poly.empty())
 						poly.pop_back();
-					}
+					
 					if(lsbAttempts<=lsbAttemptsMax) {
 						lsbAttempts++;
 						LSB--;
 					}
 					else {
-						REPORT(INFO, "guessDegree mislead us, increasing alpha and starting over");
 						LSB+=lsbAttempts;
 						lsbAttempts=0;
 						alpha++;
 						nbIntervals=1<<alpha;
+						REPORT(INFO, "guessDegree mislead us, increasing alpha to " << alpha << " and starting over");
 					}
 				}
 			} // end while(!success)
@@ -238,17 +236,6 @@ namespace flopoco{
 				}
 			}
 			// TODO? In the previous loop we could also check if one of the coeffs is always positive or negative, and optimize generated code accordingly
-
-			// A bit of reporting
-			REPORT(INFO,"Final report: ");
-			REPORT(INFO,"  Degree=" << degree	<< "      maxApproxErrorBound=" << approxErrorBound);
-			int totalOutputSize=0;
-			for (int j=0; j<=degree; j++) {
-				int size = MSB[j]-LSB +1;
-				totalOutputSize += size ;
-				REPORT(INFO,"      MSB["<<j<<"] = " << MSB[j] << "  size=" << size);
-			}
-			REPORT(INFO, "  Total size of the table is " << nbIntervals << " x " << totalOutputSize << " bits");
 
 			// Write the cache file
 			REPORT(INFO, "Writing to cache file: " << cacheFileName.str());
@@ -279,6 +266,7 @@ namespace flopoco{
 			getline(file, line); // ignore the second line which is a comment
 			file >> degree;
 			file >> alpha;
+			nbIntervals=1<<alpha;
 			file >> LSB;
 
 			for (int j=0; j<=degree; j++) {
@@ -299,6 +287,31 @@ namespace flopoco{
 				poly.push_back(p);
 			}
 		} // end if cache
+
+		// Check if all the coefficients of a given degree are of the same sign
+		for (int j=0; j<=degree; j++) {
+			mpz_class mpzsign = (poly[0]->coeff[j]->getBitVectorAsMPZ()) >> (MSB[j]-LSB);
+			coeffSigns.push_back((mpzsign==0?+1:-1));
+			for (int i=1; i<(1<<alpha); i++) {
+				mpzsign = (poly[i]->coeff[j]->getBitVectorAsMPZ()) >> (MSB[j]-LSB);
+				int sign = (mpzsign==0 ? 1 : -1);
+				if (sign != coeffSigns[j])
+					coeffSigns[j] = 0;
+			}
+		}
+		
+		
+		// A bit of reporting
+		REPORT(INFO,"Parameters of the approximation polynomials: ");
+		REPORT(INFO,"  Degree=" << degree	<< "  alpha=" << alpha	<< "    maxApproxErrorBound=" << approxErrorBound  << "    common coeff LSB="  << LSB);
+		int totalOutputSize=0;
+		for (int j=0; j<=degree; j++) {
+			int size = MSB[j]-LSB + (coeffSigns[j]==0? 1 : 0);
+			totalOutputSize += size ;
+			REPORT(INFO,"      MSB["<<j<<"] = \t" << MSB[j] << "\t size=" << size  << (coeffSigns[j]==0? "\t variable sign " : "\t constant sign ") << coeffSigns[j]);
+		}
+		REPORT(INFO, "  Total size of the table is " << nbIntervals << " x " << totalOutputSize << " bits");
+
 	}
 
 
