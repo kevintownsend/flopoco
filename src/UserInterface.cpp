@@ -689,14 +689,66 @@ namespace flopoco
 				file << content << endl;
 			};
 
-
-		for(OperatorFactoryPtr ptr : sm_factoriesByIndex)
+		string operatorList;
+		vector<OperatorFactoryPtr>::iterator it;
+		for( it = sm_factoriesByIndex.begin() ;
+			 it != sm_factoriesByIndex.end() ;
+			 it++ )
 		{
-			file << ptr->getOperatorFunctions();
+
+			file << (*it)->getOperatorFunctions();
 			file << endl;
+			operatorList += (*it)->name();
+			if(it + 1 != sm_factoriesByIndex.end())
+			{
+				operatorList += " ";
+			}
 		}
 
+		//Parsing string to know last operator name
+		tabber("# echo the name of the last operator name on the line");
+		tabber("_getLastOp ()");
+		tabber("{");
+		indent_level++;
+		tabber("local opList reponse pipedOpList");
+		tabber("opList=\""+operatorList+"\";");
+		tabber("pipedOpList=\"@(${opList// /|})\"");
+		//allow extended matching
+		tabber("shopt -s extglob");
+		tabber("reponse=\"\"");
+		file << endl;
+		tabber("for i in $1; do");
+		indent_level++;
+		tabber("case $i in");
+		indent_level++;
+		tabber("$pipedOpList ) reponse=$i;;");
+		indent_level--;
+		tabber("esac"); // fin case
+		indent_level--; 
+		tabber("done"); //fin for
+		tabber("echo $reponse");
+		indent_level--;
+		tabber("}");
+		file << endl;
 
+
+		//control function
+		tabber("# State machine of completion");
+		tabber("_flopoco()");
+		tabber("{");
+		indent_level++;
+		tabber("local saisie lastOp");
+		tabber("saisie=$COMP_LINE");
+		tabber("lastOp=`_getLastOp \"$saisie\"`");
+		
+		indentation_level--;
+		tabber("fi");
+		indent_level--;
+		tabber("}");
+		file << endl;
+
+		tabber("# Actual comlpetion");
+		tabber("complete -F _flopoco flopoco");
 		file.close();
 	}
 
