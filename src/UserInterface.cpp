@@ -689,38 +689,13 @@ namespace flopoco
 				file << content << endl;
 			};
 
-		stringstream s;
 
-		// Get options for one operator
-		tabber("_getMandatoryOptionList() {");
-		indent_level++;	
-		tabber("declare -A optionList");
-		for(OperatorFactoryPtr opFacto : sm_factoriesByIndex)
+		for(OperatorFactoryPtr ptr : sm_factoriesByIndex)
 		{
-			s.str(string()); //Emptying string stream
-			s << "optionList[" << opFacto->name() << "]=\"";
-			vector<string>::const_iterator it;
-			for(
-					it = opFacto->param_names().begin() ; 
-					it != opFacto->param_names().end() ;
-					it++
-			   )
-			{
-				if(opFacto->getDefaultParamVal(*it) == "")
-				{
-					s << *it;
-					if(it + 1 != opFacto->param_names().end())
-					{
-						s << " ";
-					}
-				}
-			}
-			s << "\";";
-			tabber(s.str());
+			file << ptr->getOperatorFunctions();
+			file << endl;
 		}
-		indent_level--;
-		tabber("}\n");
-		
+
 
 		file.close();
 	}
@@ -769,6 +744,69 @@ namespace flopoco
 		if("" != m_extraHTMLDoc)
 			s << "<dd>" << m_extraHTMLDoc << "</dd>"<<endl;
 		s << "</dl>"<<endl;
+		return s.str();
+	}
+
+	string OperatorFactory::getOperatorFunctions(void)
+	{
+		stringstream s;
+		stringstream buf;
+		size_t indent_level = 0;
+		const auto tabber = [&s, &indent_level](string content){
+				for(size_t i = 0 ; i < indent_level; i++)
+				{
+					s << "\t";
+				}
+				s << content << endl;
+			};
+
+		vector<string> mandatoryOptions;
+		vector<string> nonMandatoryOptions;
+		
+		for (string optionName : m_paramNames) {
+			if (getDefaultParamVal(optionName) == "") {
+				mandatoryOptions.push_back(optionName);
+			} else {
+				nonMandatoryOptions.push_back(optionName);
+			}
+		}
+	
+		size_t cpt = 0;
+		
+		tabber("_mandatoryoptions_"+m_name+"()");
+		tabber("{");
+		indent_level++;
+		buf.str(string());
+		buf << "echo \"";
+		for (string optionName : mandatoryOptions) {
+			cpt++;
+			buf << optionName;
+			if (cpt != mandatoryOptions.size()) {
+				buf << " ";
+			}
+		}
+		buf << "\";";
+		tabber(buf.str());
+		indent_level--;
+		tabber("}");
+		s << endl;
+		tabber("_nonmandatoryoptions_"+m_name+"()");
+		tabber("{");
+		indent_level++;
+		cpt = 0;
+		buf.str(string());	
+		buf << "echo \"";
+		for (string optionName : nonMandatoryOptions) {
+			cpt++;
+			buf << optionName;
+			if (cpt != nonMandatoryOptions.size()) {
+				buf << " ";
+			}
+		}
+		buf << "\";";
+		tabber(buf.str());
+		indent_level--;
+		tabber("}");
 		return s.str();
 	}
 

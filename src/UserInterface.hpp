@@ -202,6 +202,8 @@ namespace flopoco
 
 		const vector<string> &param_names(void) const;
 
+		string getOperatorFunctions(void);
+
 		/** get the default value associated to a parameter (empty string if there is no default)*/
 		string getDefaultParamVal(const string& key);
 
