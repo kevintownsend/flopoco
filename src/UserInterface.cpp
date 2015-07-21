@@ -8,8 +8,6 @@
 
 namespace flopoco
 {
-
-		
 	// Colors from	https://github.com/Uduse/Escape-Sequence-Color-Header/blob/master/src/Escape_Sequences_Colors.h
 	const char COLOR_NORMAL[] = { 0x1b, '[', '0', ';', '3', '9', 'm', 0 };
 	const char COLOR_BOLD_BLUE_NORMAL[] = { 0x1b, '[', '1', ';', '3', '4', ';', '4', '9', 'm', 0 };
@@ -18,7 +16,6 @@ namespace flopoco
 	const char COLOR_BLUE_NORMAL[] = { 0x1b, '[', '3', '4', ';', '4', '9', 'm', 0 };
 	const char COLOR_BOLD_RED_NORMAL[] = { 0x1b, '[', '1', ';', '3', '1', ';', '4', '9', 'm', 0 };
 	const char* defaultFPGA="Virtex5";
-
 
 	// Allocation of the global objects
 	string UserInterface::outputFileName;
@@ -37,8 +34,56 @@ namespace flopoco
 	bool   UserInterface::reDebug;
 	bool   UserInterface::flpDebug;
 
+	const vector<string> UserInterface::known_fpga = []()->vector<string>{
+				vector<string> v;
+				v.push_back("virtex4");
+				v.push_back("virtex5");
+				v.push_back("virtex6");
+				v.push_back("spartan3");
+				v.push_back("stratix2");
+				v.push_back("stratix3");
+				v.push_back("stratix4");
+				v.push_back("stratix5");
+				v.push_back("cyclone2");
+				v.push_back("cyclone3");
+				v.push_back("cyclone4");
+				v.push_back("cyclone5");
+				return v;
+			}();
 
-		
+	const vector<option_t> UserInterface::options = []()->vector<option_t>{
+				vector<option_t> v;	
+				vector<string> values;
+
+				//free option
+				v.push_back(option_t("name", values));
+				v.push_back(option_t("outputFile", values));
+				v.push_back(option_t("hardMultThreshold", values));
+				v.push_back(option_t("frequency", values));
+				
+				//verbosity level
+				for(unsigned int i = 0 ; i < 3 ; ++i) {
+					values.push_back(""+i);
+				}
+				v.push_back(option_t("verbose", values));
+				
+				//Pipeline
+				values.clear();
+				values.push_back(""+0);
+				values.push_back(""+1);
+				v.push_back(option_t("pipeline", values));
+
+				//plainVHDL
+				v.push_back(option_t("plainVHDL", values));
+
+				//generateFigures
+				v.push_back(option_t("generateFigures", values));
+
+				//target
+				v.push_back(option_t("target", known_fpga));
+
+				return v;
+			}();		
 		
 	void UserInterface::main(int argc, char* argv[]) {
 		sollya_lib_init();
@@ -244,6 +289,10 @@ namespace flopoco
 		}
 		if(argc==2 && string(argv[1])=="BuildHTMLDoc") {
 			buildHTMLDoc();
+			exit(EXIT_SUCCESS);
+		}
+		if(argc==2 && string(argv[1])=="BuildAutocomplete") {
+			buildAutocomplete();
 			exit(EXIT_SUCCESS);
 		}
 
@@ -612,6 +661,70 @@ namespace flopoco
 		file.close();
 	}
 
+	void UserInterface::buildAutocomplete()
+	{
+		ofstream file;
+		file.open("flopoco_autocomplete", ios::out);
+		file << "#\t\t\t\t Flopoco autocomplete file" << endl;
+		file << "#" << endl;
+		file << "# How to use this autocomplete file :" << endl;
+		file << "#\t1. Install bash-completion on your system (please refer";
+		file << " to your distribution manual to do so)." << endl << "#" << endl;
+		file << "#\t2. move (or link) this file to ~/.bash_completion.d/flopoco" << 
+			endl << "#" << endl;
+		file << "#\t3. Source this file in your bash completion config file :" << endl;
+		file << "#" << endl;
+		file <<"#\t\techo \". ~/.bash_completion.d/flopoco\" >> ~/.bash_completion" << endl;
+		file << "#" << endl;
+		file << "#\t   (please verify that you don't source it twice)" << endl;
+		file << "#" << endl <<  "#\t4. Restart bash, it should normally work (if not, feel free to be frustrated)" << endl;
+		file << endl;
+
+		size_t indent_level = 0;
+		const auto tabber = [&file, &indent_level](string content){
+				for(size_t i = 0 ; i < indent_level; i++)
+				{
+					file << "\t";
+				}
+				file << content << endl;
+			};
+
+		stringstream s;
+
+		// Get options for one operator
+		tabber("_getMandatoryOptionList() {");
+		indent_level++;	
+		tabber("declare -A optionList");
+		for(OperatorFactoryPtr opFacto : sm_factoriesByIndex)
+		{
+			s.str(string()); //Emptying string stream
+			s << "optionList[" << opFacto->name() << "]=\"";
+			vector<string>::const_iterator it;
+			for(
+					it = opFacto->param_names().begin() ; 
+					it != opFacto->param_names().end() ;
+					it++
+			   )
+			{
+				if(opFacto->getDefaultParamVal(*it) == "")
+				{
+					s << *it;
+					if(it + 1 != opFacto->param_names().end())
+					{
+						s << " ";
+					}
+				}
+			}
+			s << "\";";
+			tabber(s.str());
+		}
+		indent_level--;
+		tabber("}\n");
+		
+
+		file.close();
+	}
+
 
 
 
@@ -660,12 +773,9 @@ namespace flopoco
 	}
 
 	
-	string OperatorFactory::getDefaultParamVal(string& key){
+	string OperatorFactory::getDefaultParamVal(const string& key){
 		return  m_paramDefault[key];
 	}
-
-
-		
 
 	OperatorFactory::OperatorFactory(
 						 string name,
@@ -733,6 +843,9 @@ namespace flopoco
 		}
 	}
 	
+	const vector<string>& OperatorFactory::param_names(void) const{	
+		return m_paramNames;
+	}
 
 
 }; // flopoco

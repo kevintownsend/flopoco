@@ -28,6 +28,8 @@ namespace flopoco
 	class OperatorFactory;
 	typedef shared_ptr<OperatorFactory> OperatorFactoryPtr;
 
+	typedef pair<string, vector<string>> option_t;
+
 	
 	/** This is the class that manages a list of OperatorFactories, and the overall command line and documentation.
 			Each OperatorFactory is responsible for the command line and parsing for one Operator sub-class. */
@@ -94,8 +96,6 @@ namespace flopoco
 
 		/** Provide a string with the full documentation.*/
 		static string getFullDoc();
-		
-
 
 		/** add an operator to the global (first-level) list, which is stored in its Target (not really its place, sorry).
 				This method should be called by 
@@ -125,7 +125,9 @@ namespace flopoco
 
 		/** Build operators.html directly into the doc directory. */
 		static void buildHTMLDoc();
-		
+
+		/** Build flopoco autocomplete **/
+		static void buildAutocomplete();
 		
 	public:
 		static vector<OperatorPtr>  globalOpList;  /**< Level-0 operators. Each of these can have sub-operators */
@@ -147,17 +149,12 @@ namespace flopoco
 		static bool   flpDebug;
 		static vector<OperatorFactoryPtr> sm_factoriesByIndex;
 		static map<string,OperatorFactoryPtr> sm_factoriesByName;
+
+		static const vector<string> known_fpga;
+		static const vector<option_t> options;
+
 	};
 
-
-
-	
-
-
-
-
-
-	
 	/** This is the abstract class that each operator factory will inherit. 
 			Each OperatorFactory is responsible for the command line and parsing for one Operator sub-class.  */
 	class OperatorFactory
@@ -203,8 +200,10 @@ namespace flopoco
 		/** Provide a string with the full documentation in HTML. */
 		string getHTMLDoc();
 
+		const vector<string> &param_names(void) const;
+
 		/** get the default value associated to a parameter (empty string if there is no default)*/
-		string getDefaultParamVal(string& key);
+		string getDefaultParamVal(const string& key);
 
 		/*! Consumes zero or more string arguments, and creates an operator
 			\param args The offered arguments start at index 0 of the vector, and it is up to the
