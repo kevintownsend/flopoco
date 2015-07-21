@@ -194,15 +194,17 @@ namespace flopoco {
 		tc->addExpectedOutput ( "R", svR );
 	}
 
-	OperatorPtr IntAdder::parseArguments(Target *target, const vector<string> &args) {
-		int wIn = UserInterface::checkStrictlyPositiveInt(args, "wIn");
+	OperatorPtr IntAdder::parseArguments(Target *target, vector<string> &args) {
+		int wIn;
+		UserInterface::parseStrictlyPositiveInt(args, "wIn", &wIn, false);
 		return new IntAdder(target, wIn);
 	}
 
 	void IntAdder::registerFactory(){
 		UserInterface::add("IntAdder", // name
 											 "Integer adder. In modern VHDL, integer addition is expressed by a + and one usually needn't define an entity for it. However, this operator will be pipelined if the addition is too large to be performed at the target frequency.",
-											 "operator; floating point; floating-point adders", // categories
+											 UserInterface::BasicInteger, // categories
+											 "",
 											 "wE(int): exponent size in bits; ",
 											 "",
 											 IntAdder::parseArguments

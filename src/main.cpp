@@ -32,45 +32,8 @@
 using namespace std;
 using namespace flopoco;
 
-<<<<<<< HEAD
-
-	//------------ Resource Estimation --------------------------------
-	int reLevel;
-	bool resourceEstimationDebug = false;
-	//-----------------------------------------------------------------
-
-	//------------------ Floorplanning --------------------------------
-	bool floorplanning = false;
-	bool floorplanningDebug = false;
-	ostringstream floorplanMessages;
-	//-----------------------------------------------------------------
-
-=======
->>>>>>> origin/newCLI
-
-
-
 int main(int argc, char* argv[] )
 {
-<<<<<<< HEAD
-	sollya_lib_init();
-
-
-
-	Shifter::registerFactory();
-	FPExp::registerFactory();
-	NbBitsMinRegisterFactory();
-	FPDiv::registerFactory();
-	FPSqrt::registerFactory();
-	FPAddSub::registerFactory();	
-	FPAddDualPath::registerFactory();
-	FPAdd3Input::registerFactory();
-	FPAddSinglePath::registerFactory();
-	FPMult::registerFactory();
-	//FPMultKaratsuba::registerFactory();
-	FPSquare::registerFactory();
-	IntAdder::registerFactory();
-=======
 	try {
 		Shifter::registerFactory();
 		FPAdd::registerFactory();
@@ -80,6 +43,17 @@ int main(int argc, char* argv[] )
 		FixFunctionByPiecewisePoly::registerFactory();
 		FixFunctionByTable::registerFactory();
 		TestBench::registerFactory();
+		NbBitsMinRegisterFactory();
+		FPDiv::registerFactory();
+		FPSqrt::registerFactory();
+		FPAddSub::registerFactory();
+		FPAddDualPath::registerFactory();
+		FPAdd3Input::registerFactory();
+		FPAddSinglePath::registerFactory();
+		FPMult::registerFactory();
+		//FPMultKaratsuba::registerFactory();
+		FPSquare::registerFactory();
+		IntAdder::registerFactory();
 	}
 	catch (std::string s) {
 		cerr << "Error while registering factories: " << s <<endl;
@@ -88,21 +62,11 @@ int main(int argc, char* argv[] )
 	// cout << UserInterface::getFactoryCount() << " factories registered " << endl ;
 
 	UserInterface::main(argc, argv);
->>>>>>> origin/newCLI
 
 	return 0;
 }
 
 
-
-
-<<<<<<< HEAD
-
-	UserInterface::finalReport(cerr);
-
-
-=======
->>>>>>> origin/newCLI
 
 #if 0
 
@@ -117,10 +81,6 @@ int main(int argc, char* argv[] )
 	ostringstream floorplanMessages;
 	//-----------------------------------------------------------------
 
-<<<<<<< HEAD
-#if 0
-=======
->>>>>>> origin/newCLI
 
 	//------------------------ Resource Estimation ---------------------
 	for (vector<Operator*>::iterator it = oplist->begin(); it!=oplist->end(); ++it) {

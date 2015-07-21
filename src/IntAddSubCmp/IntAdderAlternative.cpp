@@ -400,15 +400,17 @@ namespace flopoco {
 		return -1;
 	}
 
-	OperatorPtr IntAdderAlternative::parseArguments(Target *target, const vector<string> &args) {
-		int wIn = UserInterface::checkStrictlyPositiveInt(args, "wIn");
+	OperatorPtr IntAdderAlternative::parseArguments(Target *target, vector<string> &args) {
+		int wIn;
+		UserInterface::parseStrictlyPositiveInt(args, "wIn", &wIn);
 		return new IntAdderAlternative(target, wIn);
 	}
 
 	void IntAdderAlternative::registerFactory(){
 		UserInterface::add("IntAdderAlternative", // name
 											 "Experimental integer adder.",
-											 "operator; floating point; floating-point adders", // categories
+											 UserInterface::BasicInteger, // categories
+											 "",
 											 "wE(int): exponent size in bits; ",
 											 "",
 											 IntAdderAlternative::parseArguments

@@ -627,16 +627,19 @@ FPAddSub::FPAddSub(Target* target, int wEX, int wFX, int wEY, int wFY, int wER, 
 		return tc;
 	}
 
-	OperatorPtr FPAddSub::parseArguments(Target *target, const vector<string> &args) {
-		int wE = UserInterface::checkStrictlyPositiveInt(args, "wE");
-		int wF = UserInterface::checkStrictlyPositiveInt(args, "wF");
+	OperatorPtr FPAddSub::parseArguments(Target *target, vector<string> &args) {
+		int wE;
+		UserInterface::parseStrictlyPositiveInt(args, "wE", &wE);
+		int wF;
+		UserInterface::parseStrictlyPositiveInt(args, "wF", &wF);
 		return new FPAddSub(target, wE, wF, wE, wF, wE, wF);
 	}
 
 	void FPAddSub::registerFactory(){
 		UserInterface::add("FPAddSub", // name
 											 "A fused floating-point adder and subtracter, computes both a+b and a-b.",
-											 "operator; floating point; floating-point adders", // categories
+											 UserInterface::BasicFloatingPoint, // categories
+											 "",
 											 "wE(int): exponent size in bits; \
 wF(int): mantissa size in bits;",
 											 "",

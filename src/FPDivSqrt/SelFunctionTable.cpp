@@ -62,39 +62,13 @@ namespace flopoco
 			}
 		}
 
-		int qa = 0;
-		if(qa % 2 == 1)
-			qa = 1;
-		if(decimalResult == 6 || decimalResult == 10)
-			qa = 2;
-		if((decimalResult < 0 && decimalResult != -7) || decimalResult == 7)
-			qa += 4;
 
-		int qb = 0;
-		if(decimalResult == 2 || decimalResult == 3 || decimalResult == -2 || decimalResult == -3)
-			qb = 1;
-		else if((decimalResult >= 4 && decimalResult == 6) || (decimalResult <= -4 && decimalResult >= -6))
-			qb = 2;
-		else if(decimalResult >= 7 || decimalResult <= -7)
-			qb = 3;
 		if(decimalResult < 0)
-			qb += 4;
+		{
+			decimalResult+=(pow(2, nbBitK)); //switch to two's complement
+		}
 
-		result = mpz_class((qa << 3) + qb);
-
-
-//		if(decimalResult < 0)
-//		{
-//			decimalResult+=(pow(2, nbBitK)); //switch to two's complement
-//			if(decimalResult != 9 && radix > 4)
-//				decimalResult+=pow(2, nbBitK); //qa is negative
-//		}
-//		else if(decimalResult == 7)
-//		{
-//			decimalResult+=pow(2, nbBitK); //qa is negative
-//		}
-//
-//		result = mpz_class(decimalResult);
+		result = mpz_class(decimalResult);
 		return result;
 	}
 }

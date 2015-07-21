@@ -209,16 +209,19 @@ namespace flopoco{
 			return tc;
 		}
 
-		OperatorPtr FPSqrt::parseArguments(Target *target, const vector<string> &args) {
-			int wE = UserInterface::checkStrictlyPositiveInt(args, "wE");
-			int wF = UserInterface::checkStrictlyPositiveInt(args, "wF");
+		OperatorPtr FPSqrt::parseArguments(Target *target, vector<string> &args) {
+			int wE;
+			UserInterface::parseStrictlyPositiveInt(args, "wE", &wE);
+			int wF;
+			UserInterface::parseStrictlyPositiveInt(args, "wF", &wF);
 			return new FPSqrt(target, wE, wF);
 		}
 
 		void FPSqrt::registerFactory(){
 			UserInterface::add("FPSqrt", // name
 												 "A correctly rounded floating-point square root function.",
-												 "operator; floating point; dividers and square roots", // categories
+												 UserInterface::BasicFloatingPoint, // categories
+												 "",
 												 "wE(int): exponent size in bits; \
 wF(int): mantissa size in bits",
 												 "",

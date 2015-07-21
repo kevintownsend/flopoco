@@ -33,13 +33,6 @@ namespace flopoco
 	bool   UserInterface::plainVHDL;
 	bool   UserInterface::generateFigures;
 	double UserInterface::unusedHardMultThreshold;
-<<<<<<< HEAD
-	int UserInterface::resourceEstimation;
-	bool UserInterface::floorplanning;
-	bool UserInterface::reDebug;
-	bool UserInterface::flpDebug;
-
-=======
 	int    UserInterface::resourceEstimation;
 	bool   UserInterface::floorplanning;
 	bool   UserInterface::reDebug;
@@ -85,7 +78,6 @@ namespace flopoco
 
 
 	
->>>>>>> origin/newCLI
 	// Global factory list TODO there should be only one.
 	vector<OperatorFactoryPtr> UserInterface::sm_factoriesByIndex;
 	map<string,OperatorFactoryPtr> UserInterface::sm_factoriesByName;
@@ -189,12 +181,6 @@ namespace flopoco
 	void UserInterface::registerFactory(OperatorFactoryPtr factory)	{
 		if(sm_factoriesByName.find(factory->name())!=sm_factoriesByName.end())
 			throw string("OperatorFactory - Factory with name '"+factory->name()+" has already been registered.");
-<<<<<<< HEAD
-
-		sm_factoriesByIndex.push_back(factory);
-=======
-		
->>>>>>> origin/newCLI
 		sm_factoriesByName.insert(make_pair(factory->name(), factory));
 		sm_factoriesByIndex.push_back(factory);
 	}
@@ -255,12 +241,6 @@ namespace flopoco
 	}
 
 
-<<<<<<< HEAD
-	void UserInterface::parseAll(int argc, char* argv[]) {
-		initialize();
-		// First convert the input arg to a vector of strings, for convenience
-=======
-
 	void UserInterface::buildAll(int argc, char* argv[]) {
 
 		// manage trivial cases
@@ -279,8 +259,6 @@ namespace flopoco
 		vector<string> initialOptions;
 		vector<vector<string>> operatorSpecs;
 
-
->>>>>>> origin/newCLI
 		vector<string> args;
 		// convert all the char* to strings
 		for (int i=1; i<argc; i++) // start with 1 to skip executable name
@@ -293,30 +271,6 @@ namespace flopoco
 			initialOptions.push_back(args[0]);
 			args.erase(args.begin());
 		}
-<<<<<<< HEAD
-		// Now the parsing itself. All the sub-parsers erase the data they consume from the string vectors
-		try {
-			if(args.size()==0) {
-				cerr << getFullDoc();
-				exit(EXIT_SUCCESS);
-			}
-			if(args.size()==1 && args[0]=="BuildHTMLDoc") {
-				buildHTMLDoc();
-				exit(EXIT_SUCCESS);
-			}
-			if(args.size()==3 && args[0]=="NbBitsMin") {
-				computeNbBit(atoi(args[1].c_str()), atoi(args[2].c_str()));
-				exit(EXIT_SUCCESS);
-			}
-
-			//cout << "args.size=" << args.size() <<endl;
-			while(args.size() > 0) { // This loop is over the Operators that are passed on the command line
-				parseGenericOptions(args);
-				string opName = args[0];  // operator Name
-				vector<string> opParams;
-				opParams.push_back(args[0]); // place the operator name in position 0
-=======
-
 		// Now there should be at least one operator specification
 		while(args.size() > 0) { // This loop is over the Operators that are passed on the command line
 			vector<string> opSpec;
@@ -325,7 +279,6 @@ namespace flopoco
 			while(args.size() > 0 // there remains something to parse
 						&& args[0].find("=") !=string::npos) {// and it is an option
 				opSpec.push_back(args[0]);
->>>>>>> origin/newCLI
 				args.erase(args.begin());
 			}
 			operatorSpecs.push_back(opSpec);
@@ -404,13 +357,8 @@ namespace flopoco
 	}
 
 
-<<<<<<< HEAD
-		// Now output to file
-		ofstream file;
-=======
 	void UserInterface::outputVHDL() {
 		ofstream file; 
->>>>>>> origin/newCLI
 		file.open(outputFileName.c_str(), ios::out);
 		outputVHDLToFile(file);
 		file.close();
@@ -457,14 +405,9 @@ namespace flopoco
 				throw (opname +": argument " + key + " not provided, and there doesn't seem to be a default value."
 							 +"\n" +  getFactoryByName(opname) -> getFullDoc());
 
-<<<<<<< HEAD
-
-	bool UserInterface::checkBoolean(vector<string> args, string key){
-=======
 	}
 
 	void UserInterface::parseString(vector<string> &args, string key, string* variable, bool genericOption){
->>>>>>> origin/newCLI
 		string val=getVal(args, key);
 		if(val=="") {
 			if(genericOption)
@@ -513,13 +456,7 @@ namespace flopoco
 	}
 
 
-<<<<<<< HEAD
-
-	int UserInterface::checkInt(vector<string> args, string key){
-=======
-	
 	void UserInterface::parseInt(vector<string>& args, string key, int* variable, bool genericOption){
->>>>>>> origin/newCLI
 		string val=getVal(args, key);
 		if(val=="") {
 			if(genericOption)
@@ -586,30 +523,10 @@ namespace flopoco
 	}
 
 
-
-
-
-<<<<<<< HEAD
-	void UserInterface::parseGenericOptions(vector<string> &args) {
-		cout << "parsing generic options" << endl;
-		entityName=getVal(args, "name"); // will be used, and reset, after the operator parser
-	}
-
-=======
->>>>>>> origin/newCLI
-
-
-
-
 	void UserInterface::add( string name,
-<<<<<<< HEAD
-													 string description, /**< for the HTML doc and the detailed help */
-													 string categories,	/**< semicolon-seperated list of categories */
-=======
 													 string description, /**< for the HTML doc and the detailed help */ 
 													 DocumentationCategory category,
 													 string seeAlso,
->>>>>>> origin/newCLI
 													 string parameterList, /**< semicolon-separated list of parameters, each being name(type)[=default]:short_description  */
 													 string extraHTMLDoc, /**< Extra information to go to the HTML doc, for instance links to articles or details on the algorithms */
 													 parser_func_t parser	 ) {
@@ -635,8 +552,6 @@ namespace flopoco
 	
 	string UserInterface::getFullDoc(){
 		ostringstream s;
-<<<<<<< HEAD
-=======
 		s << "Usage: " << COLOR_BOLD << "flopoco  [options]  OperatorName parameters  [OperatorName parameters]..." << COLOR_NORMAL << endl;
 		s << "  Both options and parameters are lists of " << COLOR_BOLD << "name=value" << COLOR_NORMAL << " pairs (with case-insensitive name)" << endl;
 		s << COLOR_BLUE_NORMAL<< "Example: " << COLOR_NORMAL << "flopoco  frequency=300 target=Virtex5   FPExp  wE=8 wF=23 name=SinglePrecisionFPExp" << endl;
@@ -652,7 +567,6 @@ namespace flopoco
 		s << "  " << COLOR_BOLD << "generateFigures" << COLOR_NORMAL << "=<0|1>:generate SVG graphics (default off) " << COLOR_RED_NORMAL << "(sticky option)" << COLOR_NORMAL << endl;
 		s << "  " << COLOR_BOLD << "verbose" << COLOR_NORMAL << "=<int>:        verbosity level (0-4, default=1)" << COLOR_RED_NORMAL << "(sticky option)" << COLOR_NORMAL<<endl;
 		s << "Sticky options apply to the rest of the command line, unless changed again" <<endl;
->>>>>>> origin/newCLI
 		for(unsigned i = 0; i<getFactoryCount(); i++) {
 			OperatorFactoryPtr f =  UserInterface::getFactoryByIndex(i);
 			s << f -> getFullDoc();
@@ -696,13 +610,8 @@ namespace flopoco
 			string pname = m_paramNames[i];
 			s << "  " << ("" != m_paramDefault[pname]?COLOR_BOLD_RED_NORMAL:COLOR_BOLD) << pname <<COLOR_NORMAL<< " (" << m_paramType[pname] << "): " << m_paramDoc[pname] << "  ";
 			if("" != m_paramDefault[pname])
-<<<<<<< HEAD
-				s << "  (optional, default value is " << m_paramDefault[pname] <<")";
-			s<< endl;
-=======
 				s << COLOR_RED_NORMAL << "  (optional, default value is " << m_paramDefault[pname] <<")"<< COLOR_NORMAL;
 			s<< endl;			
->>>>>>> origin/newCLI
 		}
 		return s.str();
 	}
@@ -744,18 +653,11 @@ namespace flopoco
 
 	OperatorFactory::OperatorFactory(
 						 string name,
-<<<<<<< HEAD
-						 string description, /* for the HTML doc and the detailed help */
-						 string categories,	/*  semicolon-seperated list of categories */
-						 string parameters, /*  semicolon-separated list of parameters, each being name(type)[=default]:short_description  */
-						 string extraHTMLDoc, /* Extra information to go to the HTML doc, for instance links to articles or details on the algorithms */
-=======
 						 string description, /* for the HTML doc and the detailed help */ 
 						 UserInterface::DocumentationCategory category,
 						 string seeAlso,
 						 string parameters, /*  semicolon-separated list of parameters, each being name(type)[=default]:short_description  */ 
 						 string extraHTMLDoc, /* Extra information to go to the HTML doc, for instance links to articles or details on the algorithms */ 
->>>>>>> origin/newCLI
 						 parser_func_t parser  )
 		: m_name(name), m_description(description), m_category(category), m_seeAlso(seeAlso), m_extraHTMLDoc(extraHTMLDoc), m_parser(parser)
 	{

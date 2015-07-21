@@ -489,25 +489,23 @@ namespace flopoco{
 		return tc;
 	}
 
-		OperatorPtr FPAddSinglePath::parseArguments(Target *target, const vector<string> &args) {
-		int wE = UserInterface::checkStrictlyPositiveInt(args, "wE");
-		int wF = UserInterface::checkStrictlyPositiveInt(args, "wF");
+		OperatorPtr FPAddSinglePath::parseArguments(Target *target, vector<string> &args) {
+		int wE;
+		UserInterface::parseStrictlyPositiveInt(args, "wE", &wE);
+		int wF;
+		UserInterface::parseStrictlyPositiveInt(args, "wF", &wF);
 		return new FPAddSinglePath(target, wE, wF);
 	}
 
 	void FPAddSinglePath::registerFactory(){
 		UserInterface::add("FPAddSInglePath", // name
 											 "A floating-point adder with a new, more compact single-path architecture.",
-											 "operator; floating point; floating-point adders", // categories
+											 UserInterface::BasicFloatingPoint, // categories
+											 "",
 											 "wE(int): exponent size in bits; \
 wF(int): mantissa size in bits;",
 											 "",
 											 FPAddSinglePath::parseArguments
 											 ) ;
-
-<<<<<<< HEAD
 	}
-=======
-
->>>>>>> origin/newCLI
 }

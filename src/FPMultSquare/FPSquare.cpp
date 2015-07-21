@@ -219,17 +219,21 @@ namespace flopoco{
 		ts -> counter++;
 	}
 
-	OperatorPtr FPSquare::parseArguments(Target *target, const vector<string> &args) {
-		int wE = UserInterface::checkStrictlyPositiveInt(args, "wE");
-		int wF_in = UserInterface::checkStrictlyPositiveInt(args, "wF_in");
-		int wF_out = UserInterface::checkStrictlyPositiveInt(args, "wF_out");
+	OperatorPtr FPSquare::parseArguments(Target *target, vector<string> &args) {
+		int wE;
+		UserInterface::parseStrictlyPositiveInt(args, "wE", &wE);
+		int wF_in;
+		UserInterface::parseStrictlyPositiveInt(args, "wF_in", &wF_in);
+		int wF_out;
+		UserInterface::parseStrictlyPositiveInt(args, "wF_out", &wF_out);
 		return new FPSquare(target, wE, wF_in, wF_out);
 	}
 
 	void FPSquare::registerFactory(){
 		UserInterface::add("FPSquare", // name
 											 "A floating-point squarer, using IntSquarer for the mantissa.",
-											 "operator; floating point; floating-point adders", // categories
+											 UserInterface::BasicFloatingPoint, // categories
+											 "",
 											 "wE(int): exponent size in bits; \
                         wF_in(int): input's mantissa size in bits;  \
                         wF_out(int): output's mantissa size in bits;",

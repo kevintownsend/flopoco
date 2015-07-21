@@ -133,15 +133,17 @@ namespace flopoco{
 				outPortMap(table , "Y", qi.str());
 				vhdl << instance(table , tInstance.str());
 
+				vhdl << tab << declare(wipad.str(), wF+7) << " <= " << wi.str() << " & '0';" << endl;
+
 				vhdl << tab << "with " << qi.str() << range(1,0) << " select " << endl;
-				vhdl << tab << declare(wim1fulla.str(), wF+7) << endl;
+				vhdl << tab << declare(wim1fulla.str(), wF+7) << " <= " << endl;
 				vhdl << tab << tab << wipad.str() << " - (\"0000\" & fY)			when \"01\"," << endl;
 				vhdl << tab << tab << wipad.str() << " + (\"0000\" & fY)			when \"11\"," << endl;
 				vhdl << tab << tab << wipad.str() << " + (\"000\" & fY & \"0\")	  when \"10\"," << endl;
 				vhdl << tab << tab << wipad.str() << " 			   		  when others;" << endl;
 
 				vhdl << tab << "with " << qi.str() << range(3,1) << " select " << endl;
-				vhdl << tab << declare(wim1full.str(), wF+7) << endl;
+				vhdl << tab << declare(wim1full.str(), wF+7) << " <= " << endl;
 				vhdl << tab << tab << wim1fulla.str() << " - (\"00\" & fY & \"00\")			when \"001\" | \"010\"," << endl;
 				vhdl << tab << tab << wim1fulla.str() << " - (\"0\" & fY & \"000\")			when \"011\"," << endl;
 				vhdl << tab << tab << wim1fulla.str() << " + (\"00\" & fY & \"00\")			when \"110\" | \"101\"," << endl;
@@ -441,21 +443,25 @@ namespace flopoco{
 
 	}
 
-	OperatorPtr FPDiv::parseArguments(Target *target, const vector<string> &args) {
-		int wE = UserInterface::checkStrictlyPositiveInt(args, "wE");
-		int wF = UserInterface::checkStrictlyPositiveInt(args, "wF");
-		bool radix8 = UserInterface::checkBoolean(args, "radix8");
+	OperatorPtr FPDiv::parseArguments(Target *target, vector<string> &args) {
+		int wE;
+		UserInterface::parseStrictlyPositiveInt(args, "wE", &wE);
+		int wF;
+		UserInterface::parseStrictlyPositiveInt(args, "wF", &wF);
+		bool radix8;
+		UserInterface::parseBoolean(args, "radix8", &radix8);
 		return new FPDiv(target, wE, wF, radix8);
 	}
 
 	void FPDiv::registerFactory(){
 		UserInterface::add("FPDiv", // name
 											 "A correctly rounded floating-point division.",
-											 "operator; floating point; dividers and square roots", // categories
+											 UserInterface::BasicFloatingPoint, // categories
+											 "http://www.cs.ucla.edu/digital_arithmetic/files/ch5.pdf",
 											 "wE(int): exponent size in bits; \
 wF(int): mantissa size in bits; \
 radix8(bool)=true: if true, the division will be implemented in radix 8, if false in radix 4;",
-											"The algorithm used here is the division by digit recurrence. For more details, check <a href=\"http://www.cs.ucla.edu/digital_arithmetic/files/ch5.pdf\">this pdf.</a>",
+											"The algorithm used here is the division by digit recurrence.",
 											FPDiv::parseArguments
 											 ) ;
 

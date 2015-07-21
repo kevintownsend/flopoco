@@ -310,19 +310,25 @@ namespace flopoco{
 		ts -> counter++;
 	}
 
-	OperatorPtr FPMult::parseArguments(Target *target, const vector<string> &args) {
-		int wE = UserInterface::checkStrictlyPositiveInt(args, "wE");
-		int wF_in = UserInterface::checkStrictlyPositiveInt(args, "wF_in");
-		int wF_out = UserInterface::checkStrictlyPositiveInt(args, "wF_out");
-		bool norm = UserInterface::checkBoolean(args, "norm");
-		bool correctRounding = UserInterface::checkBoolean(args, "correctRounding");
+	OperatorPtr FPMult::parseArguments(Target *target, vector<string> &args) {
+		int wE;
+		UserInterface::parseStrictlyPositiveInt(args, "wE", &wE);
+		int wF_in;
+		UserInterface::parseStrictlyPositiveInt(args, "wF_in", &wF_in);
+		int wF_out;
+		UserInterface::parseStrictlyPositiveInt(args, "wF_out", &wF_out);
+		bool norm;
+		UserInterface::parseBoolean(args, "norm", &norm);
+		bool correctRounding;
+		UserInterface::parseBoolean(args, "correctRounding", &correctRounding);
 		return new FPMult(target, wE, wF_in, wE, wF_in, wE, wF_out, norm, correctRounding);
 	}
 
 	void FPMult::registerFactory(){
 		UserInterface::add("FPMult", // name
 											 "A floating-point multiplier. The actual FloPoCo component supports different input and output sizes, but this is not available from the command line.",
-											 "operator; floating point; floating-point adders", // categories
+											 UserInterface::BasicFloatingPoint, // categories
+											 "",
 											 "wE(int): exponent size in bits; \
                         wF_in(int): input's mantissa size in bits;  \
                         wF_out(int): output's mantissa size in bits; \

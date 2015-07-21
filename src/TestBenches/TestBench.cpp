@@ -239,49 +239,6 @@ namespace flopoco{
 			vhdl << tab << tab << tab << "read(inline, possibilityNumber);" << endl;
 			vhdl << tab << tab << tab << "localErrorCounter := 0;" << endl;
 			vhdl << tab << tab << tab << "read(inline,tmpChar);" << endl; // we consume the character after output list
-<<<<<<< HEAD
-			vhdl << tab << tab << tab << "if possibilityNumber = 0 then" << endl;
-			vhdl << tab << tab << tab << tab << "localErrorCounter := 0;" << endl;//read(inline,tmpChar);" << endl; // we consume the character between each outputs
-			vhdl << tab << tab << tab << "elsif possibilityNumber = 1 then " << endl;
-			vhdl << tab << tab << tab << tab << "read(inline ,V_"<< s->getName() << ");" << endl;
-			if (s->isFP()) {
-			    vhdl << tab << tab << tab << tab << "if not fp_equal(fp"<< s->width() << "'(" << s->getName() << ") ,to_stdlogicvector(V_" <<  s->getName() << ")) then " << endl;
-			    vhdl << tab << tab << tab << tab << tab << " errorCounter := errorCounter + 1;" << endl;
-					// TODO better aligned reporting: see model below
-			    vhdl << tab << tab << tab << tab << tab << "assert false report(\"Incorrect output for " << s->getName()
-							 <<      ", expected value: \" & str(to_stdlogicvector(V_" << s->getName()
-							 << ")) & \" result: \" & str(" << s->getName()
-							 << ")) &  \"|| line : \" & integer'image(counter) & \" of input file \" ;"<< endl;
-			    vhdl << tab << tab << tab << tab << "end if;" << endl;
-			} else if (s->isIEEE()) {
-			    vhdl << tab << tab << tab << tab << "if not fp_equal_ieee(" << s->getName() << " ,to_stdlogicvector(V_" <<  s->getName() << "),"<<s->wE()<<" , "<<s->wF()<<") then " << endl;
-			    vhdl << tab << tab << tab << tab << tab << "assert false report(\"Incorrect output for " << s->getName()
-							 <<         ", expected value: \" & str(to_stdlogicvector(V_" << s-> getName()
-							 << ")) & \" , result: \" & str("
-							 << s->getName()  << ")) &  \"|| line : \" & integer'image(counter) & \" of input file \" ;"<< endl;
-			    vhdl << tab << tab << tab << tab << tab << " errorCounter := errorCounter + 1; " << endl;
-			    vhdl << tab << tab << tab << tab << "end if;" << endl;
-			} else if ((s->width() == 1) && (!s->isBus())) {
-			    vhdl << tab << tab << tab << tab << "if not (" << s->getName() << "= to_stdlogic(V_" << s->getName() << ")) then " << endl;
-					// TODO better aligned reporting: see model below
-			    vhdl << tab << tab << tab << tab << tab << "assert false report(\"Incorrect output for " << s->getName()
-							 <<        ",expected value: \" & str(to_stdlogic(V_" << s->getName()
-							 << ")) & \", result: \" & str("
-							 << s->getName() <<")) &  \"|| line : \" & integer'image(counter) & \" of input file \" ;"<< endl;
-			    vhdl << tab << tab << tab << tab << tab << " errorCounter := errorCounter + 1;" << endl;
-			    vhdl << tab << tab << tab << tab << "end if;" << endl;
-
-						} else {
-			    vhdl << tab << tab << tab << tab << "if not (" << s->getName() << "= to_stdlogicvector(V_" << s->getName() << ")) then " << endl;
-					// TODO better aligned reporting: see model below
-			    vhdl << tab << tab << tab << tab << tab << "assert false report(\"Incorrect output for " << s->getName()
-							 <<        ",expected value: \" & str(to_stdlogicvector(V_" << s->getName()
-							 << ")) & \", result: \" & str("
-							 << s->getName() <<")) &  \"|| line : \" & integer'image(counter) & \" of input file \" ;"<< endl;
-			    vhdl << tab << tab << tab << tab << tab << " errorCounter := errorCounter + 1;" << endl;
-			    vhdl << tab << tab << tab << tab << "end if;" << endl;
-			};
-=======
 			vhdl << tab << tab << tab << "expected_size_"<< s->getName() << " := inline'Length;"<< endl; // the remainder is the vector of expected outputs: remember how long it is
 			vhdl << tab << tab << tab << "expected_"<< s->getName() << " := inline.all & (expected_size_"<< s->getName() << "+1 to 1000 => ' ');"<< endl; // because we have to pad it to 1000 chars
 			string expectedString = "expected_" +  s->getName() + "(1 to expected_size_" + s->getName() + ")"; //  will be used several times below, so better have a Single Source of Bug
@@ -306,8 +263,6 @@ namespace flopoco{
 			vhdl << " & lf & \"          result: \" & str(" << s->getName() <<")) ;"<< endl;  
 			vhdl << tab << tab << tab << tab << "end if;" << endl;
 
->>>>>>> origin/newCLI
-
 			vhdl << tab << tab << tab << "else" << endl;
 			vhdl << tab << tab << tab << tab << "for i in possibilityNumber downto 1 loop " << endl;
 			vhdl << tab << tab << tab << tab << tab << "read(inline ,V_"<< s->getName() << ");" << endl;
@@ -328,16 +283,8 @@ namespace flopoco{
 			// **** better aligned reporting here ****
 			vhdl << tab << tab << tab << tab << tab << "assert false report(\"Line \" & integer'image(counter) & \" of input file, incorrect output for "
 					 << s->getName() << ": \" & lf & ";
-<<<<<<< HEAD
-			if ((s->width() == 1) && ( !s->isBus()))
-				vhdl << "\"  expected value: \" & str(to_stdlogic(V_" << s->getName() << ")) ";
-			else
-				vhdl <<      "\"  expected value: \" & str(to_stdlogicvector(V_" << s->getName() << ")) ";
-			vhdl << "& lf & \"          result: \" & str(" << s->getName() <<")) ;"<< endl;
-=======
 			vhdl << "\" expected values: \" & "  << expectedString;
 			vhdl << " & lf & \"          result: \" & str(" << s->getName() <<")) ;"<< endl;  
->>>>>>> origin/newCLI
 
 			vhdl << tab << tab << tab << tab << "end if;" << endl;
 			vhdl << tab << tab << tab << "end if;" << endl;

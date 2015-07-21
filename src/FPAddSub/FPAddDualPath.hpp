@@ -40,35 +40,18 @@ namespace flopoco{
 
 		// User-interface stuff
 		/** Factory method */
-		static OperatorPtr parseArguments(Target *target ,const vector<string> &args);
+		static OperatorPtr parseArguments(Target *target , vector<string> &args);
 
 		static void registerFactory();
 
 
 	private:
-<<<<<<< HEAD
-		/** The width of the exponent for the input X */
-		int wEX;
-		/** The width of the fraction for the input X */
-		int wFX;
-		/** The width of the exponent for the input Y */
-		int wEY;
-		/** The width of the fraction for the input Y */
-		int wFY;
-		/** The width of the exponent for the output R */
-		int wER;
-		/** The width of the fraction for the output R */
-		int wFR;
-		/** Signal if the output of the operator is to be or not normalized*/
-
-=======
 		/** The width of the exponent */
-		int wE; 
+		int wE;
 		/** The width of the fraction */
-		int wF; 
+		int wF;
 		/** do you want an adder or a subtractor? */
-		bool sub; 
->>>>>>> origin/newCLI
+		bool sub;
 		/** The combined leading zero counter and shifter for the close path */
 		LZOCShifterSticky* lzocs;
 		/** The integer adder object for subtraction in the close path */

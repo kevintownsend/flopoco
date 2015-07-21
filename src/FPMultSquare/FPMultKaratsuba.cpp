@@ -214,11 +214,16 @@ namespace flopoco{
 	}
 
 	OperatorPtr FPMultKaratsuba::parseArguments(Target *target, const vector<string> &args) {
-		int wE = UserInterface::checkStrictlyPositiveInt(args, "wE");
-		int wF_in = UserInterface::checkStrictlyPositiveInt(args, "wF_in");
-		int wF_out = UserInterface::checkStrictlyPositiveInt(args, "wF_out");
-		bool norm = UserInterface::checkBoolean(args, "norm");
-		bool correctRounding = UserInterface::checkBoolean(args, "correctRounding");
+		int wE;
+		UserInterface::parseStrictlyPositiveInt(args, "wE", &wE);
+		int wF_in;
+		UserInterface::parseStrictlyPositiveInt(args, "wF_in", &wF_in);
+		int wF_out;
+		UserInterface::parseStrictlyPositiveInt(args, "wF_out", &wF_out);
+		bool norm;
+		UserInterface::parseBoolean(args, "norm", &norm);
+		bool correctRounding;
+		UserInterface::parseBoolean(args, "correctRounding", &correctRounding);
 		return new FPMultKaratsuba(target, wE, wF, wE, wF, wE, wF, norm);
 	}
 

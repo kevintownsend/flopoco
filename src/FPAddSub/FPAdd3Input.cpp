@@ -414,16 +414,19 @@ FPAdd3Input::FPAdd3Input(Target* target, int wE, int wF, map<string, double> inp
 		mpfr_clears(x, y, r, NULL);
 	}
 
-		OperatorPtr FPAdd3Input::parseArguments(Target *target, const vector<string> &args) {
-		int wE = UserInterface::checkStrictlyPositiveInt(args, "wE");
-		int wF = UserInterface::checkStrictlyPositiveInt(args, "wF");
+		OperatorPtr FPAdd3Input::parseArguments(Target *target, vector<string> &args) {
+		int wE;
+		UserInterface::parseStrictlyPositiveInt(args, "wE", &wE);
+		int wF;
+		UserInterface::parseStrictlyPositiveInt(args, "wF", &wF);
 		return new FPAdd3Input(target, wE, wF);
 	}
 
 	void FPAdd3Input::registerFactory(){
 		UserInterface::add("FPAdd3Input", // name
 											 "A 3-operand floating-point adder.",
-											 "operator; floating point; floating-point adders", // categories
+											 UserInterface::BasicFloatingPoint, // categories
+											 "",
 											 "wE(int): exponent size in bits; \
 wF(int): mantissa size in bits;",
 											 "",
