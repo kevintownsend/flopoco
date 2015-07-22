@@ -296,7 +296,7 @@ namespace flopoco{
 					*	left shifting wi-1full to obtain wi-1, next partial remainder to work on
 				*/
 
-				vhdl << tab << declare(seli.str(),5) << " <= " << wi.str() << range( wF+2, wF-1)<<" & fY"<<of(wF-1)<<";" << endl;
+				vhdl << tab << declare(seli.str(),5) << " <= " << wi.str() << range( wF+2, wF-1) << " & fY" << of(wF-1)  << ";" << endl;
 				inPortMap (table , "X", seli.str());
 				outPortMap(table , "Y", qi.str());
 				vhdl << instance(table , tInstance.str());

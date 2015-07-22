@@ -9,7 +9,7 @@
 #include "IntAdder.hpp"
 
 namespace flopoco {
-	
+
 #define LOGIC      0
 #define REGISTER   1
 #define SLICE      2
@@ -17,7 +17,7 @@ namespace flopoco {
 
 #define PINF 16384
 #define XILINX_OPTIMIZATION 1
-	
+
 	/** The IntAdderShortLatency class for experimenting with adders.
 	*/
 	class IntAdderShortLatency : public IntAdder {
@@ -34,8 +34,8 @@ namespace flopoco {
 			* @param[in] srl              optimize for use of shift registers
 			**/
 			IntAdderShortLatency ( Target* target, int wIn, map<string, double> inputDelays = emptyDelayMap, int optimizeType = SLICE, bool srl = true);
-			
-		
+
+
 			/**
 			* Returns the cost in LUTs of the Short-Latency implementation
 			* @param[in] target            the target device
@@ -45,9 +45,9 @@ namespace flopoco {
 			* @return                      the number of LUTS
 			*/
 			int getLutCostShortLatency ( Target* target, int wIn, map<string, double> inputDelays, bool srl );
-			
 
-			
+
+
 			/**
 			* Returns the cost in Registers of the Short-Latency implementation
 			* @param[in] target            the target device
@@ -57,7 +57,7 @@ namespace flopoco {
 			* @return                      the number of Registers
 			*/
 			int getRegCostShortLatency ( Target* target, int wIn, map<string, double> inputDelays, bool srl );
-			
+
 			/**
 			* Returns the cost in Slices of the Short-Latency implementation
 			* @param[in] target            the target device
@@ -67,7 +67,7 @@ namespace flopoco {
 			* @return                      the number of Slices
 			*/
 			int getSliceCostShortLatency ( Target* target, int wIn, map<string, double> inputDelays, bool srl );
-			
+
 //			/**
 //			* Updates the parameters needed of architecture implementation: wIn is taken from class attributes
 //			* @param[in]  target            the target device
@@ -76,7 +76,7 @@ namespace flopoco {
 //			* @param[out] k                 the number of chunks
 //			*/
 //			void updateParameters ( Target* target, int &alpha, int &beta, int &k );
-//			
+//
 //			/**
 //			* Updates the parameters needed of architecture implementation: wIn is taken from class attributes
 //			* @param[in]  target            the target device
@@ -87,7 +87,7 @@ namespace flopoco {
 //			* @param[out] k                 the number of chunks
 //			*/
 //			void updateParameters ( Target* target, map<string, double> inputDelays, int &alpha, int &beta, int &gamma, int &k );
-//			
+//
 //			/**
 //			* Updates the parameters needed of architecture implementation: wIn is taken from class attributes
 //			* @param[in]  target            the target device
@@ -97,7 +97,7 @@ namespace flopoco {
 //			* @param[out] k                 the number of chunks
 //			*/
 //			void updateParameters ( Target* target, map<string, double> inputDelays, int &alpha, int &beta, int &k );
-			
+
 			/**
 			* Returns the result of the optimization algorithm for the short-latency architecture on the input data.
 			* @param[in] target            the target device
@@ -106,27 +106,33 @@ namespace flopoco {
 			*/
 			void tryOptimizedChunkSplittingShortLatency ( Target* target, int wIn, int &k );
 			void tryOptimizedChunkSplittingShortLatency ( Target* target, map<string, double> inputDelays, int wIn, int &k );
-			
+
 			/**
 			*  Destructor
 			*/
 			~IntAdderShortLatency();
-			
+
 			/**
 			* The emulate function.
 			* @param[in] tc               a list of test-cases
 			*/
 			void emulate ( TestCase* tc );
-			
+
+			/** Factory method that parses arguments and calls the constructor */
+			static OperatorPtr parseArguments(Target *target , vector<string> &args);
+
+			/** Factory register method */
+			static void registerFactory();
+
 		protected:
 			int wIn_;                         /**< the width for X, Y and R*/
-			
+
 		private:
 			//		map<string, double> inputDelays_; /**< a map between input signal names and their maximum delays */
 			double maxInputDelay;             /**< the maximum delay between the inputs present in the map*/
 			int *cSize;                       /**< array containing the chunk sizes for all nbOfChunks*/
 			int *cIndex;                      /**< array containing the indexes for all Chunks*/
-			
+
 			// new notations
 			int alpha;                        /**< the chunk size */
 			int beta;                         /**< the last chunk size */
@@ -136,13 +142,13 @@ namespace flopoco {
 			int selectedDesign;               /**< one of the 3 possible implementations */
 			int classicalSlackVersion;        /**< for the slack case, two architectures are possible in the classical case. */
 			int alternativeSlackVersion;      /**< for the slack case, two architectures are possible in the alternative case. */
-			
+
 			int shortLatencyVersion;          /**< the short-latency has two options, one optimized and one defalut. The default one is selected if the optimization cannot take place */
 			int shortLatencyKValue;          /**<  */
-			
+
 			int shortLatencyInputRegister;
 			double objectivePeriod;           /**< the inverse of the frequency */
 	};
-	
+
 }
 #endif

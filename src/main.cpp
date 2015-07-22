@@ -28,6 +28,10 @@
 #include "utils.hpp"
 #include "main.hpp"
 #include "FPDivSqrt/Tools/NbBitsMin.cpp"
+#include "IntAddSubCmp/IntAdderSpecific.hpp"
+#include "IntAddSubCmp/IntAdderAlternative.hpp"
+#include "IntAddSubCmp/IntAdderClassical.hpp"
+#include "IntAddSubCmp/IntAdderShortLatency.hpp"
 
 using namespace std;
 using namespace flopoco;
@@ -54,6 +58,11 @@ int main(int argc, char* argv[] )
 		//FPMultKaratsuba::registerFactory();
 		FPSquare::registerFactory();
 		IntAdder::registerFactory();
+		IterativeLog::registerFactory();
+		FPPow::registerFactory();
+		IntAdderClassical::registerFactory();
+		IntAdderAlternative::registerFactory();
+		IntAdderShortLatency::registerFactory();
 	}
 	catch (std::string s) {
 		cerr << "Error while registering factories: " << s <<endl;

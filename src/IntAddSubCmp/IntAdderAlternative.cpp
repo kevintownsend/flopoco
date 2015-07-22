@@ -403,15 +403,21 @@ namespace flopoco {
 	OperatorPtr IntAdderAlternative::parseArguments(Target *target, vector<string> &args) {
 		int wIn;
 		UserInterface::parseStrictlyPositiveInt(args, "wIn", &wIn);
-		return new IntAdderAlternative(target, wIn);
+		int optimizeType;
+		UserInterface::parseStrictlyPositiveInt(args, "optimizeType", &optimizeType);
+		bool srl;
+		UserInterface::parseBoolean(args, "srl", &srl);
+		return new IntAdderAlternative(target, wIn, emptyDelayMap, optimizeType, srl);
 	}
 
 	void IntAdderAlternative::registerFactory(){
 		UserInterface::add("IntAdderAlternative", // name
-											 "Experimental integer adder.",
-											 UserInterface::BasicInteger, // categories
+											 "A classical integer adder.",
+											 UserInterface::ElementaryFunctions, // categories
 											 "",
-											 "wE(int): exponent size in bits; ",
+											 "wIn(int): input size in bits; \
+optimizeType(int)=2: 0=LUT, 1=REG, 2=SLICE, 3=LATENCY; \
+srl(bool)=true: optimize for the use of hardware shift register;",
 											 "",
 											 IntAdderAlternative::parseArguments
 											 ) ;
