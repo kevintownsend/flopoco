@@ -51,6 +51,13 @@ namespace flopoco
 				return v;
 			}();
 
+	const vector<string> UserInterface::special_targets= []()->vector<string>{
+				vector<string> v;
+				v.push_back("BuildHTMLDoc");
+				v.push_back("BuildAutocomplete");
+				return v;
+			}();
+
 	const vector<option_t> UserInterface::options = []()->vector<option_t>{
 				vector<option_t> v;	
 				vector<string> values;
@@ -63,14 +70,14 @@ namespace flopoco
 				
 				//verbosity level
 				for(unsigned int i = 0 ; i < 3 ; ++i) {
-					values.push_back(""+i);
+					values.push_back(std::to_string(i));
 				}
 				v.push_back(option_t("verbose", values));
 				
 				//Pipeline
 				values.clear();
-				values.push_back(""+0);
-				values.push_back(""+1);
+				values.push_back(std::to_string(0));
+				values.push_back(std::to_string(1));
 				v.push_back(option_t("pipeline", values));
 
 				//plainVHDL
@@ -690,18 +697,36 @@ namespace flopoco
 			};
 
 		string operatorList;
-		vector<OperatorFactoryPtr>::iterator it;
-		for( it = sm_factoriesByIndex.begin() ;
-			 it != sm_factoriesByIndex.end() ;
-			 it++ )
 		{
-
-			file << (*it)->getOperatorFunctions();
-			file << endl;
-			operatorList += (*it)->name();
-			if(it + 1 != sm_factoriesByIndex.end())
+			vector<OperatorFactoryPtr>::iterator it;
+			for( it = sm_factoriesByIndex.begin() ;
+				 it != sm_factoriesByIndex.end() ;
+				 it++ )
 			{
-				operatorList += " ";
+
+				file << (*it)->getOperatorFunctions();
+				file << endl;
+				operatorList += (*it)->name();
+				if(it + 1 != sm_factoriesByIndex.end())
+				{
+					operatorList += " ";
+				}
+			}
+		}
+
+		string specialtargetList;
+		{
+			vector<string>::const_iterator it;
+			for( it = special_targets.begin() ;
+				 it != special_targets.end() ;
+				 it++ )
+			{
+
+				specialtargetList += *it;
+				if(it + 1 != special_targets.end())
+				{
+					specialtargetList+= " ";
+				}
 			}
 		}
 
@@ -711,10 +736,8 @@ namespace flopoco
 		tabber("{");
 		indent_level++;
 		tabber("local opList reponse pipedOpList");
-		tabber("opList=\""+operatorList+"\";");
+		tabber("opList=\""+operatorList+" "+specialtargetList+"\";");
 		tabber("pipedOpList=\"@(${opList// /|})\"");
-		//allow extended matching
-		tabber("shopt -s extglob");
 		tabber("reponse=\"\"");
 		file << endl;
 		tabber("for i in $1; do");
@@ -731,18 +754,144 @@ namespace flopoco
 		tabber("}");
 		file << endl;
 
+		//programm completion function
+		tabber("_mandatoryoptions_()");
+		tabber("{");
+		indent_level++;
+		tabber("echo ''");
+		indent_level--;
+		tabber("}");
+		file << endl;
+
+		tabber("_nonmandatoryoptions_()");
+		tabber("{");
+		indent_level++;
+		stringstream buf;
+		for(option_t option : options)
+		{
+			if (option.second.empty()) {
+				buf << option.first << "= ";
+			} else {
+				for(string value : option.second) {
+					buf << option.first << "=" << value << " ";
+				}
+			}
+		}
+		tabber("echo '"+buf.str()+"'");
+		indent_level--;
+		tabber("}");
+		file << endl;
+
+		//function wich add all operators to completion
+		tabber("_addOperator()");
+		tabber("{");
+		indent_level++;
+		tabber("local opList");
+		tabber("opList=\""+operatorList+"\"");
+		tabber("for i in $opList; do");
+		indent_level++;
+		tabber("COMPREPLY+=(\"$i\")");
+		indent_level--;
+		tabber("done");
+		tabber("if [ \"${1//[:space:]/}\" == \"\" ] ; then");
+		indent_level++;
+		tabber("COMPREPLY+=(\"BuildHTMLDoc\")");
+		tabber("COMPREPLY+=(\"BuildAutocomplete\")");
+		indent_level--;
+		tabber("fi");
+		indent_level--;
+		tabber("}");
+		file << endl ;
+
+		//function that check for possible completion features
+		tabber("_availableOption()");
+		tabber("{");
+		indent_level++;
+		tabber("local saisie lastControlWord buffer option_set splitControlWord option_set_clean retour");
+		tabber("saisie=$1");
+		tabber("lastControlWord=$2");
+		tabber("if [ -z \"$lastControlWord\" ] ; then");
+		indent_level++;
+		tabber("splitControlWord=${COMP_WORDS[0]}");
+		indent_level--;
+		tabber("else");
+		indent_level++;
+		tabber("splitControlWord=$2");
+		indent_level--;
+		tabber("fi");
+		tabber("option_set=${1##*${splitControlWord}}");
+		tabber("for option in $option_set ; do");
+		indent_level++;
+		tabber("option=${option\%\%=*}");
+		tabber("option_set_clean=\"${option_set_clean} ${option}\"");
+		indent_level--;
+		tabber("done");
+		//Retrieving mandatory option
+		tabber("mandatory_option=\"`_mandatoryoptions_${lastControlWord}`\"");
+		tabber("nonmandatory_option=\"`_nonmandatoryoptions_${lastControlWord}`\"");
+		tabber("for opt in $option_set_clean ; do");
+		indent_level++;
+		tabber("mandatory_option=${mandatoryOptions//$opt=*([^[:space:]])/}");
+		tabber("nonmandatory_option=${nonmandatoryOptions//$opt=*([^[:space:]])/}");
+		indent_level--;
+		tabber("done");
+		tabber("retour=\"\"");
+		tabber("for i in $mandatory_option $nonmandatory_option; do");
+		indent_level++;
+		tabber("retour=\"$retour $i\"");
+		indent_level--;
+		tabber("done");
+		tabber("echo $retour");
+		indent_level--;
+		tabber("}");
+		file << endl;
 
 		//control function
-		tabber("# State machine of completion");
 		tabber("_flopoco()");
 		tabber("{");
 		indent_level++;
-		tabber("local saisie lastOp");
+		tabber("shopt -s extglob");
+		tabber("local saisie lastOp buf afterOp cur spetrgtlst");
+		tabber("cur=${COMP_WORDS[COMP_CWORD]}");
 		tabber("saisie=$COMP_LINE");
 		tabber("lastOp=`_getLastOp \"$saisie\"`");
-		
-		indentation_level--;
+		tabber("if [ -z \"$lastOp\" ] ; then");
+		indent_level++;
+		tabber("buf=${saisie##*${COMP_WORDS[0]}}");
+		indent_level--;
+		tabber("else");
+		indent_level++;
+		tabber("buf=${saisie##*${lastOp}}");
+		indent_level--;
 		tabber("fi");
+		tabber("afterOp=\"\"");
+		tabber("for opt in $buf ; do");
+		indent_level++;
+		tabber("afterOp=\"$afterOp ${opt//=*/}\"");
+		indent_level--;
+		tabber("done");
+
+		tabber("spetrgtlst="+specialtargetList);
+		tabber("case $lastOp in");
+		indent_level++;
+		tabber("@(${spetrgtlst// /|}) ) echo tralala ;;");
+		indent_level--;
+		tabber("esac");
+		
+		tabber("# possible set");
+		tabber("local mopts nmopts nextOps"); 
+		tabber("# allowed set");
+		tabber("local amopts anmopts anextOps"); 
+
+		tabber("if [ -z \"$cur\" ] ; then"); //Finding next words
+		indent_level++;
+
+		indent_level--;
+		tabber("else"); //completing current word
+		indent_level++;
+		indent_level--;
+		tabber("fi");
+
 		indent_level--;
 		tabber("}");
 		file << endl;

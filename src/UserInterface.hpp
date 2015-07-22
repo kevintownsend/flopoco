@@ -151,6 +151,7 @@ namespace flopoco
 		static map<string,OperatorFactoryPtr> sm_factoriesByName;
 
 		static const vector<string> known_fpga;
+		static const vector<string> special_targets;
 		static const vector<option_t> options;
 
 	};
@@ -222,3 +223,4 @@ namespace flopoco
 }; // namespace flopoco
 
 #endif
+
