@@ -769,13 +769,7 @@ namespace flopoco
 		stringstream buf;
 		for(option_t option : options)
 		{
-			if (option.second.empty()) {
-				buf << option.first << "= ";
-			} else {
-				for(string value : option.second) {
-					buf << option.first << "=" << value << " ";
-				}
-			}
+				buf << option.first << " " ;
 		}
 		tabber("echo '"+buf.str()+"'");
 		indent_level--;
@@ -871,7 +865,7 @@ namespace flopoco
 		indent_level--;
 		tabber("done");
 
-		tabber("spetrgtlst="+specialtargetList);
+		tabber("spetrgtlst=\""+specialtargetList+"\"");
 		tabber("case $lastOp in");
 		indent_level++;
 		tabber("@(${spetrgtlst// /|}) ) echo tralala ;;");
@@ -881,14 +875,46 @@ namespace flopoco
 		tabber("# possible set");
 		tabber("local mopts nmopts nextOps"); 
 		tabber("# allowed set");
-		tabber("local amopts anmopts anextOps"); 
+		tabber("local amopts anmopts anextOps");
+
+		tabber("amopts=`_mandatoryoptions_$lastOp`");
+		tabber("anmopts=`_nonmandatoryoptions_$lastOp`");
+		tabber("anextOps=\""+operatorList+"\"");
+		tabber("if [ -z \"$lastOp\" ] ; then");
+		indent_level++;
+		tabber("anextOps=\"$anextOps "+specialtargetList+"\"");
+		indent_level--;
+		tabber("fi");
+
+		tabber("mopts=$amopts");
+		tabber("nmopts=$anmopts");
+		tabber("for opt in $afterOp ; do");
+		indent_level++;
+		tabber("mopts=\"${mopts//*([^[:print:]])$opt*([^[:print:]])/}\"");	
+		tabber("nmopts=\"${nmopts//*([^[:print:]])$opt*([^[:print:]])/}\"");	
+		indent_level--;
+		tabber("done");
+
+		tabber("if [ -z \"${mopts//[:space:]/}\" ] ; then");
+		indent_level++;
+		tabber("nextOps=$anextOps");
+		indent_level--;
+		tabber("else");
+		tabber("echo nonvoid");
+		tabber("fi");
 
 		tabber("if [ -z \"$cur\" ] ; then"); //Finding next words
 		indent_level++;
-
+		tabber("availableOptions=\"$mopts $nmopts $nextOps\"");
+		tabber("for possibility in $availableOptions ; do");
+		indent_level++;
+		tabber("COMPREPLY+=(\"$possibility\")");
+		indent_level--;
+		tabber("done");
 		indent_level--;
 		tabber("else"); //completing current word
 		indent_level++;
+		tabber("echo \"WIP : should complete current word\"");
 		indent_level--;
 		tabber("fi");
 
@@ -972,19 +998,13 @@ namespace flopoco
 			}
 		}
 	
-		size_t cpt = 0;
-		
 		tabber("_mandatoryoptions_"+m_name+"()");
 		tabber("{");
 		indent_level++;
 		buf.str(string());
 		buf << "echo \"";
 		for (string optionName : mandatoryOptions) {
-			cpt++;
-			buf << optionName;
-			if (cpt != mandatoryOptions.size()) {
-				buf << " ";
-			}
+			buf << optionName << " ";
 		}
 		buf << "\";";
 		tabber(buf.str());
@@ -994,15 +1014,10 @@ namespace flopoco
 		tabber("_nonmandatoryoptions_"+m_name+"()");
 		tabber("{");
 		indent_level++;
-		cpt = 0;
 		buf.str(string());	
 		buf << "echo \"";
 		for (string optionName : nonMandatoryOptions) {
-			cpt++;
-			buf << optionName;
-			if (cpt != nonMandatoryOptions.size()) {
-				buf << " ";
-			}
+			buf << optionName << " ";
 		}
 		buf << "\";";
 		tabber(buf.str());
