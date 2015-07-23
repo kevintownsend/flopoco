@@ -674,19 +674,9 @@ namespace flopoco
 		file.open("flopoco_autocomplete", ios::out);
 		file << "#\t\t\t\t Flopoco autocomplete file" << endl;
 		file << "#" << endl;
-		file << "# How to use this autocomplete file :" << endl;
-		file << "#\t1. Install bash-completion on your system (please refer";
-		file << " to your distribution manual to do so)." << endl << "#" << endl;
-		file << "#\t2. move (or link) this file to ~/.bash_completion.d/flopoco" << 
-			endl << "#" << endl;
-		file << "#\t3. Source this file in your bash completion config file :" << endl;
-		file << "#" << endl;
-		file <<"#\t\techo \". ~/.bash_completion.d/flopoco\" >> ~/.bash_completion" << endl;
-		file << "#" << endl;
-		file << "#\t   (please verify that you don't source it twice)" << endl;
-		file << "#" << endl <<  "#\t4. Restart bash, it should normally work (if not, feel free to be frustrated)" << endl;
-		file << endl;
-
+		file << "#\tIf you don't know what to do with this file, please delete it and run" << endl;
+		file << "#\t\t\tflopoco BuildAutocomplete" << endl;
+		file <<endl;
 		size_t indent_level = 0;
 		const auto tabber = [&file, &indent_level](string content){
 				for(size_t i = 0 ; i < indent_level; i++)
@@ -916,7 +906,6 @@ namespace flopoco
 		tabber("local valueList=`_optionvalues_$lastOp $cur`");
 		tabber("if [ -z \"${valueList// /}\" ] ; then");
 		indent_level++;
-		tabber("echo $cur");
 		tabber("compopt -o nospace");
 		tabber("return");
 		indent_level--;
@@ -942,7 +931,7 @@ namespace flopoco
 		tabber("local buff");
 		tabber("for candidate in $nmopts $mopts $nextOps; do");
 		indent_level++;
-		tabber("buff=${candidate#\"$cur\"}");
+		tabber("buff=${candidate#\"${COMP_WORDS[COMP_CWORD]}\"}");
 		tabber("if (( ${#buff} < ${#candidate} )) ; then");
 		indent_level++;
 		tabber("((matchCounter++))");
@@ -990,6 +979,13 @@ namespace flopoco
 		tabber("# Actual comlpetion");
 		tabber("complete -F _flopoco flopoco");
 		file.close();
+
+		cout << "Bash autocomplete successfully generated !!" << endl;
+		cout << "(this is in no case a proof that the script will work)" << endl;
+		cout << "In order to make it work, we recommend that you link this file in your ~/.bash_completion.d directory" << endl << endl;
+		cout << "\t\tln -s flopoco_autocomplete ~/.bash_completion.d/flopoco" << endl << endl;
+		cout << "and then source it in your .bashrc by adding the following line :"<< endl << endl;
+		cout << "\t\t. ~/.bash_completion.d/flopoco" << endl;
 	}
 
 
