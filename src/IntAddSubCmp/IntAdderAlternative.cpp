@@ -413,7 +413,7 @@ namespace flopoco {
 	void IntAdderAlternative::registerFactory(){
 		UserInterface::add("IntAdderAlternative", // name
 											 "A classical integer adder.",
-											 UserInterface::ElementaryFunctions, // categories
+											 UserInterface::BasicInteger, // categories
 											 "",
 											 "wIn(int): input size in bits; \
 optimizeType(int)=2: 0=LUT, 1=REG, 2=SLICE, 3=LATENCY; \

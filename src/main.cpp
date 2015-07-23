@@ -57,12 +57,18 @@ int main(int argc, char* argv[] )
 		FPMult::registerFactory();
 		//FPMultKaratsuba::registerFactory();
 		FPSquare::registerFactory();
-		IntAdder::registerFactory();
 		IterativeLog::registerFactory();
 		FPPow::registerFactory();
+		IntAdder::registerFactory();
 		IntAdderClassical::registerFactory();
 		IntAdderAlternative::registerFactory();
 		IntAdderShortLatency::registerFactory();
+		IntAdderSpecific::registerFactory();
+		IntComparator::registerFactory();
+		IntComparatorSpecific::registerFactory();
+		IntDualSub::registerFactory();
+		LongIntAdderAddAddMuxGen1::registerFactory();
+		LongIntAdderAddAddMuxGen2::registerFactory();
 	}
 	catch (std::string s) {
 		cerr << "Error while registering factories: " << s <<endl;

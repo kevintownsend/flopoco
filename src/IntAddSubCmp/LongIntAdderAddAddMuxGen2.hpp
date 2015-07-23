@@ -25,13 +25,19 @@ namespace flopoco{
 		 * @param[in] regular defaults to 0. A value of 32 for example forces the chunk-size to be 32
 		 **/
 		LongIntAdderAddAddMuxGen2(Target* target, int wIn, map<string, double> inputDelays = emptyDelayMap, int regular = 0);
-	
+
 		/**
 		 *  Destructor
 		 */
 		~LongIntAdderAddAddMuxGen2();
 
 		void emulate(TestCase* tc);
+
+		// User-interface stuff
+		/** Factory method */
+		static OperatorPtr parseArguments(Target *target , vector<string> &args);
+		static void registerFactory();
+
 	protected:
 		int wIn_;                         /**< the width for X, Y and R*/
 
