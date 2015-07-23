@@ -769,73 +769,51 @@ namespace flopoco
 		stringstream buf;
 		for(option_t option : options)
 		{
-				buf << option.first << " " ;
+			buf << option.first << " " ;
 		}
-		tabber("echo '"+buf.str()+"'");
+		tabber("echo ' "+buf.str()+"'");
 		indent_level--;
 		tabber("}");
 		file << endl;
 
-		//function wich add all operators to completion
-		tabber("_addOperator()");
+		tabber("_optionvalues_()");
 		tabber("{");
 		indent_level++;
-		tabber("local opList");
-		tabber("opList=\""+operatorList+"\"");
-		tabber("for i in $opList; do");
-		indent_level++;
-		tabber("COMPREPLY+=(\"$i\")");
-		indent_level--;
-		tabber("done");
-		tabber("if [ \"${1//[:space:]/}\" == \"\" ] ; then");
-		indent_level++;
-		tabber("COMPREPLY+=(\"BuildHTMLDoc\")");
-		tabber("COMPREPLY+=(\"BuildAutocomplete\")");
-		indent_level--;
-		tabber("fi");
+		tabber("declare -A optionmap");
+		for (option_t option : options) {
+			if(!option.second.empty())
+			{
+				buf.str(string());
+				for(string value : option.second)
+				{
+					buf << value << " ";
+				}
+				tabber("optionmap+=(['"+option.first+"']=\""+buf.str()+"\")");
+			}
+		}
+		tabber("echo ${optionmap[$1]}");
 		indent_level--;
 		tabber("}");
 		file << endl ;
 
-		//function that check for possible completion features
-		tabber("_availableOption()");
+		tabber("_exclude_lists()"); //exlude from $1 content of $2
 		tabber("{");
 		indent_level++;
-		tabber("local saisie lastControlWord buffer option_set splitControlWord option_set_clean retour");
-		tabber("saisie=$1");
-		tabber("lastControlWord=$2");
-		tabber("if [ -z \"$lastControlWord\" ] ; then");
+		tabber("local response=\"\" tmpbuf tmpbuf2 len1 len2");
+		tabber("tmpbuf2=\" $2 \"");
+		tabber("len2=${#tmpbuf2}");
+		tabber("for item in $1 ; do");
+		tabber("tmpbuf=${tmpbuf2/ $item /}");
+		tabber("len1=${#tmpbuf}");
 		indent_level++;
-		tabber("splitControlWord=${COMP_WORDS[0]}");
-		indent_level--;
-		tabber("else");
+		tabber("if (( $len1 == $len2 )) ; then");
 		indent_level++;
-		tabber("splitControlWord=$2");
+		tabber("response=\"$response $item\"");
 		indent_level--;
 		tabber("fi");
-		tabber("option_set=${1##*${splitControlWord}}");
-		tabber("for option in $option_set ; do");
-		indent_level++;
-		tabber("option=${option\%\%=*}");
-		tabber("option_set_clean=\"${option_set_clean} ${option}\"");
 		indent_level--;
 		tabber("done");
-		//Retrieving mandatory option
-		tabber("mandatory_option=\"`_mandatoryoptions_${lastControlWord}`\"");
-		tabber("nonmandatory_option=\"`_nonmandatoryoptions_${lastControlWord}`\"");
-		tabber("for opt in $option_set_clean ; do");
-		indent_level++;
-		tabber("mandatory_option=${mandatoryOptions//$opt=*([^[:space:]])/}");
-		tabber("nonmandatory_option=${nonmandatoryOptions//$opt=*([^[:space:]])/}");
-		indent_level--;
-		tabber("done");
-		tabber("retour=\"\"");
-		tabber("for i in $mandatory_option $nonmandatory_option; do");
-		indent_level++;
-		tabber("retour=\"$retour $i\"");
-		indent_level--;
-		tabber("done");
-		tabber("echo $retour");
+		tabber("echo $response");
 		indent_level--;
 		tabber("}");
 		file << endl;
@@ -845,8 +823,20 @@ namespace flopoco
 		tabber("{");
 		indent_level++;
 		tabber("shopt -s extglob");
-		tabber("local saisie lastOp buf afterOp cur spetrgtlst");
-		tabber("cur=${COMP_WORDS[COMP_CWORD]}");
+		tabber("local saisie lastOp buf afterOp cur spetrgtlst longcur");
+		tabber("cur=$2");
+		tabber("longcur=$cur");
+		tabber("local tmpbuf=${COMP_LINE##*=}");
+		tabber("if [ \"${cur//[:space:]/}\" == \"=\" ] ; then");
+		indent_level++;
+		tabber("cur=$3");
+		indent_level--;
+		tabber("elif [ \"$3\" == \"=\" -a ${#tmpbuf} -eq 0 ] ; then");
+		indent_level++;
+		tabber("cur=${COMP_WORDS[COMP_CWORD - 2]}");
+		tabber("longcur=\"$cur$3$2\"");
+		indent_level--;
+		tabber("fi");
 		tabber("saisie=$COMP_LINE");
 		tabber("lastOp=`_getLastOp \"$saisie\"`");
 		tabber("if [ -z \"$lastOp\" ] ; then");
@@ -868,7 +858,7 @@ namespace flopoco
 		tabber("spetrgtlst=\""+specialtargetList+"\"");
 		tabber("case $lastOp in");
 		indent_level++;
-		tabber("@(${spetrgtlst// /|}) ) echo tralala ;;");
+		tabber("@(${spetrgtlst// /|}) ) return ;;");
 		indent_level--;
 		tabber("esac");
 		
@@ -886,24 +876,16 @@ namespace flopoco
 		indent_level--;
 		tabber("fi");
 
-		tabber("mopts=$amopts");
-		tabber("nmopts=$anmopts");
-		tabber("for opt in $afterOp ; do");
-		indent_level++;
-		tabber("mopts=\"${mopts//*([^[:print:]])$opt*([^[:print:]])/}\"");	
-		tabber("nmopts=\"${nmopts//*([^[:print:]])$opt*([^[:print:]])/}\"");	
-		indent_level--;
-		tabber("done");
+		tabber("mopts=`_exclude_lists \"$amopts\" \"$afterOp\" `");
+		tabber("nmopts=`_exclude_lists \"$anmopts\" \"$afterOp\" `");
 
 		tabber("if [ -z \"${mopts//[:space:]/}\" ] ; then");
 		indent_level++;
 		tabber("nextOps=$anextOps");
 		indent_level--;
-		tabber("else");
-		tabber("echo nonvoid");
 		tabber("fi");
 
-		tabber("if [ -z \"$cur\" ] ; then"); //Finding next words
+		tabber("if [ -z \"$2\" ] ; then"); //Finding next words
 		indent_level++;
 		tabber("availableOptions=\"$mopts $nmopts $nextOps\"");
 		tabber("for possibility in $availableOptions ; do");
@@ -912,9 +894,90 @@ namespace flopoco
 		indent_level--;
 		tabber("done");
 		indent_level--;
+
 		tabber("else"); //completing current word
 		indent_level++;
-		tabber("echo \"WIP : should complete current word\"");
+		//Choix des candidats à la sélection
+		tabber("local candidates=\"\"");
+		tabber("local -i matchCounter=0");
+		tabber("local buff");
+		tabber("for candidate in $nmopts $mopts $nextOps; do");
+		indent_level++;
+		tabber("buff=${candidate#\"$longcur\"}");
+		tabber("if (( ${#buff} < ${#candidate} )) ; then");
+		indent_level++;
+		tabber("((matchCounter++))");
+		tabber("candidates=\"$candidates $candidate\"");
+		indent_level--;
+		tabber("fi");
+		indent_level--;
+		tabber("done");
+		tabber("echo candidates : $candidates");
+
+		//If only one match, verify wether it's an option 
+		tabber("if [ \"$matchCounter\" -eq \"1\" ] ; then");
+		indent_level++;
+		tabber("local extendedOptions extendedOptionList");
+		tabber("extendedOptionList=\"${amopts} ${anmopts}\"");
+		tabber("extendedOptionList=${extendedOptionList// /|}");
+		tabber("case ${candidates// /} in");
+		indent_level++;
+		tabber("@($extendedOptionList))"); //we have a one matching option here
+		tabber("local valuelist=`_optionvalues_${lastOp} ${cur}`");
+		tabber("for i in $valuelist ; do");
+		indent_level++;
+		tabber("extendedOptions=\"$extendedOptions $i\"");
+		indent_level--;
+		tabber("done");
+		tabber("if [ \"$2\" == \"$cur\" ] ; then");//We are completing option name
+		indent_level++;
+		tabber("compopt -o nospace");
+		tabber("COMPREPLY+=(\"${candidates// /}=\")");
+		tabber("return");
+		indent_level--;
+		tabber("elif [ -z \"${candidates// /}\" ] ; then");
+		indent_level++;
+		tabber("compopt -o nospace");
+		tabber("return");
+		indent_level--;
+		tabber("else");
+		indent_level++;
+		tabber("if [ \"$2\" == \"=\" ] ; then");//we are completing the assignment
+		indent_level++;
+		tabber("for option in extendedOptions ; do");
+		indent_level++;
+		tabber("COMPREPLY+=(\"=$option\")");
+		indent_level--;
+		tabber("done");
+		tabber("return");
+		indent_level--;
+		tabber("else");
+		indent_level++;
+		tabber("for option in extendedoptions ; do");
+		indent_level++;
+		tabber("COMPREPLY+=(\"$option\")");
+		indent_level--;
+		tabber("done");
+		indent_level--;
+		tabber("fi");
+		indent_level--;
+		tabber("fi");
+		tabber(";;");
+		indent_level--;
+		tabber("esac");
+		
+		tabber("COMPREPLY+=(\"${candidates// /}\")"); //Its an operator name
+		indent_level--;
+
+		tabber("else");//There are multiple matches
+		indent_level++;
+		tabber("for candidate in $candidates ; do");
+		indent_level++;
+		tabber("COMPREPLY+=(\"$candidate\")");
+		indent_level--;
+		tabber("done");
+		indent_level--;
+		tabber("fi"); 
 		indent_level--;
 		tabber("fi");
 
@@ -1002,7 +1065,7 @@ namespace flopoco
 		tabber("{");
 		indent_level++;
 		buf.str(string());
-		buf << "echo \"";
+		buf << "echo \" ";
 		for (string optionName : mandatoryOptions) {
 			buf << optionName << " ";
 		}
@@ -1015,12 +1078,28 @@ namespace flopoco
 		tabber("{");
 		indent_level++;
 		buf.str(string());	
-		buf << "echo \"";
+		buf << "echo \" ";
 		for (string optionName : nonMandatoryOptions) {
 			buf << optionName << " ";
 		}
 		buf << "\";";
 		tabber(buf.str());
+		indent_level--;
+		tabber("}");
+		s << endl;
+		tabber("_optionvalues_"+m_name+"()");
+		tabber("{");
+		indent_level++;
+		tabber("declare -A valueList");
+		for(string option : m_paramNames)
+		{
+			map<string, string>::iterator it = m_paramType.find(option);
+			if(it != m_paramType.end() && (*it).second == "bool")
+			{
+				tabber("valueList+=(["+option+"]=\"0 1\")");
+			}
+		}
+		tabber("echo ${valueList[\"$1\"]}");
 		indent_level--;
 		tabber("}");
 		return s.str();
