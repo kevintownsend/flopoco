@@ -41,6 +41,8 @@ namespace flopoco{
 	*/
 	void FixRealKCM::init()
 	{
+		useNumericStd();
+
 		srcFileName="FixRealKCM";
 
 		setCopyrightString("Florent de Dinechin (2007-2011-?), 3IF Dev Team 2015");
