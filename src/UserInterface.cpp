@@ -981,10 +981,11 @@ namespace flopoco
 		file.close();
 
 		cout << "Bash autocomplete successfully generated !!" << endl;
-		cout << "(this is in no case a proof that the script will work)" << endl;
-		cout << "In order to make it work, we recommend that you link this file in your ~/.bash_completion.d directory" << endl << endl;
-		cout << "\t\tln -s flopoco_autocomplete ~/.bash_completion.d/flopoco" << endl << endl;
-		cout << "and then source it in your .bashrc by adding the following line :"<< endl << endl;
+		cout << "(this is in no case a warranty nor a guarantee that the script will work)" << endl;
+		cout << "In order to make it work, we recommend that you link this file in your ~/.bash_completion.d directory" << 
+			endl << "you might have to create the ~/.bash_completion.d directory" << endl << endl;
+		cout << "\t\tmv flopoco_autocomplete ~/.bash_completion.d/flopoco" << endl << endl;
+		cout << "and then add the following line to your .bashrc :"<< endl << endl;
 		cout << "\t\t. ~/.bash_completion.d/flopoco" << endl;
 	}
 
