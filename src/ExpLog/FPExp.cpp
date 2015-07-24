@@ -607,14 +607,13 @@ namespace flopoco{
 				ostringstream function;
 				function << "1b"<<2*k-1<<"*(exp(x*1b-" << k << ")-x*1b-" << k << "-1)";  // e^z-z-1
 				fe = new FixFunctionByPiecewisePoly(target, function.str(), 
-						-sizeZhigh, // lsbIn,
-						-1, // msbOut // was -2*k
-						-wF-g+2*k-1, // lsbOut // was -wF-g 
-						d, // degree
-						true, // finalRounding
-						inDelayMap("X", target->localWireDelay() + getCriticalPath()) 
-					);
-				
+																						-sizeZhigh, // lsbIn,
+																						-1, // msbOut // was -2*k
+																						-wF-g+2*k-1, // lsbOut // was -wF-g 
+																						d, // degree
+																						true, // finalRounding
+																						0.25, // approxErrorBudget, default
+																						inDelayMap("X", target->localWireDelay() + getCriticalPath()) );
 				addSubComponent(fe);
 				inPortMap(fe, "X", "Zhigh");
 				outPortMap(fe, "Y", "expZmZm1");

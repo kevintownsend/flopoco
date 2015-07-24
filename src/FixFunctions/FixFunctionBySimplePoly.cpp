@@ -97,7 +97,8 @@ namespace flopoco{
 			vhdl << endl;
 		}
 
-
+		// TODO: error analysis for evaluation.
+		// The following comment is no longer true
 		// Here we assume all the coefficients already include the proper number of guard bits
 		int sigmaMSB=coeffMSB[degree];
 		int sigmaLSB=coeffLSB[degree];
