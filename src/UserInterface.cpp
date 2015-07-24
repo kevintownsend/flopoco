@@ -880,7 +880,7 @@ namespace flopoco
 		indent_level--;
 		tabber("fi");
 
-		tabber("if [ -z \"${COMP_WORDS[COMP_CWORD]}\" ] ; then"); //Finding next words
+		tabber("if [ -z \"${COMP_WORDS[COMP_CWORD]}\" -o -z \"$2\" ] ; then"); //Finding next words
 		indent_level++;
 		tabber("availableOptions=\"$mopts $nmopts $nextOps\"");
 		tabber("for possibility in $availableOptions ; do");
