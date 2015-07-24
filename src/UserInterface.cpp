@@ -826,7 +826,7 @@ namespace flopoco
 		tabber("lastOp=`_getLastOp \"$saisie\"`");
 		file << endl;
 		tabber("#Si l'opérateur est une cible foinale on s'arrête");
-		tabber("spetrgtlst=\"BuildHTMLDoc BuildAutocomplete\"");
+		tabber("spetrgtlst=\""+specialtargetList+"\"");
 		tabber("case $lastOp in");
 		indent_level++;
 		tabber("@(${spetrgtlst// /|}) ) return ;;");
@@ -885,7 +885,7 @@ namespace flopoco
 		file << endl;
 		tabber("if [ -z \"$lastOp\" ] ; then");
 		indent_level++;
-		tabber("anextOps=\"$anextOps $specialtargetList\"");
+		tabber("anextOps=\"$anextOps $spetrgtlst\"");
 		indent_level--;
 		tabber("fi");
 		file << endl;
