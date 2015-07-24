@@ -198,7 +198,7 @@ g(int)=-1: the number of guardbits added. Using -1 gives sensible default",
 			coeffAccuracy *=degree;
 		}
 		
-		int initialLSB = floor(log2(coeffAccuracy));
+		int initialLSB = ceil(log2(coeffAccuracy));
 		REPORT(DETAILED, "Initial LSB is " << initialLSB);
 
 		sollya_obj_t degreeS = sollya_lib_constant_from_int(degree);
