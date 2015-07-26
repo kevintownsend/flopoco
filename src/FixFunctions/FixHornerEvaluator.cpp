@@ -112,7 +112,7 @@ namespace flopoco{
 				REPORT(DETAILED, "i="<< i  << " lsbXtrunc=" << 	lsbXTrunc[i] << " msbP=" << msbP[i]<< " lsbP=" << lsbP[i]<< " msbSigma=" << 	msbSigma[i]<< " lsbSigma=" << 	lsbSigma[i]);
 			}
 			if(error < roundingErrorBudget){
-				REPORT(DETAILED, "Rounding error bounded by "<< error  << " which is smaller than the rounding error budget " << roundingErrorBudget << " Success!");
+				REPORT(INFO, "Rounding error bounded by "<< error  << ": Success!");
 				done=true;
 			}
 			else {// increase all the LSBs and start over. TODO refine
@@ -122,6 +122,10 @@ namespace flopoco{
 				}
 			}
 		} // while
+		// A bit of reporting
+		for(int i=degree-1; i>=0; i--) {
+			REPORT(INFO, "  level " << i << " requires a signed " << 0-lsbXTrunc[i]+1 << "x" <<  msbSigma[i+1] - lsbSigma[i+1] +1 << " multiplier");
+		}
 	} 
 
 
@@ -158,8 +162,7 @@ namespace flopoco{
 		for (int i=0; i<=degree; i++)
 			coeffSize.push_back(msbCoeff[i]-lsbCoeff+1); // see FixConstant.hpp for the constant format
 
-	// declaring inputs
-		REPORT(0, "lsbIn=" << lsbIn);
+		// declaring inputs
 		if(signedXandCoeffs){
 			addInput("X"  , 0 - lsbIn+1);
 			vhdl << tab << declareFixPoint("Xs", true, 0, lsbIn) << " <= signed(X);" << endl;
@@ -171,8 +174,8 @@ namespace flopoco{
 		for (int i=0; i<=degree; i++)
 			addInput(join("A",i), coeffSize[i]);
 
-	// declaring outputs
-	addOutput("R", msbOut-lsbOut+1);
+		// declaring outputs
+		addOutput("R", msbOut-lsbOut+1);
 		setCriticalPath( getMaxInputDelays(inputDelays) + target->localWireDelay() );
 
 		for(int i=0; i<=degree; i++) {
@@ -183,7 +186,6 @@ namespace flopoco{
 
 		// optimizing the lsbMults
 		computeArchParameters();
-		
 
 		// Now generate the hardware
 		vhdl << tab << declareFixPoint(join("Sigma", degree), true, msbSigma[degree], lsbSigma[degree])

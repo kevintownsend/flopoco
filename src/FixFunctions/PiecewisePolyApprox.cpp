@@ -150,7 +150,7 @@ namespace flopoco{
 					break;
 			} // end for loop on alpha
 			if (alphaOK)
-				REPORT(DETAILED, " Found alpha=" << alpha << " OK");
+				REPORT(INFO, "Found alpha=" << alpha);
 
 			// Compute the LSB of each coefficient. Minimum value is:
 			LSB = floor(log2(targetAccuracy*degree));
@@ -163,7 +163,7 @@ namespace flopoco{
 			
 			int lsbAttemptsMax = intlog2(degree)+1;
 			int lsbAttempts=0; // a counter of attempts to move the LSB down, caped by lsbAttemptsMax
-			bool a0Increased=false; // before adding LSB bits to everybody we try to add them to a0 only.
+			// bool a0Increased=false; // before adding LSB bits to everybody we try to add them to a0 only.
 
 			
 			bool success=false;

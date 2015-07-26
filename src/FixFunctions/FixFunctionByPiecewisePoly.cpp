@@ -132,8 +132,8 @@ namespace flopoco{
 			REPORT(INFO, "Degree 1: You should consider using FixFunctionByMultipartiteTable");
 			}
 			// Build the polynomial approximation
-			REPORT(DETAILED, "Computing polynomial approximation for target precision "<< lsbOut-2);
 			double targetAcc= approxErrorBudget*pow(2, lsbOut);
+			REPORT(INFO, "Computing polynomial approximation for target accuracy "<< targetAcc);
 			polyApprox = new PiecewisePolyApprox(func, targetAcc, degree);
 			int alpha =  polyApprox-> alpha; // coeff table input size 
 
@@ -154,7 +154,7 @@ namespace flopoco{
 			REPORT(DETAILED, "Poly table output size = " << polyTableOutputSize);
 
 			double roundingErrorBudget=exp2(lsbOut-1)-polyApprox->approxErrorBound;
-			REPORT(DETAILED, "Overall error budget = " << exp2(lsbOut) << "  of which approximation error = " << polyApprox->approxErrorBound
+			REPORT(INFO, "Overall error budget = " << exp2(lsbOut) << "  of which approximation error = " << polyApprox->approxErrorBound
 						 << "   hence rounding error budget = "<< roundingErrorBudget );
 		 
 
@@ -187,6 +187,7 @@ namespace flopoco{
 
 			// Here I wish I could plug more parallel evaluators. Hence the interface.
 			
+			REPORT(INFO, "Now building the Horner evaluator for rounding error budget "<< roundingErrorBudget);
 			// This builds an architecture such as eps_finalround < 2^(lsbOut-1) and eps_round<2^(lsbOut-2)
 			FixHornerEvaluator* horner = new FixHornerEvaluator(target, lsbIn+alpha+1, msbOut, lsbOut, degree, polyApprox->MSB, polyApprox->LSB, roundingErrorBudget);		
 			addSubComponent(horner);
