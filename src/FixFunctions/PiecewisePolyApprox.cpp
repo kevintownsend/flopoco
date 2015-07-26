@@ -156,11 +156,16 @@ namespace flopoco{
 			LSB = floor(log2(targetAccuracy*degree));
 			REPORT(DEBUG, "To obtain target accuracy " << targetAccuracy << " with a degree-"<<degree <<" polynomial, we compute coefficients accurate to LSB="<<LSB);
 			// It is pretty sure that adding intlog2(degree) bits is enough for FPMinimax.
+
+			// The main loop starts with the almost hopeless LSB defined above, then tries to push it down, a0 first, then all the others.
+			// If guessdegree returned an interval, it tries lsbAttemptsMax times, then gives up and tries to increase the degree.
+			// Otherwise lsbAttemptsMax is ignored, but in practice success happens earlier anyway
+			
 			int lsbAttemptsMax = intlog2(degree)+1;
 			int lsbAttempts=0; // a counter of attempts to move the LSB down, caped by lsbAttemptsMax
+			bool a0Increased=false; // before adding LSB bits to everybody we try to add them to a0 only.
 
-
-			// Still have to do a while loop because we can't trust guessdegree, damn
+			
 			bool success=false;
 			while(!success) {
 				// Now fill the vector of polynomials, computing the coefficient parameters along.
@@ -323,4 +328,40 @@ namespace flopoco{
 		return c->getBitVectorAsMPZ();
 	}
 
+
+	OperatorPtr PiecewisePolyApprox::parseArguments(Target *target, vector<string> &args)
+	{
+		string f;
+		double ta;
+		int d;
+
+		UserInterface::parseString(args, "f", &f);
+		UserInterface::parseFloat(args, "targetAcc", &ta);
+		UserInterface::parseInt(args, "d", &d);
+
+		PiecewisePolyApprox *ppa = new PiecewisePolyApprox(f, ta, d);
+		cout << "Accuracy is " << ppa->approxErrorBound << " ("<< log2(ppa->approxErrorBound) << " bits)";
+
+		return NULL;
+	}
+
+
+	
+	void PiecewisePolyApprox::registerFactory()
+	{
+		UserInterface::add("PiecewisePolyApprox", // name
+											 "Helper/Debug feature, does not generate VHDL. Uniformly segmented piecewise polynomial approximation of function f, accurate to targetAcc on [0,1)",
+											 UserInterface::FunctionApproximation,
+											 "",
+											 "\
+f(string): function to be evaluated between double-quotes, for instance \"exp(x*x)\";\
+targetAcc(real): the target approximation errror of the polynomial WRT the function;\
+d(int): the degree to use",
+											 "",
+											 PiecewisePolyApprox::parseArguments
+											 ) ;
+	}
+
+
+	
 } //namespace
