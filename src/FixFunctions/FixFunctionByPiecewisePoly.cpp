@@ -155,7 +155,7 @@ namespace flopoco{
 
 			double roundingErrorBudget=exp2(lsbOut-1)-polyApprox->approxErrorBound;
 			REPORT(INFO, "Overall error budget = " << exp2(lsbOut) << "  of which approximation error = " << polyApprox->approxErrorBound
-						 << "   hence rounding error budget = "<< roundingErrorBudget );
+						 << " hence rounding error budget = "<< roundingErrorBudget );
 		 
 
 			
