@@ -200,7 +200,7 @@ namespace flopoco{
 				// Align before addition
 				resizeFixPoint(join("Ptrunc", i), join("P", i), msbSigma[i], lsbSigma[i]-1);
 				resizeFixPoint(join("Aext", i), join("As", i), msbSigma[i], lsbSigma[i]-1);
-				setCycle(getCurrentCycle() + target->plainMultDepth(1-lsbXTrunc[i], msbSigma[i]-lsbSigma[i]+1) );
+				setCycle(getCurrentCycle() + target->plainMultDepth(1-lsbXTrunc[i], msbSigma[i+1]-lsbSigma[i+1]+1) );
 
 				vhdl << tab << declareFixPoint(join("SigmaBeforeRound", i), true, msbSigma[i], lsbSigma[i]-1)
 						 << " <= " << join("Aext", i) << " + " << join("Ptrunc", i) << "+'1';" << endl;
