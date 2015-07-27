@@ -295,7 +295,7 @@ src/Conversions/Fix2FP
 
 # Complex numbers ---------------------------------------------------
 # TODO for Matei
-
+#src/Complex/FixedComplexAdder
 
 # Floating-point adders and subtracters -----------------------------
  src/FPAddSub/FPAdd

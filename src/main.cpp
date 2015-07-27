@@ -69,6 +69,14 @@ int main(int argc, char* argv[] )
 		IntDualSub::registerFactory();
 		LongIntAdderAddAddMuxGen1::registerFactory();
 		LongIntAdderAddAddMuxGen2::registerFactory();
+		LongIntAdderCmpAddIncGen1::registerFactory();
+		LongIntAdderCmpAddIncGen2::registerFactory();
+		LongIntAdderCmpCmpAddGen1::registerFactory();
+		LongIntAdderCmpCmpAddGen2::registerFactory();
+		LongIntAdderMuxNetwork::registerFactory();
+		//FixedComplexAdder::registerFactory();
+		FixFIR::registerFactory();
+		FixSOPC::registerFactory();
 	}
 	catch (std::string s) {
 		cerr << "Error while registering factories: " << s <<endl;

@@ -9,7 +9,7 @@
 
 namespace flopoco{
 
-	/** The CarryGenerationCircuit class for experimenting with adders. 
+	/** The CarryGenerationCircuit class for experimenting with adders.
 	 */
 	class CarryGenerationCircuit : public Operator
 	{
@@ -23,7 +23,7 @@ namespace flopoco{
 		CarryGenerationCircuit(Target* target, int wIn, map<string, double> inputDelays = emptyDelayMap);
 		/*CarryGenerationCircuit(Target* target, int wIn);
 		  void cmn(Target* target, int wIn, map<string, double> inputDelays);*/
-	
+
 		/**
 		 *  Destructor
 		 */
@@ -31,6 +31,11 @@ namespace flopoco{
 
 		void outputVHDL(std::ostream& o, std::string name);
 		void emulate(TestCase* tc);
+
+		// User-interface stuff
+		/** Factory method */
+		static OperatorPtr parseArguments(Target *target , vector<string> &args);
+		static void registerFactory();
 
 	protected:
 		int wIn_;                         /**< the width for X, Y and R*/
