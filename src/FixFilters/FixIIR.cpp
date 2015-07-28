@@ -457,14 +457,14 @@ namespace flopoco {
 		{
 			string tmp;
 			UserInterface::parseString(args, "coeffa", &tmp);
-			input.push_back(tmp);
+			inputa.push_back(tmp);
 		}
 		vector<string> inputb;
 		while(args.size()!=1)
 		{
 			string tmp;
 			UserInterface::parseString(args, "coeffb", &tmp);
-			input.push_back(tmp);
+			inputb.push_back(tmp);
 		}
 
 		return new FixIIR(target, msbOut, lsbOut, h, inputb, inputa);

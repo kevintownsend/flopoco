@@ -76,7 +76,7 @@ namespace flopoco{
 
 		void fillTestCase(mpz_class a[]);
 
-		registerFactory();
+		void registerFactory();
 	};
 
 }
