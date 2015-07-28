@@ -28,12 +28,6 @@
 
 using namespace std;
 
-#define WIP_FORGET
-#ifdef WIP_LFORGET
-#pragma message("Version du FixRealKCM en cours de développement")
-#pragma message("Statut : Standalone correcte mais embeddable en cours d'adaptation")
-#endif
-
 namespace flopoco{
 
 	/**

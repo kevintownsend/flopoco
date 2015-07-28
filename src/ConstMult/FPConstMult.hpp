@@ -75,6 +75,8 @@ namespace flopoco{
 		mpfr_t mpY;
 
 		void fillTestCase(mpz_class a[]);
+
+		registerFactory();
 	};
 
 }

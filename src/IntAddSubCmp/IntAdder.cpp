@@ -212,7 +212,7 @@ namespace flopoco {
 
 	}
 
-/    void IntAdder::changeName(std::string operatorName){
+//    void IntAdder::changeName(std::string operatorName){
 //		Operator::changeName(operatorName);
 //		addImplementationList[selectedVersion]->changeName(operatorName);
 //		//		cout << "changin IntAdder name to " << operatorName << endl;

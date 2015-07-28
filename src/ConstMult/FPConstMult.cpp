@@ -29,6 +29,7 @@
 #include "../Operator.hpp"
 #include "FPConstMult.hpp"
 #include "../TestBenches/FPNumber.hpp"
+#include 
 
 using namespace std;
 
@@ -645,9 +646,6 @@ namespace flopoco{
 
 
 
-
-
-
 	// Computes multiplication by mpfrC, which is a high-precision value of the constant
 	void FPConstMult::emulate(TestCase *tc)
 	{
@@ -689,6 +687,16 @@ namespace flopoco{
 		}
 	}
 
+	void FPConstMult::registerFactory()
+	{
+		UserInterface::add(
+					"FPConstMult", 
+					"Floating-point constant multiplier using the shift-and-add approach. The constant is provided as sign, integral significand and integral exponent",
+					UserInterface::BasicFloatingPoint,
+					"https://hal-ens-lyon.archives-ouvertes.fr/ensl-00269219/document",
+
+				);
+	}
 }
 
 #if 0
