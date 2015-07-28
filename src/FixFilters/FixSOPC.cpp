@@ -36,7 +36,7 @@ namespace flopoco{
 		}
 		initialize();
 	}
-	
+
 
 	FixSOPC::FixSOPC(
 			Target* target_,
@@ -81,7 +81,7 @@ namespace flopoco{
 
 	void FixSOPC::initialize()	{
 		srcFileName="FixSOPC";
-					
+
 		ostringstream name;
 		name << "FixSOPC_uid" << getNewUId(); 
 		setName(name.str()); 
@@ -106,15 +106,15 @@ namespace flopoco{
 
 		if(computeGuardBits) {
 			// guard bits for a faithful result
-			g = 1+ intlog2(n-1); 
+			g = 1+ intlog2(n-1);
 			REPORT(INFO, "g=" << g);
 		}
 
-		
+
 		for (int i=0; i< n; i++)	{
 				// parse the coeffs from the string, with Sollya parsing
 				sollya_obj_t node;
-				
+
 				node = sollya_lib_parse_string(coeff[i].c_str());
 				// If conversion did not succeed (i.e. parse error)
 				if(node == 0)	{
@@ -123,12 +123,12 @@ namespace flopoco{
 							coeff[i] << " as a numeric constant" << endl;
 						throw error.str();
 					}
-				
+
 				mpfr_init2(mpcoeff[i], veryLargePrec);
 				sollya_lib_get_constant(mpcoeff[i], node);
 				sollya_lib_clear_obj(node);
 			}
-		
+
 
 		if(computeMSBOut) {
 			mpfr_t sumAbsCoeff, absCoeff;
@@ -145,7 +145,7 @@ namespace flopoco{
 			// now sumAbsCoeff is the max value that the SOPC can take.
 			double sumAbs = mpfr_get_d(sumAbsCoeff, GMP_RNDU); // just to make the following loop easier
 			REPORT(INFO, "sumAbs=" << sumAbs);
-			msbOut=1; 
+			msbOut=1;
 			while(sumAbs>=2.0)		{
 					sumAbs*=0.5;
 					msbOut++;
@@ -156,19 +156,20 @@ namespace flopoco{
 				}
 			REPORT(INFO, "Worst-case weight of MSB of the result is " << msbOut);
 			mpfr_clears(sumAbsCoeff, absCoeff, NULL);
-		}			
+		}
 
-		addOutput("R", msbOut-lsbOut+1); 
+		addOutput("R", msbOut-lsbOut+1);
 
-		int sumSize = 1 + msbOut - lsbOut  + g ; 
+		int sumSize = 1 + msbOut - lsbOut  + g ;
 		REPORT(DETAILED, "Sum size is: "<< sumSize );
-		
+
 		//compute the guard bits from the KCM mulipliers, and take the max
 		int guardBitsKCM = 0;
 		int lsbOutKCM = lsbOut-g; // we want each KCM to be faithful to this ulp
 		double targetUlpError = 1.0;
 		for(int i=0; i<n; i++)		{
 			int wInKCM = msbIn[i]-lsbIn[i]+1;	//p bits + 1 sign bit
+
 			int temp = FixRealKCM::neededGuardBits(
 					getTarget(), 
 					wInKCM, 
@@ -177,18 +178,19 @@ namespace flopoco{
 					lsbIn[i],
 					lsbOut
 				);			
+
 			if(temp > guardBitsKCM)
 				guardBitsKCM = temp;
 		}
-		
-		sumSize += guardBitsKCM; 
+
+		sumSize += guardBitsKCM;
 		REPORT(DETAILED, "Sum size with KCM guard bits is: "<< sumSize);
-		
+
 		if(!getTarget()->plainVHDL())
 		{
 			//create the bitheap that computes the sum
 			bitHeap = new BitHeap(this, sumSize);
-			
+
 			for (int i=0; i<n; i++)	{
 				// Multiplication: instantiating a KCM object. It will add bits also to the right of lsbOutKCM
 				new FixRealKCM(
@@ -204,15 +206,16 @@ namespace flopoco{
 						 lsbOutKCM - guardBitsKCM
 					 );
 			}
-			
+
 			//rounding - add 1/2 ulps
 			bitHeap->addConstantOneBit(g+guardBitsKCM-1);
-			
+
 			//compress the bitheap
 			bitHeap -> generateCompressorVHDL();
 			
 			vhdl << tab << "R" << " <= " << bitHeap-> getSumName() << 
 				range(sumSize-1, g+guardBitsKCM) << ";" << endl;
+
 		}
 
 		else
@@ -237,19 +240,19 @@ namespace flopoco{
 			// Now advance to their output, and build a pipelined rake
 			syncCycleFromSignal("P0");
 			vhdl << tab << declare("S0", sumSize) << " <= " << zg(sumSize) << ";" << endl;
-			for(int i=0; i< n; i++)		{				
+			for(int i=0; i< n; i++)		{
 				//manage the critical path
 				manageCriticalPath(getTarget()->adderDelay(sumSize));
 				// Addition
 				int pSize = getSignalByName(join("P", i))->width();
 				vhdl << tab << declare(join("S", i+1), sumSize) << " <= " <<  join("S",i);
 				vhdl << " + (" ;
-				if(sumSize>pSize) 
+				if(sumSize>pSize)
 					vhdl << "("<< sumSize-1 << " downto " << pSize<< " => "<< join("P",i) << of(pSize-1) << ")" << " & " ;
 				vhdl << join("P", i) << ");" << endl;
 			}
-						
-			// Rounding costs one more adder to add the half-ulp round bit. 
+
+			// Rounding costs one more adder to add the half-ulp round bit.
 			// This could be avoided by pushing this bit in one of the KCM tables
 			syncCycleFromSignal(join("S", n));
 			manageCriticalPath(getTarget()->adderDelay(msbOut-lsbOut+1));
@@ -260,11 +263,11 @@ namespace flopoco{
 
 	};
 
-	
 
 
 
-	// Function that factors the work done by emulate() of FixFIR and the emulate() of FixSOPC 
+
+	// Function that factors the work done by emulate() of FixFIR and the emulate() of FixSOPC
 	pair<mpz_class,mpz_class> FixSOPC::computeSOPCForEmulate(vector<mpz_class> inputs) {
 		// Not completely safe: we compute everything on veryLargePrec, and hope that rounding this result is equivalent to rounding the exact result
 		mpfr_t t, s, rd, ru;
@@ -290,16 +293,16 @@ namespace flopoco{
 		mpfr_mul_2si (s, s, -lsbOut, GMP_RNDN);
 
 		mpfr_init2 (rd, 1+msbOut-lsbOut);
-		mpfr_init2 (ru, 1+msbOut-lsbOut);		
+		mpfr_init2 (ru, 1+msbOut-lsbOut);
 
 		mpz_class rdz, ruz;
 
 		mpfr_get_z (rdz.get_mpz_t(), s, GMP_RNDD); 					// there can be a real rounding here
 		rdz=signedToBitVector(rdz, 1+msbOut-lsbOut);
 
-		mpfr_get_z (ruz.get_mpz_t(), s, GMP_RNDU); 					// there can be a real rounding here	
+		mpfr_get_z (ruz.get_mpz_t(), s, GMP_RNDU); 					// there can be a real rounding here
 		ruz=signedToBitVector(ruz, 1+msbOut-lsbOut);
-		
+
 		mpfr_clears (t, s, rd, ru, NULL);
 
 		return make_pair(rdz, ruz);
@@ -321,9 +324,34 @@ namespace flopoco{
 		tc->addExpectedOutput ("R", results.second);
 	}
 
+	OperatorPtr FixSOPC::parseArguments(Target *target, vector<string> &args) {
+		int lsbIn;
+		UserInterface::parseInt(args, "lsbIn", &lsbIn);
+		int lsbOut;
+		UserInterface::parseInt(args, "lsbOut", &lsbOut);
+		vector<string> input;
+		while(args.size()!=1)
+		{
+			string tmp;
+			UserInterface::parseString(args, "coeff", &tmp);
+			input.push_back(tmp);
+		}
 
+		return new FixSOPC(target, lsbIn, lsbOut, input);
+	}
 
-
+	void FixSOPC::registerFactory(){
+		UserInterface::add("FixSOPC", // name
+											 "A fix-point .",
+											 UserInterface::BasicFixPoint, // categories
+											 "",
+											 "lsbInOut(int): integer size in bits;\
+rescale(bool)=false: If true, divides all coefficient by 1/sum(|coeff|);\
+coeff(int): can be called multiple times. Coefficients are considered as real numbers and can be put as 0.1564565756768 or sin(3*pi/8).;",
+											 "",
+											 FixSOPC::parseArguments
+											 ) ;
+	}
 
 
 	// please fill me with regression tests or corner case tests
@@ -353,7 +381,7 @@ namespace flopoco{
 				if(i==j)
 					tc->addInput(join("X",j), (mpz_class(1)<<(p-1)) );
 				else
-					tc->addInput(join("X",j), mpz_class(0) );					
+					tc->addInput(join("X",j), mpz_class(0) );
 			}
 			emulate(tc);
 			tcl->add(tc);

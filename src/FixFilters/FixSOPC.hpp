@@ -49,6 +49,11 @@ namespace flopoco{
 		/** @brief This method does most of the work for emulate(), because we want to call it also from the emulate() of FixFIR */
 		pair<mpz_class,mpz_class> computeSOPCForEmulate(vector<mpz_class> x);
 
+		// User-interface stuff
+		/** Factory method */
+		static OperatorPtr parseArguments(Target *target , vector<string> &args);
+		static void registerFactory();
+
 	protected:
 		int n;							        /**< number of products, also size of the vectors coeff, msbIn and lsbIn */
 		vector<int> msbIn;			    /**< MSB weights of the inputs */

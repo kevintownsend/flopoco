@@ -9,7 +9,7 @@
 
 namespace flopoco{
 
-	/** The IntDualSub class computes both X-Y and Y-X, or both X-Y and X+Y 
+	/** The IntDualSub class computes both X-Y and Y-X, or both X-Y and X+Y
 	 */
 	class IntDualSub : public Operator
 	{
@@ -24,7 +24,7 @@ namespace flopoco{
 		IntDualSub(Target* target, int wIn, int opType, map<string, double> inputDelays = emptyDelayMap);
 		/*IntDualSub(Target* target, int wIn);
 		  void cmn(Target* target, int wIn, map<string, double> inputDelays);*/
-	
+
 		/**
 		 *  Destructor
 		 */
@@ -32,9 +32,13 @@ namespace flopoco{
 
 		void emulate(TestCase* tc);
 		void buildStandardTestCases(TestCaseList* tcl);
+		// User-interface stuff
+		/** Factory method */
+		static OperatorPtr parseArguments(Target *target , vector<string> &args);
+		static void registerFactory();
 
 
-	 
+
 	protected:
 		int wIn_;                         /**< the width for X, Y and the results */
 		int opType_;					  /**< the operation type. if 0, op type is x-y y-x; if 1 op_type is x-y x+y */

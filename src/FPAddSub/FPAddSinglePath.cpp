@@ -1,9 +1,9 @@
 /*
   Floating Point Adder for FloPoCo
- 
-  This file is part of the FloPoCo project 
+
+  This file is part of the FloPoCo project
   developed by the Arenaire team at Ecole Normale Superieure de Lyon
-  
+
   Authors:   Bogdan Pasca, Florent de Dinechin
 
   Initial software.
@@ -38,23 +38,23 @@ namespace flopoco{
 #define DEBUGVHDL 0
 
 
-	FPAddSinglePath::FPAddSinglePath(Target* target, 
-																	 int wE, int wF, 
+	FPAddSinglePath::FPAddSinglePath(Target* target,
+																	 int wE, int wF,
 																	 bool sub, map<string, double> inputDelays) :
 		Operator(target), wE(wE), wF(wF), sub(sub) {
-	
+
 		srcFileName="FPAddSinglePath";
-			
+
 		ostringstream name;
 		if(sub)
 			name<<"FPSub_";
 		else
 			name<<"FPAdd_";
 
-		name <<wE<<"_"<<wF<<"_uid"<<getNewUId(); 
-		setName(name.str()); 
+		name <<wE<<"_"<<wF<<"_uid"<<getNewUId();
+		setName(name.str());
 
-		setCopyrightString("Bogdan Pasca, Florent de Dinechin (2010)");		
+		setCopyrightString("Bogdan Pasca, Florent de Dinechin (2010)");
 
 		sizeRightShift = intlog2(wF+3);
 
@@ -74,41 +74,41 @@ namespace flopoco{
 		vhdl << tab << declare("excExpFracY",2+wE+wF) << " <= Y"<<range(wE+wF+2, wE+wF+1) << " & Y"<<range(wE+wF-1, 0)<<";"<<endl;
 
 		/*		setCriticalPath(getMaxInputDelays(inputDelays));
-					manageCriticalPath(target->localWireDelay() + target->eqComparatorDelay(wE+wF+2)); 
+					manageCriticalPath(target->localWireDelay() + target->eqComparatorDelay(wE+wF+2));
 					vhdl<< tab << declare("eqdiffsign") << " <= '1' when excExpFracX = excExpFracY else '0';"<<endl; */
-		
+
 		setCriticalPath(getMaxInputDelays(inputDelays));
 		manageCriticalPath(target->localWireDelay() + target->adderDelay(wE+1));
 		vhdl<< tab << declare("eXmeY",wE+1) << " <= (\"0\" & X"<<range(wE+wF-1,wF)<<") - (\"0\" & Y"<<range(wE+wF-1,wF)<<");"<<endl;
 		vhdl<< tab << declare("eYmeX",wE+1) << " <= (\"0\" & Y"<<range(wE+wF-1,wF)<<") - (\"0\" & X"<<range(wE+wF-1,wF)<<");"<<endl;
 		double cpeXmeY = getCriticalPath();
-		
-		
+
+
 		setCriticalPath(getMaxInputDelays(inputDelays));
-		
+
 		if (wF < 30){
 			manageCriticalPath(target->localWireDelay() + target->adderDelay(wE)); //comparator delay implemented for now as adder
 			vhdl<< tab << declare("swap")       << " <= '0' when excExpFracX >= excExpFracY else '1';"<<endl;
 		}else{
 			IntAdder *cmpAdder = new IntAdder(target, wE+wF+2+1);
 			oplist.push_back(cmpAdder);
-			
+
 			vhdl << tab << declare("addCmpOp1",wE+wF+2+1) << "<= " << zg(1,0) << " & excExpFracX;"<<endl;
 			vhdl << tab << declare("addCmpOp2",wE+wF+2+1) << "<= " << og(1,0) << " & not(excExpFracY);"<<endl;
-			
+
 			inPortMap(cmpAdder, "X", "addCmpOp1");
 			inPortMap(cmpAdder, "Y", "addCmpOp2");
 			inPortMapCst(cmpAdder, "Cin", "'1'");
 			outPortMap (cmpAdder, "R", "cmpRes");
-			
+
 			vhdl << instance(cmpAdder, "cmpAdder") << endl;
 			syncCycleFromSignal("cmpRes");
 			setCriticalPath( cmpAdder->getOutputDelay("R") );
 			vhdl<< tab << declare("swap")       << " <= cmpRes"<<of(wE+wF+2)<<";"<<endl;
 		}
-		
+
 		double cpswap = getCriticalPath();
-		
+
 		manageCriticalPath(target->localWireDelay() + target->lutDelay());
 
 		string pmY="Y";
@@ -117,7 +117,7 @@ namespace flopoco{
 			pmY = "mY";
 		}
 
-		// depending on the value of swap, assign the corresponding values to the newX and newY signals 
+		// depending on the value of swap, assign the corresponding values to the newX and newY signals
 
 		vhdl<<tab<<declare("newX",wE+wF+3) << " <= X when swap = '0' else "<< pmY << ";"<<endl;
 		vhdl<<tab<<declare("newY",wE+wF+3) << " <= " << pmY <<" when swap = '0' else X;"<<endl;
@@ -128,14 +128,14 @@ namespace flopoco{
 		vhdl << tab << declare("signX")   << "<= newX"<<of(wE+wF)<<";"<<endl;
 		vhdl << tab << declare("signY")   << "<= newY"<<of(wE+wF)<<";"<<endl;
 		vhdl << tab << declare("EffSub") << " <= signX xor signY;"<<endl;
-		vhdl << tab << declare("sXsYExnXY",6) << " <= signX & signY & excX & excY;"<<endl; 
-		vhdl << tab << declare("sdExnXY",4) << " <= excX & excY;"<<endl; 
+		vhdl << tab << declare("sXsYExnXY",6) << " <= signX & signY & excX & excY;"<<endl;
+		vhdl << tab << declare("sdExnXY",4) << " <= excX & excY;"<<endl;
 		manageCriticalPath(target->localWireDelay()+ target->lutDelay());
 		vhdl << tab << declare("fracY",wF+1) << " <= "<< zg(wF+1)<<" when excY=\"00\" else ('1' & newY("<<wF-1<<" downto 0));"<<endl;
 		double cpfracY = getCriticalPath();
 
-		
-		
+
+
 		//exception bits: need to be updated but for not FIXME
 		manageCriticalPath(target->localWireDelay()+2*target->lutDelay());
 		vhdl <<tab<<"with sXsYExnXY select "<<endl;
@@ -145,8 +145,8 @@ namespace flopoco{
 				 <<tab<<tab<<"\"11\" when others;"<<endl;
 		manageCriticalPath(target->localWireDelay() + target->lutDelay());
 		vhdl <<tab<<declare("signR") << "<= '0' when (sXsYExnXY=\"100000\" or sXsYExnXY=\"010000\") else signX;"<<endl;
-		
-		
+
+
 		setCycleFromSignal("swap");;
 		if ( getCycleFromSignal("eYmeX") == getCycleFromSignal("swap") )
 			setCriticalPath(max(cpeXmeY, cpswap));
@@ -155,34 +155,34 @@ namespace flopoco{
 				setCriticalPath(cpeXmeY);
 		}
 		manageCriticalPath(target->localWireDelay() + target->lutDelay());//multiplexer
-		vhdl<<tab<<declare("expDiff",wE+1) << " <= eXmeY when swap = '0' else eYmeX;"<<endl; 
+		vhdl<<tab<<declare("expDiff",wE+1) << " <= eXmeY when swap = '0' else eYmeX;"<<endl;
 		manageCriticalPath(target->localWireDelay() + target->eqConstComparatorDelay(wE+1));
 		vhdl<<tab<<declare("shiftedOut") << " <= '1' when (expDiff >= "<<wF+2<<") else '0';"<<endl;
-		//shiftVal=the number of positions that fracY must be shifted to the right				
-		
+		//shiftVal=the number of positions that fracY must be shifted to the right
+
 		//		cout << "********" << wE << " " <<  sizeRightShift  <<endl;
-		
+
 		if (wE>sizeRightShift) {
 			manageCriticalPath(target->localWireDelay() + target->lutDelay());
 			vhdl<<tab<<declare("shiftVal",sizeRightShift) << " <= expDiff("<< sizeRightShift-1<<" downto 0)"
-					<< " when shiftedOut='0' else CONV_STD_LOGIC_VECTOR("<<wF+3<<","<<sizeRightShift<<") ;" << endl; 
-		}		
+					<< " when shiftedOut='0' else CONV_STD_LOGIC_VECTOR("<<wF+3<<","<<sizeRightShift<<") ;" << endl;
+		}
 		else if (wE==sizeRightShift) {
 			vhdl<<tab<<declare("shiftVal", sizeRightShift) << " <= expDiff" << range(sizeRightShift-1,0) << ";" << endl ;
 		}
 		else 	{ //  wE< sizeRightShift
 			vhdl<<tab<<declare("shiftVal",sizeRightShift) << " <= CONV_STD_LOGIC_VECTOR(0,"<<sizeRightShift-wE <<") & expDiff;" <<	endl;
 		}
-		
+
 		if ( getCycleFromSignal("fracY") == getCycleFromSignal("shiftVal") )
 			setCriticalPath( max(cpfracY, getCriticalPath()) );
 		else{
 			if (syncCycleFromSignal("fracY"))
 				setCriticalPath(cpfracY);
-		}		
-		
-		// shift right the significand of new Y with as many positions as the exponent difference suggests (alignment) 
-		REPORT(DETAILED, "Building far path right shifter");	
+		}
+
+		// shift right the significand of new Y with as many positions as the exponent difference suggests (alignment)
+		REPORT(DETAILED, "Building far path right shifter");
 		rightShifter = new Shifter(target,wF+1,wF+3, Shifter::Right, inDelayMap("X",getCriticalPath()));
 		rightShifter->changeName(getName()+"_RightShifter");
 		addSubComponent(rightShifter);
@@ -201,27 +201,27 @@ namespace flopoco{
 		manageCriticalPath(target->localWireDelay() + target->eqConstComparatorDelay(wF+1));
 		vhdl<<tab<< declare("sticky") << " <= '0' when (shiftedFracY("<<wF<<" downto 0)=CONV_STD_LOGIC_VECTOR(0,"<<wF<<")) else '1';"<<endl;
 		double cpsticky = getCriticalPath();
-		
+
 		setCycleFromSignal("shiftedFracY");
 		nextCycle();         ////
 		setCriticalPath(0.0);////
 		setCriticalPath(cpshiftedFracY);
 		//pad fraction of Y [overflow][shifted frac having inplicit 1][guard][round]
-		vhdl<<tab<< declare("fracYfar", wF+4)      << " <= \"0\" & shiftedFracY("<<2*wF+3<<" downto "<<wF+1<<");"<<endl;	
+		vhdl<<tab<< declare("fracYfar", wF+4)      << " <= \"0\" & shiftedFracY("<<2*wF+3<<" downto "<<wF+1<<");"<<endl;
 		manageCriticalPath(target->localWireDelay() + target->lutDelay());
 		vhdl<<tab<< declare("EffSubVector", wF+4) << " <= ("<<wF+3<<" downto 0 => EffSub);"<<endl;
 		vhdl<<tab<< declare("fracYfarXorOp", wF+4) << " <= fracYfar xor EffSubVector;"<<endl;
-		//pad fraction of X [overflow][inplicit 1][fracX][guard bits]				
+		//pad fraction of X [overflow][inplicit 1][fracX][guard bits]
 		vhdl<<tab<< declare("fracXfar", wF+4)      << " <= \"01\" & (newX("<<wF-1<<" downto 0)) & \"00\";"<<endl;
-		
+
 		if (getCycleFromSignal("sticky")==getCycleFromSignal("fracXfar"))
 			setCriticalPath( max (cpsticky, getCriticalPath()) );
 		else
 			if (syncCycleFromSignal("sticky"))
 				setCriticalPath(cpsticky);
-		manageCriticalPath(target->localWireDelay()+ target->lutDelay());	
+		manageCriticalPath(target->localWireDelay()+ target->lutDelay());
 		vhdl<<tab<< declare("cInAddFar")           << " <= EffSub and not sticky;"<< endl;//TODO understand why
-		
+
 		//result is always positive.
 		fracAddFar = new IntAdder(target,wF+4, inDelayMap("X", getCriticalPath()));
 		addSubComponent(fracAddFar);
@@ -232,21 +232,21 @@ namespace flopoco{
 		vhdl << instance(fracAddFar, "fracAdder");
 		syncCycleFromSignal("fracAddResult");
 		setCriticalPath(fracAddFar->getOutputDelay("R"));
-		
+
 		if (getCycleFromSignal("sticky")==getCycleFromSignal("fracAddResult"))
 			setCriticalPath(max(cpsticky, getCriticalPath()));
 		else{
 			if (syncCycleFromSignal("sticky"))
 				setCriticalPath(cpsticky);
-		}	
-		
+		}
+
 		//shift in place
 		vhdl << tab << declare("fracGRS",wF+5) << "<= fracAddResult & sticky; "<<endl;
-	
-		//incremented exponent. 
+
+		//incremented exponent.
 		vhdl << tab << declare("extendedExpInc",wE+2) << "<= (\"00\" & expX) + '1';"<<endl;
-		
-		
+
+
 		lzocs = new LZOCShifterSticky(target, wF+5, wF+5, intlog2(wF+5), false, 0, inDelayMap("I",getCriticalPath()));
 		addSubComponent(lzocs);
 		inPortMap  (lzocs, "I", "fracGRS");
@@ -257,25 +257,25 @@ namespace flopoco{
 		setCriticalPath(lzocs->getOutputDelay("O"));
 		// 		double cpnZerosNew = getCriticalPath();
 		double cpshiftedFrac = getCriticalPath();
-		
-		
-		
-		
+
+
+
+
 		//need to decide how much to add to the exponent
 		/*		manageCriticalPath(target->localWireDelay() + target->adderDelay(wE+2));*/
 		// 	vhdl << tab << declare("expPart",wE+2) << " <= (" << zg(wE+2-lzocs->getCountWidth(),0) <<" & nZerosNew) - 1;"<<endl;
 		//update exponent
-		
+
 		manageCriticalPath(target->localWireDelay() + target->adderDelay(wE+2));
 		vhdl << tab << declare("updatedExp",wE+2) << " <= extendedExpInc - (" << zg(wE+2-lzocs->getCountWidth(),0) <<" & nZerosNew);"<<endl;
-		vhdl << tab << declare("eqdiffsign")<< " <= '1' when nZerosNew="<<og(lzocs->getCountWidth(),0)<<" else '0';"<<endl; 
-		
-		
+		vhdl << tab << declare("eqdiffsign")<< " <= '1' when nZerosNew="<<og(lzocs->getCountWidth(),0)<<" else '0';"<<endl;
+
+
 		//concatenate exponent with fraction to absorb the possible carry out
 		vhdl<<tab<<declare("expFrac",wE+2+wF+1)<<"<= updatedExp & shiftedFrac"<<range(wF+3,3)<<";"<<endl;
 		double cpexpFrac = getCriticalPath();
-		
-		
+
+
 		// 		//at least in parallel with previous 2 statements
 		setCycleFromSignal("shiftedFrac");
 		setCriticalPath(cpshiftedFrac);
@@ -284,21 +284,21 @@ namespace flopoco{
 		vhdl<<tab<<declare("rnd")<<"<= shiftedFrac"<<of(2)<<";"<<endl;
 		vhdl<<tab<<declare("grd")<<"<= shiftedFrac"<<of(3)<<";"<<endl;
 		vhdl<<tab<<declare("lsb")<<"<= shiftedFrac"<<of(4)<<";"<<endl;
-		
+
 		//decide what to add to the guard bit
 		manageCriticalPath(target->localWireDelay() + target->lutDelay());
 		vhdl<<tab<<declare("addToRoundBit")<<"<= '0' when (lsb='0' and grd='1' and rnd='0' and stk='0')  else '1';"<<endl;
 		//round
-		
+
 		if (getCycleFromSignal("expFrac") == getCycleFromSignal("addToRoundBit"))
 			setCriticalPath(max(cpexpFrac, getCriticalPath()));
 		else
 			if (syncCycleFromSignal("expFrac"))
 				setCriticalPath(cpexpFrac);
-			
+
 		IntAdder *ra = new IntAdder(target, wE+2+wF+1, inDelayMap("X", getCriticalPath() ) );
 		addSubComponent(ra);
-		
+
 		inPortMap(ra,"X", "expFrac");
 		inPortMapCst(ra, "Y", zg(wE+2+wF+1,0) );
 		inPortMap( ra, "Cin", "addToRoundBit");
@@ -306,12 +306,12 @@ namespace flopoco{
 		vhdl << instance(ra, "roundingAdder");
 		setCycleFromSignal("RoundedExpFrac");
 		setCriticalPath(ra->getOutputDelay("R"));
-		
+
 		// 		vhdl<<tab<<declare("RoundedExpFrac",wE+2+wF+1)<<"<= expFrac + addToRoundBit;"<<endl;
 
 		//possible update to exception bits
 		vhdl << tab << declare("upExc",2)<<" <= RoundedExpFrac"<<range(wE+wF+2,wE+wF+1)<<";"<<endl;
-		
+
 		vhdl << tab << declare("fracR",wF)<<" <= RoundedExpFrac"<<range(wF,1)<<";"<<endl;
 		vhdl << tab << declare("expR",wE) <<" <= RoundedExpFrac"<<range(wF+wE,wF+1)<<";"<<endl;
 
@@ -326,12 +326,12 @@ namespace flopoco{
 		vhdl<<tab<<declare("excR",2) << " <= \"00\" when (eqdiffsign='1' and EffSub='1') else excRt2;"<<endl;
 		// IEEE standard says in 6.3: if exact sum is zero, it should be +zero in RN
 		vhdl<<tab<<declare("signR2") << " <= '0' when (eqdiffsign='1' and EffSub='1') else signR;"<<endl;
-		
 
-		// assign result 
+
+		// assign result
 		vhdl<<tab<< declare("computedR",wE+wF+3) << " <= excR & signR2 & expR & fracR;"<<endl;
 		vhdl << tab << "R <= computedR;"<<endl;
-		
+
 		/*		manageCriticalPath(target->localWireDelay() +  target->lutDelay());
 					vhdl<<tab<<"with sdExnXY select"<<endl;
 					vhdl<<tab<<"R <= newX when \"0100\"|\"1000\"|\"1001\", newY when \"0001\"|\"0010\"|\"0110\", computedR when others;"<<endl;*/
@@ -348,14 +348,14 @@ namespace flopoco{
 		/* Get I/O values */
 		mpz_class svX = tc->getInputValue("X");
 		mpz_class svY = tc->getInputValue("Y");
-	
+
 		/* Compute correct value */
 		FPNumber fpx(wE, wF, svX);
 		FPNumber fpy(wE, wF, svY);
 		mpfr_t x, y, r;
 		mpfr_init2(x, 1+wF);
 		mpfr_init2(y, 1+wF);
-		mpfr_init2(r, 1+wF); 
+		mpfr_init2(r, 1+wF);
 		fpx.getMPFR(x);
 		fpy.getMPFR(y);
 		if(sub)
@@ -363,7 +363,7 @@ namespace flopoco{
 		else
 			mpfr_add(r, x, y, GMP_RNDN);
 
-		// Set outputs 
+		// Set outputs
 		FPNumber  fpr(wE, wF, r);
 		mpz_class svR = fpr.getSignalValue();
 		tc->addExpectedOutput("R", svR);
@@ -379,44 +379,44 @@ namespace flopoco{
 	void FPAddSinglePath::buildStandardTestCases(TestCaseList* tcl){
 		TestCase *tc;
 
-		// Regression tests 
-		tc = new TestCase(this); 
+		// Regression tests
+		tc = new TestCase(this);
 		tc->addFPInput("X", 1.0);
 		tc->addFPInput("Y", -1.0);
 		emulate(tc);
 		tcl->add(tc);
 
-		tc = new TestCase(this); 
+		tc = new TestCase(this);
 		tc->addFPInput("X", 1.0);
 		tc->addFPInput("Y", FPNumber::plusDirtyZero);
 		emulate(tc);
 		tcl->add(tc);
 
-		tc = new TestCase(this); 
+		tc = new TestCase(this);
 		tc->addFPInput("X", 1.0);
 		tc->addFPInput("Y", FPNumber::minusDirtyZero);
 		emulate(tc);
 		tcl->add(tc);
 
-		tc = new TestCase(this); 
+		tc = new TestCase(this);
 		tc->addFPInput("X", FPNumber::plusInfty);
 		tc->addFPInput("Y", FPNumber::minusInfty);
 		emulate(tc);
 		tcl->add(tc);
 
-		tc = new TestCase(this); 
+		tc = new TestCase(this);
 		tc->addFPInput("X", FPNumber::plusInfty);
 		tc->addFPInput("Y", FPNumber::plusInfty);
 		emulate(tc);
 		tcl->add(tc);
 
-		tc = new TestCase(this); 
+		tc = new TestCase(this);
 		tc->addFPInput("X", FPNumber::minusInfty);
 		tc->addFPInput("Y", FPNumber::minusInfty);
 		emulate(tc);
 		tcl->add(tc);
-		
-		tc = new TestCase(this); 
+
+		tc = new TestCase(this);
 		tc->addFPInput("X", -4.375e1);
 		tc->addFPInput("Y", 4.375e1);
 		emulate(tc);
@@ -433,7 +433,7 @@ namespace flopoco{
 		mpz_class normalExn = mpz_class(1)<<(wE+wF+1);
 		mpz_class negative  = mpz_class(1)<<(wE+wF);
 
-		tc = new TestCase(this); 
+		tc = new TestCase(this);
 		/* Fill inputs */
 		if ((i & 7) == 0) {// cancellation, same exponent
 			mpz_class e = getLargeRandom(wE);
@@ -489,5 +489,23 @@ namespace flopoco{
 		return tc;
 	}
 
+		OperatorPtr FPAddSinglePath::parseArguments(Target *target, vector<string> &args) {
+		int wE;
+		UserInterface::parseStrictlyPositiveInt(args, "wE", &wE);
+		int wF;
+		UserInterface::parseStrictlyPositiveInt(args, "wF", &wF);
+		return new FPAddSinglePath(target, wE, wF);
+	}
 
+	void FPAddSinglePath::registerFactory(){
+		UserInterface::add("FPAddSInglePath", // name
+											 "A floating-point adder with a new, more compact single-path architecture.",
+											 UserInterface::BasicFloatingPoint, // categories
+											 "",
+											 "wE(int): exponent size in bits; \
+wF(int): mantissa size in bits;",
+											 "",
+											 FPAddSinglePath::parseArguments
+											 ) ;
+	}
 }

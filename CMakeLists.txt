@@ -295,7 +295,8 @@ src/Conversions/Fix2FP
 
 # Complex numbers ---------------------------------------------------
 src/Complex/FixComplexKCM
-
+# TODO for Matei
+#src/Complex/FixedComplexAdder
 
 # Floating-point adders and subtracters -----------------------------
  src/FPAddSub/FPAdd
@@ -310,8 +311,10 @@ src/Complex/FixComplexKCM
  src/FPMultSquare/FPSquare
 
 # Floating-point dividers and square roots
+src/FPDivSqrt/SelFunctionTable
 src/FPDivSqrt/FPDiv
 src/FPDivSqrt/FPSqrt
+src/FPDivSqrt/Tools/NbBitsMin
 # src/FPDivSqrt/FPSqrtPoly # Resurrect some day?
 
 

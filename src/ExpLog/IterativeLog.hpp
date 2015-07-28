@@ -78,6 +78,10 @@ namespace flopoco{
 		void buildStandardTestCases(TestCaseList* tcl);
 		/**Overloading the function of Operator with a function that tests only positive FP numbers (full range)*/
 		TestCase* buildRandomTestCase(int i);
+		// User-interface stuff
+		/** Factory method */
+		static OperatorPtr parseArguments(Target *target , vector<string> &args);
+		static void registerFactory();
 
 		int wE, wF;
 
