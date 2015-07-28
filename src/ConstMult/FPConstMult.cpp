@@ -29,7 +29,6 @@
 #include "../Operator.hpp"
 #include "FPConstMult.hpp"
 #include "../TestBenches/FPNumber.hpp"
-#include 
 
 using namespace std;
 
@@ -687,6 +686,21 @@ namespace flopoco{
 		}
 	}
 
+	OperatorPtr FPConstMult::parse(Target* target, vector<string>& args)
+	{
+		int wE_in, wE_out, wF_in, wF_out, cst_width;
+		string constant;
+
+		UserInterface::parsePositiveInt(args, "cst_width", &cst_width);
+		UserInterface::parseStrictlyPositiveInt(args, "wE_in", &wE_in);
+		UserInterface::parseStrictlyPositiveInt(args, "wE_out", &wE_out);
+		UserInterface::parseStrictlyPositiveInt(args, "wF_in", &wF_in);
+		UserInterface::parseStrictlyPositiveInt(args, "wF_out", &wF_out);
+		UserInterface::parseString(args, "constant", &constant);
+
+		return new FPConstMult(target, wE_in, wF_in, wE_out, wF_out, cst_width, constant);
+	}
+
 	void FPConstMult::registerFactory()
 	{
 		UserInterface::add(
@@ -694,7 +708,14 @@ namespace flopoco{
 					"Floating-point constant multiplier using the shift-and-add approach. The constant is provided as sign, integral significand and integral exponent",
 					UserInterface::BasicFloatingPoint,
 					"https://hal-ens-lyon.archives-ouvertes.fr/ensl-00269219/document",
-
+					"wE_in(int): input exponent width;"
+					"wF_in(int): input significand part width;"
+					"wE_out(int): output exponent width;"
+					"wF_out(int): output significand width;"
+					"constant(string): constant in sollya formalism (e.g. \"cos(3*pi/2)\");"
+					"cst_width(int)=0:constant precision. If set to zero, the actual width will be computed in order to get a faithful result.",
+					"",
+					parse
 				);
 	}
 }

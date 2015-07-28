@@ -76,7 +76,9 @@ namespace flopoco{
 
 		void fillTestCase(mpz_class a[]);
 
-		void registerFactory();
+		//Interface stuff
+		static void registerFactory();
+		static OperatorPtr parse(Target* target, vector<string>& args);
 	};
 
 }

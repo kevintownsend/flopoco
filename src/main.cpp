@@ -32,6 +32,7 @@
 #include "IntAddSubCmp/IntAdderAlternative.hpp"
 #include "IntAddSubCmp/IntAdderClassical.hpp"
 #include "IntAddSubCmp/IntAdderShortLatency.hpp"
+#include "ConstMult/FPConstMult.hpp"
 
 using namespace std;
 using namespace flopoco;
@@ -56,6 +57,7 @@ int main(int argc, char* argv[] )
 		FPAdd3Input::registerFactory();
 		FPAddSinglePath::registerFactory();
 		FPMult::registerFactory();
+		FPConstMult::registerFactory();
 		//FPMultKaratsuba::registerFactory();
 		FPSquare::registerFactory();
 		IterativeLog::registerFactory();
