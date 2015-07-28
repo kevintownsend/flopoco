@@ -26,6 +26,11 @@ namespace flopoco{
 		/** @brief function used to create Standard testCase defined by the developper */
 		void buildStandardTestCases(TestCaseList* tcl);
 
+		// User-interface stuff
+		/** Factory method */
+		static OperatorPtr parseArguments(Target *target , vector<string> &args);
+		static void registerFactory();
+
 	private:
 		int msbOut;					/**< weight of the MSB in the result */
 		int lsbOut;					/**< weight of the LSB in the result */

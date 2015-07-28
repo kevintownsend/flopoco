@@ -18,7 +18,7 @@ using namespace std;
 
 namespace flopoco {
 
-	FixIIR::FixIIR(Target* target, int msbOut_, int lsbOut_, double H_, vector<string> coeffb_, vector<string> coeffa_, map<string, double> inputDelays) : 
+	FixIIR::FixIIR(Target* target, int msbOut_, int lsbOut_, double H_, vector<string> coeffb_, vector<string> coeffa_, map<string, double> inputDelays) :
 		Operator(target), msbOut(msbOut_), lsbOut(lsbOut_), H(H_), coeffb(coeffb_), coeffa(coeffa_)
 	{
 		srcFileName="FixIIR";
@@ -32,7 +32,7 @@ namespace flopoco {
 
 		n = coeffb.size();
 		m = coeffa.size();
-		
+
 
 
 		//manage the critical path
@@ -42,7 +42,7 @@ namespace flopoco {
 
 
 		// guard bits for a faithful result
-		g= intlog2(2*H*(n+m)); 
+		g= intlog2(2*H*(n+m));
 		REPORT(INFO, "g=" << g);
 
 		hugePrec = 10*(1+msbOut+-lsbOut+g);
@@ -62,7 +62,7 @@ namespace flopoco {
 		{
 			// parse the coeffs from the string, with Sollya parsing
 			sollya_obj_t node;
-			
+
 			node = sollya_lib_parse_string(coeffb[i].c_str());
 			// If conversion did not succeed (i.e. parse error)
 			if(node == 0)
@@ -78,16 +78,16 @@ namespace flopoco {
 				coeffsignb[i] = 1;
 			else
 				coeffsignb[i] = 0;
-			
+
 			mpfr_abs(mpcoeffb[i], mpcoeffb[i], GMP_RNDN);
-				
+
 		}
 
 		for (int i=0; i< m; i++)
 		{
 			// parse the coeffs from the string, with Sollya parsing
 			sollya_obj_t node;
-			
+
 			node = sollya_lib_parse_string(coeffa[i].c_str());
 			// If conversion did not succeed (i.e. parse error)
 			if(node == 0)
@@ -99,27 +99,27 @@ namespace flopoco {
 
 			mpfr_init2(mpcoeffa[i], 10000);
 			sollya_lib_get_constant(mpcoeffa[i], node);
-			
+
 			if(mpfr_get_d(mpcoeffa[i], GMP_RNDN) < 0)
 				coeffsigna[i] = 1;
 			else
 				coeffsigna[i] = 0;
-			
+
 			mpfr_abs(mpcoeffa[i], mpcoeffa[i], GMP_RNDN);
 
 		}
-		
 
-		wO = (msbOut - lsbOut) + 1; //1 + sign  ; 
 
-		
+		wO = (msbOut - lsbOut) + 1; //1 + sign  ;
 
-		int size = wO + g ; 
+
+
+		int size = wO + g ;
 		REPORT(INFO, "Sum size is: "<< size );
 
-		
+
 		//compute the guard bits from the KCM mulipliers
-		int wInKCM_B = 1 -lsbOut;	//1 sign bit + p bit 
+		int wInKCM_B = 1 -lsbOut;	//1 sign bit + p bit
 		int lsbOutKCM = lsbOut-g;
 		double targetUlpError = 1.0;
 
@@ -178,7 +178,7 @@ namespace flopoco {
 
 		vhdl << instance(shiftRegB, "shiftRegB");
 
-		
+
 		//Shift register for the right part
 		setCycleFromSignal("X");
 
@@ -200,14 +200,14 @@ namespace flopoco {
 		target->setPipelined(false); //the following parts of the circuit will be combinatorial
 		setCombinatorial();
 
-		
+
 		if (!target->plainVHDL())
 		{
 			//create the bitheap that computes the sum
 			bitHeapB = new BitHeap(this, size+guardBitsKCM_B);
 			bitHeapA = new BitHeap(this, size+guardBitsKCM_A);
 
-			for (int i=0; i<n; i++) 
+			for (int i=0; i<n; i++)
 			{
 				// TODO possible mem leak here? The pointer is lost, do we keep
 				// pointers to the subtables?  Multiplication: instantiating a
@@ -226,7 +226,7 @@ namespace flopoco {
 			}
 
 
-			for (int i=0; i<m; i++) 
+			for (int i=0; i<m; i++)
 			{
 				// Multiplication: instantiating a KCM object. It will add bits also to the right of lsbOutKCM
 				new FixRealKCM(this,				// the envelopping operator
@@ -259,7 +259,7 @@ namespace flopoco {
 
 			vhdl << tab << "Rtmp" << " <= " << bitHeapB-> getSumName() << range(size+guardBitsKCM_B-1, guardBitsKCM_B) << " + " <<bitHeapA-> getSumName() << range(size+guardBitsKCM_A-1, guardBitsKCM_A) <<";" << endl;
 
-			
+
 		}
 		else
 		{
@@ -271,8 +271,8 @@ namespace flopoco {
 				//manage the critical path
 				setCycleFromSignal(join("Yb",i));
 
-				// Multiplication: instantiating a KCM object. 
-				FixRealKCM* mult = new FixRealKCM(target, 
+				// Multiplication: instantiating a KCM object.
+				FixRealKCM* mult = new FixRealKCM(target,
 												  true, // signed
 												  -1, // input MSB, but one sign bit will be added
 												  lsbOut, // input LSB weight
@@ -296,7 +296,7 @@ namespace flopoco {
 					vhdl << " - (" ;
 				else
 					vhdl << " + (" ;
-				if(size>pSize) 
+				if(size>pSize)
 					vhdl << "("<< size-1 << " downto " << pSize<< " => "<< join("Pb",i) << of(pSize-1) << ")" << " & " ;
 				vhdl << join("Pb", i) << ");" << endl;
 			}
@@ -308,8 +308,8 @@ namespace flopoco {
 				previousCycle();
 				getSignalByName(join("Ya",i))->setCycle(getCurrentCycle());
 
-				// Multiplication: instantiating a KCM object. 
-				FixRealKCM* mult = new FixRealKCM(target, 
+				// Multiplication: instantiating a KCM object.
+				FixRealKCM* mult = new FixRealKCM(target,
 												  true, // signed
 												  msbOut, // input MSB, but one sign bit will be added
 												  lsbOut-g, // input LSB weight
@@ -331,7 +331,7 @@ namespace flopoco {
 					vhdl << " - (" ;
 				else
 					vhdl << " + (" ;
-				if(size>pSize) 
+				if(size>pSize)
 					vhdl << "("<< size-1 << " downto " << pSize<< " => "<< join("Pa",i) << of(pSize-1) << ")" << " & " ;
 				vhdl << join("Pa", i) << ");" << endl;
 			}
@@ -342,18 +342,18 @@ namespace flopoco {
 
 
 			// setSequential();
-			
+
 			// setCycleFromSignal(join("S", n+m));
 
 			vhdl << tab << "Rtmp <= " << join("S", n+m) << ";" << endl;
 
 
-			
+
 		}
 		setSequential();
 		target->setPipelined();
-		addOutput("R", wO, 2); 
-		
+		addOutput("R", wO, 2);
+
 		syncCycleFromSignal(join("Yb", n-1));
 		nextCycle();
 
@@ -380,24 +380,24 @@ namespace flopoco {
 		mpfr_init2 (x, 1-lsbOut);
 		mpfr_init2 (t, hugePrec);
 		mpfr_init2 (u, hugePrec);
-		mpfr_init2 (s, hugePrec);	
+		mpfr_init2 (s, hugePrec);
 
 		mpfr_set_d(s, 0.0, GMP_RNDN); // initialize s to 0
 
 		for (int i=0; i< n; i++)
 		{
-			sx = xHistory[(currentIndexB+n-i)%n];		// get the input bit vector as an integer		
-			sx = bitVectorToSigned(sx, 1-lsbOut); 						// convert it to a signed mpz_class		
+			sx = xHistory[(currentIndexB+n-i)%n];		// get the input bit vector as an integer
+			sx = bitVectorToSigned(sx, 1-lsbOut); 						// convert it to a signed mpz_class
 			mpfr_set_z (x, sx.get_mpz_t(), GMP_RNDD); 				// convert this integer to an MPFR; this rounding is exact
 			mpfr_div_2si (x, x, -lsbOut, GMP_RNDD); 						// multiply this integer by 2^-p to obtain a fixed-point value; this rounding is again exact
 
 			mpfr_mul(t, x, mpcoeffb[i], GMP_RNDN); 					// Here rounding possible, but precision used is ridiculously high so it won't matter
 
 			if(coeffsignb[i]==1)
-				mpfr_neg(t, t, GMP_RNDN); 
+				mpfr_neg(t, t, GMP_RNDN);
 
 			mpfr_add(s, s, t, GMP_RNDN); 							// same comment as above
-			
+
 		}
 
 		for (int i=0; i<m; i++)
@@ -406,7 +406,7 @@ namespace flopoco {
 			mpfr_mul(u, yHistory[(currentIndexA+m-i-1)%m], mpcoeffa[i], GMP_RNDN); 					// Here rounding possible, but precision used is ridiculously high so it won't matter
 
 			if(coeffsigna[i]==1)
-				mpfr_neg(u, u, GMP_RNDN); 
+				mpfr_neg(u, u, GMP_RNDN);
 
 			mpfr_add(s, s, u, GMP_RNDN); 							// same comment as above
 
@@ -418,10 +418,10 @@ namespace flopoco {
 		// now we should have in s the (exact in most cases) sum
 		// round it up and down
 
-		// make s an integer -- no rounding here 
+		// make s an integer -- no rounding here
 		mpfr_mul_2si (s, s, -lsbOut, GMP_RNDN);
 
-		
+
 		// We are waiting until the first meaningful value comes out of the IIR
 
 		mpz_class rdz, ruz;
@@ -430,11 +430,11 @@ namespace flopoco {
 		rdz=signedToBitVector(rdz, wO);
 		tc->addExpectedOutput ("R", rdz);
 
-		mpfr_get_z (ruz.get_mpz_t(), s, GMP_RNDU); 					// there can be a real rounding here	
+		mpfr_get_z (ruz.get_mpz_t(), s, GMP_RNDU); 					// there can be a real rounding here
 		ruz=signedToBitVector(ruz, wO);
 		tc->addExpectedOutput ("R", ruz);
 
-		
+
 		mpfr_clears (x, t, u, s, NULL);
 
 		currentIndexB = (currentIndexB +1)%n; // We use a circular buffer to store the inputs
@@ -444,5 +444,46 @@ namespace flopoco {
 	};
 
 	void FixIIR::buildStandardTestCases(TestCaseList* tcl){};
+
+	OperatorPtr FixIIR::parseArguments(Target *target, vector<string> &args) {
+		int msbOut;
+		UserInterface::parseInt(args, "msbOut", &msbOut);
+		int lsbOut;
+		UserInterface::parseInt(args, "lsbOut", &lsbOut);
+		double h;
+		UserInterface::parseFloat(args, "h", &h);
+		vector<string> inputa;
+		while(args.size()!=1)
+		{
+			string tmp;
+			UserInterface::parseString(args, "coeffa", &tmp);
+			input.push_back(tmp);
+		}
+		vector<string> inputb;
+		while(args.size()!=1)
+		{
+			string tmp;
+			UserInterface::parseString(args, "coeffb", &tmp);
+			input.push_back(tmp);
+		}
+
+		return new FixIIR(target, msbOut, lsbOut, h, inputb, inputa);
+	}
+
+
+	void FixIIR::registerFactory(){
+		UserInterface::add("FixIIR", // name
+											 "A fix-point .",
+											 UserInterface::BasicFixPoint, // categories
+											 "",
+											 "msbOut(int): output's most significant bit;\
+lsbOut(int): output's least significant bit;\
+h(int): ;\
+coeffa(int): can be called multiple times. Coefficients are considered as real numbers and can be put as 0.1564565756768 or sin(3*pi/8).;\
+coeffb(int): can be called multiple times. Coefficients are considered as real numbers and can be put as 0.1564565756768 or sin(3*pi/8).;",
+											 "",
+											 FixIIR::parseArguments
+											 ) ;
+	}
 
 }

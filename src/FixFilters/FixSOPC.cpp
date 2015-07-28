@@ -345,8 +345,8 @@ namespace flopoco{
 											 "A fix-point .",
 											 UserInterface::BasicFixPoint, // categories
 											 "",
-											 "lsbInOut(int): integer size in bits;\
-rescale(bool)=false: If true, divides all coefficient by 1/sum(|coeff|);\
+											 "lsbIn(int): input's last significant bit;\
+lsbOut(int): output's last significant bit;\
 coeff(int): can be called multiple times. Coefficients are considered as real numbers and can be put as 0.1564565756768 or sin(3*pi/8).;",
 											 "",
 											 FixSOPC::parseArguments
