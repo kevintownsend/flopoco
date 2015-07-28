@@ -5,13 +5,13 @@
 #include "utils.hpp"
 #include "BitHeap/BitHeap.hpp"
 
-namespace flopoco{ 
+namespace flopoco{
 
 	class FixIIR : public Operator {
 
 	public:
 		/* Constructor ; you must use bitheap in case of negative coefficient*/
-		FixIIR(Target* target, int msbOut_, int lsbOut_, double H_, vector<string> coeffb_, vector<string> coeffa_, map<string, double> inputDelays = emptyDelayMap); 
+		FixIIR(Target* target, int msbOut_, int lsbOut_, double H_, vector<string> coeffb_, vector<string> coeffa_, map<string, double> inputDelays = emptyDelayMap);
 
 		/* Destructor */
 		~FixIIR();
@@ -24,9 +24,14 @@ namespace flopoco{
 		/* function used to create Standard testCase defined by the developper */
 		void buildStandardTestCases(TestCaseList* tcl);
 
+		// User-interface stuff
+		/** Factory method */
+		static OperatorPtr parseArguments(Target *target , vector<string> &args);
+		static void registerFactory();
+
   	private:
 		int msbOut;					/**< weight of the MSB in the result */
-		int lsbOut;					/**< weight of the LSB in the result */ 
+		int lsbOut;					/**< weight of the LSB in the result */
 		double H;						/**< Worst case peak gain */
 		vector<string> coeffb;			/**< the b_i coefficients as strings */
 		vector<string> coeffa;			/**< the a_i coefficients as strings */
