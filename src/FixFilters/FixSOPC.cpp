@@ -75,10 +75,6 @@ namespace flopoco{
 		}
 	}
 
-
-
-
-
 	void FixSOPC::initialize()	{
 		srcFileName="FixSOPC";
 
@@ -106,7 +102,7 @@ namespace flopoco{
 
 		if(computeGuardBits) {
 			// guard bits for a faithful result
-			g = 1+ intlog2(n-1);
+			g = intlog2(n-1);
 			REPORT(INFO, "g=" << g);
 		}
 
@@ -167,8 +163,9 @@ namespace flopoco{
 		int guardBitsKCM = 0;
 		int lsbOutKCM = lsbOut-g; // we want each KCM to be faithful to this ulp
 		double targetUlpError = 1.0;
+
 		for(int i=0; i<n; i++)		{
-			int wInKCM = msbIn[i]-lsbIn[i]+1;	//p bits + 1 sign bit
+			int wInKCM = msbIn[i]-lsbIn[i]+1-g;	//p bits + 1 sign bit
 
 			int temp = FixRealKCM::neededGuardBits(
 					getTarget(), 
@@ -198,17 +195,14 @@ namespace flopoco{
 						 getTarget(), 	// the target FPGA
 						 getSignalByName(join("X",i)),
 						 true, 		// signed
-						 msbIn[i]-1, 		// input MSB ?? TODO one sign bit will be added by KCM because it has a non-standard interface. To be fixed someday
+						 msbIn[i], 	
 						 lsbIn[i], 		// input LSB weight
 						 lsbOutKCM, 		// output LSB weight -- the output MSB is computed out of the constant
 						 coeff[i], 	// pass the string unmodified
 						 bitHeap,	// pass the reference to the bitheap that will accumulate the intermediary products
-						 lsbOutKCM - guardBitsKCM
+						 lsbOutKCM - guardBitsKCM 
 					 );
 			}
-
-			//rounding - add 1/2 ulps
-			bitHeap->addConstantOneBit(g+guardBitsKCM-1);
 
 			//compress the bitheap
 			bitHeap -> generateCompressorVHDL();
