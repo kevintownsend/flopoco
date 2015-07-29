@@ -22,6 +22,8 @@ namespace flopoco{
 		string constant;
 		mpfr_t mpC;
 		
+		static OperatorPtr parser(Target *target, vector<string> &args);
+		static void registerFactory(void);
 		
 // 		int lsbIn;
 // 		int msbIn;

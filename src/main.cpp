@@ -57,6 +57,7 @@ int main(int argc, char* argv[] )
 		FPAddSinglePath::registerFactory();
 		FPMult::registerFactory();
 		FPConstMult::registerFactory();
+		FPRealKCM::registerFactory();
 		//FPMultKaratsuba::registerFactory();
 		FPSquare::registerFactory();
 		IterativeLog::registerFactory();

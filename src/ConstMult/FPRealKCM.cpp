@@ -71,7 +71,14 @@ namespace flopoco{
 		vhdl << tab << declare("exc",2) << "<= X"<<range(wE+wF+2, wE+wF+1)<<";"<<endl;
 		vhdl << tab << declare("sign") << "<= X"<<of(wE+wF)<<";"<<endl;
 		
-		FixRealKCM *frkcm = new FixRealKCM( target, -wF, 0, 0, -wF+iExp-1, constant);
+		FixRealKCM *frkcm = new FixRealKCM( 
+					target, 
+					false,
+					0,
+					-wF,
+					-wF+iExp-1, 
+					constant
+				);
 		oplist.push_back(frkcm);
 		
 		inPortMap(frkcm, "X", "fracX");
@@ -82,7 +89,7 @@ namespace flopoco{
 		
 		//get number of bits of output
 		//normalize
-		vhdl << tab << declare("norm") << " <= fracMultRes"<<of(wF+1)<<";"<<endl;
+		vhdl << tab << declare("norm") << " <= fracMultRes"<<of(wF)<<";"<<endl;
 		
 		manageCriticalPath(target->localWireDelay() + target->adderDelay(wE+2));
 		vhdl << tab << declare("nf",wF) << " <= fracMultRes"<<range(wF-1,0)<<" when norm='0' else fracMultRes"<<range(wF,1)<<";"<<endl;
@@ -151,9 +158,31 @@ namespace flopoco{
 
 	// }
 
-
-
-
+	//Interface related methods
+	OperatorPtr FPRealKCM::parser(Target *target, vector<string> &args)
+	{
+		int wE, wF;
+		string constant;
+		UserInterface::parseStrictlyPositiveInt(args, "wE", &wE);
+		UserInterface::parseStrictlyPositiveInt(args, "wF", &wF);
+		UserInterface::parseString(args, "constant", &constant);
+		return new FPRealKCM(target, wE, wF, constant);
+	}
+	
+	void FPRealKCM::registerFactory(void)
+	{
+		UserInterface::add(
+					"FPRealKCM",
+					"Table based real multiplier for floating points input. Output size is computed",
+					UserInterface::BasicFloatingPoint,
+					"",
+					"wE(int): exponent width;"
+					"wF(int): significand width;"
+					"constant(string): constant expressed in sollya formalism",
+					"",
+					FPRealKCM::parser
+				);
+	}
 
 
 }
