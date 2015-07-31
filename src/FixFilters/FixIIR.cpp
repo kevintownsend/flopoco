@@ -424,20 +424,31 @@ namespace flopoco {
 		double h;
 		UserInterface::parseFloat(args, "h", &h);
 		vector<string> inputa;
-		while(args.size()!=1)
+		string in;
+		UserInterface::parseString(args, "coeffa", &in);
+		unsigned int deb = in.find("=");
+		unsigned int fin = in.find(":");
+		while(fin != string::npos)
 		{
-			string tmp;
-			UserInterface::parseString(args, "coeffa", &tmp);
-			input.push_back(tmp);
-		}
-		vector<string> inputb;
-		while(args.size()!=1)
-		{
-			string tmp;
-			UserInterface::parseString(args, "coeffb", &tmp);
-			input.push_back(tmp);
-		}
+			inputa.push_back(in.substr(deb+1, fin-deb-1));
+			deb = fin;
 
+			fin = in.find(":", deb+1);
+		}
+		inputa.push_back(in.substr(deb+1));
+
+		vector<string> inputb;
+		UserInterface::parseString(args, "coeffb", &in);
+		deb = in.find("=");
+		fin = in.find(":");
+		while(fin != string::npos)
+		{
+			inputb.push_back(in.substr(deb+1, fin-deb-1));
+			deb = fin;
+
+			fin = in.find(":", deb+1);
+		}
+		inputb.push_back(in.substr(deb+1));
 		return new FixIIR(target, msbOut, lsbOut, h, inputb, inputa);
 	}
 
@@ -450,8 +461,8 @@ namespace flopoco {
 											 "msbOut(int): output's most significant bit;\
 lsbOut(int): output's least significant bit;\
 h(int): ;\
-coeffa(int): can be called multiple times. Coefficients are considered as real numbers and can be put as 0.1564565756768 or sin(3*pi/8).;\
-coeffb(int): can be called multiple times. Coefficients are considered as real numbers and can be put as 0.1564565756768 or sin(3*pi/8).;",
+coeffa(int): to enter several coeff, use ':' as separator (ex:coeff=1:2:3:4:5). Coefficients are considered as real numbers and can be put as 0.1564565756768 or sin(3*pi/8).;\
+coeffb(int): to enter several coeff, use ':' as separator (ex:coeff=1:2:3:4:5). Coefficients are considered as real numbers and can be put as 0.1564565756768 or sin(3*pi/8).;",
 											 "",
 											 FixIIR::parseArguments
 											 ) ;

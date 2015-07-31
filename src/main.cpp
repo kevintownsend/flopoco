@@ -77,6 +77,7 @@ int main(int argc, char* argv[] )
 		//FixedComplexAdder::registerFactory();
 		FixFIR::registerFactory();
 		FixSOPC::registerFactory();
+		FixIIR::registerFactory();
 	}
 	catch (std::string s) {
 		cerr << "Error while registering factories: " << s <<endl;
