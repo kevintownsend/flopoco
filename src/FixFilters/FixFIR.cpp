@@ -195,12 +195,18 @@ namespace flopoco {
 		bool rescale;
 		UserInterface::parseBoolean(args, "rescale", &rescale);
 		vector<string> input;
-		while(args.size()!=1)
+		string in;
+		UserInterface::parseString(args, "coeff", &in);
+		unsigned int deb = in.find("=");
+		unsigned int fin = in.find(":");
+		while(fin != string::npos)
 		{
-			string tmp;
-			UserInterface::parseString(args, "coeff", &tmp);
-			input.push_back(tmp);
+			input.push_back(in.substr(deb+1, fin-deb-1));
+			deb = fin;
+
+			fin = in.find(":", deb+1);
 		}
+		input.push_back(in.substr(deb+1));
 
 		return new FixFIR(target, lsbInOut, input, rescale);
 	}
@@ -212,7 +218,7 @@ namespace flopoco {
 											 "",
 											 "lsbInOut(int): integer size in bits;\
 rescale(bool)=false: If true, divides all coefficient by 1/sum(|coeff|);\
-coeff(int): can be called multiple times. Coefficients are considered as real numbers and can be put as 0.1564565756768 or sin(3*pi/8).;",
+coeff(int): to enter several coeff, use ':' as separator (ex:coeff=1:2:3:4:5). Coefficients are considered as real numbers and can be put as 0.1564565756768 or sin(3*pi/8).;",
 											 "",
 											 FixFIR::parseArguments
 											 ) ;
