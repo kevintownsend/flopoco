@@ -61,6 +61,7 @@ namespace flopoco{
 		setName(name.str());
 				
 		int iExp = mpfr_get_exp(mpC);// - 1;
+		cout << "iExp : " << iExp << endl;
 		
 		addFPInput("X", wE, wF);
 		addFPOutput("R", wE, wF, 2); //faithful result
@@ -68,9 +69,9 @@ namespace flopoco{
 		vhdl << tab << declare("fracX",wF+1) << " <= \"1\" & X"<<range(wF-1,0)<<";"<<endl;
 		vhdl << tab << declare("eX",wE) << " <= X"<<range(wE+wF-1, wF)<<";"<<endl;
 		
-		vhdl << tab << declare("exc",2) << "<= X"<<range(wE+wF+2, wE+wF+1)<<";"<<endl;
-		vhdl << tab << declare("sign") << "<= X"<<of(wE+wF)<<";"<<endl;
-		
+		vhdl << tab << declare("exc",2) << "<= X" << range(wE+wF+2, wE+wF+1)<<";"<<endl;
+		vhdl << tab << declare("sign") << "<= X" << of(wE + wF) << ";" << endl;
+
 		FixRealKCM *frkcm = new FixRealKCM( 
 					target, 
 					false,
