@@ -78,12 +78,14 @@ using namespace std;
 namespace flopoco{
 
 
+	
 	void FixHornerEvaluator::computeArchParameters(){
 		// Initialize all the lsbs to lsbCoeff
 		msbSigma[degree] = msbCoeff[degree];
 		lsbSigma[degree] = lsbCoeff; // This one is not variable
 		for(int i=degree-1; i>=0; i--) {
-			msbSigma[i] = msbCoeff[i] + 1; // TODO this +1 is there for addition overflow, and probably overkill most of the times. But it is safe
+			msbSigma[i] = msbCoeff[i] + 1; // TODO this +1 is there for addition overflow, and probably overkill most of the times.
+			// TODO Replace it with a call to Sollya... But it is safe
 			lsbSigma[i] = lsbCoeff; // these ones will decrease if we need more accuracy
 		}
 		double error;

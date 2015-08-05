@@ -21,7 +21,7 @@ namespace flopoco{
 
 
 	FixFunction::FixFunction(string sollyaString_, bool signedIn_, int lsbIn_, int msbOut_, int lsbOut_):
-		lsbIn(lsbIn_), msbOut(msbOut_), lsbOut(lsbOut_), wOut(msbOut_-lsbOut+1), signedIn(signedIn_)
+		sollyaString(sollyaString_), lsbIn(lsbIn_), msbOut(msbOut_), lsbOut(lsbOut_), wOut(msbOut_-lsbOut+1), signedIn(signedIn_)
 	{
 		if(signedIn)
 			wIn=-lsbIn+1; // add the sign bit at position 0
