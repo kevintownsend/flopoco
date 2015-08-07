@@ -103,8 +103,10 @@ namespace flopoco{
 
 		static void registerFactory();
 
-	private:
+
 		FixFunction *f;                   /**< The function to be approximated */
+
+	private:
 		sollya_obj_t polynomialS;         /**< The polynomial approximating it */
 
 

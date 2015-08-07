@@ -32,6 +32,13 @@ namespace flopoco{
 
 		virtual ~PiecewisePolyApprox();
 
+		/** Compute the MSBs of the intermediate terms sigma_i in an Horner evaluation scheme */
+		vector<int> computeSigmaMSBs();
+		
+		static OperatorPtr parseArguments(Target *target, vector<string> &args);
+
+		static void registerFactory();
+
 		/** get the bits of coeff of degree d of polynomial number i */
 		mpz_class getCoeff(int i, int d); 
 

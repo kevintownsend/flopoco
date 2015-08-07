@@ -132,8 +132,8 @@ namespace flopoco{
 			REPORT(INFO, "Degree 1: You should consider using FixFunctionByMultipartiteTable");
 			}
 			// Build the polynomial approximation
-			REPORT(DETAILED, "Computing polynomial approximation for target precision "<< lsbOut-2);
 			double targetAcc= approxErrorBudget*pow(2, lsbOut);
+			REPORT(INFO, "Computing polynomial approximation for target accuracy "<< targetAcc);
 			polyApprox = new PiecewisePolyApprox(func, targetAcc, degree);
 			int alpha =  polyApprox-> alpha; // coeff table input size 
 
@@ -154,8 +154,8 @@ namespace flopoco{
 			REPORT(DETAILED, "Poly table output size = " << polyTableOutputSize);
 
 			double roundingErrorBudget=exp2(lsbOut-1)-polyApprox->approxErrorBound;
-			REPORT(DETAILED, "Overall error budget = " << exp2(lsbOut) << "  of which approximation error = " << polyApprox->approxErrorBound
-						 << "   hence rounding error budget = "<< roundingErrorBudget );
+			REPORT(INFO, "Overall error budget = " << exp2(lsbOut) << "  of which approximation error = " << polyApprox->approxErrorBound
+						 << " hence rounding error budget = "<< roundingErrorBudget );
 		 
 
 			
@@ -187,6 +187,7 @@ namespace flopoco{
 
 			// Here I wish I could plug more parallel evaluators. Hence the interface.
 			
+			REPORT(INFO, "Now building the Horner evaluator for rounding error budget "<< roundingErrorBudget);
 			// This builds an architecture such as eps_finalround < 2^(lsbOut-1) and eps_round<2^(lsbOut-2)
 			FixHornerEvaluator* horner = new FixHornerEvaluator(target, lsbIn+alpha+1, msbOut, lsbOut, degree, polyApprox->MSB, polyApprox->LSB, roundingErrorBudget);		
 			addSubComponent(horner);
@@ -256,7 +257,8 @@ namespace flopoco{
                         msbOut(int): weight of output MSB;\
                         lsbOut(int): weight of output LSB;\
                         d(int): degree of the polynomial;\
-                        approxErrorBudget(real)=0.25: error budget in ulp for the approximation.",                        
+                        approxErrorBudget(real)=0.25: error budget in ulp for the approximation, between 0 and 0.5",                        
+>>>>>>> f6391057b323efe15ad98be60a47ba4cf9557cf1
 											 "This operator uses a table for coefficients, and Horner evaluation with truncated multipliers sized just right.<br>For more details, see <a href=\"bib/flopoco.html#DinJolPas2010-poly\">this article</a>.",
 											 FixFunctionByPiecewisePoly::parseArguments
 											 ) ;
@@ -265,3 +267,4 @@ namespace flopoco{
 
 }
 	
+
