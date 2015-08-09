@@ -327,40 +327,6 @@ namespace flopoco{
 	}
 
 
-	vector<int> PiecewisePolyApprox::computeSigmaMSBs(){
-		mpfi_t a, res;
-		sollya_obj_t rangeS;
-		mpfr_t left, right;
-		mpfi_init2			(a, 1000); // 1000 bits should be enough for anybody 
-		mpfi_init2			(res, 1000); // 1000 bits should be enough for anybody 
-		mpfr_init2			(left, 1000); // 1000 bits should be enough for anybody 
-		mpfr_init2			(right, 1000); // 1000 bits should be enough for anybody 
-
-		cerr << "AAAAAAAAA"<<endl;
-		rangeS = sollya_lib_parse_string("[-1;1]");
-		cerr << "AAAAAAAAA"<<endl;
-		sollya_lib_get_interval_from_range(a, rangeS); // just get the interval as an MPFI
-
-		cerr << "AAAAAAAAA"<<endl;
-		for (int i=0; i<(1<<alpha); i++){
-			sollya_lib_evaluate_function_over_interval(res, poly[i]->f->fS, a);
-			mpfi_get_left   (left, res);
-			mpfi_get_right   (right, res);
-			
-			double l=mpfr_get_d(left, GMP_RNDN);
-			double r=mpfr_get_d(right, GMP_RNDN);
-			REPORT(INFO,"left=" << l << " right=" << r);
-		}
-		mpfi_clear(a);
-		mpfi_clear(res);
-		mpfr_clear(left);
-		mpfr_clear(right);
-		sollya_lib_clear_obj(rangeS);
-		cerr << "EEEEEEEEEEE"<<endl;
-	}
-
-
-
 	mpz_class PiecewisePolyApprox::getCoeff(int i, int d){
 		BasicPolyApprox* p = poly[i];
 		FixConstant* c = p->coeff[d];

@@ -19,6 +19,7 @@
 #include <sstream>
 #include <vector>
 #include <math.h>
+#include <limits.h>
 #include <string.h>
 
 #include <gmp.h>
@@ -156,9 +157,7 @@ namespace flopoco{
 			double roundingErrorBudget=exp2(lsbOut-1)-polyApprox->approxErrorBound;
 			REPORT(INFO, "Overall error budget = " << exp2(lsbOut) << "  of which approximation error = " << polyApprox->approxErrorBound
 						 << " hence rounding error budget = "<< roundingErrorBudget );
-		 
-
-			
+		 			
 			// This is where we add the final rounding bit
 			FixFunctionByPiecewisePoly::CoeffTable* coeffTable = new CoeffTable(target, alpha, polyTableOutputSize, polyApprox,
 																					finalRounding, lsbOut-1 /*position of the round bit*/) ;
@@ -186,7 +185,9 @@ namespace flopoco{
 			}
 
 			// Here I wish I could plug more parallel evaluators. Hence the interface.
-			
+
+			// First compute the size of the intermediate terms sigma_i
+			computeSigmaMSBs();
 			REPORT(INFO, "Now building the Horner evaluator for rounding error budget "<< roundingErrorBudget);
 			// This builds an architecture such as eps_finalround < 2^(lsbOut-1) and eps_round<2^(lsbOut-2)
 			FixHornerEvaluator* horner = new FixHornerEvaluator(target, lsbIn+alpha+1, msbOut, lsbOut, degree, polyApprox->MSB, polyApprox->LSB, roundingErrorBudget);		
@@ -209,7 +210,78 @@ namespace flopoco{
 	FixFunctionByPiecewisePoly::~FixFunctionByPiecewisePoly() {
 		free(f);
 	}
+
+
+
+
 	
+
+	void FixFunctionByPiecewisePoly::computeSigmaMSBs(){
+		mpfr_t res_left, res_right, min_left, max_right;
+		sollya_obj_t rangeS;
+		mpfr_init2(res_left, 10000); // should be enough for anybody
+		mpfr_init2(res_right, 10000); // should be enough for anybody
+		mpfr_init2(min_left, 10000); // should be enough for anybody
+		mpfr_init2(max_right, 10000); // should be enough for anybody
+		mpfr_set_d(min_left, -1/0, GMP_RN);
+		mpfr_set_d(max_right, +1/0, GMP_RNDN);
+		// initialize the vector of MSB weights
+		for (int j=0; j<=degree; j++) {
+			sigmaMSB.push_back(INT_MIN);
+		}
+		rangeS = sollya_lib_parse_string("[-1;1]");		
+		
+		for (int i=0; i<(1<<polyApprox -> alpha); i++){
+			FixConstant* sigma = polyApprox -> poly[i] -> coeff[degree];
+			sollya_obj_t sigmaS = sollya_lib_constant(sigma -> fpValue);
+			int msb = sigma -> MSB;
+			if (msb>sigmaMSB[degree])
+				sigmaMSB[degree]=msb;
+			
+			for (int j=degree-1; j>=0; j--) {
+				// interval eval of sigma_j
+				// get the output range of sigma
+				sollya_obj_t pi_jS = sollya_lib_mul(rangeS, sigmaS);
+				sollya_lib_clear_obj(sigmaS);
+				sollya_obj_t a_jS = sollya_lib_constant(polyApprox -> poly[i] -> coeff[j] -> fpValue);
+				sigmaS = sollya_lib_add(a_jS, pi_jS);
+				sollya_lib_clear_obj(pi_jS);
+				sollya_lib_clear_obj(a_jS);
+				//				cerr << "333"<<endl;
+				// Get the endpoints
+				int isrange = sollya_lib_get_bounds_from_range(res_left, res_right, sigmaS);
+				if (isrange==false)
+					THROWERROR("computeSigmaMSB: Not a range???");
+#if 0
+				double l=mpfr_get_d(res_left, GMP_RNDN);
+				double r=mpfr_get_d(res_right, GMP_RNDN);
+				REPORT(INFO, "i=" << i << "  j=" << j << "  left=" << l << " right=" << r);
+#endif				
+			}
+			
+			sollya_lib_clear_obj(sigmaS);
+		
+		}
+		sollya_lib_clear_obj(rangeS);
+		mpfr_clear(res_left);
+		mpfr_clear(res_right);
+		mpfr_clear(min_left);
+		mpfr_clear(max_right);
+
+	}
+
+#if 0
+				sollya_lib_evaluate_function_over_interval(res, sigmaS, a);
+				mpfi_get_left   (left, res);
+				mpfi_get_right   (right, res);
+				
+				double l=mpfr_get_d(left, GMP_RNDN);
+				double r=mpfr_get_d(right, GMP_RNDN);
+				REPORT(INFO, "i=" << i << "  j=" << j << "  left=" << l << " right=" << r);
+		mpfi_clear(a);
+		mpfi_clear(res);
+#endif
+
 
 
 	void FixFunctionByPiecewisePoly::emulate(TestCase* tc){

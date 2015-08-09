@@ -68,6 +68,10 @@ namespace flopoco{
 		FixFunction *f; 
 		bool finalRounding;
 		double approxErrorBudget;
+		vector<int> sigmaMSB;                   /**< vector of MSB weights for each sigma term */
+
+		/** Compute the MSBs of the intermediate terms sigma_i in an Horner evaluation scheme */
+		void computeSigmaMSBs();
 	};
 
 }
