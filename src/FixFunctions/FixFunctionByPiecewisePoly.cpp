@@ -187,7 +187,7 @@ namespace flopoco{
 			// Here I wish I could plug more parallel evaluators. Hence the interface.
 
 			// First compute the size of the intermediate terms sigma_i
-			computeSigmaMSBs();
+			computeSigmaSignsAndMSBs();
 			REPORT(INFO, "Now building the Horner evaluator for rounding error budget "<< roundingErrorBudget);
 			// This builds an architecture such as eps_finalround < 2^(lsbOut-1) and eps_round<2^(lsbOut-2)
 			FixHornerEvaluator* horner = new FixHornerEvaluator(target, lsbIn+alpha+1, msbOut, lsbOut, degree, polyApprox->MSB, polyApprox->LSB, roundingErrorBudget);		
@@ -216,27 +216,27 @@ namespace flopoco{
 
 	
 
-	void FixFunctionByPiecewisePoly::computeSigmaMSBs(){
-		mpfr_t res_left, res_right, min_left, max_right;
+	void FixFunctionByPiecewisePoly::computeSigmaSignsAndMSBs(){
+		mpfr_t res_left, res_right;
 		sollya_obj_t rangeS;
 		mpfr_init2(res_left, 10000); // should be enough for anybody
 		mpfr_init2(res_right, 10000); // should be enough for anybody
-		mpfr_init2(min_left, 10000); // should be enough for anybody
-		mpfr_init2(max_right, 10000); // should be enough for anybody
-		mpfr_set_d(min_left, -1/0, GMP_RN);
-		mpfr_set_d(max_right, +1/0, GMP_RNDN);
+		rangeS = sollya_lib_parse_string("[-1;1]");		
+
 		// initialize the vector of MSB weights
 		for (int j=0; j<=degree; j++) {
 			sigmaMSB.push_back(INT_MIN);
+			sigmaSign.push_back(17); // 17 meaning "not initialized yet"
 		}
-		rangeS = sollya_lib_parse_string("[-1;1]");		
 		
 		for (int i=0; i<(1<<polyApprox -> alpha); i++){
+			// initialize the vectors with sigma_d = a_d
 			FixConstant* sigma = polyApprox -> poly[i] -> coeff[degree];
 			sollya_obj_t sigmaS = sollya_lib_constant(sigma -> fpValue);
 			int msb = sigma -> MSB;
 			if (msb>sigmaMSB[degree])
 				sigmaMSB[degree]=msb;
+			sigmaSign[degree] = polyApprox -> coeffSigns[degree];
 			
 			for (int j=degree-1; j>=0; j--) {
 				// interval eval of sigma_j
@@ -252,24 +252,63 @@ namespace flopoco{
 				int isrange = sollya_lib_get_bounds_from_range(res_left, res_right, sigmaS);
 				if (isrange==false)
 					THROWERROR("computeSigmaMSB: Not a range???");
-#if 0
+				// First a tentative conversion to double to sort and get an estimate of the MSB and zeroness
 				double l=mpfr_get_d(res_left, GMP_RNDN);
 				double r=mpfr_get_d(res_right, GMP_RNDN);
 				REPORT(INFO, "i=" << i << "  j=" << j << "  left=" << l << " right=" << r);
-#endif				
-			}
+				// Now we want to know is if both have the same sign
+				if (l>=0 && r>=0) { // sigma is positive
+					if (sigmaSign[j] == 17 || sigmaSign[j] == +1)
+						sigmaSign[j] = +1;
+					else
+						sigmaSign[j] = 0;
+				}
+				else if (l<0 && r<0) { // sigma is positive
+					if (sigmaSign[j] == 17 || sigmaSign[j] == -1)
+						sigmaSign[j] = -1;
+					else
+						sigmaSign[j] = 0;
+				}
+				else
+					sigmaSign[j] = 0;
+				
+
+				// now finally the MSB computation
+				int msb;
+				mpfr_t mptmp;
+				mpfr_init2(mptmp, 10000); // should be enough for anybody
+				// we are interested in the max in magnitude
+				if(fabs(l)>fabs(r)){
+					mpfr_abs(mptmp, res_left, GMP_RNDN); // exact
+				}
+				else{
+					mpfr_abs(mptmp, res_right, GMP_RNDN); // exact
+				}
+				mpfr_log2(mptmp, mptmp, GMP_RNDU);
+				mpfr_floor(mptmp, mptmp);
+				msb = mpfr_get_si(mptmp, GMP_RNDU);
+				mpfr_clear(mptmp);
+				msb++; // for the sign
+				if (msb > sigmaMSB[j])
+					sigmaMSB[j] = msb;
+			} // for j
+			
 			
 			sollya_lib_clear_obj(sigmaS);
 		
-		}
-		sollya_lib_clear_obj(rangeS);
+		} // for i
 		mpfr_clear(res_left);
 		mpfr_clear(res_right);
-		mpfr_clear(min_left);
-		mpfr_clear(max_right);
+		sollya_lib_clear_obj(rangeS);
 
+		for (int j=degree; j>=0; j--) {
+			REPORT(DETAILED, "Horner step " << j << ":   sigmaSign = " << sigmaSign[j] << " \t sigmaMSB = " << sigmaMSB[j]);
+		}	
+						 
 	}
 
+	
+	
 #if 0
 				sollya_lib_evaluate_function_over_interval(res, sigmaS, a);
 				mpfi_get_left   (left, res);
