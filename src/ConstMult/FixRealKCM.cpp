@@ -229,27 +229,20 @@ namespace flopoco{
 		int oldWIn = wIn;
 		/** will be target->lutInputs() or target->lutInputs()-1  */
 		int optimalTableInputWidth = target->lutInputs()-1;
-		int* diSize = new int[17*42];		
+		int* diSize = nullptr;		
 		int nbOfTables, guardBits;
-		int wOut = wIn - 1 + lsbIn + msbC - lsbOut + 1;
+		int wOut = wIn + lsbIn + msbC - lsbOut + 1;
 		int newWIn = wOut;
 		int newGuardBits = 0;
 
-		//The loop is here to prevent neglictible input bits from being
-		//tabulated.
 		if(wIn <= wOut)
 		{
-			int offset = 0;
 			int nbTablesEntieres = wIn / optimalTableInputWidth;
 			int remainingBits = wIn % optimalTableInputWidth;
 			nbOfTables = nbTablesEntieres;
 
 			if(remainingBits != 0)
 			{ 
-				//On each case we will need to handle first table in width size
-				//separately
-				offset++;
-
 				int guardBits_extendedTable = 
 					guardBitsFromTableNumber(nbTablesEntieres, targetUlpError);
 				int guardBits_extraTable =
@@ -259,33 +252,45 @@ namespace flopoco{
 				if	(	guardBits_extraTable == guardBits_extendedTable )
 				{
 					nbOfTables++;
-					diSize[0] = remainingBits;
+					diSize = new int[nbOfTables];
+					for(int i = 0 ; i + 1 < nbOfTables ; diSize[i++] = optimalTableInputWidth );
+					diSize[nbOfTables - 1] = remainingBits;
 				}
 				else
 				{
+					diSize = new int[nbOfTables];
 					diSize[0] = remainingBits + optimalTableInputWidth;
+					for(int i = 1 ; i < nbOfTables ; diSize[i++] = optimalTableInputWidth);
 				}
 			}
-			for(int i = offset ; i < nbOfTables ; diSize[i++] = optimalTableInputWidth);
+			else
+			{
+				diSize = new int[nbOfTables];	
+				for(int i = 0 ; i < nbOfTables ; diSize[i++] = optimalTableInputWidth);
+			}
+
 		}
 		else
 		{
+			cout << "Tres petite constante !!!!!!!!!!" << endl;
+			//The loop is here to prevent neglictible input bits from being
+			//tabulated.
 			do
 			{ 
+				if(diSize != nullptr)
+				{
+					delete diSize;
+					diSize = nullptr;
+				}
 				wIn = newWIn;
 				guardBits = newGuardBits;
 
-				int offset = 0;
 				int nbTablesEntieres = wIn / optimalTableInputWidth;
 				int remainingBits = wIn % optimalTableInputWidth;
 				nbOfTables = nbTablesEntieres;
 
 				if(remainingBits != 0)
 				{ 
-					//On each case we will need to handle first table in width size
-					//separately
-					offset++;
-
 					int guardBits_extendedTable = 
 						guardBitsFromTableNumber(nbTablesEntieres, targetUlpError);
 					int guardBits_extraTable =
@@ -295,14 +300,22 @@ namespace flopoco{
 					if	(	guardBits_extraTable == guardBits_extendedTable )
 					{
 						nbOfTables++;
-						diSize[0] = remainingBits;
+						diSize = new int[nbOfTables];
+						for(int i = 0 ; i + 1 < nbOfTables ; diSize[i++] = optimalTableInputWidth);
+						diSize[nbOfTables - 1] = remainingBits;
 					}
 					else
 					{
+						diSize = new int[nbOfTables];
 						diSize[0] = remainingBits + optimalTableInputWidth;
+						for(int i = 1 ; i < nbOfTables ; diSize[i++] = optimalTableInputWidth );
 					}
 				}
-				for(int i = offset ; i < nbOfTables ; diSize[i++] = optimalTableInputWidth);
+				else
+				{
+					diSize = new int[nbOfTables];
+					for(int i = 0 ; i < nbOfTables ; diSize[i++] = optimalTableInputWidth);
+				}
 				
 				newGuardBits = guardBitsFromTableNumber(nbOfTables, targetUlpError);
 				newWIn = wIn + newGuardBits - guardBits;
@@ -380,15 +393,16 @@ namespace flopoco{
 					bitHeap->addConstantOneBit(w);
 				}
 			}
+		
+		
 		}
 
 		if(g > 0)
 		{
 			REPORT(INFO, "Adding one half ulp to transform truncation into"
 					" faithful rounding");
-			bitHeap->addConstantOneBit(g-1);
+			bitHeap->addConstantOneBit(lsbOut-bitheaplsb-1);
 		}
-
 	}
 
 
@@ -907,6 +921,7 @@ targetUlpError(real)=1.0: required precision on last bit. Should be strictly gre
 		return result;
 	}
 }
+
 
 
 
