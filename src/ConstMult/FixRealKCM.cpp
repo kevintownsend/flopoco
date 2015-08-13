@@ -272,7 +272,7 @@ namespace flopoco{
 		}
 		else
 		{
-			cerr << "Input precision higher than required. Trying to optimize" << endl;
+cerr << "Input precision higher than required. Trying to optimize" << endl;
 			//The loop is here to prevent neglictible input bits from being
 			//tabulated.
 			do
