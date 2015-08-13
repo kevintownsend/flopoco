@@ -272,7 +272,7 @@ namespace flopoco{
 		}
 		else
 		{
-			cout << "Tres petite constante !!!!!!!!!!" << endl;
+			cerr << "Input precision higher than required. Trying to optimize" << endl;
 			//The loop is here to prevent neglictible input bits from being
 			//tabulated.
 			do
@@ -319,7 +319,7 @@ namespace flopoco{
 				
 				newGuardBits = guardBitsFromTableNumber(nbOfTables, targetUlpError);
 				newWIn = wIn + newGuardBits - guardBits;
-			}while(newWIn > wIn && wIn <= oldWIn);
+			}while(newWIn > wIn && wIn <= oldWIn && newWIn <= oldWIn);
 		}
 
 		if(disize_target != nullptr)
