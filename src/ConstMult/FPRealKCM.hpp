@@ -24,7 +24,7 @@ namespace flopoco{
 		
 		static OperatorPtr parser(Target *target, vector<string> &args);
 		static void registerFactory(void);
-		
+
 // 		int lsbIn;
 // 		int msbIn;
 // 		bool signedInput;

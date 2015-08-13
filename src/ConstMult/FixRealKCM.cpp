@@ -182,7 +182,6 @@ namespace flopoco{
 						);
 				}
 			}
-
 			return true;
 		}
 		return false;
