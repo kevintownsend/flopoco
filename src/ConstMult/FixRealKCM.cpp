@@ -230,11 +230,11 @@ namespace flopoco{
 		int optimalTableInputWidth = target->lutInputs()-1;
 		int* diSize = nullptr;		
 		int nbOfTables, guardBits;
-		int wOut = wIn + lsbIn + msbC - lsbOut + 1;
-		int newWIn = wOut;
+		int wOut = wIn + lsbIn + msbC - lsbOut;
+		int newWIn = wOut + msbC + 1;
 		int newGuardBits = 0;
 
-		if(wIn <= wOut)
+		if(wIn <= newWIn)
 		{
 			int nbTablesEntieres = wIn / optimalTableInputWidth;
 			int remainingBits = wIn % optimalTableInputWidth;
@@ -269,15 +269,12 @@ namespace flopoco{
 			}
 
 		}
-		else
-		{
-cerr << "Input precision higher than required. Trying to optimize" << endl;
+		else {
+			cerr << "Input precision higher than required. Trying to optimize" << endl;
 			//The loop is here to prevent neglictible input bits from being
 			//tabulated.
-			do
-			{ 
-				if(diSize != nullptr)
-				{
+			do { 
+				if(diSize != nullptr) {
 					delete diSize;
 					diSize = nullptr;
 				}
@@ -288,30 +285,24 @@ cerr << "Input precision higher than required. Trying to optimize" << endl;
 				int remainingBits = wIn % optimalTableInputWidth;
 				nbOfTables = nbTablesEntieres;
 
-				if(remainingBits != 0)
-				{ 
+				if (remainingBits != 0) { 
 					int guardBits_extendedTable = 
 						guardBitsFromTableNumber(nbTablesEntieres, targetUlpError);
 					int guardBits_extraTable =
 						guardBitsFromTableNumber(nbTablesEntieres + 1, targetUlpError);
 					
 					//TODO : compute more accurately costs and compare them
-					if	(	guardBits_extraTable == guardBits_extendedTable )
-					{
+					if	(	guardBits_extraTable == guardBits_extendedTable ) {
 						nbOfTables++;
 						diSize = new int[nbOfTables];
 						for(int i = 0 ; i + 1 < nbOfTables ; diSize[i++] = optimalTableInputWidth);
 						diSize[nbOfTables - 1] = remainingBits;
-					}
-					else
-					{
+					} else {
 						diSize = new int[nbOfTables];
 						diSize[0] = remainingBits + optimalTableInputWidth;
 						for(int i = 1 ; i < nbOfTables ; diSize[i++] = optimalTableInputWidth );
 					}
-				}
-				else
-				{
+				} else {
 					diSize = new int[nbOfTables];
 					for(int i = 0 ; i < nbOfTables ; diSize[i++] = optimalTableInputWidth);
 				}

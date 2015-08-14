@@ -223,7 +223,7 @@ namespace flopoco{
 		mpfr_init2(res_right, 10000); // should be enough for anybody
 		mpfr_init2(min_left, 10000); // should be enough for anybody
 		mpfr_init2(max_right, 10000); // should be enough for anybody
-		mpfr_set_d(min_left, -1/0, GMP_RN);
+		mpfr_set_d(min_left, -1/0, GMP_RNDN);
 		mpfr_set_d(max_right, +1/0, GMP_RNDN);
 		// initialize the vector of MSB weights
 		for (int j=0; j<=degree; j++) {
@@ -330,7 +330,6 @@ namespace flopoco{
                         lsbOut(int): weight of output LSB;\
                         d(int): degree of the polynomial;\
                         approxErrorBudget(real)=0.25: error budget in ulp for the approximation, between 0 and 0.5",                        
->>>>>>> f6391057b323efe15ad98be60a47ba4cf9557cf1
 											 "This operator uses a table for coefficients, and Horner evaluation with truncated multipliers sized just right.<br>For more details, see <a href=\"bib/flopoco.html#DinJolPas2010-poly\">this article</a>.",
 											 FixFunctionByPiecewisePoly::parseArguments
 											 ) ;
