@@ -74,31 +74,38 @@ namespace flopoco{
 		vhdl << tab << declare("fracX",wF+1) << " <= \"1\" & X"<<range(wF-1,0)<<";"<<endl;
 		vhdl << tab << declare("eX",wE) << " <= X"<<range(wE+wF-1, wF)<<";"<<endl;
 		
-		FixRealKCM *frkcm = new FixRealKCM( 
-				target, 
-				false,
-				0,
-				-wF,
-				-wF+iExp-1, 
-				constant
-			);
-		oplist.push_back(frkcm);
+		if(mpfr_cmp_ui_2exp(mpC, 1, iExp - 1) == 0)
+		{
+			cout << "Power of two " << endl;
+			vhdl << tab << declare("nf", wF) << " <= fracX " << range(wF-1, 0) << ";" << endl ;
+			vhdl << tab << declare("norm") << " <= '0' ;" << endl ;
+		}
+		else
+		{
+			FixRealKCM *frkcm = new FixRealKCM( 
+					target, 
+					false,
+					0,
+					-wF,
+					-wF+iExp-1, 
+					constant
+				);
+			oplist.push_back(frkcm);
+	
+			inPortMap(frkcm, "X", "fracX");
+			outPortMap(frkcm, "R", "fracMultRes");
+			vhdl << tab << instance( frkcm, "ConstMultKCM") << endl;
+			syncCycleFromSignal("fracMultRes");
+			setCriticalPath(frkcm->getOutputDelay("R"));
+		
+			//get number of bits of output
+			//normalize
+			vhdl << tab << declare("norm") << " <= fracMultRes"<<of(wF+1)<<";"<<endl;
+		
+			manageCriticalPath(target->localWireDelay() + target->adderDelay(wE+2));
+			vhdl << tab << declare("nf",wF) << " <= fracMultRes"<<range(wF-1,0)<<" when norm='0' else fracMultRes"<<range(wF,1)<<";"<<endl;
+		}
 
-		inPortMap(frkcm, "X", "fracX");
-		outPortMap(frkcm, "R", "fracMultRes");
-		vhdl << tab << instance( frkcm, "ConstMultKCM") << endl;
-		syncCycleFromSignal("fracMultRes");
-		setCriticalPath(frkcm->getOutputDelay("R"));
-		
-
-		
-		//get number of bits of output
-		//normalize
-		vhdl << tab << declare("norm") << " <= fracMultRes"<<of(wF+1)<<";"<<endl;
-		
-		manageCriticalPath(target->localWireDelay() + target->adderDelay(wE+2));
-		vhdl << tab << declare("nf",wF) << " <= fracMultRes"<<range(wF-1,0)<<" when norm='0' else fracMultRes"<<range(wF,1)<<";"<<endl;
-		
 		//update exponent
 		vhdl << tab << declare("expOp1",wE+2) << " <= CONV_STD_LOGIC_VECTOR("<<iExp-1<<","<<wE+2<<");"<<endl;
 		vhdl << tab << declare("finalExp",wE+2) << " <= (\"00\" & eX) + expOp1 + norm;"<<endl;
