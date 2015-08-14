@@ -150,17 +150,22 @@ namespace flopoco{
 					break;
 			} // end for loop on alpha
 			if (alphaOK)
-				REPORT(DETAILED, " Found alpha=" << alpha << " OK");
+				REPORT(INFO, "Found alpha=" << alpha);
 
 			// Compute the LSB of each coefficient. Minimum value is:
 			LSB = floor(log2(targetAccuracy*degree));
 			REPORT(DEBUG, "To obtain target accuracy " << targetAccuracy << " with a degree-"<<degree <<" polynomial, we compute coefficients accurate to LSB="<<LSB);
 			// It is pretty sure that adding intlog2(degree) bits is enough for FPMinimax.
+
+			// The main loop starts with the almost hopeless LSB defined above, then tries to push it down, a0 first, then all the others.
+			// If guessdegree returned an interval, it tries lsbAttemptsMax times, then gives up and tries to increase the degree.
+			// Otherwise lsbAttemptsMax is ignored, but in practice success happens earlier anyway
+			
 			int lsbAttemptsMax = intlog2(degree)+1;
 			int lsbAttempts=0; // a counter of attempts to move the LSB down, caped by lsbAttemptsMax
+			// bool a0Increased=false; // before adding LSB bits to everybody we try to add them to a0 only.
 
-
-			// Still have to do a while loop because we can't trust guessdegree, damn
+			
 			bool success=false;
 			while(!success) {
 				// Now fill the vector of polynomials, computing the coefficient parameters along.
@@ -251,6 +256,7 @@ namespace flopoco{
 			file << approxErrorBound << endl;
 			// now the coefficients themselves
 			for (int i=0; i<(1<<alpha); i++) {
+				//				file << poly[i] -> f -> sollyaString << endl;
 				for (int j=0; j<=degree; j++) {
 					file <<  poly[i] -> coeff[j] -> getBitVectorAsMPZ() << endl;
 				}
@@ -277,6 +283,7 @@ namespace flopoco{
 			file >> approxErrorBound;
 
 			for (int i=0; i<(1<<alpha); i++) {
+				//				file << sollyaString;				
 				vector<mpz_class> coeff;
 				for (int j=0; j<=degree; j++) {
 					mpz_class c;
@@ -284,6 +291,7 @@ namespace flopoco{
 					coeff.push_back(c);
 				}
 				BasicPolyApprox* p = new BasicPolyApprox(degree,MSB,LSB,coeff);
+				//				p->f = new FixFunction(sollyaString, true);
 				poly.push_back(p);
 			}
 		} // end if cache
@@ -299,7 +307,11 @@ namespace flopoco{
 					coeffSigns[j] = 0;
 			}
 		}
-		
+#if 0 //experimental, WIP
+		cerr << "***************************************"<<endl;
+		computeSigmaMSBs();
+		cerr << "***************************************"<<endl;
+#endif
 		
 		// A bit of reporting
 		REPORT(INFO,"Parameters of the approximation polynomials: ");
@@ -315,12 +327,46 @@ namespace flopoco{
 	}
 
 
-
-
 	mpz_class PiecewisePolyApprox::getCoeff(int i, int d){
 		BasicPolyApprox* p = poly[i];
 		FixConstant* c = p->coeff[d];
 		return c->getBitVectorAsMPZ();
 	}
 
+
+	OperatorPtr PiecewisePolyApprox::parseArguments(Target *target, vector<string> &args)
+	{
+		string f;
+		double ta;
+		int d;
+
+		UserInterface::parseString(args, "f", &f);
+		UserInterface::parseFloat(args, "targetAcc", &ta);
+		UserInterface::parseInt(args, "d", &d);
+
+		PiecewisePolyApprox *ppa = new PiecewisePolyApprox(f, ta, d);
+		cout << "Accuracy is " << ppa->approxErrorBound << " ("<< log2(ppa->approxErrorBound) << " bits)";
+
+		return NULL;
+	}
+
+
+	
+	void PiecewisePolyApprox::registerFactory()
+	{
+		UserInterface::add("PiecewisePolyApprox", // name
+											 "Helper/Debug feature, does not generate VHDL. Uniformly segmented piecewise polynomial approximation of function f, accurate to targetAcc on [0,1)",
+											 UserInterface::FunctionApproximation,
+											 "",
+											 "\
+f(string): function to be evaluated between double-quotes, for instance \"exp(x*x)\";\
+targetAcc(real): the target approximation errror of the polynomial WRT the function;\
+d(int): the degree to use",
+											 "",
+											 PiecewisePolyApprox::parseArguments
+											 ) ;
+	}
+
+
+	
 } //namespace

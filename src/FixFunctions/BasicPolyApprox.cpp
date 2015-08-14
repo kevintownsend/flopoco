@@ -159,8 +159,9 @@ namespace flopoco{
 											 "Helper/Debug feature, does not generate VHDL. Polynomial approximation of function f, accurate to targetAcc on [0,1)",
 											 UserInterface::FunctionApproximation,
 											 "",
-											 "f(string): function to be evaluated between double-quotes, for instance \"exp(x*x)\";\
-targetAcc(real): the target accuracy of the function output;\
+											 "\
+f(string): function to be evaluated between double-quotes, for instance \"exp(x*x)\";\
+targetAcc(real): the target approximation errror of the polynomial WRT the function;\
 signedIn(bool)=true: defines the input range : [0,1) if false, and [-1,1) otherwise;\
 g(int)=-1: the number of guardbits added. Using -1 gives sensible default",
 											 "",
@@ -198,7 +199,7 @@ g(int)=-1: the number of guardbits added. Using -1 gives sensible default",
 			coeffAccuracy *=degree;
 		}
 		
-		int initialLSB = floor(log2(coeffAccuracy));
+		int initialLSB = ceil(log2(coeffAccuracy));
 		REPORT(DETAILED, "Initial LSB is " << initialLSB);
 
 		sollya_obj_t degreeS = sollya_lib_constant_from_int(degree);

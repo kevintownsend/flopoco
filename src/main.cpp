@@ -43,6 +43,8 @@ int main(int argc, char* argv[] )
 		FPAdd::registerFactory();
 		FPExp::registerFactory();
 		BasicPolyApprox::registerFactory();
+		FixRealKCM::registerFactory();
+		PiecewisePolyApprox::registerFactory();
 		FixFunctionBySimplePoly::registerFactory();
 		FixFunctionByPiecewisePoly::registerFactory();
 		FixFunctionByTable::registerFactory();

@@ -31,6 +31,10 @@ namespace flopoco{
 		PiecewisePolyApprox(string sollyaString, double targetAccuracy, int degree);
 
 		virtual ~PiecewisePolyApprox();
+		
+		static OperatorPtr parseArguments(Target *target, vector<string> &args);
+
+		static void registerFactory();
 
 		/** get the bits of coeff of degree d of polynomial number i */
 		mpz_class getCoeff(int i, int d); 
