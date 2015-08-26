@@ -142,7 +142,7 @@ namespace flopoco{
 				vhdl << tab << tab << wipad.str() << " + (\"0000\" & fY)			when \"11\"," << endl;
 				vhdl << tab << tab << wipad.str() << " + (\"000\" & fY & \"0\")	  when \"10\"," << endl;
 				vhdl << tab << tab << wipad.str() << " 			   		  when others;" << endl;
-
+#if 0 // Splitting the following logic into two levels gives better synthesis results...
 				vhdl << tab << "with " << qi.str() << range(3,1) << " select " << endl;
 				vhdl << tab << declare(wim1full.str(), wF+7) << " <= " << endl;
 				vhdl << tab << tab << wim1fulla.str() << " - (\"00\" & fY & \"00\")			when \"001\" | \"010\"," << endl;
@@ -150,7 +150,21 @@ namespace flopoco{
 				vhdl << tab << tab << wim1fulla.str() << " + (\"00\" & fY & \"00\")			when \"110\" | \"101\"," << endl;
 				vhdl << tab << tab << wim1fulla.str() << " + (\"0\" & fY & \"000\")			when \"100\"," << endl;
 				vhdl << tab << tab << wim1fulla.str() << " 			   		  when others;" << endl;
+#else
+				ostringstream fYdec;
+				fYdec << "fYdec" << i-1;	//
+				vhdl << tab << "with " << qi.str() << range(3,1) << " select " << endl;
+				vhdl << tab << declare(fYdec.str(), wF+7) << " <= " << endl;
+				vhdl << tab << tab << "(\"00\" & fY & \"00\")			when \"001\" | \"010\" | \"110\"| \"101\"," << endl;
+				vhdl << tab << tab << "(\"0\" & fY & \"000\")			when \"011\"| \"100\"," << endl;
+				vhdl << tab << tab << rangeAssign(wF+6,0,"'0'") << "when others;" << endl;
 
+				vhdl << tab << "with " << qi.str() << of(3) << " select" << endl; // Remark here: seli(6)==qi(3) but it we get better results using the latter.
+				vhdl << tab << declare(wim1full.str(), wF+7) << " <= " << endl;
+				vhdl << tab << tab << wim1fulla.str() << " - " << fYdec.str() << "			when '0'," << endl;
+				vhdl << tab << tab << wim1fulla.str() << " + " << fYdec.str() << "			when others;" << endl;
+
+#endif
 				vhdl << tab << declare(wim1.str(),wF+6) << " <= " << wim1full.str()<<range(wF+3,0)<<" & \"00\";" << endl;
 			}
 
@@ -461,7 +475,7 @@ namespace flopoco{
 											 "http://www.cs.ucla.edu/digital_arithmetic/files/ch5.pdf",
 											 "wE(int): exponent size in bits; \
 wF(int): mantissa size in bits; \
-radix8(bool)=false: if true, radix 8 SRT is used, if false radix 4 SRT;",
+radix8(bool)=true: if true, radix 8 SRT is used, if false radix 4 SRT;",
 											"The algorithm used here is the division by digit recurrence.",
 											FPDiv::parseArguments
 											 ) ;
