@@ -11,7 +11,7 @@
 
 namespace flopoco{
 
-	/** The LongIntAdderCmpAddIncGen2 class for experimenting with adders. 
+	/** The LongIntAdderCmpAddIncGen2 class for experimenting with adders.
 	 */
 	class LongIntAdderCmpAddIncGen2 : public Operator
 	{
@@ -25,7 +25,7 @@ namespace flopoco{
 		LongIntAdderCmpAddIncGen2(Target* target, int wIn, map<string, double> inputDelays = emptyDelayMap);
 		/*LongIntAdderCmpAddIncGen2(Target* target, int wIn);
 		  void cmn(Target* target, int wIn, map<string, double> inputDelays);*/
-	
+
 		/**
 		 *  Destructor
 		 */
@@ -33,6 +33,11 @@ namespace flopoco{
 		void outputVHDL(std::ostream& o, std::string name);
 
 		void emulate(TestCase* tc);
+
+		// User-interface stuff
+		/** Factory method */
+		static OperatorPtr parseArguments(Target *target , vector<string> &args);
+		static void registerFactory();
 
 	protected:
 		int wIn_;                         /**< the width for X, Y and R*/

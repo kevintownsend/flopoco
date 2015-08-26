@@ -42,27 +42,33 @@ namespace flopoco{
 // 		void buildStandardTestCases(TestCaseList* tcl);
 // 		TestCase* buildRandomTestCase(int i);
 
+		// User-interface stuff
+		/** Factory method */
+		static OperatorPtr parseArguments(Target *target , vector<string> &args);
+
+		static void registerFactory();
+
 
 
 	private:
 
 
 		/** The combined leading zero counter and shifter for the close path */
-		LZOCShifterSticky* lzocs; 
+		LZOCShifterSticky* lzocs;
 		/** The integer adder object for subtraction in the close path */
-		IntAdder *fracSubClose; 
+		IntAdder *fracSubClose;
 		/** The dual subtractor for the close path */
 		IntDualSub *dualSubClose;
 		/** The fraction adder for the far path */
-		IntAdder *fracAddFar; 
+		IntAdder *fracAddFar;
 		/** The adder that does the final rounding */
-		IntAdder *finalRoundAdd; 
+		IntAdder *finalRoundAdd;
 		/** The right shifter for the far path */
-		Shifter* rightShifter;	
+		Shifter* rightShifter;
 
 
 		int sizeRightShift;
-	
+
 		int wE;
 		int wF;
 	};

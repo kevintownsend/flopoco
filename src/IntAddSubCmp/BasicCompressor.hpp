@@ -26,23 +26,29 @@ namespace flopoco
 		vector<int> height; /** inverted input vector h **/
 		int wOut; /** size of the output vector **/
 		int param; /** computes the range of the output vector **/
-		
-		
-		/** constructor **/	
+
+
+		/** constructor **/
 		BasicCompressor(Target * target, vector<int> h);
-	
-	
+
+
 		/** destructor**/
 		~BasicCompressor();
 
 		unsigned getColumnSize(int column);
 
 		int getOutputSize();
-	
-	
+
+
 		/** test case generator  **/
 		void emulate(TestCase * tc);
+
+		// User-interface stuff
+		/** Factory method */
+		static OperatorPtr parseArguments(Target *target ,const vector<string> &args);
+
+		static void registerFactory();
 	};
 }
- 
+
 #endif

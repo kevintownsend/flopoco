@@ -20,7 +20,7 @@ namespace flopoco{
 	{
 	public:
 		/**
-		 * The  constructor
+		 * @brief The  constructor
 		 * @param[in]		target		the target device
 		 * @param[in]		Signed	is the Fix number signed?
 		 * @param[in]		MSB			the MSB of the input number
@@ -31,7 +31,7 @@ namespace flopoco{
 		Fix2FP(Target* target, bool Signed, int MSBI, int LSBI, int wER, int wFR);
 
 		/**
-		 *  destructor
+		 * @brief destructor
 		 */
 		~Fix2FP();
 
@@ -43,21 +43,21 @@ namespace flopoco{
 
 	private:
 		/** The MSB for the input */
-		int MSBI; 
+		int MSBI;
 		/** The LSB for the input */
-		int LSBI; 
+		int LSBI;
 		/** are all numbers positive or not */
 		bool Signed;
 		/** The width of the exponent for the output R */
-		int wER; 
+		int wER;
 		/** The width of the fraction for the output R */
 		int wFR;
-	
+
 
 		/**The leading sign counter	*/
-		LZOCShifterSticky* lzocs; 
+		LZOCShifterSticky* lzocs;
 		/**The leading zero counter	*/
-		LZOCShifterSticky* lzcs; 
+		LZOCShifterSticky* lzcs;
 		/** The integer adder object for subtraction from the MSB the position of the leading 1, for shifting the number */
 		IntAdder* fractionConvert;
 		/** The integer adder object for adding 1 to the fraction part*/
@@ -72,10 +72,10 @@ namespace flopoco{
 		IntAdder* zeroD;
 		/** The integer adder object for correcting the exponent*/
 		IntAdder* expCorrect;
-	
-	
-	
-	
+
+
+
+
 		int wF;
 		int wE;
 		int sizeExponentValue;
@@ -83,7 +83,7 @@ namespace flopoco{
 		int MSB;
 		int LSB;
 		int inputWidth;
-	
+
 
 	};
 }

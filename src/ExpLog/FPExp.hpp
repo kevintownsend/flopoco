@@ -1,13 +1,13 @@
 /*
   An FP exponential for FloPoCo
-  
+
   This file is part of the FloPoCo project
   developed by the Arenaire team at Ecole Normale Superieure de Lyon
-  
+
   Author : Florent de Dinechin, Florent.de.Dinechin@ens-lyon.fr
 
   Initial software.
-  Copyright © ENS-Lyon, INRIA, CNRS, UCBL,  
+  Copyright © ENS-Lyon, INRIA, CNRS, UCBL,
   2008-2010.
   All rights reserved.
 
@@ -30,12 +30,10 @@ namespace flopoco{
 	class FPExp : public Operator
 	{
 	public:
-		
-		/** The magic dual table, that holds either (e^A, e^Z-1) or (e^A, e^Z-Z-1) 
-		       |.....e^A....||...expZpart.....|
-		       <--sizeExpA--><--sizeExpZPart-->
-*/
-		       
+		/** @brief The magic dual table, that holds either (e^A, e^Z-1) or (e^A, e^Z-Z-1)
+			   |.....e^A....||...expZpart.....|
+			   <--sizeExpA--><--sizeExpZPart-->
+		*/
 		class magicTable: public DualTable {
 		public:
 			magicTable(Target* target, int sizeExpA_, int sizeExpZPart_, bool storeExpZmZm1_);
@@ -52,24 +50,33 @@ namespace flopoco{
 			mpz_class function(int x);
 		};
 
+		/** @brief The constructor with manual control of all options
+		* @param wE exponent size
+		* @param wF fraction size
+		* @param k size of the input to the first table
+		* @param d  degree of the polynomial approximation (if k=d=0, the
+		* 			constructor tries to compute sensible values)
+		* @param guardBits number of gard bits. If -1, a default value (that
+		* 				   depends of the size)  is computed inside the constructor.  
+		* @param fullInput boolean, if true input mantissa is of size wE+wF+1, 
+		*                  so that  input shift doesn't padd it with 0s (useful 
+		*                  for FPPow)
+		*/
+		FPExp(
+				Target* target, 
+				int wE,
+				int wF,
+				int k,
+				int d,
+				int guardBits=-1,
+				bool fullInput=false,
+				map<string, double> inputDelays = emptyDelayMap
+			);
 
-
-
-		/** The constructor with manual control of all options
-		    * @param wE exponent size
-		    * @param wF fraction size
-		    * @param k size of the input to the first table 
-		    * @param d  degree of the polynomial approximation (if k=d=0, the constructor tries to compute sensible values)
-		    * @param guardBits number of gard bits. If -1, a default value (that depends of the size)  is computed inside the constructor.  
-		    * @param fullInput boolean, if true input mantissa is of size wE+wF+1, so that input shift doesn't padd it with 0s (useful for FPPow)
-		    */
-
-		FPExp(Target* target, int wE, int wF, int k, int d, int guardBits=-1, bool fullInput=false,  map<string, double> inputDelays = emptyDelayMap);
 		~FPExp();
-		
+
 		// Overloading the virtual functions of Operator
-		// void outputVHDL(ostream& o, string name);
-		
+		// void outputVHDL(std::ostream& o, std::string name);
 		void emulate(TestCase * tc);
 		void buildStandardTestCases(TestCaseList* tcl);
 		TestCase* buildRandomTestCase(int i);

@@ -31,7 +31,7 @@ namespace flopoco{
 
 		/**
 		 * Emulate a correctly rounded square root using MPFR.
-		 * @param tc a TestCase partially filled with input values 
+		 * @param tc a TestCase partially filled with input values
 		 */
 		void emulate(TestCase * tc);
 
@@ -39,12 +39,19 @@ namespace flopoco{
 		TestCase* buildRandomTestCase(int i);
 		//	void buildStandardTestCases(TestCaseList* tcl);
 
-	
+
+		// User-interface stuff
+		/** Factory method */
+		static OperatorPtr parseArguments(Target *target , vector<string> &args);
+
+		static void registerFactory();
+
+
 	private:
 		/** The width of the exponent for the input X */
-		int wE; 
+		int wE;
 		/** The width of the fraction for the input X */
-		int wF; 
+		int wF;
 		/** A boolean selecting between the old digit recurrence implementation, or the polynomial-based one */
 		bool useDSP;
 		/** A boolean selecting between IEEE-compliant correct rounding

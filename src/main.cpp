@@ -27,13 +27,14 @@
 #include "FloPoCo.hpp"
 #include "utils.hpp"
 #include "main.hpp"
-
+#include "FPDivSqrt/Tools/NbBitsMin.cpp"
+#include "IntAddSubCmp/IntAdderSpecific.hpp"
+#include "IntAddSubCmp/IntAdderAlternative.hpp"
+#include "IntAddSubCmp/IntAdderClassical.hpp"
+#include "IntAddSubCmp/IntAdderShortLatency.hpp"
 
 using namespace std;
 using namespace flopoco;
-
-
-
 
 int main(int argc, char* argv[] )
 {
@@ -46,7 +47,41 @@ int main(int argc, char* argv[] )
 		FixFunctionBySimplePoly::registerFactory();
 		FixFunctionByPiecewisePoly::registerFactory();
 		FixFunctionByTable::registerFactory();
+		FixRealKCM::registerFactory();
 		TestBench::registerFactory();
+		NbBitsMinRegisterFactory();
+		FPDiv::registerFactory();
+		FPSqrt::registerFactory();
+		FPAddSub::registerFactory();
+		FPAddDualPath::registerFactory();
+		FPAdd3Input::registerFactory();
+		FPAddSinglePath::registerFactory();
+		FPMult::registerFactory();
+		FPConstMult::registerFactory();
+		FPRealKCM::registerFactory();
+		//FPMultKaratsuba::registerFactory();
+		FPSquare::registerFactory();
+		IterativeLog::registerFactory();
+		FPPow::registerFactory();
+		IntAdder::registerFactory();
+		IntAdderClassical::registerFactory();
+		IntAdderAlternative::registerFactory();
+		IntAdderShortLatency::registerFactory();
+		IntAdderSpecific::registerFactory();
+		IntComparator::registerFactory();
+		IntComparatorSpecific::registerFactory();
+		IntDualSub::registerFactory();
+		LongIntAdderAddAddMuxGen1::registerFactory();
+		LongIntAdderAddAddMuxGen2::registerFactory();
+		LongIntAdderCmpAddIncGen1::registerFactory();
+		LongIntAdderCmpAddIncGen2::registerFactory();
+		LongIntAdderCmpCmpAddGen1::registerFactory();
+		LongIntAdderCmpCmpAddGen2::registerFactory();
+		LongIntAdderMuxNetwork::registerFactory();
+		//FixedComplexAdder::registerFactory();
+		FixFIR::registerFactory();
+		FixSOPC::registerFactory();
+		FixIIR::registerFactory();
 	}
 	catch (std::string s) {
 		cerr << "Error while registering factories: " << s <<endl;
@@ -58,8 +93,6 @@ int main(int argc, char* argv[] )
 
 	return 0;
 }
-
-
 
 
 

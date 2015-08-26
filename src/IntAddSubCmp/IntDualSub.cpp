@@ -5,9 +5,9 @@
 
   This file is part of the FloPoCo project
   developed by the Arenaire team at Ecole Normale Superieure de Lyon
-  
+
   Initial software.
-  Copyright © ENS-Lyon, INRIA, CNRS, UCBL,  
+  Copyright © ENS-Lyon, INRIA, CNRS, UCBL,
   2008-2010.
   All rights reserved.
 
@@ -34,8 +34,8 @@ namespace flopoco{
 	{
 		ostringstream name;
 		srcFileName="IntDualSub";
-		setCopyrightString("Bogdan Pasca, Florent de Dinechin (2008-2010)");		
-	     
+		setCopyrightString("Bogdan Pasca, Florent de Dinechin (2008-2010)");
+
 		if (opType==0) {
 			son_ = "yMx";
 			name << "IntDualSub_";
@@ -47,14 +47,14 @@ namespace flopoco{
 		name << wIn;
 		setNameWithFreq(name.str());
 
-	
+
 		// Set up the IO signals
 		addInput ("X"  , wIn_, true);
 		addInput ("Y"  , wIn_, true);
 		addOutput("RxMy", wIn_, 1, true);
 		addOutput("R"+son_, wIn_, 1, true);
-	
-		REPORT(DETAILED, "delay for X is   "<< inputDelays["X"]);	
+
+		REPORT(DETAILED, "delay for X is   "<< inputDelays["X"]);
 		REPORT(DETAILED, "delay for Y is   "<< inputDelays["Y"]);
 
 		if (target->isPipelined()){
@@ -64,12 +64,12 @@ namespace flopoco{
 			for (iter = inputDelays.begin(); iter!=inputDelays.end();++iter)
 				if (iter->second > maxInputDelay)
 					maxInputDelay = iter->second;
-	
+
 			REPORT(DETAILED, "Maximum input delay is "<<	maxInputDelay);
-	
+
 			double	objectivePeriod;
 			objectivePeriod = 1/ target->frequency();
-		
+
 			REPORT(DETAILED, "Objective period is "<< objectivePeriod<<" at an objective frequency of "<<target->frequency());
 
 			if (objectivePeriod<maxInputDelay){
@@ -77,7 +77,7 @@ namespace flopoco{
 			  REPORT(INFO, "Warning, the combinatorial delay at the input of "<<this->getName()<<"is above limit");
 			  maxInputDelay = objectivePeriod;
 			}
-		
+
 			if (((objectivePeriod - maxInputDelay) - target->lutDelay())<0)	{
 				bufferedInputs = 1;
 				maxInputDelay=0;
@@ -86,27 +86,27 @@ namespace flopoco{
 				cSize = new int[nbOfChunks+1];
 				cSize[nbOfChunks-1]=( ((wIn_%chunkSize_)==0)?chunkSize_:wIn_-(nbOfChunks-1)*chunkSize_);
 				for (int i=0;i<=nbOfChunks-2;i++)
-					cSize[i]=chunkSize_;				
+					cSize[i]=chunkSize_;
 			}
 			else{
-				int cS0; 
+				int cS0;
 				bufferedInputs=0;
 				int maxInAdd;
 				target->suggestSlackSubaddSize(maxInAdd, wIn_, maxInputDelay);
-				//int maxInAdd = ceil(((objectivePeriod - maxInputDelay) - target->lutDelay())/target->carryPropagateDelay()); 			
+				//int maxInAdd = ceil(((objectivePeriod - maxInputDelay) - target->lutDelay())/target->carryPropagateDelay());
 				cS0 = (maxInAdd<=wIn_?maxInAdd:wIn_);
 				if ((wIn_-cS0)>0)
 					{
 						int newWIn = wIn_-cS0;
 						target->suggestSubaddSize(chunkSize_,newWIn);
 						nbOfChunks = ceil( double(newWIn)/double(chunkSize_));
-				
+
 						cSize = new int[nbOfChunks+1];
 						cSize[0] = cS0;
 						cSize[nbOfChunks]=( (( (wIn_-cSize[0])%chunkSize_)==0)?chunkSize_:(wIn_-cSize[0])-(nbOfChunks-1)*chunkSize_);
 						for (int i=1;i<=nbOfChunks-1;i++)
-							cSize[i]=chunkSize_;				
-						nbOfChunks++;			
+							cSize[i]=chunkSize_;
+						nbOfChunks++;
 					}
 				else{
 					nbOfChunks=1;
@@ -114,14 +114,14 @@ namespace flopoco{
 					cSize[0] = cS0;
 				}
 			}
-		
+
 			REPORT(DETAILED, "Buffered Inputs "<<(bufferedInputs?"yes":"no"));
 			for (int i=nbOfChunks-1;i>=0;i--)
 				REPORT(DETAILED, "chunk size[" <<i<<"]="<<cSize[i]);
-		
+
 
 			outDelayMap["RxMy"] = target->adderDelay(cSize[nbOfChunks-1]);
-			outDelayMap["R"+son_] = target->adderDelay(cSize[nbOfChunks-1]);  
+			outDelayMap["R"+son_] = target->adderDelay(cSize[nbOfChunks-1]);
 			REPORT(DETAILED, "Last addition size is "<<cSize[nbOfChunks-1]<< " having a delay of "<<target->adderDelay(cSize[nbOfChunks-1]));
 
 			//VHDL generation
@@ -177,8 +177,8 @@ namespace flopoco{
 				if (i==0)
 					vhdl << ";" << endl;
 				else
-					vhdl << " & ";			
-			} 
+					vhdl << " & ";
+			}
 		}else{
 			vhdl << tab << "RxMy <= X + not(Y) + '1';" <<endl;
 			vhdl << tab << "R"<<son_<<" <= "<< (opType_==0 ? "not(X) + Y + '1'" : "X+Y")<<";"<<endl;
@@ -198,11 +198,11 @@ namespace flopoco{
 
 		mpz_class svR2;
 		if (opType_==0)
-			svR2=svY-svX;  
+			svR2=svY-svX;
 		else {
 			svR2=svX+svY;
 			// Don't allow overflow
-			mpz_clrbit(svR2.get_mpz_t(),wIn_); 
+			mpz_clrbit(svR2.get_mpz_t(),wIn_);
 		}
 		tc->addExpectedOutput("R"+son_, svR2);
 	}
@@ -211,18 +211,37 @@ namespace flopoco{
 	void IntDualSub::buildStandardTestCases(TestCaseList* tcl){
 		TestCase *tc;
 
-		tc = new TestCase(this); 
+		tc = new TestCase(this);
 		tc->addInput("X", mpz_class(0) );
 		tc->addInput("Y", mpz_class(1));
 		emulate(tc);
 		tcl->add(tc);
 
-		tc = new TestCase(this); 
+		tc = new TestCase(this);
 		tc->addInput("X", mpz_class(0) );
 		tc->addInput("Y", mpz_class(-1));
 		emulate(tc);
 		tcl->add(tc);
+	}
 
-	
+	OperatorPtr IntDualSub::parseArguments(Target *target, vector<string> &args) {
+		int wIn;
+		UserInterface::parseStrictlyPositiveInt(args, "wIn", &wIn);
+		int opType;
+		UserInterface::parseStrictlyPositiveInt(args, "opType", &opType);
+		return new IntDualSub(target, wIn, opType);
+	}
+
+	void IntDualSub::registerFactory(){
+		UserInterface::add("IntDualSub", // name
+											 "An integer comparator for experimentation.",
+											 UserInterface::BasicInteger, // categories
+											 "",
+											 "wIn(int): input size in bits;\
+opType(int): 1=compute X-Y and X+Y, 2=compute X-Y and Y-X;",
+											 "",
+											 IntDualSub::parseArguments
+											 ) ;
+
 	}
 }

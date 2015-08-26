@@ -17,7 +17,7 @@
 #include "BitHeap/BitHeap.hpp"
 
 /**
-	Integer multiple (parallel) constant multiplication
+	@brief Integer multiple (parallel) constant multiplication
 
 	See also ShiftAddOp, ShiftAddDag, IntConstMult.
 	ShiftAddOp defines a shift-and-add operation for IntConstMult.
@@ -38,7 +38,7 @@ namespace flopoco{
 	class IntConstMCM : public IntConstMult
 	{
 	public:
-		/** The standard constructor, inputs the number to implement */
+		/** @brief The standard constructor, inputs the number to implement */
 		IntConstMCM(Target* target, int xsize, int nbConst, vector<mpz_class> constants);
 
 		~IntConstMCM();
@@ -56,7 +56,7 @@ namespace flopoco{
 
 	private:
 		/**
-		 * Merge the ShiftAddDags contained in implementations, in order to have
+		 * @brief Merge the ShiftAddDags contained in implementations, in order to have
 		 * reuse between the constant multipliers.
 		 *
 		 * Note: this function assumes that the trees for each of the constant multiplications
@@ -65,7 +65,7 @@ namespace flopoco{
 		void mergeTrees();
 
 		/**
-		 * Try to replace the nodes of a tree with the root at @param root
+		 * @brief Try to replace the nodes of a tree with the root at @param root
 		 * with nodes already existing in @param forest
 		 * @param forest an existing forest of trees
 		 * @param root the root of the tree in which we're trying to replace elements
@@ -74,7 +74,7 @@ namespace flopoco{
 		void replaceSadInForest(ShiftAddDag* forest, ShiftAddOp* root, ShiftAddOp* searchLimit = NULL);
 
 		/**
-		 * Check if a node already exists in a given forest of trees.
+		 * @brief Check if a node already exists in a given forest of trees.
 		 * @param forest an existing forest of trees
 		 * @param node the element we're trying to find
 		 * @param searchLimit the tree at which to end the searches in the forest of trees given by @param forest
@@ -83,7 +83,7 @@ namespace flopoco{
 		ShiftAddOp* sadExistsInForest(ShiftAddDag* forest, ShiftAddOp* node, ShiftAddOp* searchLimit = NULL);
 
 		/**
-		 * Check if a node already exists in a given tree.
+		 * @brief Check if a node already exists in a given tree.
 		 * @param tree an existing tree/subtree
 		 * @param node the element we're trying to find
 		 * @return a reference to the existing node, or NULL if the node doesn't already exist

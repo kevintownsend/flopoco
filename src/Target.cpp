@@ -37,7 +37,11 @@ namespace flopoco{
 			useHardMultipliers_= true;
 			unusedHardMultThreshold_=0.5;
 		}
-
+	
+	Target::~Target()
+	{
+		//VIDE
+	}
 
 	// vector<Operator*> *  Target::getGlobalOpListRef(){
 	// 	return & globalOpList;

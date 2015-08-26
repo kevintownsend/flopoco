@@ -7,7 +7,7 @@
   Author : Florent de Dinechin, Florent.de.Dinechin@ens-lyon.fr, Kinga Illyes, Bogdan Popa
 
   Initial software.
-  Copyright Š ENS-Lyon, INRIA, CNRS, UCBL,
+  Copyright © ENS-Lyon, INRIA, CNRS, UCBL,
   2012.
   All rights reserved.
 
@@ -31,14 +31,23 @@ using namespace std;
 namespace flopoco
 {
 
-	BitHeap::BitHeap(Operator* op, int maxWeight, bool enableSuperTiles, string name, int compressionType) :
-		op(op), compressionType(compressionType), maxWeight(maxWeight), enableSuperTiles(enableSuperTiles)
+	BitHeap::BitHeap(
+			Operator* op, 
+			int maxWeight, 
+			bool enableSuperTiles, 
+			string name, 
+			int compressionType
+		) :
+			op(op), 
+			compressionType(compressionType), 
+			maxWeight(maxWeight), 
+			enableSuperTiles(enableSuperTiles)
 	{
 		// Set up the vector of lists of weighted bits, and the vector of uids
 		srcFileName=op->getSrcFileName() + ":BitHeap"; // for REPORT to work
 		guid = Operator::getNewUId();
 		stringstream s;
-		s << op->getName() << "_BitHeap"<< name << "_" <<guid; // for REPORT to work
+		s << op->getName() << "_BitHeap"<< name << "_" << guid; // for REPORT to work
 
 		uniqueName_=s.str();
 		REPORT(DEBUG, "Creating BitHeap of size " << maxWeight);
@@ -2033,7 +2042,7 @@ namespace flopoco
 			//determine the index of the column where the addition should start
 			//	not necessarly the minimum index line
 			minIndex = minWeight;
-			while((minIndex<maxWeight) && (bits[minIndex].size()<2))
+			while((minIndex < maxWeight) && (bits[minIndex].size()<2))
 				minIndex++;
 
 			maxIndex = maxWeight;
@@ -2987,10 +2996,12 @@ namespace flopoco
 					bool hasNonVoidColumn = false;
 
 					while(wInt<bits.size() && !hasNonVoidColumn)
+					{
 						if(currentHeight(wInt) != 0)
 							hasNonVoidColumn = true;
 						else
 							wInt++;
+					}
 					if(!hasNonVoidColumn || (wInt == bits.size()))
 						THROWERROR("All LSB columns cannot be void!");
 

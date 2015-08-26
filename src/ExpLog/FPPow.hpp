@@ -24,7 +24,12 @@ namespace flopoco{
 		void emulate(TestCase * tc);
 		void buildStandardTestCases(TestCaseList* tcl);
 		/**Overloading the function of Operator */
-		TestCase* buildRandomTestCase(int n); 
+		TestCase* buildRandomTestCase(int n);
+
+		// User-interface stuff
+		/** Factory method */
+		static OperatorPtr parseArguments(Target *target , vector<string> &args);
+		static void registerFactory();
 
 		int wE, wF;
 

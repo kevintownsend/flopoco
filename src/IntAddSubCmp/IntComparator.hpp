@@ -10,27 +10,33 @@
 
 namespace flopoco{
 
-	/** 
+	/**
 	 * An integer comparator for FloPoCo
-	 */ 
+	 */
 	class IntComparator : public Operator
 	{
 	public:
-	
-		/** 
+
+		/**
 		 *  IntComparator constructor
 		 * @param[in] target the target device for this operator
 		 * @param[in] wIn the width of the mantissa input
 		 */
 		IntComparator(Target* target, int wIn, int criteria, bool constant, int constValue, map<string, double> inputDelays = emptyDelayMap);
-	
+
 		/** The IntComparator destructor */
 		~IntComparator();
 
 		void emulate(TestCase* tc);
-	
+
+		// User-interface stuff
+		/** Factory method */
+		static OperatorPtr parseArguments(Target *target , vector<string> &args);
+
+		static void registerFactory();
+
 	private:
-	
+
 		int          wIn_;                   /**< The number of bits of the input */
 		int          criteria_;              /**< comparisson criteria. -2 -1 0 1 2 = { <, <=, =, >=, >} */
 

@@ -32,12 +32,10 @@ namespace flopoco {
 // a MonomialOfBits is a product of b_i
 class MonomialOfBits {
 	public:
-		MonomialOfBits (size_t n): data(std::vector<bool>(n)), n(n) {
-		}
+		MonomialOfBits (size_t n);
+
 		MonomialOfBits operator* (const MonomialOfBits& rhs) const;
-		bool operator== (const MonomialOfBits& rhs) const {
-			return (this->n == rhs.n) && (this->data == rhs.data);
-		}
+		bool operator== (const MonomialOfBits& rhs) const ;
 		bool operator< (const MonomialOfBits& rhs) const;
 
 		std::vector<bool> data;
@@ -53,10 +51,7 @@ struct ProductIRQuoRem;
 // appears at most one time in the sum [not enforced in representation]
 class ProductBit {
 	public:
-		ProductBit (size_t mon_size)
-			:data (std::list<MonomialOfBits>())
-			,mon_size (mon_size) {
-		}
+		ProductBit (size_t mon_size);
 		ProductBit (const ProductBitIR& rhs);
 
 		std::list<MonomialOfBits> data;
@@ -68,10 +63,7 @@ class ProductBit {
 class ProductBitIR {
 	public:
 		ProductBitIR (const ProductBit& rhs);
-		ProductBitIR (size_t mon_size)
-			:data (std::map<MonomialOfBits,int>())
-			,mon_size (mon_size) {
-		}
+		ProductBitIR (size_t mon_size);
 		int getTimes (const MonomialOfBits& e) const;
 		void addToCoeff (const MonomialOfBits& e, int coeff);
 		ProductBitIR& operator+= (const ProductBitIR& rhs);
@@ -91,16 +83,9 @@ class ProductBitIR {
    grow to the right (std::vector<T>::push_back but not push_front) */
 class ProductIR {
 	public:
-		ProductIR (size_t w, int msb, size_t mon_size) 
-			:data (std::vector<ProductBitIR>
-					(w, ProductBitIR(mon_size))
-			      )
-			,msb (msb),mon_size (mon_size) {
-		}
+		ProductIR (size_t w, int msb, size_t mon_size);
 		ProductIR (std::vector<ProductBitIR> data,
-				int msb, size_t mon_size)
-			:data (data), msb (msb), mon_size (mon_size) {
-		}
+				int msb, size_t mon_size);
 		ProductIR (const Product& rhs);
 		// returns the polynomial x_0*1b-1 + x_1*1b-2 + ...
 		static ProductIR identity (size_t mon_size);

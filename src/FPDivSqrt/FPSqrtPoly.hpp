@@ -34,7 +34,7 @@ namespace flopoco{
 
 		/**
 		 * Emulate a correctly rounded square root using MPFR.
-		 * @param tc a TestCase partially filled with input values 
+		 * @param tc a TestCase partially filled with input values
 		 */
 		void emulate(TestCase * tc);
 
@@ -43,9 +43,9 @@ namespace flopoco{
 		//	void buildStandardTestCases(TestCaseList* tcl);
 	private:
 		/** The width of the exponent for the input X */
-		int wE; 
+		int wE;
 		/** The width of the fraction for the input X */
-		int wF; 
+		int wF;
 
 		/** A boolean selecting between IEEE-compliant correct rounding
 			 or faithful (last-bit accurate) result  */

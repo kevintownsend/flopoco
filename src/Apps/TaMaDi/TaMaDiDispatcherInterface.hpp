@@ -23,30 +23,30 @@ namespace flopoco{
 	public:
 
 		/**
-		 * The TaMaDiDispatcherInterface constructor
+		 * @brief			The TaMaDiDispatcherInterface constructor
 		 * @param[in]		target  the target device
-		 * @param[in]		wp		binary-format precision we are intrested in      
+		 * @param[in]		wp		binary-format precision we are intrested in
 		 * @param[in]		d		polynomial degree
 		 * @param[in]		iterations number of iterations in each interval
-		 * @param[in]		wIntervalID the number of bits required to store the interval ID (log2(#intervals))  
+		 * @param[in]		wIntervalID the number of bits required to store the interval ID (log2(#intervals))
 		 * @param[in]		n		number of parallel processing units
-		 **/ 
+		 **/
 		TaMaDiDispatcherInterface(Target* target, int wp, int d, int iterations, int wIntervalID, int compSize, int n, int inFIFODepth, int peFIFODepth, int outFIFODepth, int DispatcherInputFIFODepth, int DispatcherOutputFIFODepth);
 
 		/**
-		 * TaMaDiDispatcherInterface destructor
+		 * @brief			TaMaDiDispatcherInterface destructor
 		 */
 		~TaMaDiDispatcherInterface();
-	
+
 	protected:
-		
+
 		int wp;    /**< Working precision will be defined as m-p */
 		int d;     /**< The degree of the polynomial */
 		int iterations;
 		int wIntervalID;
 		int n;
 		int inFIFODepth;
-		
+
 	private:
 	};
 }

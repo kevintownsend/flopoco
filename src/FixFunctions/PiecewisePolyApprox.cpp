@@ -20,6 +20,9 @@
 
 /*
 	 The function is assumed to have inputs in [0,1]
+
+	 Stylistic remark: use index i for the subintervals, and j for the degree
+
 */
 #include "PiecewisePolyApprox.hpp"
 #include <sstream>

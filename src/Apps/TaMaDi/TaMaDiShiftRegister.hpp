@@ -18,21 +18,21 @@ namespace flopoco{
 	public:
 
 		/**
-		 * The TaMaDiShiftRegister constructor
+		 * @brief			The TaMaDiShiftRegister constructor
 		 * @param[in]		target  the target device
 		 * @param[in]		widthLocation		the width of the shift register in bits
-		 * @param[in]		n				the number of positions it supports for shifting       
-		 **/ 
+		 * @param[in]		n				the number of positions it supports for shifting
+		 **/
 		TaMaDiShiftRegister(Target* target, int widthLocation, int n);
 
 		/**
-		 * TaMaDiShiftRegister destructor
+		 * @brief			TaMaDiShiftRegister destructor
 		 */
 		~TaMaDiShiftRegister();
-	
+
 	protected:
-		
-		
+
+
 	private:
 	};
 }

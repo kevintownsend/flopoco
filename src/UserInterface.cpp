@@ -1,5 +1,6 @@
 #include "UserInterface.hpp"
 #include "FloPoCo.hpp"
+#include "FPDivSqrt/Tools/NbBitsMin.hpp"
 #include <algorithm>
 #include <iostream>
 #include <iomanip>
@@ -8,8 +9,6 @@
 
 namespace flopoco
 {
-
-		
 	// Colors from	https://github.com/Uduse/Escape-Sequence-Color-Header/blob/master/src/Escape_Sequences_Colors.h
 	const char COLOR_NORMAL[] = { 0x1b, '[', '0', ';', '3', '9', 'm', 0 };
 	const char COLOR_BOLD_BLUE_NORMAL[] = { 0x1b, '[', '1', ';', '3', '4', ';', '4', '9', 'm', 0 };
@@ -18,7 +17,6 @@ namespace flopoco
 	const char COLOR_BLUE_NORMAL[] = { 0x1b, '[', '3', '4', ';', '4', '9', 'm', 0 };
 	const char COLOR_BOLD_RED_NORMAL[] = { 0x1b, '[', '1', ';', '3', '1', ';', '4', '9', 'm', 0 };
 	const char* defaultFPGA="Virtex5";
-
 
 	// Allocation of the global objects
 	string UserInterface::outputFileName;
@@ -37,8 +35,63 @@ namespace flopoco
 	bool   UserInterface::reDebug;
 	bool   UserInterface::flpDebug;
 
+	const vector<string> UserInterface::known_fpga = []()->vector<string>{
+				vector<string> v;
+				v.push_back("virtex4");
+				v.push_back("virtex5");
+				v.push_back("virtex6");
+				v.push_back("spartan3");
+				v.push_back("stratix2");
+				v.push_back("stratix3");
+				v.push_back("stratix4");
+				v.push_back("stratix5");
+				v.push_back("cyclone2");
+				v.push_back("cyclone3");
+				v.push_back("cyclone4");
+				v.push_back("cyclone5");
+				return v;
+			}();
 
-		
+	const vector<string> UserInterface::special_targets= []()->vector<string>{
+				vector<string> v;
+				v.push_back("BuildHTMLDoc");
+				v.push_back("BuildAutocomplete");
+				return v;
+			}();
+
+	const vector<option_t> UserInterface::options = []()->vector<option_t>{
+				vector<option_t> v;	
+				vector<string> values;
+
+				//free option
+				v.push_back(option_t("name", values));
+				v.push_back(option_t("outputFile", values));
+				v.push_back(option_t("hardMultThreshold", values));
+				v.push_back(option_t("frequency", values));
+				
+				//verbosity level
+				for(unsigned int i = 0 ; i < 3 ; ++i) {
+					values.push_back(std::to_string(i));
+				}
+				v.push_back(option_t("verbose", values));
+				
+				//Pipeline
+				values.clear();
+				values.push_back(std::to_string(0));
+				values.push_back(std::to_string(1));
+				v.push_back(option_t("pipeline", values));
+
+				//plainVHDL
+				v.push_back(option_t("plainVHDL", values));
+
+				//generateFigures
+				v.push_back(option_t("generateFigures", values));
+
+				//target
+				v.push_back(option_t("target", known_fpga));
+
+				return v;
+			}();		
 		
 	void UserInterface::main(int argc, char* argv[]) {
 		try {
@@ -83,7 +136,7 @@ namespace flopoco
 
 	vector<OperatorPtr>  UserInterface::globalOpList;  /**< Level-0 operators. Each of these can have sub-operators */
 
-	
+
 	// This should be obsoleted soon. It is there only because random_main needs it
 	void addOperator(OperatorPtr op) {
 		UserInterface::globalOpList.push_back(op);
@@ -103,13 +156,13 @@ namespace flopoco
 			if(!alreadyPresent)
 				globalOpList.push_back(op);
 	}
-	
+
 
 	void UserInterface::outputVHDLToFile(ofstream& file){
 		outputVHDLToFile(globalOpList, file);
 	}
 
-	
+
 	/* The recursive method */
 	void UserInterface::outputVHDLToFile(vector<OperatorPtr> &oplist, ofstream& file){
 		string srcFileName = "Operator.cpp"; // for REPORT
@@ -140,7 +193,7 @@ namespace flopoco
 	}
 
 
-	
+
 	void UserInterface::finalReport(ostream& s){
 		s << endl<<"Final report:"<<endl;
 		for(auto i: globalOpList) {
@@ -176,11 +229,10 @@ namespace flopoco
 		
 	}
 
-	
+
 	void UserInterface::registerFactory(OperatorFactoryPtr factory)	{
 		if(sm_factoriesByName.find(factory->name())!=sm_factoriesByName.end())
 			throw string("OperatorFactory - Factory with name '"+factory->name()+" has already been registered.");
-		
 		sm_factoriesByName.insert(make_pair(factory->name(), factory));
 		sm_factoriesByIndex.push_back(factory);
 	}
@@ -240,8 +292,6 @@ namespace flopoco
 		unusedHardMultThreshold=0.7;
 	}
 
-
-
 	void UserInterface::buildAll(int argc, char* argv[]) {
 
 		// manage trivial cases
@@ -253,13 +303,16 @@ namespace flopoco
 			buildHTMLDoc();
 			exit(EXIT_SUCCESS);
 		}
+		if(argc==2 && string(argv[1])=="BuildAutocomplete") {
+			buildAutocomplete();
+			exit(EXIT_SUCCESS);
+		}
 
 		// First convert for convenience the input arg list into
 		// 1/ a (possibly empty) vector of global args / initial options,
 		// 2/ a vector of operator specification, each being itself a vector of strings 
 		vector<string> initialOptions;
 		vector<vector<string>> operatorSpecs;
-
 
 		vector<string> args;
 		// convert all the char* to strings
@@ -273,7 +326,6 @@ namespace flopoco
 			initialOptions.push_back(args[0]);
 			args.erase(args.begin());
 		}
-
 		// Now there should be at least one operator specification
 		while(args.size() > 0) { // This loop is over the Operators that are passed on the command line
 			vector<string> opSpec;
@@ -355,7 +407,7 @@ namespace flopoco
 		}catch(std::exception &s){
 			std::cerr<<"Exception : "<<s.what()<<"\n";
 			//factory->Usage(std::cerr);
-			exit(EXIT_FAILURE);	
+			exit(EXIT_FAILURE);
 		}
 	}
 
@@ -363,7 +415,7 @@ namespace flopoco
 	void UserInterface::outputVHDL() {
 		ofstream file; 
 		file.open(outputFileName.c_str(), ios::out);
-		outputVHDLToFile(file); 
+		outputVHDLToFile(file);
 		file.close();
 	}
 
@@ -398,7 +450,7 @@ namespace flopoco
 		}
 		return ""; // not found
 	}
-	
+
 	// The following are helper functions to make implementation of factory parsers trivial
 	// The code is not efficient but who cares: it is simple to maintain.
 	// Beware, args[0] is the operator name, so that we may look up the doc in the factories etc.
@@ -459,7 +511,6 @@ namespace flopoco
 	}
 
 
-	
 	void UserInterface::parseInt(vector<string>& args, string key, int* variable, bool genericOption){
 		string val=getVal(args, key);
 		if(val=="") {
@@ -527,19 +578,12 @@ namespace flopoco
 	}
 
 
-	
-
-
-
-
-	
-	
 	void UserInterface::add( string name,
 													 string description, /**< for the HTML doc and the detailed help */ 
 													 DocumentationCategory category,
 													 string seeAlso,
 													 string parameterList, /**< semicolon-separated list of parameters, each being name(type)[=default]:short_description  */
-													 string extraHTMLDoc, /**< Extra information to go to the HTML doc, for instance links to articles or details on the algorithms */ 
+													 string extraHTMLDoc, /**< Extra information to go to the HTML doc, for instance links to articles or details on the algorithms */
 													 parser_func_t parser	 ) {
 		OperatorFactoryPtr factory(new OperatorFactory(name, description, category, seeAlso, parameterList, extraHTMLDoc, parser));
 		UserInterface::registerFactory(factory);
@@ -603,8 +647,304 @@ namespace flopoco
 			file << f -> getHTMLDoc();
 		}
 		file << "</body>" << endl;
-		file << "</html>" << endl;		
+		file << "</html>" << endl;
 		file.close();
+	}
+
+	void UserInterface::buildAutocomplete()
+	{
+		ofstream file;
+		file.open("flopoco_autocomplete", ios::out);
+		file << "#\t\t\t\t Flopoco autocomplete file" << endl;
+		file << "#" << endl;
+		file << "#\tIf you don't know what to do with this file, please delete it and run" << endl;
+		file << "#\t\t\tflopoco BuildAutocomplete" << endl;
+		file <<endl;
+		size_t indent_level = 0;
+		const auto tabber = [&file, &indent_level](string content){
+				for(size_t i = 0 ; i < indent_level; i++)
+				{
+					file << "\t";
+				}
+				file << content << endl;
+			};
+
+		string operatorList;
+		{
+			vector<OperatorFactoryPtr>::iterator it;
+			for( it = sm_factoriesByIndex.begin() ;
+				 it != sm_factoriesByIndex.end() ;
+				 it++ )
+			{
+
+				file << (*it)->getOperatorFunctions();
+				file << endl;
+				operatorList += (*it)->name();
+				if(it + 1 != sm_factoriesByIndex.end())
+				{
+					operatorList += " ";
+				}
+			}
+		}
+
+		string specialtargetList;
+		{
+			vector<string>::const_iterator it;
+			for( it = special_targets.begin() ;
+				 it != special_targets.end() ;
+				 it++ )
+			{
+
+				specialtargetList += *it;
+				if(it + 1 != special_targets.end())
+				{
+					specialtargetList+= " ";
+				}
+			}
+		}
+
+		//Parsing string to know last operator name
+		tabber("# echo the name of the last operator name on the line");
+		tabber("_getLastOp ()");
+		tabber("{");
+		indent_level++;
+		tabber("local opList reponse pipedOpList");
+		tabber("opList=\""+operatorList+" "+specialtargetList+"\";");
+		tabber("pipedOpList=\"@(${opList// /|})\"");
+		tabber("reponse=\"\"");
+		file << endl;
+		tabber("for i in $1; do");
+		indent_level++;
+		tabber("case $i in");
+		indent_level++;
+		tabber("$pipedOpList ) reponse=$i;;");
+		indent_level--;
+		tabber("esac"); // fin case
+		indent_level--; 
+		tabber("done"); //fin for
+		tabber("echo $reponse");
+		indent_level--;
+		tabber("}");
+		file << endl;
+
+		//programm completion function
+		tabber("_mandatoryoptions_()");
+		tabber("{");
+		indent_level++;
+		tabber("echo ''");
+		indent_level--;
+		tabber("}");
+		file << endl;
+
+		tabber("_nonmandatoryoptions_()");
+		tabber("{");
+		indent_level++;
+		stringstream buf;
+		for(option_t option : options)
+		{
+			buf << option.first << " " ;
+		}
+		tabber("echo ' "+buf.str()+"'");
+		indent_level--;
+		tabber("}");
+		file << endl;
+
+		tabber("_optionvalues_()");
+		tabber("{");
+		indent_level++;
+		tabber("declare -A optionmap");
+		for (option_t option : options) {
+			if(!option.second.empty())
+			{
+				buf.str(string());
+				for(string value : option.second)
+				{
+					buf << value << " ";
+				}
+				tabber("optionmap+=(['"+option.first+"']=\""+buf.str()+"\")");
+			}
+		}
+		tabber("echo ${optionmap[$1]}");
+		indent_level--;
+		tabber("}");
+		file << endl ;
+
+		tabber("_exclude_lists()"); //exlude from $1 content of $2
+		tabber("{");
+		indent_level++;
+		tabber("local response=\"\" tmpbuf tmpbuf2 len1 len2");
+		tabber("tmpbuf2=\" $2 \"");
+		tabber("len2=${#tmpbuf2}");
+		tabber("for item in $1 ; do");
+		tabber("tmpbuf=${tmpbuf2/ $item /}");
+		tabber("len1=${#tmpbuf}");
+		indent_level++;
+		tabber("if (( $len1 == $len2 )) ; then");
+		indent_level++;
+		tabber("response=\"$response $item\"");
+		indent_level--;
+		tabber("fi");
+		indent_level--;
+		tabber("done");
+		tabber("echo $response");
+		indent_level--;
+		tabber("}");
+		file << endl;
+
+		//control function
+		tabber("_flopoco()");
+		tabber("{");
+		indent_level++;
+		tabber("shopt -s extglob");
+		tabber("local saisie lastOp=\"\"");
+		tabber("");
+		tabber("#récupération de la ligne");
+		tabber("saisie=$COMP_LINE");
+		file << endl;
+		tabber("lastOp=`_getLastOp \"$saisie\"`");
+		file << endl;
+		tabber("#Si l'opérateur est une cible foinale on s'arrête");
+		tabber("spetrgtlst=\""+specialtargetList+"\"");
+		tabber("case $lastOp in");
+		indent_level++;
+		tabber("@(${spetrgtlst// /|}) ) return ;;");
+		indent_level--;
+		tabber("esac");
+		file << endl;
+		tabber("#On ne s'intéresse qu'à ce qui se situe après l'opérateur'");
+		tabber("if [ -z \"$lastOp\" ] ; then");
+		indent_level++;
+		tabber("saisie=${saisie##*${1}}");
+		indent_level--;
+		tabber("else");
+		indent_level++;
+		tabber("saisie=${saisie##*${lastOp}}");
+		indent_level--;
+		tabber("fi");
+		tabber("");
+		tabber("local optionset=\"\"");
+		tabber("local currentOpt=\"\"");
+		tabber("local currentValue=\"\"");
+		tabber("local remaininglength=\"1\"");
+		tabber("local -i beforeEqual=0");
+		file << endl;
+		tabber("for wordgroup in $saisie ; do");
+		indent_level++;
+		tabber("beforeEqual=0");
+		tabber("currentOpt=${wordgroup%%=*}");
+		tabber("currentValue=${wordgroup#*=}");
+		tabber("optionset=\"$optionset $currentOpt\"");
+		tabber("local buf=${saisie##*$wordgroup}");
+		tabber("remaininglength=${#buf}");
+		tabber("if [ \"$currentOpt\" != \"$wordgroup\" ] ; then");
+		indent_level++;
+		tabber("beforeEqual=1");
+		indent_level--;
+		tabber("fi");
+		indent_level--;
+		tabber("done");
+		file << endl;;
+		tabber("if [ \"$remaininglength\" -gt 0 ] ; then");
+		indent_level++;
+		tabber("beforeEqual=0");
+		tabber("currentOpt=\"\"");
+		indent_level--;
+		tabber("fi");
+		file << endl;
+		tabber("# possible set");
+		tabber("local mopts nmopts nextOps");
+		file << endl;
+		tabber("# allowed set");
+		tabber("local amopts anmopts anextOps");
+		file << endl;
+		tabber("amopts=`_mandatoryoptions_$lastOp`");
+		tabber("anmopts=`_nonmandatoryoptions_$lastOp`");
+		tabber("anextOps=\""+operatorList+"\"");
+		file << endl;
+		tabber("if [ -z \"$lastOp\" ] ; then");
+		indent_level++;
+		tabber("anextOps=\"$anextOps $spetrgtlst\"");
+		indent_level--;
+		tabber("fi");
+		file << endl;
+		tabber("mopts=`_exclude_lists \"$amopts\" \"$optionset\" `");
+		tabber("case $currentOpt in");
+		tabber("@(${amopts// /|})) mopts=\"$mopts $currentOpt\";;");
+		tabber("esac");
+		file << endl;
+		tabber("nmopts=`_exclude_lists \"$anmopts\" \"$optionset\" `");
+		tabber("case $currentOpt in");
+		tabber("@(${anmopts// /|})) nmopts=\"$nmopts $currentOpt\";;");
+		tabber("esac");
+		tabber("local optionslist=\"$mopts $nmopts\"");
+		tabber("optionslist=${optionslist// /|}");
+		file << endl;
+		tabber("#if we have no mandatory options left");
+		tabber("if [ -z \"${mopts// /}\" ] ; then");
+		indent_level++;
+		tabber("nextOps=$anextOps");
+		indent_level--;
+		tabber("fi");
+		file << endl;
+		tabber("#if we are beginning a new word or completing name");
+		tabber("if [ \"$beforeEqual\" -eq 0 ] ; then");
+		indent_level++;
+		tabber("#echo \"Completing new word\"");
+		tabber("local -i candidatecounter=0");
+		tabber("for candidate in $mopts $nmopts $nextOps ; do");
+		indent_level++;
+		tabber("case $candidate in");
+		tabber("$currentOpt*)");
+		indent_level++;
+		tabber("COMPREPLY+=(\"$candidate\")");
+		tabber("((candidatecounter++))");
+		tabber(";;");
+		indent_level--;
+		tabber("esac");
+		indent_level--;
+		tabber("done");
+		tabber("if (( candidatecounter == 1 )) ; then");
+		indent_level++;
+		tabber("#echo \"only one candidate\"");
+		tabber("case ${COMPREPLY[0]} in");
+		tabber("@($optionslist))");
+		indent_level++;
+		tabber("#echo \"candidate is option\"");
+		tabber("compopt -o nospace");
+		tabber("COMPREPLY[0]=\"${COMPREPLY[0]}=\";;");
+		indent_level--;
+		tabber("esac");
+		indent_level--;
+		tabber("fi");
+		tabber("return");
+		indent_level--;
+		tabber("fi");
+		file << endl;
+		tabber("#we are completing option value");
+		tabber("#echo \"completing option value\"");
+		tabber("local availableValues=`_optionvalues_$lastOp $currentOpt`");
+		tabber("for value in $availableValues ; do");
+		indent_level++;
+		tabber("case $value in");
+		tabber("$currentValue*) COMPREPLY+=(\"$value\");;");
+		tabber("esac");
+		indent_level--;
+		tabber("done");
+		indent_level--;
+		tabber("}");
+		file << endl;
+
+		tabber("# Actual comlpetion");
+		tabber("complete -F _flopoco flopoco");
+		file.close();
+
+		cout << "Bash autocomplete successfully generated !!" << endl;
+		cout << "(this is in no case a warranty nor a guarantee that the script will work)" << endl;
+		cout << "In order to make it work, we recommend that you link this file in your ~/.bash_completion.d directory" << 
+			endl << "you might have to create the ~/.bash_completion.d directory" << endl << endl;
+		cout << "\t\tmv flopoco_autocomplete ~/.bash_completion.d/flopoco" << endl << endl;
+		cout << "and then add the following line to your .bashrc :"<< endl << endl;
+		cout << "\t\t. ~/.bash_completion.d/flopoco" << endl;
 	}
 
 
@@ -645,7 +985,7 @@ namespace flopoco
 			s << "<dd>" << m_paramDoc[pname] << "</dd>";
 			if("" != m_paramDefault[pname])
 				s << " </span>";
-			s<< endl;			
+			s<< endl;
 		}
 		s << "</dl></dd>"<<endl;
 		if("" != m_extraHTMLDoc)
@@ -654,13 +994,78 @@ namespace flopoco
 		return s.str();
 	}
 
+	string OperatorFactory::getOperatorFunctions(void)
+	{
+		stringstream s;
+		stringstream buf;
+		size_t indent_level = 0;
+		const auto tabber = [&s, &indent_level](string content){
+				for(size_t i = 0 ; i < indent_level; i++)
+				{
+					s << "\t";
+				}
+				s << content << endl;
+			};
+
+		vector<string> mandatoryOptions;
+		vector<string> nonMandatoryOptions;
+		
+		for (string optionName : m_paramNames) {
+			if (getDefaultParamVal(optionName) == "") {
+				mandatoryOptions.push_back(optionName);
+			} else {
+				nonMandatoryOptions.push_back(optionName);
+			}
+		}
 	
-	string OperatorFactory::getDefaultParamVal(string& key){
-		return  m_paramDefault[key];
+		tabber("_mandatoryoptions_"+m_name+"()");
+		tabber("{");
+		indent_level++;
+		buf.str(string());
+		buf << "echo \" ";
+		for (string optionName : mandatoryOptions) {
+			buf << optionName << " ";
+		}
+		buf << "\";";
+		tabber(buf.str());
+		indent_level--;
+		tabber("}");
+		s << endl;
+		tabber("_nonmandatoryoptions_"+m_name+"()");
+		tabber("{");
+		indent_level++;
+		buf.str(string());	
+		buf << "echo \" ";
+		for (string optionName : nonMandatoryOptions) {
+			buf << optionName << " ";
+		}
+		buf << "\";";
+		tabber(buf.str());
+		indent_level--;
+		tabber("}");
+		s << endl;
+		tabber("_optionvalues_"+m_name+"()");
+		tabber("{");
+		indent_level++;
+		tabber("declare -A valueList");
+		for(string option : m_paramNames)
+		{
+			map<string, string>::iterator it = m_paramType.find(option);
+			if(it != m_paramType.end() && (*it).second == "bool")
+			{
+				tabber("valueList+=(["+option+"]=\"0 1\")");
+			}
+		}
+		tabber("echo ${valueList[\"$1\"]}");
+		indent_level--;
+		tabber("}");
+		return s.str();
 	}
 
-
-		
+	
+	string OperatorFactory::getDefaultParamVal(const string& key){
+		return  m_paramDefault[key];
+	}
 
 	OperatorFactory::OperatorFactory(
 						 string name,
@@ -689,7 +1094,7 @@ namespace flopoco
 				string name=part.substr(0, nameEnd);
 				//cout << "Found parameter: {" << name<<"}";
 				m_paramNames.push_back(name);
-				
+
 				int typeEnd = part.find(')', 0);
 				string type=part.substr(nameEnd+1, typeEnd-nameEnd-1);
 				//cout << " of type  {" << type <<"}";
@@ -727,7 +1132,9 @@ namespace flopoco
 			while (parameters[start]==' ') start++;
 		}
 	}
-	
 
+	const vector<string>& OperatorFactory::param_names(void) const{	
+		return m_paramNames;
+	}
 
 }; // flopoco

@@ -26,8 +26,7 @@ namespace flopoco{
 	private:
 		string name;
 		sollya_obj_t node;
-	
-	}
-		;
+
+	};
 }
 #endif // _FUNCTION_HH_

@@ -18,7 +18,7 @@ namespace flopoco{
 	{
 	protected:
 
-		/**			A table of reciprocals for the first iteration */ 
+		/**	@brief A table of reciprocals for the first iteration */
 		class FirstInvTable : public Table
 		{
 		public:
@@ -77,31 +77,35 @@ namespace flopoco{
 		void emulate(TestCase * tc);
 		void buildStandardTestCases(TestCaseList* tcl);
 		/**Overloading the function of Operator with a function that tests only positive FP numbers (full range)*/
-		TestCase* buildRandomTestCase(int i); 
+		TestCase* buildRandomTestCase(int i);
+		// User-interface stuff
+		/** Factory method */
+		static OperatorPtr parseArguments(Target *target , vector<string> &args);
+		static void registerFactory();
 
 		int wE, wF;
 
 		/** The input sizes to the successive tables*/
-		int a[MAXRRSTAGES]; 
+		int a[MAXRRSTAGES];
 
 		/** The intermediate precision: at step i, the exp part is bounded by
 			 1 <= m < 1+2^-p[i]*/
-		int p[MAXRRSTAGES]; 
+		int p[MAXRRSTAGES];
 
 		/** The useful size of the product Ai*Zi, and hence of the subword of Zi input to the mult.  */
-		int psize[MAXRRSTAGES]; 
+		int psize[MAXRRSTAGES];
 
 
 		/** size of the virtual mantissa:
 			 1.000(p[i] zeroes)00000zzzzzzz
 			 the zzzz are the bits of Zi, which will be actually computed  */
-		int sfullZ[MAXRRSTAGES]; 
+		int sfullZ[MAXRRSTAGES];
 
 		/** size of Zi before truncation, should be equal to s[i]+t[i] */
 		int sbt[MAXRRSTAGES];
 
 		/** The number of non-zero bits of Zi, will be limited to wF+g */
-		int s[MAXRRSTAGES]; 
+		int s[MAXRRSTAGES];
 
 		/** The numbers of bits of the full Zi to truncate to limit the size to wF+g */
 		int t[MAXRRSTAGES];
@@ -114,7 +118,7 @@ namespace flopoco{
 
 		int pfinal;  // equal to s[stages+1]
 
-		// The guard bits 
+		// The guard bits
 		int gLog;
 
 
@@ -122,8 +126,8 @@ namespace flopoco{
 		// as soon as it would be more than 64 bits
 		int fullSizeSim;
 
-		// The target precision: numbers may be truncated so that their LSB has weight -target_prec 
-		int target_prec;  
+		// The target precision: numbers may be truncated so that their LSB has weight -target_prec
+		int target_prec;
 
 		// Various subcomponents
 		Shifter *ao_lshift;   // ao stands for "almost one"

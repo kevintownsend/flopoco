@@ -78,7 +78,6 @@ using namespace std;
 namespace flopoco{
 
 
-	
 	void FixHornerEvaluator::computeArchParameters(){
 		// Initialize all the lsbs to lsbCoeff
 		msbSigma[degree] = msbCoeff[degree];

@@ -159,10 +159,11 @@
 
 
 
+/* Complex arithmetic */
+#include "Complex/FixComplexKCM.hpp"
 
 #if 0
 // Old stuff removed from older versions, some of which to bring back to life
-/* Complex arithmetic */
 #include "Complex/FixedComplexAdder.hpp"
 #include "Complex/FixedComplexMultiplier.hpp"
 

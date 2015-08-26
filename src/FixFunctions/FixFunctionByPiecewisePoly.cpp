@@ -223,6 +223,7 @@ namespace flopoco{
 		mpfr_init2(res_right, 10000); // should be enough for anybody
 		rangeS = sollya_lib_parse_string("[-1;1]");		
 
+
 		// initialize the vector of MSB weights
 		for (int j=0; j<=degree; j++) {
 			sigmaMSB.push_back(INT_MIN);
@@ -377,3 +378,4 @@ namespace flopoco{
 
 }
 	
+

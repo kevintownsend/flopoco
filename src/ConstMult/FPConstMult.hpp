@@ -12,25 +12,25 @@ namespace flopoco{
 	class FPConstMult : public Operator
 	{
 	public:
-		/** The generic constructor */
+		/** @brief The generic constructor */
 		FPConstMult(Target* target, int wE_in, int wF_in, int wE_out, int wF_out, int cst_sgn, int cst_exp, mpz_class cst_sig);
-		
-		/** A constructor for rational constants */
+
+		/** @brief A constructor for rational constants */
 		FPConstMult(Target* target, int wE_in, int wF_in, int wE_out, int wF_out, int a, int b);
-		
-		/** An empty constructor,  used by CRFPConstMult */
+
+		/** @brief An empty constructor,  used by CRFPConstMult */
 		FPConstMult(Target* target, int wE_in, int wF_in, int wE_out, int wF_out);
-		
-		/** A constructor that parses an expression for the constant */
+
+		/** @brief A constructor that parses an expression for the constant */
 		FPConstMult(Target* target, int wE_in, int wF_in, int wE_out, int wF_out, int wF_C, string constant);
 
 		~FPConstMult();
 
-		int wE_in; 
-		int wF_in; 
-		int wE_out; 
-		int wF_out; 
-		mpfr_t mpfrC; 
+		int wE_in;
+		int wF_in;
+		int wE_out;
+		int wF_out;
+		mpfr_t mpfrC;
 		int cstWidth;
 		bool correctRounding;
 
@@ -43,7 +43,7 @@ namespace flopoco{
 		mpfr_t cstSig; // between 1 and 2, high accuracy
 		mpfr_t mpfr_xcut_sig; // between 1 and 2
 
-		mpz_class xcut_sig_rd; // an int on wF_in+1 bits, which is mpfr_xcut_sig rounded down 
+		mpz_class xcut_sig_rd; // an int on wF_in+1 bits, which is mpfr_xcut_sig rounded down
 
 		bool mantissa_is_one; /**< is the mantissa equal to 1? */
 		bool constant_is_zero; /**< is the constant equal to 0? */
@@ -64,8 +64,9 @@ namespace flopoco{
 		void normalizeCst();
 
 
-		/** The method that declares all the signals and sets up the pipeline.
-			 It is called by the constructors of FPConstMult and CRFPConstMult to avoid code duplication */
+		/** @brief The method that declares all the signals and sets up the pipeline.
+		 * It is called by the constructors of FPConstMult and CRFPConstMult to avoid code duplication
+		 */
 		void buildVHDL();
 
 		void emulate(TestCase *tc);
@@ -74,6 +75,10 @@ namespace flopoco{
 		mpfr_t mpY;
 
 		void fillTestCase(mpz_class a[]);
+
+		//Interface stuff
+		static void registerFactory();
+		static OperatorPtr parse(Target* target, vector<string>& args);
 	};
 
 }

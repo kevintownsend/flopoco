@@ -5,28 +5,35 @@
 #include "utils.hpp"
 #include "BitHeap/BitHeap.hpp"
 
-namespace flopoco{ 
+namespace flopoco{
 
 	class FixIIR : public Operator {
 
 	public:
-		/* Constructor ; you must use bitheap in case of negative coefficient*/
-		FixIIR(Target* target, int msbOut_, int lsbOut_, double H_, vector<string> coeffb_, vector<string> coeffa_, map<string, double> inputDelays = emptyDelayMap); 
+		/** @brief Constructor ; you must use bitheap in case of negative coefficient*/
+		FixIIR(Target* target, int msbOut_, int lsbOut_, double H_, vector<string> coeffb_, vector<string> coeffa_, map<string, double> inputDelays = emptyDelayMap);
 
-		/* Destructor */
+		/** @brief Destructor */
 		~FixIIR();
 
 		// Below all the functions needed to test the operator
-		/* the emulate function is used to simulate in software the operator
-		  in order to compare this result with those outputed by the vhdl opertator */
+		/**
+		 * @brief the emulate function is used to simulate in software the operator
+		 * in order to compare this result with those outputed by the vhdl opertator
+		 */
 		void emulate(TestCase * tc);
 
-		/* function used to create Standard testCase defined by the developper */
+		/** @brief function used to create Standard testCase defined by the developper */
 		void buildStandardTestCases(TestCaseList* tcl);
 
-  	private:
+		// User-interface stuff
+		/** Factory method */
+		static OperatorPtr parseArguments(Target *target , vector<string> &args);
+		static void registerFactory();
+
+	private:
 		int msbOut;					/**< weight of the MSB in the result */
-		int lsbOut;					/**< weight of the LSB in the result */ 
+		int lsbOut;					/**< weight of the LSB in the result */
 		double H;						/**< Worst case peak gain */
 		vector<string> coeffb;			/**< the b_i coefficients as strings */
 		vector<string> coeffa;			/**< the a_i coefficients as strings */
