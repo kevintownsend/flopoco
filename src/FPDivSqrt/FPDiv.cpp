@@ -287,7 +287,7 @@ namespace flopoco{
 			//			nextCycle();/////////////////////////////////////////////////////////////
 			setCriticalPath(0);
 
-			double srt4stepdelay =  2*target->lutDelay() + 2*target->localWireDelay() + target->adderDelay(wF+4);
+			double srt4stepdelay =  2*target->lutDelay() + target->localWireDelay() + target->localWireDelay(wF+4) + target->adderDelay(wF+4);
 
 			SelFunctionTable* table;
 			table = new SelFunctionTable(target, 0.5, 1.0, 1, 4, 3, 4, 5, 3);
