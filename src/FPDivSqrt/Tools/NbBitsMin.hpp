@@ -9,6 +9,6 @@ namespace flopoco
 	float U(int k, float ro, float d);
 	float estimateCost(int nbBit, int radix, int digitSet);
 	void computeNbBit(int radix, int digitSet);
-	static void NbBitsMinRegisterFactory();
+	void NbBitsMinRegisterFactory();
 }
 

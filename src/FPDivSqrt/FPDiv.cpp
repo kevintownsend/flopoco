@@ -40,7 +40,7 @@ namespace flopoco{
 #define DEBUGVHDL 0
 
 
-	FPDiv::FPDiv(Target* target, int wE, int wF, bool newVersion) :
+	FPDiv::FPDiv(Target* target, int wE, int wF, int radix) :
 		Operator(target), wE(wE), wF(wF) {
 
 		int i;
@@ -51,9 +51,21 @@ namespace flopoco{
 		name<<"FPDiv_"<<wE<<"_"<<wF;
 		setNameWithFreq(name.str());
 
+		if(radix !=0  && radix!=4 && radix !=8) {
+			THROWERROR("Got radix = " << radix << ". Only possible choices for radix are 0, 4 or 8" );
+		}
+		
+		if(radix==0){ // 0 means "let FloPoCo choose"
+			if( (target->lutInputs() <= 4) || (!target->isPipelined()))
+				radix=4;
+			else
+				radix=8;
+			REPORT(INFO, "Using radix " << radix << " SRT algorithm");
+		}
 
-		if(newVersion)
 
+	 
+		if(radix==8)
 		{
 			int extraBit = 0;
 			extraBit+=2; //Here we'll prescale by 5/4 => 2 right extra bits
@@ -107,17 +119,15 @@ namespace flopoco{
 			wInit << "w" << nDigit-1;
 			vhdl << tab << declare(wInit.str(), wF+6) << " <=  \"00\" & fX;" << endl; //TODO : review that
 
-			//			nextCycle();/////////////////////////////////////////////////////////////
 
-
-			double srt4stepdelay =  2*target->lutDelay() + 2*target->localWireDelay() + target->adderDelay(wF+7);
+			double srt8stepdelay =  3*target->lutDelay() + 2*target->localWireDelay()+ target->localWireDelay(2*wF+14) + target->adderDelay(wF+7);
 
 			SelFunctionTable* table;
 			table = new SelFunctionTable(target, 0.75, 1.0, 2, 5, 7, 8, 7, 4);
 			addSubComponent(table);
 
 			for(i=nDigit-1; i>=1; i--) {
-				manageCriticalPath(srt4stepdelay);
+				manageCriticalPath(srt8stepdelay);
 
 				ostringstream wi, qi, wim1, seli, wipad, wim1full, wim1fulla, tInstance;
 				wi << "w" << i;						//actual partial remainder
@@ -168,7 +178,7 @@ namespace flopoco{
 				vhdl << tab << declare(wim1.str(),wF+6) << " <= " << wim1full.str()<<range(wF+3,0)<<" & \"00\";" << endl;
 			}
 
-			manageCriticalPath(srt4stepdelay);
+			manageCriticalPath(srt8stepdelay);
 
 			vhdl << tab << declare("q0",4) << "(3 downto 0) <= \"0000\" when  w0 = (" << wF+5 << " downto 0 => '0')" << endl;
 			vhdl << tab << "             else w0(" << wF+5 << ") & \"010\";" << endl;
@@ -463,9 +473,9 @@ namespace flopoco{
 		UserInterface::parseStrictlyPositiveInt(args, "wE", &wE);
 		int wF;
 		UserInterface::parseStrictlyPositiveInt(args, "wF", &wF);
-		bool radix8;
-		UserInterface::parseBoolean(args, "radix8", &radix8);
-		return new FPDiv(target, wE, wF, radix8);
+		int radix;
+		UserInterface::parsePositiveInt(args, "radix", &radix);
+		return new FPDiv(target, wE, wF, radix);
 	}
 
 	void FPDiv::registerFactory(){
@@ -475,8 +485,8 @@ namespace flopoco{
 											 "http://www.cs.ucla.edu/digital_arithmetic/files/ch5.pdf",
 											 "wE(int): exponent size in bits; \
 wF(int): mantissa size in bits; \
-radix8(bool)=true: if true, radix 8 SRT is used, if false radix 4 SRT;",
-											"The algorithm used here is the division by digit recurrence.",
+radix(int)=0: Can be 0, 4 or 8. Default 0 means: let FloPoCo choose between 4 and 8. In your context, the other choice may have a better area/speed trade-offs;",
+											"The algorithm used here is the division by digit recurrence (SRT). In radix 4, we use a maximally redundant digit set. In radix 8, we use split-digits in [-10,10], and a bit of prescaling.",
 											FPDiv::parseArguments
 											 ) ;
 
