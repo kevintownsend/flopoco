@@ -5,11 +5,11 @@
   This file is part of the FloPoCo project
   developed by the Arenaire team at Ecole Normale Superieure de Lyon
 
-  Authors: Jeremie Detrey, Florent de Dinechin
+  Authors: Maxime Christ, Jeremie Detrey, Florent de Dinechin
 
   Initial software.
   Copyright © ENS-Lyon, INRIA, CNRS, UCBL,
-  2008-2010.
+  2008-2015.
   All rights reserved.
 
  */
@@ -45,10 +45,11 @@ namespace flopoco{
 
 		int i;
 		ostringstream name;
+		setCopyrightString("Maxime Christ, Florent de Dinechin (2015)");
 
 		srcFileName="FPDiv";
 		name<<"FPDiv_"<<wE<<"_"<<wF;
-		uniqueName_ = name.str();
+		setNameWithFreq(name.str());
 
 
 		if(newVersion)
@@ -106,7 +107,7 @@ namespace flopoco{
 			wInit << "w" << nDigit-1;
 			vhdl << tab << declare(wInit.str(), wF+6) << " <=  \"00\" & fX;" << endl; //TODO : review that
 
-			nextCycle();/////////////////////////////////////////////////////////////
+			//			nextCycle();/////////////////////////////////////////////////////////////
 
 
 			double srt4stepdelay =  2*target->lutDelay() + 2*target->localWireDelay() + target->adderDelay(wF+7);
@@ -259,7 +260,7 @@ namespace flopoco{
 			wInit << "w"<<nDigit-1;
 			vhdl << tab << declare(wInit.str(), wF+3) <<" <=  \"00\" & fX;" << endl;
 
-			nextCycle();/////////////////////////////////////////////////////////////
+			//			nextCycle();/////////////////////////////////////////////////////////////
 			setCriticalPath(0);
 
 			double srt4stepdelay =  2*target->lutDelay() + 2*target->localWireDelay() + target->adderDelay(wF+4);
@@ -460,7 +461,7 @@ namespace flopoco{
 											 "http://www.cs.ucla.edu/digital_arithmetic/files/ch5.pdf",
 											 "wE(int): exponent size in bits; \
 wF(int): mantissa size in bits; \
-radix8(bool)=true: if true, the division will be implemented in radix 8, if false in radix 4;",
+radix8(bool)=false: if true, radix 8 SRT is used, if false radix 4 SRT;",
 											"The algorithm used here is the division by digit recurrence.",
 											FPDiv::parseArguments
 											 ) ;

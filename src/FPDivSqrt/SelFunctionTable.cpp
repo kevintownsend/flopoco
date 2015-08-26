@@ -13,12 +13,14 @@ namespace flopoco
 																														digitSet(digit),
 																														radix(base)
 	{
-		ro = ((float)digitSet)/(radix-1);
+		setCopyrightString("Maxime Christ, Florent de Dinechin (2015)");
 		ostringstream name;
 		srcFileName="SelFunctionTable";
-		name << "SelFunctionTable";
+		name << "SelFunctionTable_r"<< radix;
 		setName(name.str());
-	}
+
+		ro = ((float)digitSet)/(radix-1);
+}
 
 	SelFunctionTable::~SelFunctionTable() {}
 
@@ -26,12 +28,12 @@ namespace flopoco
 	{
 		mpz_class result;
 
-		//TODO : Parameterized the table
+		//TODO : Parameterize the table
 
-        int w = (x>>nbBitD);	 //separating w and d (together in x)
-        int d = x - (w<<nbBitD);
-        int wneg = (w >> (nbBitW-1)) << (nbBitW-1); //getting the sign bit
-        w -= 2*wneg; //switching from two's complement to decimal representation, more convenient for upcoming computation
+		int w = (x>>nbBitD);	 //separating w and d (together in x)
+		int d = x - (w<<nbBitD);
+		int wneg = (w >> (nbBitW-1)) << (nbBitW-1); //getting the sign bit
+		w -= 2*wneg; //switching from two's complement to decimal representation, more convenient for upcoming computation
 
 		int decimalResult;
 		int nbBitK = ceil(log2(digitSet)+1); //Nb of bit for the entire part of w
