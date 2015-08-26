@@ -203,7 +203,7 @@ namespace flopoco {
 	void IntAdder::registerFactory(){
 		UserInterface::add("IntAdder", // name
 											 "Integer adder. In modern VHDL, integer addition is expressed by a + and one usually needn't define an entity for it. However, this operator will be pipelined if the addition is too large to be performed at the target frequency.",
-											 UserInterface::BasicInteger, // categories
+											 "BasicInteger", // category
 											 "",
 											 "wE(int): exponent size in bits; ",
 											 "",

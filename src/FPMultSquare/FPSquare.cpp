@@ -232,7 +232,7 @@ namespace flopoco{
 	void FPSquare::registerFactory(){
 		UserInterface::add("FPSquare", // name
 											 "A floating-point squarer, using IntSquarer for the mantissa.",
-											 UserInterface::BasicFloatingPoint, // categories
+											 "BasicFloatingPoint", // categories
 											 "",
 											 "wE(int): exponent size in bits; \
                         wF_in(int): input's mantissa size in bits;  \

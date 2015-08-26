@@ -425,7 +425,7 @@ FPAdd3Input::FPAdd3Input(Target* target, int wE, int wF, map<string, double> inp
 	void FPAdd3Input::registerFactory(){
 		UserInterface::add("FPAdd3Input", // name
 											 "A 3-operand floating-point adder.",
-											 UserInterface::BasicFloatingPoint, // categories
+											 "BasicFloatingPoint", // categories
 											 "",
 											 "wE(int): exponent size in bits; \
 wF(int): mantissa size in bits;",

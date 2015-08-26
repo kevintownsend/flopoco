@@ -340,7 +340,7 @@ vhdl << instance(compOne, join("cmpO",j) );
 	void LongIntAdderCmpAddIncGen1::registerFactory(){
 		UserInterface::add("LongIntAdderCmpAddIncGen1", // name
 											 "An long integer comparator for experimentation.",
-											 UserInterface::BasicInteger, // categories
+											 "BasicInteger", // categories
 											 "",
 											 "wIn(int): input size in bits;",
 											 "",

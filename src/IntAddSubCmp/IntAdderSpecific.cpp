@@ -167,7 +167,7 @@ namespace flopoco{
 	void IntAdderSpecific::registerFactory(){
 		UserInterface::add("IntAdderSpecific", // name
 											 "A specific integer adder for experimentation.",
-											 UserInterface::BasicInteger, // categories
+											 "BasicInteger", // categories
 											 "",
 											 "wIn(int): input size in bits; ",
 											 "",

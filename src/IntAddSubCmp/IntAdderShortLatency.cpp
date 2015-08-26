@@ -725,8 +725,8 @@ namespace flopoco {
 
 	void IntAdderShortLatency::registerFactory(){
 		UserInterface::add("IntAdderShortLatency", // name
-											 "A classical integer adder.",
-											 UserInterface::BasicInteger, // categories
+											 "A fast integer adder for large sizes.",
+											 "BasicInteger",
 											 "",
 											 "wIn(int): input size in bits; \
 optimizeType(int)=2: 0=LUT, 1=REG, 2=SLICE, 3=LATENCY; \

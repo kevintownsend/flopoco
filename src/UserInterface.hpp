@@ -37,23 +37,6 @@ namespace flopoco
 	{
 	public:
 
-		typedef enum {
-			ShiftersLZOCs,
-			BasicInteger,
-			BasicFixPoint,
-			BasicFloatingPoint,
-			CompositeFloatingPoint,
-			ElementaryFunctions,
-			FunctionApproximation,
-			ComplexFixPoint,
-			ComplexFloatingPoint,
-			LNS,
-			Conversions,
-			TestBenches,
-			Miscellanous
-		} DocumentationCategory;
-
-
 		/** The function that does it all */
 		static void main(int argc, char* argv[]);
 
@@ -74,7 +57,7 @@ namespace flopoco
 		static void add(
 										string name,
 										string description, 
-										DocumentationCategory category,
+										string category,
 										string seeAlso,
 										string parameterList, 
 										string extraHTMLDoc,  
@@ -126,7 +109,7 @@ namespace flopoco
 		/** Build operators.html directly into the doc directory. */
 		static void buildHTMLDoc();
 
-		/** Build flopoco autocomplete **/
+		/** Build flopoco bash autocompletion file **/
 		static void buildAutocomplete();
 		
 	public:
@@ -147,10 +130,10 @@ namespace flopoco
 		static bool   floorplanning;
 		static bool   reDebug;
 		static bool   flpDebug;
-		static vector<OperatorFactoryPtr> sm_factoriesByIndex;
-		static map<string,OperatorFactoryPtr> sm_factoriesByName;
+		static map<string,OperatorFactoryPtr> factoriesByName;
+		static const map<string,string> categories;
 
-		static const vector<string> known_fpga;
+		static const vector<string> known_fpgas;
 		static const vector<string> special_targets;
 		static const vector<option_t> options;
 
@@ -165,7 +148,7 @@ namespace flopoco
 		
 		string m_name; /**< see constructor doc */ 
 		string m_description;  /**< see constructor doc */
-		UserInterface::DocumentationCategory m_category;  /**< see constructor doc */
+		string m_category;  /**< see constructor doc */
 		string m_seeAlso; /**< see constructor doc */
 		vector<string> m_paramNames;  /**< list of paramater names */
 		map<string,string> m_paramType;  /**< type of parameters listed in m_paramNames */
@@ -187,7 +170,7 @@ namespace flopoco
 		OperatorFactory(
 						 string name,
 						 string description, 
-						 UserInterface::DocumentationCategory category,
+						 string category,
 						 string seeAlso,
 						 string parameters,  
 						 string extraHTMLDoc,  

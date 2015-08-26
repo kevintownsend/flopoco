@@ -21,7 +21,7 @@ namespace flopoco{
 	void FPAdd::registerFactory(){
 		UserInterface::add("FPAdd", // name
 											 "A correctly rounded floating-point adder.",
-											 UserInterface::BasicFloatingPoint,
+											 "BasicFloatingPoint",
 											 "", //seeAlso
 											 "wE(int): exponent size in bits; \
                         wF(int): mantissa size in bits; \

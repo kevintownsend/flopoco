@@ -481,7 +481,7 @@ namespace flopoco{
 	void FPDiv::registerFactory(){
 		UserInterface::add("FPDiv", // name
 											 "A correctly rounded floating-point division.",
-											 UserInterface::BasicFloatingPoint, // categories
+											 "BasicFloatingPoint", // categories
 											 "http://www.cs.ucla.edu/digital_arithmetic/files/ch5.pdf",
 											 "wE(int): exponent size in bits; \
 wF(int): mantissa size in bits; \

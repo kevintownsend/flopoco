@@ -500,7 +500,7 @@ namespace flopoco{
 	void FPAddSinglePath::registerFactory(){
 		UserInterface::add("FPAddSInglePath", // name
 											 "A floating-point adder with a new, more compact single-path architecture.",
-											 UserInterface::BasicFloatingPoint, // categories
+											 "BasicFloatingPoint", // categories
 											 "",
 											 "wE(int): exponent size in bits; \
 wF(int): mantissa size in bits;",

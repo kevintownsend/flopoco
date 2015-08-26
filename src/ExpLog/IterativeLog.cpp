@@ -1266,7 +1266,7 @@ namespace flopoco{
 	void IterativeLog::registerFactory(){
 		UserInterface::add("IterativeLog", // name
 											 "An iterative method to compute a log.",
-											 UserInterface::ElementaryFunctions, // categories
+											 "ElementaryFunctions", // categories
 											 "",
 											 "wE(int): exponent size in bits; \
 wF(int): mantissa size in bits; \

@@ -175,7 +175,7 @@ namespace flopoco{
 	void IntComparatorSpecific::registerFactory(){
 		UserInterface::add("IntComparatorSpecific", // name
 											 "An integer comparator for experimentation.",
-											 UserInterface::BasicInteger, // categories
+											 "BasicInteger", // categories
 											 "",
 											 "wIn(int): input size in bits;\
 type(int): ;",

@@ -200,7 +200,7 @@ namespace flopoco{
 	{
 		UserInterface::add("FixFunctionBySimplePoly",
 						   "Evaluator of function f on [0,1) or [-1,1), using a single polynomial with Horner scheme",
-						   UserInterface::FunctionApproximation,
+						   "FunctionApproximation",
 						   "",
 						   "f(string): function to be evaluated between double-quotes, for instance \"exp(x*x)\";\
 lsbIn(int): weight of input LSB, for instance -8 for an 8-bit input;\

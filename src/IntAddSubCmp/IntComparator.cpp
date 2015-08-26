@@ -178,7 +178,7 @@ namespace flopoco{
 	void IntComparator::registerFactory(){
 		UserInterface::add("IntComparator", // name
 											 "An integer comparator.",
-											 UserInterface::BasicInteger, // categories
+											 "BasicInteger", // category
 											 "",
 											 "wIn(int): input size in bits;\
 criteria(int): -2=lesser than, -1=lesser or equal, 0=equal, 1=greater or equal, 2=greater;\

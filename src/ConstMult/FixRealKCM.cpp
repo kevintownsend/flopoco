@@ -783,7 +783,7 @@ namespace flopoco{
 		UserInterface::add(
 				"FixRealKCM",
 				"Table based real multiplier. Output size is computed",
-				UserInterface::BasicFixPoint,
+				"BasicFixPoint",
 				"",
 				"signedInput(bool): 0=unsigned, 1=signed; \
 msbIn(int): weight associated to most significant bit (including \

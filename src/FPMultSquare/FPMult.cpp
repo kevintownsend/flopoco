@@ -327,7 +327,7 @@ namespace flopoco{
 	void FPMult::registerFactory(){
 		UserInterface::add("FPMult", // name
 											 "A floating-point multiplier. The actual FloPoCo component supports different input and output sizes, but this is not available from the command line.",
-											 UserInterface::BasicFloatingPoint, // categories
+											 "BasicFloatingPoint", // categories
 											 "",
 											 "wE(int): exponent size in bits; \
                         wF_in(int): input's mantissa size in bits;  \

@@ -462,7 +462,7 @@ exit(1);
 	void LongIntAdderMuxNetwork::registerFactory(){
 		UserInterface::add("LongIntAdderMuxNetwork", // name
 											 "An long integer comparator for experimentation.",
-											 UserInterface::BasicInteger, // categories
+											 "BasicInteger", // categories
 											 "",
 											 "wIn(int): input size in bits;\
 regular(int)=0: size of chunks;",

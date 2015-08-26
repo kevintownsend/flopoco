@@ -213,8 +213,8 @@ namespace flopoco {
 
 	void FixFIR::registerFactory(){
 		UserInterface::add("FixFIR", // name
-											 "A fix-point .",
-											 UserInterface::BasicFixPoint, // categories
+											 "A fix-point Finite Impulse Filter generator.",
+											 "FiltersEtc", // categories
 											 "",
 											 "lsbInOut(int): integer size in bits;\
 rescale(bool)=false: If true, divides all coefficient by 1/sum(|coeff|);\

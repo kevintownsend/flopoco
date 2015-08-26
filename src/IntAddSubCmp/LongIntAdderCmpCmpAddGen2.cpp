@@ -373,7 +373,7 @@ exit(-1);
 	void LongIntAdderCmpCmpAddGen2::registerFactory(){
 		UserInterface::add("LongIntAdderCmpCmpAddGen2", // name
 											 "An long integer comparator for experimentation.",
-											 UserInterface::BasicInteger, // categories
+											 "BasicInteger", // categories
 											 "",
 											 "wIn(int): input size in bits;",
 											 "",

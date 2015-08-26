@@ -220,7 +220,7 @@ namespace flopoco{
 		void FPSqrt::registerFactory(){
 			UserInterface::add("FPSqrt", // name
 												 "A correctly rounded floating-point square root function.",
-												 UserInterface::BasicFloatingPoint, // categories
+												 "BasicFloatingPoint", // categories
 												 "",
 												 "wE(int): exponent size in bits; \
 wF(int): mantissa size in bits",

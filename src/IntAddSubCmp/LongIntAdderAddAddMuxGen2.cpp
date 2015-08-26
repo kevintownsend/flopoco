@@ -445,7 +445,7 @@ exit(1);
 	void LongIntAdderAddAddMuxGen2::registerFactory(){
 		UserInterface::add("LongIntAdderAddAddMuxGen2", // name
 											 "An long integer adder.",
-											 UserInterface::ElementaryFunctions, // categories
+											 "ElementaryFunctions", // categories
 											 "",
 											 "wIn(int): input size in bits;\
 regular(int)=0: force the chunk size",

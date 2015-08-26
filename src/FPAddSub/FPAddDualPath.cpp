@@ -622,7 +622,7 @@ namespace flopoco{
 	void FPAddDualPath::registerFactory(){
 		UserInterface::add("FPAddDualPath", // name
 											 "Floating-point adder with dual-path architecture. Trades a larger circuit size for a smaller latency.",
-											 UserInterface::BasicFloatingPoint, // categories
+											 "BasicFloatingPoint", // categories
 											 "",
 											 "wE(int): exponent size in bits; \
 wF(int): mantissa size in bits;",

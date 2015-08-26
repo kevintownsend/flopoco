@@ -80,7 +80,7 @@ namespace flopoco{
 	{
 		UserInterface::add("FixFunctionByTable", // name
 											 "Evaluator of function f on [0,1) or [-1,1), depending on signedIn, using a table.",
-											 UserInterface::FunctionApproximation,
+											 "FunctionApproximation",
 											 "",
 											 "f(string): function to be evaluated between double-quotes, for instance \"exp(x*x)\";\
 signedIn(bool): true if the function input is [-1,1), false if it is [0,1);\

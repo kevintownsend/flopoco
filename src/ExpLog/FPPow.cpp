@@ -621,7 +621,7 @@ namespace flopoco{
 	void FPPow::registerFactory(){
 		UserInterface::add("FPPow", // name
 											 "A floating-point power function.",
-											 UserInterface::ElementaryFunctions, // categories
+											 "ElementaryFunctions", // categories
 											 "",
 											 "wE(int): exponent size in bits for both inputs; \
 wF(int): mantissa size in bits for both inputs; \

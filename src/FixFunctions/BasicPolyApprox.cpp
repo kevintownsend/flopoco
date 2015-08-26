@@ -157,7 +157,7 @@ namespace flopoco{
 	{
 		UserInterface::add("BasicPolyApprox", // name
 											 "Helper/Debug feature, does not generate VHDL. Polynomial approximation of function f, accurate to targetAcc on [0,1)",
-											 UserInterface::FunctionApproximation,
+											 "FunctionApproximation",
 											 "",
 											 "\
 f(string): function to be evaluated between double-quotes, for instance \"exp(x*x)\";\

@@ -484,8 +484,8 @@ namespace flopoco {
 
 	void FixIIR::registerFactory(){
 		UserInterface::add("FixIIR", // name
-											 "A fix-point .",
-											 UserInterface::BasicFixPoint, // categories
+											 "A fix-point Infinite Impulse Response filter generator.",
+											 "FiltersEtc", // categories
 											 "",
 											 "msbOut(int): output's most significant bit;\
 lsbOut(int): output's least significant bit;\

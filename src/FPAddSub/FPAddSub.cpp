@@ -638,7 +638,7 @@ FPAddSub::FPAddSub(Target* target, int wEX, int wFX, int wEY, int wFY, int wER, 
 	void FPAddSub::registerFactory(){
 		UserInterface::add("FPAddSub", // name
 											 "A fused floating-point adder and subtracter, computes both a+b and a-b.",
-											 UserInterface::BasicFloatingPoint, // categories
+											 "BasicFloatingPoint", // categories
 											 "",
 											 "wE(int): exponent size in bits; \
 wF(int): mantissa size in bits;",

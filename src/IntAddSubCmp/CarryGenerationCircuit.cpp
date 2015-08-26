@@ -185,7 +185,7 @@ namespace flopoco{
 	void CarryGenerationCircuit::registerFactory(){
 		UserInterface::add("CarryGenerationCircuit", // name
 											 "",
-											 UserInterface::BasicInteger, // categories
+											 "BasicInteger", // categories
 											 "",
 											 "wIn(int): input size in bits;",
 											 "",

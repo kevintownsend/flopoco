@@ -995,7 +995,7 @@ namespace flopoco{
 	void FPExp::registerFactory(){
 		UserInterface::add("FPExp", // name
 											 "A faithful floating-point exponential function.",
-											 UserInterface::ElementaryFunctions,
+											 "ElementaryFunctions",
 											 "", // seeAlso
 											 "wE(int): exponent size in bits; \
                         wF(int): mantissa size in bits;  \

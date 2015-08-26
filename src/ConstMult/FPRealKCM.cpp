@@ -184,7 +184,7 @@ namespace flopoco{
 		UserInterface::add(
 					"FPRealKCM",
 					"Table based real multiplier for floating points input. Output size is computed",
-					UserInterface::BasicFloatingPoint,
+					"BasicFloatingPoint",
 					"",
 					"wE(int): exponent width;"
 					"wF(int): significand width;"

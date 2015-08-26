@@ -359,7 +359,7 @@ namespace flopoco{
 	{
 		UserInterface::add("PiecewisePolyApprox", // name
 											 "Helper/Debug feature, does not generate VHDL. Uniformly segmented piecewise polynomial approximation of function f, accurate to targetAcc on [0,1)",
-											 UserInterface::FunctionApproximation,
+											 "FunctionApproximation",
 											 "",
 											 "\
 f(string): function to be evaluated between double-quotes, for instance \"exp(x*x)\";\

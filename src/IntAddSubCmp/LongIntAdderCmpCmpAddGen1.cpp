@@ -389,7 +389,7 @@ vhdl << tab << declare(join("nsX",j,"_1_l",l-1), cSize[j],true) << " <= not("<<j
 	void LongIntAdderCmpCmpAddGen1::registerFactory(){
 		UserInterface::add("LongIntAdderCmpCmpAddGen1", // name
 											 "An long integer comparator for experimentation.",
-											 UserInterface::BasicInteger, // categories
+											 "BasicInteger", // categories
 											 "",
 											 "wIn(int): input size in bits;",
 											 "",

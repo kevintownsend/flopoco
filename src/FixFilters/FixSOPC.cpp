@@ -342,8 +342,8 @@ namespace flopoco{
 
 	void FixSOPC::registerFactory(){
 		UserInterface::add("FixSOPC", // name
-											 "A fix-point .",
-											 UserInterface::BasicFixPoint, // categories
+											 "A fix-point Sum of Product by Constants.",
+											 "FiltersEtc", // categories
 											 "",
 											 "lsbIn(int): input's last significant bit;\
 lsbOut(int): output's last significant bit;\

@@ -706,7 +706,7 @@ namespace flopoco{
 		UserInterface::add(
 					"FPConstMult", 
 					"Floating-point constant multiplier using the shift-and-add approach. The constant is provided as sign, integral significand and integral exponent",
-					UserInterface::BasicFloatingPoint,
+					"BasicFloatingPoint",
 					"https://hal-ens-lyon.archives-ouvertes.fr/ensl-00269219/document",
 					"wE_in(int): input exponent width;"
 					"wF_in(int): input significand part width;"
