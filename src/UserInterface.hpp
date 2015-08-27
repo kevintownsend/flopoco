@@ -131,7 +131,7 @@ namespace flopoco
 		static bool   reDebug;
 		static bool   flpDebug;
 		static map<string,OperatorFactoryPtr> factoriesByName;
-		static const map<string,string> categories;
+		static const vector<pair<string,string>> categories;
 
 		static const vector<string> known_fpgas;
 		static const vector<string> special_targets;
@@ -143,7 +143,7 @@ namespace flopoco
 			Each OperatorFactory is responsible for the command line and parsing for one Operator sub-class.  */
 	class OperatorFactory
 	{
-
+		friend UserInterface;
 	private:
 		
 		string m_name; /**< see constructor doc */ 

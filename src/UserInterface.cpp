@@ -16,6 +16,9 @@ namespace flopoco
 	const char COLOR_RED_NORMAL[] = { 0x1b, '[', '3', '1', ';', '4', '9', 'm', 0 };
 	const char COLOR_BLUE_NORMAL[] = { 0x1b, '[', '3', '4', ';', '4', '9', 'm', 0 };
 	const char COLOR_BOLD_RED_NORMAL[] = { 0x1b, '[', '1', ';', '3', '1', ';', '4', '9', 'm', 0 };
+	const char COLOR_REVERSEVIDEO_BLACK_GREEN[] = { 0x1b, '[', '7', ';', '3', '0', ';', '4', '2', 'm', 0 };
+	const char COLOR_BOLD_MAGENTA_NORMAL[] = { 0x1b, '[', '1', ';', '3', '5', ';', '4', '9', 'm', 0 };
+
 	const char* defaultFPGA="Virtex5";
 
 	// Allocation of the global objects
@@ -36,22 +39,22 @@ namespace flopoco
 	bool   UserInterface::flpDebug;
 
 
-	const map<string,string> UserInterface::categories = []()->map<string,string>{
-		map<string,string> v;
-		v.insert(make_pair("ShiftersLZOCs", "Shifters, Leading Zero Counters, etc"));
-		v.insert(make_pair("BasicInteger", "Basic integer operators (pipelined)"));
-		v.insert(make_pair("BasicFixPoint", "Basic fixed-point Operators"));
-		v.insert(make_pair("BasicFloatingPoint", "Basic floating-point Operators"));
-		v.insert(make_pair("CompositeFloatingPoint", "Composite floating-point operators"));
-		v.insert(make_pair("ElementaryFunctions", "Elementary functions in fixed- or floating-Point"));
-		v.insert(make_pair("FunctionApproximation", "Arbitrary function approximators"));
-		v.insert(make_pair("ComplexFixPoint", "Complex arithmetic in fixed point" ));
-		v.insert(make_pair("ComplexFloatingPoint", "Complex arithmetic in floating point" ));
-		v.insert(make_pair("LNS", "Logarithm Number System" ));
-		v.insert(make_pair("Conversions", "Conversions between number systems" ));
-		v.insert(make_pair("FiltersEtc", "Filters and FFTs"));
-		v.insert(make_pair("TestBenches", "Test Benches"));
-		v.insert(make_pair("Miscellaneous", "Miscellaneous"));
+	const vector<pair<string,string>> UserInterface::categories = []()->vector<pair<string,string>>{
+		vector<pair<string,string>> v;
+		v.push_back(make_pair("ShiftersLZOCs", "Shifters, Leading Zero Counters, etc"));
+		v.push_back(make_pair("BasicInteger", "Basic integer operators (pipelined)"));
+		v.push_back(make_pair("BasicFixPoint", "Basic fixed-point Operators"));
+		v.push_back(make_pair("BasicFloatingPoint", "Basic floating-point Operators"));
+		v.push_back(make_pair("CompositeFloatingPoint", "Composite floating-point operators"));
+		v.push_back(make_pair("ElementaryFunctions", "Elementary functions in fixed- or floating-Point"));
+		v.push_back(make_pair("FunctionApproximation", "Arbitrary function approximators"));
+		v.push_back(make_pair("ComplexFixPoint", "Complex arithmetic in fixed point" ));
+		v.push_back(make_pair("ComplexFloatingPoint", "Complex arithmetic in floating point" ));
+		v.push_back(make_pair("LNS", "Logarithm Number System" ));
+		v.push_back(make_pair("Conversions", "Conversions between number systems" ));
+		v.push_back(make_pair("FiltersEtc", "Filters and FFTs"));
+		v.push_back(make_pair("TestBenches", "Test Benches"));
+		v.push_back(make_pair("Miscellaneous", "Miscellaneous"));
 		return v;
 	}();
 	
@@ -231,15 +234,7 @@ namespace flopoco
 			cerr << tab << "add wave -r *" <<endl;
 			cerr << tab << "run " << ((TestBench*)op)->getSimulationTime() << "ns" << endl;
 			cerr << "To run the simulation using gHDL, type the following in a shell prompt:" <<endl;
-			string simlibs;
-#if 0
-			if(op->getStdLibType()==0 || op->getStdLibType()==-1)
-				simlibs="--ieee=synopsys ";
-			if(op->getStdLibType()==1)
-				simlibs="--ieee=standard ";
-#else
-				simlibs="--ieee=standard --ieee=synopsys ";
-#endif
+			string simlibs="--ieee=standard --ieee=synopsys ";
 			cerr <<  "ghdl -a " << simlibs << "-fexplicit "<< outputFileName <<endl;
 			cerr <<  "ghdl -e " << simlibs << "-fexplicit " << op->getName() <<endl;
 			cerr <<  "ghdl -r " << simlibs << op->getName() << " --vcd=" << op->getName() << ".vcd --stop-time=" << ((TestBench*)op)->getSimulationTime() << "ns" <<endl;
@@ -608,9 +603,18 @@ namespace flopoco
 		s << "  " << COLOR_BOLD << "generateFigures" << COLOR_NORMAL << "=<0|1>:generate SVG graphics (default off) " << COLOR_RED_NORMAL << "(sticky option)" << COLOR_NORMAL << endl;
 		s << "  " << COLOR_BOLD << "verbose" << COLOR_NORMAL << "=<int>:        verbosity level (0-4, default=1)" << COLOR_RED_NORMAL << "(sticky option)" << COLOR_NORMAL<<endl;
 		s << "Sticky options apply to the rest of the command line, unless changed again" <<endl;
-		for(auto it: UserInterface::factoriesByName) {
-			OperatorFactoryPtr f =  it.second;
-			s << f -> getFullDoc();
+		s <<endl;
+		s <<  COLOR_BOLD << "List of operators with command-line interface"<< COLOR_NORMAL << " (a few more are hidden inside FloPoCo)" <<endl;
+		// The following is an inefficient double loop to avoid duplicating the data structure: nobody needs efficiency here
+		for(auto catIt: UserInterface::categories) {
+			string cat =  catIt.first;
+			string catDesc =  catIt.second;
+			s <<COLOR_BOLD_MAGENTA_NORMAL << "========"<< catDesc << "========"<< COLOR_NORMAL << endl;
+			for(auto it: UserInterface::factoriesByName) {
+				OperatorFactoryPtr f =  it.second;
+				if(cat == f->m_category)
+					s << f -> getFullDoc();
+			}
 		}
 		return s.str();
 	}
@@ -628,9 +632,16 @@ namespace flopoco
 		file << "</head>" << endl;
 		file << "<body>" << endl;
 
-		for(auto it: UserInterface::factoriesByName) {
-			OperatorFactoryPtr f =  it.second;
-			file << f -> getHTMLDoc();
+		// The following is an inefficient double loop to avoid duplicating the data structure: nobody needs efficiency here
+		for(auto catIt: UserInterface::categories) {
+			string cat =  catIt.first;
+			string catDesc =  catIt.second;
+			file << "<h3>" << catDesc << "</h3>" << endl;
+			for(auto it: UserInterface::factoriesByName) {
+				OperatorFactoryPtr f =  it.second;
+				if(cat == f->m_category)
+				 file << f -> getHTMLDoc();
+			}
 		}
 		file << "</body>" << endl;
 		file << "</html>" << endl;
