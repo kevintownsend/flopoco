@@ -47,6 +47,7 @@ int main(int argc, char* argv[] )
 		FixFunctionBySimplePoly::registerFactory();
 		FixFunctionByPiecewisePoly::registerFactory();
 		FixFunctionByTable::registerFactory();
+		FixFunctionByMultipartiteTable::registerFactory();
 		FixRealKCM::registerFactory();
 		TestBench::registerFactory();
 		NbBitsMinRegisterFactory();

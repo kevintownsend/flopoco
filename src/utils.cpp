@@ -305,12 +305,18 @@ namespace flopoco{
 		double x = 1.0;
 		if(power>0){ 
 			for (int i = 0; i < power; i++)
-				x *= 2;
+				x *= 2.0;
 		} else if(power<0) {
 			for (int i = 0; i < -power; i++)
-				x /= 2;
+				x /= 2.0;
 		}
 		return x;
+	}
+	
+	// TODO remove, used only in Multipartite
+		double p2(double a)
+	{
+		return pow(2, a);
 	}
 
 	mpz_class mpzpow2(unsigned int power)

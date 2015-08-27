@@ -150,6 +150,12 @@ namespace flopoco{
 	 */
 	double intpow2(int power);
 
+		/** TODO remove soon
+	 * @param number which will be squared
+	 * @return 2^power
+	 */
+	double p2(double a);
+
 	/** 2 to the power function.
 	 * @param power the power at which 2 is raised
 	 * @return 2^power

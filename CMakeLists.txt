@@ -328,7 +328,9 @@ src/FPComposite/FP2DNorm
 # Generic fixed-point function evaluators ---------------------------
  src/Table 
  src/DualTable 
- 
+
+ src/FixConstant
+
  src/FixFunctions/FixFunction
  src/FixFunctions/FixFunctionByTable
  src/FixFunctions/BasicPolyApprox
@@ -336,10 +338,12 @@ src/FPComposite/FP2DNorm
  src/FixFunctions/FixHornerEvaluator
  src/FixFunctions/FixFunctionBySimplePoly
  src/FixFunctions/FixFunctionByPiecewisePoly
- src/FixConstant
 
- src/FixFunctions/BipartiteTable
  src/FixFunctions/GenericTable
+ src/FixFunctions/BipartiteTable
+ src/FixFunctions/Multipartite
+ src/FixFunctions/FixFunctionByMultipartiteTable
+# src/FixFunctions/QuineMcCluskey
 
 # Trigonometric functions ------------------------------------------
 src/Trigs/ConstDiv3ForSinPoly
