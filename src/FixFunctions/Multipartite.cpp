@@ -32,8 +32,8 @@ namespace flopoco
 	Multipartite::Multipartite(FixFunctionByMultipartiteTable* mpt_, FixFunction *f_, int inputSize_, int outputSize_):
 		f(f_), inputSize(inputSize_), outputSize(outputSize_), mpt(mpt_)
 	{
-		inputRange = p2(inputSize_);
-		epsilonT = 1 / (p2(outputSize+1));
+		inputRange = intpow2(inputSize_);
+		epsilonT = 1 / (intpow2(outputSize+1));
 	}
 
 	Multipartite::Multipartite(FixFunction *f_, int m_, int alpha_, int beta_, vector<int> gammai_, vector<int> betai_, FixFunctionByMultipartiteTable *mpt_):
@@ -47,7 +47,7 @@ namespace flopoco
 		for (int i = 1; i < m; i++)
 			pi[i] = pi[i-1] + betai[i-1];
 
-		epsilonT = 1 / (p2(outputSize+1));
+		epsilonT = 1 / (intpow2(outputSize+1));
 		computeMathErrors();
 	}
 
@@ -57,7 +57,7 @@ namespace flopoco
 	{
 		guardBits =  (int) floor(-outputSize - 1
 								 + log2(m /
-										(p2(-outputSize - 1) - mathError)));
+										(intpow2(-outputSize - 1) - mathError)));
 	}
 
 
@@ -74,7 +74,7 @@ namespace flopoco
 
 	void Multipartite::computeSizes()
 	{
-		int size = (int) p2(alpha) * (outputSize + guardBits);
+		int size = (int) intpow2(alpha) * (outputSize + guardBits);
 		outputSizeTOi = vector<int>(m);
 		sizeTOi = vector<int>(m);
 		for (int i=0; i<m; i++)
@@ -91,21 +91,21 @@ namespace flopoco
 		double r1, r2, r;
 		double delta = deltai(i);
 		r1 = abs( delta * si(i,0) );
-		r2 = abs( delta * si(i, (int)(p2(gammai[i]) - 1)));
+		r2 = abs( delta * si(i, (int)(intpow2(gammai[i]) - 1)));
 		if (r1 > r2)
 			r = r1;
 		else
 			r = r2;
 		outputSizeTOi[i]= (int)ceil( outputSize + guardBits + log2(r));
 
-		sizeTOi[i] = (int)p2( gammai[i]+betai[i]-1 ) * (outputSizeTOi[i]-1);
+		sizeTOi[i] = (int)intpow2( gammai[i]+betai[i]-1 ) * (outputSizeTOi[i]-1);
 	}
 
 
 	/** Just as in the article */
 	double Multipartite::deltai(int i)
 	{
-		return mui(i, (int)(p2(betai[i]) - 1)) - mui(i, 0);
+		return mui(i, (int)(intpow2(betai[i]) - 1)) - mui(i, 0);
 	}
 
 
@@ -113,7 +113,7 @@ namespace flopoco
 	double Multipartite::mui(int i, int Bi)
 	{
 		int wi = inputSize;
-		return  (f->signedIn ? -1 : 0) + (f->signedIn ? 2 : 1) *  p2(-wi+pi[i]) * Bi;
+		return  (f->signedIn ? -1 : 0) + (f->signedIn ? 2 : 1) *  intpow2(-wi+pi[i]) * Bi;
 	}
 
 
@@ -122,8 +122,8 @@ namespace flopoco
 	{
 		int wi = inputSize;
 		double xleft = (f->signedIn ? -1 : 0)
-				+ (f->signedIn ? 2 : 1) * p2(-gammai[i])  * ((double)Ai);
-		double xright= (f->signedIn ? -1 : 0) + (f->signedIn ? 2 : 1) * ((p2(-gammai[i]) * ((double)Ai+1)) - p2(-wi+pi[i]+betai[i]));
+				+ (f->signedIn ? 2 : 1) * intpow2(-gammai[i])  * ((double)Ai);
+		double xright= (f->signedIn ? -1 : 0) + (f->signedIn ? 2 : 1) * ((intpow2(-gammai[i]) * ((double)Ai+1)) - intpow2(-wi+pi[i]+betai[i]));
 		double delta = deltai(i);
 		double si =  (f->eval(xleft + delta)
 					  - f->eval(xleft)
@@ -159,15 +159,15 @@ namespace flopoco
 		for(int s = 0; s < inputSize; s++)
 		{
 			int maxBits = 0;
-			for(int i = 0; i < p2(inputSize - s); i++)
+			for(int i = 0; i < intpow2(inputSize - s); i++)
 			{
-				int value = values[p2(s) * i];
-				for(int j = 0; j < p2(s); j++)
+				int value = values[intpow2(s) * i];
+				for(int j = 0; j < intpow2(s); j++)
 				{
-					maxBits = max(maxBits, countBits(values[i * p2(s) + j] - value));
+					maxBits = max(maxBits, countBits(values[i * intpow2(s) + j] - value));
 				}
 			}
-			int sSize = p2(inputSize - s) * outputSize + p2(inputSize) * maxBits;
+			int sSize = intpow2(inputSize - s) * outputSize + intpow2(inputSize) * maxBits;
 
 			if(sSize < size || size < 0)
 			{
@@ -182,13 +182,13 @@ namespace flopoco
 
 		vector<mpz_class> valsa;
 		vector<mpz_class> valsw;
-		for(int i = 0; i < p2(inputSize - betterS); i++)
+		for(int i = 0; i < intpow2(inputSize - betterS); i++)
 		{
-			int value = values[p2(betterS) * i];
+			int value = values[intpow2(betterS) * i];
 			valsa.push_back(mpz_class(value));
-			for(int j = 0; j < p2(betterS); j++)
+			for(int j = 0; j < intpow2(betterS); j++)
 			{
-				valsw.push_back(mpz_class((values[i * p2(betterS) + j] - value) & ((1 << (maxBitsCounted+1)) - 1)));
+				valsw.push_back(mpz_class((values[i * intpow2(betterS) + j] - value) & ((1 << (maxBitsCounted+1)) - 1)));
 			}
 		}
 
@@ -212,11 +212,11 @@ namespace flopoco
 
 	void Multipartite::mkTables(Target* target)
 	{
-		tiv = new TIV(this, target, alpha, f->wOut + guardBits, 0, p2(alpha) - 1);
+		tiv = new TIV(this, target, alpha, f->wOut + guardBits, 0, intpow2(alpha) - 1);
 		toi = vector<TOi*>(m);
 		for(int i = 0; i < m; ++i)
 		{
-			toi[i] = new TOi(this, i, target, gammai[i] + betai[i] - 1, outputSizeTOi[i]-1, 0, p2(gammai[i] + betai[i] - 1) - 1);
+			toi[i] = new TOi(this, i, target, gammai[i] + betai[i] - 1, outputSizeTOi[i]-1, 0, intpow2(gammai[i] + betai[i] - 1) - 1);
 		}
 
 		compressAndUpdateTIV(alpha, f->wOut + guardBits);
@@ -252,8 +252,8 @@ namespace flopoco
 		Bi = x - (Ai << (mp->betai[ti]-1));
 		slope = mp->si(ti,Ai); // mathematical slope
 
-		y = slope * p2(-wI + mp->pi[ti]) * (Bi+0.5);
-		dTOi = y * p2(wO+g) * p2(mp->f->lsbIn - mp->f->lsbOut) * p2(mp->inputSize - mp->outputSize);
+		y = slope * intpow2(-wI + mp->pi[ti]) * (Bi+0.5);
+		dTOi = y * intpow2(wO+g) * intpow2(mp->f->lsbIn - mp->f->lsbOut) * intpow2(mp->inputSize - mp->outputSize);
 		TOi = (int)floor(dTOi);
 
 		return mpz_class(TOi);
@@ -284,7 +284,7 @@ namespace flopoco
 
 
 		for (unsigned int i = 0; i < mp->pi.size(); i++) {
-			offsetX+= p2(mp->pi[i]) * (p2(mp->betai[i]) -1);
+			offsetX+= intpow2(mp->pi[i]) * (intpow2(mp->betai[i]) -1);
 		}
 
 		offsetX = offsetX / ((double)mp->inputRange);
@@ -294,17 +294,17 @@ namespace flopoco
 				else //even
 					offsetMatula = 0.5 * mp->m;
 
-		offsetMatula += p2(g-1); //for the final rounding
+		offsetMatula += intpow2(g-1); //for the final rounding
 
-		double xVal = (mp->f->signedIn ? -1 : 0) + (mp->f->signedIn ? 2 : 1) * x * p2(-mp->alpha);
+		double xVal = (mp->f->signedIn ? -1 : 0) + (mp->f->signedIn ? 2 : 1) * x * intpow2(-mp->alpha);
 		// we compute the function at the left and at the right of
 		// the interval
-		yl = mp->f->eval(xVal) * p2(mp->f->lsbIn - mp->f->lsbOut) * p2(mp->inputSize - mp->outputSize);
-		yr = mp->f->eval(xVal+offsetX) * p2(mp->f->lsbIn - mp->f->lsbOut) * p2(mp->inputSize - mp->outputSize);
+		yl = mp->f->eval(xVal) * intpow2(mp->f->lsbIn - mp->f->lsbOut) * intpow2(mp->inputSize - mp->outputSize);
+		yr = mp->f->eval(xVal+offsetX) * intpow2(mp->f->lsbIn - mp->f->lsbOut) * intpow2(mp->inputSize - mp->outputSize);
 
 		// and we take the mean of these values
 		y =  0.5 * (yl + yr);
-		dTIVval = y * p2(g + wO);
+		dTIVval = y * intpow2(g + wO);
 
 		if(mp->m % 2 == 1)
 			TIVval = (int) round(dTIVval + offsetMatula);

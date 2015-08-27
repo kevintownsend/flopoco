@@ -313,12 +313,6 @@ namespace flopoco{
 		return x;
 	}
 	
-	// TODO remove, used only in Multipartite
-		double p2(double a)
-	{
-		return pow(2, a);
-	}
-
 	mpz_class mpzpow2(unsigned int power)
 	{
 		mpz_class x = 1;

@@ -499,9 +499,9 @@ namespace flopoco
 		int wi = obj->inputSize; // for the notations of the paper
 		double ci = (double)ci_; // for the notations of the paper
 
-		double xleft = (f->signedIn ? -1 : 0) + (f->signedIn ? 2 : 1) * p2(-gammai) * ci;
-		double xright = (f->signedIn ? -1 : 0) + (f->signedIn ? 2 : 1) * (p2(-gammai) * (ci+1) - p2(-wi+pi+betai));
-		double delta = (f->signedIn ? 2 : 1) * p2(pi-wi) * (p2(betai) - 1);
+		double xleft = (f->signedIn ? -1 : 0) + (f->signedIn ? 2 : 1) * intpow2(-gammai) * ci;
+		double xright = (f->signedIn ? -1 : 0) + (f->signedIn ? 2 : 1) * (intpow2(-gammai) * (ci+1) - intpow2(-wi+pi+betai));
+		double delta = (f->signedIn ? 2 : 1) * intpow2(pi-wi) * (intpow2(betai) - 1);
 
 		double eps = 0.25 * (f->eval(xleft + delta)
 							 - f->eval(xleft)
@@ -515,8 +515,8 @@ namespace flopoco
 	double FixFunctionByMultipartiteTable::epsilon2ndOrder(int Ai, int gammai, int betai, int pi)
 	{
 		int wi = obj->inputSize;
-		double xleft = (f->signedIn ? -1 : 0) + (f->signedIn ? 2 : 1) * p2(-gammai)  * ((double)Ai);
-		double delta = (f->signedIn ? 2 : 1) * ( p2(pi-wi) * (p2(betai) - 1));
+		double xleft = (f->signedIn ? -1 : 0) + (f->signedIn ? 2 : 1) * intpow2(-gammai)  * ((double)Ai);
+		double delta = (f->signedIn ? 2 : 1) * ( intpow2(pi-wi) * (intpow2(betai) - 1));
 		double epsilon = 0.5 * (f->eval(xleft + (delta-1)/2)
 								- (delta-1)/2 * (f->eval(xleft + delta)
 												 - f->eval(xleft)));
@@ -534,7 +534,7 @@ namespace flopoco
 		if(gammai+betai+pi==obj->inputSize)
 		{
 			eps1 = abs(epsilon2ndOrder(0, gammai, betai, pi));
-			eps2 = abs(epsilon2ndOrder( (int)p2(gammai) -1, gammai, betai, pi));
+			eps2 = abs(epsilon2ndOrder( (int)intpow2(gammai) -1, gammai, betai, pi));
 			if (eps1 > eps2)
 				eps = eps1;
 			else
@@ -543,7 +543,7 @@ namespace flopoco
 		else
 		{
 			eps1 = abs(epsilon(0, gammai, betai, pi));
-			eps2 = abs(epsilon( (int)p2(gammai) -1, gammai, betai, pi));
+			eps2 = abs(epsilon( (int)intpow2(gammai) -1, gammai, betai, pi));
 
 			if (eps1 > eps2)
 				eps = eps1;
