@@ -97,11 +97,12 @@ namespace flopoco
 					values.push_back(std::to_string(i));
 				}
 				v.push_back(option_t("verbose", values));
-				
-				//Pipeline
+
+				// Boolean options
 				values.clear();
 				values.push_back(std::to_string(0));
 				values.push_back(std::to_string(1));
+				//Pipeline
 				v.push_back(option_t("pipeline", values));
 
 				//plainVHDL

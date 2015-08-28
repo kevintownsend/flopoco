@@ -130,36 +130,17 @@ namespace flopoco{
 	} 
 
 
-	FixHornerEvaluator::FixHornerEvaluator(Target* target,
-																				 int lsbIn_, int msbOut_, int lsbOut_,
-																				 int degree_, vector<int> msbCoeff_, int lsbCoeff_,
-																				 double roundingErrorBudget_,
-																				 bool signedXandCoeffs_,
-																				 bool finalRounding_, map<string, double> inputDelays)
-	: Operator(target), degree(degree_), lsbIn(lsbIn_), msbOut(msbOut_), lsbOut(lsbOut_),
-		msbCoeff(msbCoeff_), lsbCoeff(lsbCoeff_),
-		roundingErrorBudget(roundingErrorBudget_) ,signedXandCoeffs(signedXandCoeffs_),
-		finalRounding(finalRounding_)
-  {
 
-	/* Generate unique name */
-	{
-	  std::ostringstream o;
-	  o << "FixHornerEvaluator_" << getNewUId() << "_";
-	  if(target->isPipelined())
-				o << target->frequencyMHz() ;
-	  else
-				o << "comb";
-	  uniqueName_ = o.str();
-	}
-
-	setCopyrightString("F. de Dinechin (2014)");
-	srcFileName="FixHornerEvaluator";
+	
+	void FixHornerEvaluator::initialize(){
+		setNameWithFreqAndUID("FixHornerEvaluator");		
+		setCopyrightString("F. de Dinechin (2014)");
+		srcFileName="FixHornerEvaluator";
 
 		if(!signedXandCoeffs)
 			REPORT(0,"signedXandCoeffs=false, this code has probably never been tested in this case. If it works, please remove this warning. If it doesn't, we deeply apologize and invite you to fix it.");
 
-		// computing the coeff sizes
+			// computing the coeff sizes
 		for (int i=0; i<=degree; i++)
 			coeffSize.push_back(msbCoeff[i]-lsbCoeff+1); // see FixConstant.hpp for the constant format
 
@@ -177,17 +158,20 @@ namespace flopoco{
 
 		// declaring outputs
 		addOutput("R", msbOut-lsbOut+1);
-		setCriticalPath( getMaxInputDelays(inputDelays) + target->localWireDelay() );
+		//		setCriticalPath( getMaxInputDelays(inputDelays) + target->localWireDelay() );
 
 		for(int i=0; i<=degree; i++) {
 			vhdl << tab << declareFixPoint(join("As", i), signedXandCoeffs, msbCoeff[i], lsbCoeff)
 					 << " <= " << (signedXandCoeffs?"signed":"unsigned") << "(" << join("A",i) << ");" <<endl;
 		}
 
+}
 
-		// optimizing the lsbMults
-		computeArchParameters();
 
+
+
+	
+	void FixHornerEvaluator::generateVHDL(){
 		// Now generate the hardware
 		vhdl << tab << declareFixPoint(join("Sigma", degree), true, msbSigma[degree], lsbSigma[degree])
 				 << " <= " << join("As", degree)  << ";" << endl;
@@ -196,14 +180,14 @@ namespace flopoco{
 			resizeFixPoint(join("XsTrunc", i), "Xs", 0, lsbXTrunc[i]);
 
 			//  assemble faithful operators (either FixMultAdd, or truncated mult)
-			if(target->plainVHDL()) {	// stupid pipelining here
+			if(getTarget()->plainVHDL()) {	// stupid pipelining here
 				vhdl << tab << declareFixPoint(join("P", i), true, msbP[i],  lsbP[i])
 						 <<  " <= "<< join("XsTrunc", i) <<" * Sigma" << i+1 << ";" << endl;
 
 				// Align before addition
 				resizeFixPoint(join("Ptrunc", i), join("P", i), msbSigma[i], lsbSigma[i]-1);
 				resizeFixPoint(join("Aext", i), join("As", i), msbSigma[i], lsbSigma[i]-1);
-				setCycle(getCurrentCycle() + target->plainMultDepth(1-lsbXTrunc[i], msbSigma[i+1]-lsbSigma[i+1]+1) );
+				setCycle(getCurrentCycle() + getTarget()->plainMultDepth(1-lsbXTrunc[i], msbSigma[i+1]-lsbSigma[i+1]+1) );
 
 				vhdl << tab << declareFixPoint(join("SigmaBeforeRound", i), true, msbSigma[i], lsbSigma[i]-1)
 						 << " <= " << join("Aext", i) << " + " << join("Ptrunc", i) << "+'1';" << endl;
@@ -229,6 +213,25 @@ namespace flopoco{
 			resizeFixPoint("Ys", "Sigma0",  msbOut, lsbOut);
 
 		vhdl << tab << "R <= " << "std_logic_vector(Ys);" << endl;
+		
+	}
+
+	FixHornerEvaluator::FixHornerEvaluator(Target* target,
+																				 int lsbIn_, int msbOut_, int lsbOut_,
+																				 int degree_, vector<int> msbCoeff_, int lsbCoeff_,
+																				 double roundingErrorBudget_,
+																				 bool signedXandCoeffs_,
+																				 bool finalRounding_, map<string, double> inputDelays)
+	: Operator(target), degree(degree_), lsbIn(lsbIn_), msbOut(msbOut_), lsbOut(lsbOut_),
+		msbCoeff(msbCoeff_), lsbCoeff(lsbCoeff_),
+		roundingErrorBudget(roundingErrorBudget_) ,signedXandCoeffs(signedXandCoeffs_),
+		finalRounding(finalRounding_)
+  {
+		initialize();
+		// optimizing the lsbMults
+		computeArchParameters();
+
+		generateVHDL();
   }
 
 	FixHornerEvaluator::~FixHornerEvaluator(){}

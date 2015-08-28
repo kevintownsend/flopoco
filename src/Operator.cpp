@@ -309,13 +309,25 @@ namespace flopoco{
 		uniqueName_ = operatorName;
 	}
 
+	// TODO Should be removed in favor of setNameWithFreqAndUID
 	void Operator::setNameWithFreq(std::string operatorName){
 		std::ostringstream o;
 		o <<  operatorName <<  "_" ;
 		if(target_->isPipelined())
-			o << target_->frequencyMHz() ;
+			o << "F" << target_->frequencyMHz() ;
 		else
 			o << "comb";
+		uniqueName_ = o.str();
+	}
+
+	void Operator::setNameWithFreqAndUID(std::string operatorName){
+		std::ostringstream o;
+		o <<  operatorName <<  "_" ;
+		if(target_->isPipelined())
+			o << "F"<<target_->frequencyMHz() ;
+		else
+			o << "comb";
+		o << "_uid" << getNewUId();
 		uniqueName_ = o.str();
 	}
 

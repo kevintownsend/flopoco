@@ -188,9 +188,14 @@ namespace flopoco{
 
 			// First compute the size of the intermediate terms sigma_i
 			computeSigmaSignsAndMSBs();
+			
 			REPORT(INFO, "Now building the Horner evaluator for rounding error budget "<< roundingErrorBudget);
 			// This builds an architecture such as eps_finalround < 2^(lsbOut-1) and eps_round<2^(lsbOut-2)
+#if 1 // This constructor computes sigma and msbs only out of the formats
 			FixHornerEvaluator* horner = new FixHornerEvaluator(target, lsbIn+alpha+1, msbOut, lsbOut, degree, polyApprox->MSB, polyApprox->LSB, roundingErrorBudget);		
+#else // This constructor uses the more accurate data computed out of the actual polynomials
+			FixHornerEvaluator* horner = new FixHornerEvaluator(target, lsbIn+alpha+1, msbOut, lsbOut, degree, sigmaSign, sigmaMSB, polyApprox->LSB, roundingErrorBudget);		
+#endif
 			addSubComponent(horner);
 
 			inPortMap(horner, "X", "Zs");
@@ -223,6 +228,7 @@ namespace flopoco{
 		mpfr_init2(res_right, 10000); // should be enough for anybody
 		rangeS = sollya_lib_parse_string("[-1;1]");		
 
+		REPORT(DEBUG, "Computing sigmas, signs and MSBs");
 
 		// initialize the vector of MSB weights
 		for (int j=0; j<=degree; j++) {
@@ -248,7 +254,6 @@ namespace flopoco{
 				sigmaS = sollya_lib_add(a_jS, pi_jS);
 				sollya_lib_clear_obj(pi_jS);
 				sollya_lib_clear_obj(a_jS);
-				//				cerr << "333"<<endl;
 				// Get the endpoints
 				int isrange = sollya_lib_get_bounds_from_range(res_left, res_right, sigmaS);
 				if (isrange==false)
@@ -256,7 +261,7 @@ namespace flopoco{
 				// First a tentative conversion to double to sort and get an estimate of the MSB and zeroness
 				double l=mpfr_get_d(res_left, GMP_RNDN);
 				double r=mpfr_get_d(res_right, GMP_RNDN);
-				REPORT(INFO, "i=" << i << "  j=" << j << "  left=" << l << " right=" << r);
+				REPORT(DEBUG, "i=" << i << "  j=" << j << "  left=" << l << " right=" << r);
 				// Now we want to know is if both have the same sign
 				if (l>=0 && r>=0) { // sigma is positive
 					if (sigmaSign[j] == 17 || sigmaSign[j] == +1)

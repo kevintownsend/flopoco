@@ -80,7 +80,9 @@ namespace flopoco{
 		int lsbP[1000];
 		int lsbXTrunc[1000];
 
-		void computeArchParameters();
+		void computeArchParameters(); 
+		void initialize(); /** initialization factored out between various constructors */ 
+		void generateVHDL(); /** generation of the VHDL once all the parameters have been computed */ 
 
   };
 

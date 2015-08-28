@@ -237,6 +237,11 @@ public:
 	*/
 	void setNameWithFreq(std::string operatorName = "UnknownOperator");
 
+	/** Sets Operator name to given name, with either the frequency appended, or "comb" for combinatorial, and a unique identifier for good measure.
+	 * @param operatorName new name of the operator
+	*/
+	void setNameWithFreqAndUID(std::string operatorName = "UnknownOperator");
+
 	/** Sets Operator name to givenName.
 	 * Sets the name of the operator to operatorName.
 	 * @param operatorName new name of the operator

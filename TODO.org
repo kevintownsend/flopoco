@@ -32,7 +32,8 @@ on the model of ./flopoo BuildHTMLDoc
 * Janitoring
 *** TargetFactory
 *** uniformize name construction 
-using setName(), getuid(), etc. Model: src/FPAddSub/FPAdderSinglePath.cpp 
+using setNameWithFreqAndUID()  Model: src/FPAddSub/FPAdderSinglePath.cpp 
+
 *** add more  newComponentAndInstance() on the model of FixMultAdd
 
 *** rename pow2, intpow2 etc as exp2
