@@ -78,13 +78,10 @@ using namespace std;
 namespace flopoco{
 
 
-	void FixHornerEvaluator::computeArchParameters(){
-		// Initialize all the lsbs to lsbCoeff
-		msbSigma[degree] = msbCoeff[degree];
+	void FixHornerEvaluator::computeLSBs(){
+
 		lsbSigma[degree] = lsbCoeff; // This one is not variable
 		for(int i=degree-1; i>=0; i--) {
-			msbSigma[i] = msbCoeff[i] + 1; // TODO this +1 is there for addition overflow, and probably overkill most of the times.
-			// TODO Replace it with a call to Sollya... But it is safe
 			lsbSigma[i] = lsbCoeff; // these ones will decrease if we need more accuracy
 		}
 		double error;
@@ -104,7 +101,6 @@ namespace flopoco{
 				
 				// P is the full product of sigma_i+1 by xtrunc: sum the MSBs+1, and sum the LSBs
 				// Again TODO this +1 is most of the time overkill (only for the case -1*-1. Can sigma reach -1?)
-				msbP[i] = msbSigma[i+1] + 0 + 1;
 				lsbP[i] = lsbSigma[i+1] + lsbXTrunc[i]; 
 				if(getTarget()->plainVHDL()) 	// we will be able to round the product to lsbSigma[i] 
 					error += exp2(lsbSigma[i]-1);
@@ -123,6 +119,8 @@ namespace flopoco{
 				}
 			}
 		} // while
+
+		
 		// A bit of reporting
 		for(int i=degree-1; i>=0; i--) {
 			REPORT(INFO, "  level " << i << " requires a signed " << 0-lsbXTrunc[i]+1 << "x" <<  msbSigma[i+1] - lsbSigma[i+1] +1 << " multiplier");
@@ -160,11 +158,15 @@ namespace flopoco{
 		addOutput("R", msbOut-lsbOut+1);
 		//		setCriticalPath( getMaxInputDelays(inputDelays) + target->localWireDelay() );
 
-		for(int i=0; i<=degree; i++) {
-			vhdl << tab << declareFixPoint(join("As", i), signedXandCoeffs, msbCoeff[i], lsbCoeff)
-					 << " <= " << (signedXandCoeffs?"signed":"unsigned") << "(" << join("A",i) << ");" <<endl;
+		// initialize the vectors to the proper size so we can use them as arrays. I know.
+		for (int i=0; i<degree; i++) {
+			msbSigma.push_back(0);
+			signSigma.push_back(0);
+			msbP.push_back(0);
+			lsbP.push_back(0);
+			lsbSigma.push_back(0);
+			lsbXTrunc.push_back(0);
 		}
-
 }
 
 
@@ -172,7 +174,10 @@ namespace flopoco{
 
 	
 	void FixHornerEvaluator::generateVHDL(){
-		// Now generate the hardware
+		for(int i=0; i<=degree; i++) {
+			vhdl << tab << declareFixPoint(join("As", i), signedXandCoeffs, msbCoeff[i], lsbCoeff)
+					 << " <= " << (signedXandCoeffs?"signed":"unsigned") << "(" << join("A",i) << ");" <<endl;
+		}
 		vhdl << tab << declareFixPoint(join("Sigma", degree), true, msbSigma[degree], lsbSigma[degree])
 				 << " <= " << join("As", degree)  << ";" << endl;
 
@@ -216,6 +221,39 @@ namespace flopoco{
 		
 	}
 
+
+	// A naive constructor that does a worst case analysis of datapath looing onnly at the coeff sizes
+	FixHornerEvaluator::FixHornerEvaluator(Target* target,
+																				 int lsbIn_, int msbOut_, int lsbOut_,
+																				 int degree_, vector<int> msbCoeff_, int lsbCoeff_,
+																				 double roundingErrorBudget_,
+																				 bool signedXandCoeffs_,
+																				 bool finalRounding_, map<string, double> inputDelays)
+	: Operator(target), degree(degree_), lsbIn(lsbIn_), msbOut(msbOut_), lsbOut(lsbOut_),
+		msbCoeff(msbCoeff_), lsbCoeff(lsbCoeff_),
+		roundingErrorBudget(roundingErrorBudget_) ,signedXandCoeffs(signedXandCoeffs_),
+		finalRounding(finalRounding_)
+  {
+		initialize();
+
+		// Initialize the MSBs with a very rough analysis
+		msbSigma[degree] = msbCoeff[degree];
+		for(int i=degree-1; i>=0; i--) {
+			msbSigma[i] = msbCoeff[i] + 1; // TODO this +1 is there for addition overflow, and probably overkill most of the times.
+		}
+		for(int i=degree-1; i>=0; i--) {
+			msbP[i] = msbSigma[i+1] + 0 + 1;
+		}
+
+		// optimizing the lsbMults
+		computeLSBs();
+
+		generateVHDL();
+  }
+
+
+#if 0
+	// An optimized constructor if the caller has been able to compute the signs and MSBs of the sigma terms
 	FixHornerEvaluator::FixHornerEvaluator(Target* target,
 																				 int lsbIn_, int msbOut_, int lsbOut_,
 																				 int degree_, vector<int> msbCoeff_, int lsbCoeff_,
@@ -229,11 +267,11 @@ namespace flopoco{
   {
 		initialize();
 		// optimizing the lsbMults
-		computeArchParameters();
+		computeLSBs();
 
 		generateVHDL();
   }
-
+#endif
 	FixHornerEvaluator::~FixHornerEvaluator(){}
 
 

@@ -74,15 +74,16 @@ namespace flopoco{
 		vector<int> coeffSize;            /**< vector of the sizes of the coefficients, computed out of MSB and LSB. See FixConstant.hpp for the constant format */
 
 		// internal architectural parameters; max degree = 1000 should be enough for anybody
-		int msbSigma[1000];
-		int lsbSigma[1000];
-		int msbP[1000];
-		int lsbP[1000];
-		int lsbXTrunc[1000];
+		vector<int> msbSigma;
+		vector <int> signSigma;
+		vector <int>  msbP;
+		vector <int> lsbSigma;
+		vector <int> lsbP;
+		vector <int> lsbXTrunc;
 
-		void computeArchParameters(); 
-		void initialize(); /** initialization factored out between various constructors */ 
-		void generateVHDL(); /** generation of the VHDL once all the parameters have been computed */ 
+		void computeLSBs(); /**< error analysis that ensures the rounding budget is met */ 
+		void initialize(); /**< initialization factored out between various constructors */ 
+		void generateVHDL(); /**< generation of the VHDL once all the parameters have been computed */ 
 
   };
 
