@@ -15,7 +15,7 @@
  */
 
 
-// TODO Test even and odd significands
+// TODO Radix 4 with digit set -2..2 should fit the iteration in one row of LUT+add
 
 #include <iostream>
 #include <sstream>
@@ -253,7 +253,8 @@ namespace flopoco{
 			}
 
 
-		else //TODO : the old version is using 5-input's LUTs, try to fit in 4-input's LUTs (same as above : select qA and qB and make a 2-levels addition)
+		else ////////////////////////// Radix 4 version ////////////////////////
+			//TODO : the old version is using 5-input's LUTs, try to fit in 4-input's LUTs (same as above : select qA and qB and make a 2-levels addition)
 		{
 			// -------- Parameter set up -----------------
 			nDigit = (wF+6) >> 1;
@@ -325,8 +326,10 @@ namespace flopoco{
 				inPortMap (table , "X", seli.str());
 				outPortMap(table , "Y", qi.str());
 				vhdl << instance(table , tInstance.str());
-
 				vhdl << endl;
+				// Two options for radix 4. More experiments are needed 
+#if 1  // The following leads to higher frequency and higher resource usage: 
+				// For (8,23) on Virtex6 with ISE this gives 466Mhz, 1083 regs+ 1029 LUTs 
 				vhdl << tab << "with " << qi.str() << " select" << endl;
 				vhdl << tab << tab << declare(qiTimesD.str(),wF+4) << " <= "<< endl ;
 				vhdl << tab << tab << tab << "\"000\" & fY            when \"001\" | \"111\"," << endl;
@@ -334,6 +337,21 @@ namespace flopoco{
 				vhdl << tab << tab << tab << "\"0\" & fYTimes3        when \"011\" | \"101\"," << endl;
 				vhdl << tab << tab << tab << "(" << wF+3 << " downto 0 => '0')  when others;" << endl;
 				vhdl << endl;
+#else // Recompute 3Y locally to save the registers: the LUT is used anyway
+				// For (8,23) on Virtex6 with ISE this gives 345Mhz, 856 regs+ 1051 LUTs 
+				vhdl << tab << "with " << qi.str() << " select" << endl;
+				vhdl << tab << tab << declare(join("addendA",i),wF+4) << " <= "<< endl ;
+				vhdl << tab << tab << tab << "\"000\" & fY            when \"001\" | \"111\" | \"011\" | \"101\"," << endl;
+				vhdl << tab << tab << tab << "(" << wF+3 << " downto 0 => '0')  when others;" << endl;
+
+				vhdl << tab << "with " << qi.str() << " select" << endl;
+				vhdl << tab << tab << declare(join("addendB",i),wF+4) << " <= "<< endl ;
+				vhdl << tab << tab << tab << "\"00\" & fY & \"0\"       when \"010\" | \"110\"| \"011\" | \"101\"," << endl;
+				vhdl << tab << tab << tab << "(" << wF+3 << " downto 0 => '0')  when others;" << endl;
+
+				vhdl << tab << tab << declare(qiTimesD.str(),wF+4) << " <= " << join("addendA",i) << " + " << join("addendB",i) << ";"<< endl ;
+				vhdl << endl;
+#endif				
 				vhdl << tab << declare(wipad.str(), wF+4) << " <= " << wi.str() << " & \"0\";" << endl;
 				vhdl << tab << "with " << qi.str() << "(2) select" << endl;
 				vhdl << tab << declare(wim1full.str(), wF+4) << "<= " << wipad.str() << " - " << qiTimesD.str() << " when '0'," << endl;
