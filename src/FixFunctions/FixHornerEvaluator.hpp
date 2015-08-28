@@ -44,6 +44,7 @@ namespace flopoco{
 
      */
 
+																				
     FixHornerEvaluator(Target* target, 
 											 int lsbIn,
 											 int msbOut,
@@ -51,6 +52,21 @@ namespace flopoco{
 											 int degree, 
 											 vector<int> msbCoeff, 
 											 int lsbCoeff,
+											 double roundingErrorBudget=-1,
+											 bool signedXandCoeffs=true, 
+											 bool finalRounding=true,
+											 map<string, double> inputDelays = emptyDelayMap);
+
+		
+		/** An optimized constructor if the caller has been able to compute the signs and MSBs of the sigma terms */
+    FixHornerEvaluator(Target* target, 
+											 int lsbIn,
+											 int msbOut,
+											 int lsbOut,
+											 int degree, 
+											 vector<int> msbCoeff, 
+											 int lsbCoeff,
+											 vector<int> sigmaSign, vector<int> sigmaMSB,
 											 double roundingErrorBudget=-1,
 											 bool signedXandCoeffs=true, 
 											 bool finalRounding=true,
@@ -74,8 +90,8 @@ namespace flopoco{
 		vector<int> coeffSize;            /**< vector of the sizes of the coefficients, computed out of MSB and LSB. See FixConstant.hpp for the constant format */
 
 		// internal architectural parameters; max degree = 1000 should be enough for anybody
-		vector<int> msbSigma;
 		vector <int> signSigma;
+		vector<int> msbSigma;
 		vector <int>  msbP;
 		vector <int> lsbSigma;
 		vector <int> lsbP;

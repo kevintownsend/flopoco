@@ -158,15 +158,6 @@ namespace flopoco{
 		addOutput("R", msbOut-lsbOut+1);
 		//		setCriticalPath( getMaxInputDelays(inputDelays) + target->localWireDelay() );
 
-		// initialize the vectors to the proper size so we can use them as arrays. I know.
-		for (int i=0; i<degree; i++) {
-			msbSigma.push_back(0);
-			signSigma.push_back(0);
-			msbP.push_back(0);
-			lsbP.push_back(0);
-			lsbSigma.push_back(0);
-			lsbXTrunc.push_back(0);
-		}
 }
 
 
@@ -236,6 +227,16 @@ namespace flopoco{
   {
 		initialize();
 
+		// initialize the vectors to the proper size so we can use them as arrays. I know.
+		for (int i=0; i<degree; i++) {
+			msbSigma.push_back(0);
+			signSigma.push_back(0); // For signSigma this happens to be the default
+			msbP.push_back(0);
+			lsbP.push_back(0);
+			lsbSigma.push_back(0);
+			lsbXTrunc.push_back(0);
+		}
+
 		// Initialize the MSBs with a very rough analysis
 		msbSigma[degree] = msbCoeff[degree];
 		for(int i=degree-1; i>=0; i--) {
@@ -252,26 +253,42 @@ namespace flopoco{
   }
 
 
-#if 0
 	// An optimized constructor if the caller has been able to compute the signs and MSBs of the sigma terms
 	FixHornerEvaluator::FixHornerEvaluator(Target* target,
 																				 int lsbIn_, int msbOut_, int lsbOut_,
 																				 int degree_, vector<int> msbCoeff_, int lsbCoeff_,
+																				 vector<int> sigmaSign_, vector<int> sigmaMSB_,
 																				 double roundingErrorBudget_,
 																				 bool signedXandCoeffs_,
 																				 bool finalRounding_, map<string, double> inputDelays)
 	: Operator(target), degree(degree_), lsbIn(lsbIn_), msbOut(msbOut_), lsbOut(lsbOut_),
 		msbCoeff(msbCoeff_), lsbCoeff(lsbCoeff_),
-		roundingErrorBudget(roundingErrorBudget_) ,signedXandCoeffs(signedXandCoeffs_),
-		finalRounding(finalRounding_)
+		roundingErrorBudget(roundingErrorBudget_) ,
+		signedXandCoeffs(signedXandCoeffs_),
+		finalRounding(finalRounding_),
+		signSigma(sigmaSign_),  msbSigma(sigmaMSB_)
   {
 		initialize();
+		// initialize the vectors to the proper size so we can use them as arrays. I know.
+		for (int i=0; i<degree; i++) {
+			msbP.push_back(0);
+			lsbP.push_back(0);
+			lsbSigma.push_back(0);
+			lsbXTrunc.push_back(0);
+		}
+
+		for(int i=degree-1; i>=0; i--) {
+			msbP[i] = msbSigma[i+1] + 0 + 1;
+		}
+
+
 		// optimizing the lsbMults
 		computeLSBs();
 
 		generateVHDL();
   }
-#endif
+
+
 	FixHornerEvaluator::~FixHornerEvaluator(){}
 
 

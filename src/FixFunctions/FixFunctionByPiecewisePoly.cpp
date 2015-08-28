@@ -191,10 +191,10 @@ namespace flopoco{
 			
 			REPORT(INFO, "Now building the Horner evaluator for rounding error budget "<< roundingErrorBudget);
 			// This builds an architecture such as eps_finalround < 2^(lsbOut-1) and eps_round<2^(lsbOut-2)
-#if 1 // This constructor computes sigma and msbs only out of the formats
+#if 0 // This constructor computes sigma and msbs only out of the formats
 			FixHornerEvaluator* horner = new FixHornerEvaluator(target, lsbIn+alpha+1, msbOut, lsbOut, degree, polyApprox->MSB, polyApprox->LSB, roundingErrorBudget);		
 #else // This constructor uses the more accurate data computed out of the actual polynomials
-			FixHornerEvaluator* horner = new FixHornerEvaluator(target, lsbIn+alpha+1, msbOut, lsbOut, degree, sigmaSign, sigmaMSB, polyApprox->LSB, roundingErrorBudget);		
+			FixHornerEvaluator* horner = new FixHornerEvaluator(target, lsbIn+alpha+1, msbOut, lsbOut, degree, polyApprox->MSB, polyApprox->LSB, sigmaSign, sigmaMSB, roundingErrorBudget);		
 #endif
 			addSubComponent(horner);
 
