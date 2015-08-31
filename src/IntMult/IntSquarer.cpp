@@ -291,5 +291,25 @@ namespace flopoco{
 		tc->addExpectedOutput("R", svR);
 	}
 
+	
+	OperatorPtr IntSquarer::parseArguments(Target *target, std::vector<std::string> &args) {
+		int wIn;
+		UserInterface::parseStrictlyPositiveInt(args, "wIn", &wIn);
+		return new IntSquarer(target, wIn);
+	}
+
+
+	
+	void IntSquarer::registerFactory(){
+		UserInterface::add("IntSquarer", // name
+											 "A pipelined integer squarer.",
+											 "BasicInteger", // category
+											 "", // see also
+											 "wIn(int): size of input in bits", // This string will be parsed
+											 "", // no particular extra doc needed
+											 IntSquarer::parseArguments
+											 ) ;
+	}
+
 
 }

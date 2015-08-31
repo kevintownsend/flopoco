@@ -61,6 +61,7 @@ int main(int argc, char* argv[] )
 		IntComparator::registerFactory();
 		IntDualSub::registerFactory();
 		IntMultiplier::registerFactory();
+		IntSquarer::registerFactory();
 
 		FPAdd::registerFactory();
 		FPExp::registerFactory();
