@@ -36,11 +36,17 @@ namespace flopoco{
 	Shifter::Shifter(Target* target, int wIn, int maxShift, ShiftDirection direction, map<string, double> inputDelays) :
 		Operator(target, inputDelays), wIn_(wIn), maxShift_(maxShift), direction_(direction) {
 	
+		srcFileName = "Shifters";
 		setCopyrightString ( "Bogdan Pasca, Florent de Dinechin (2008-2011)" );	
-		setOperatorName();
-		srcFileName = (direction == Right?  "RightShifter": "LeftShifter");
 		
-		REPORT( INFO, " wIn="<<wIn<<" maxShift="<<maxShift<<" direction="<< (direction == Right?  "RightShifter": "LeftShifter") );
+		ostringstream name;
+		if(direction_==Left) name <<"LeftShifter_";
+		else                 name <<"RightShifter_";
+		name<<wIn_<<"_by_max_"<<maxShift;
+		setNameWithFreqAndUID(name.str());
+
+		
+		REPORT(DETAILED, " wIn="<<wIn<<" maxShift="<<maxShift<<" direction="<< (direction == Right?  "RightShifter": "LeftShifter") );
 		
 		// -------- Parameter set up -----------------
 		wOut_         = wIn_ + maxShift_;
@@ -115,13 +121,6 @@ namespace flopoco{
 	Shifter::~Shifter() {
 	}
 
-	void Shifter::setOperatorName(){
-		ostringstream name;
-		if(direction_==Left) name <<"LeftShifter_";
-		else                 name <<"RightShifter_";
-		name<<wIn_<<"_by_max_"<<maxShift_<<"_uid"<<Operator::getNewUId();;
-		uniqueName_=name.str();
-	}
 
 	void Shifter::emulate(TestCase* tc)
 	{

@@ -259,4 +259,34 @@ namespace flopoco{
 	}
 
 
+	OperatorPtr LZOCShifterSticky::parseArguments(Target *target, std::vector<std::string> &args) {
+		int wIn, wOut, wCount, countType;
+		bool computeSticky;
+		UserInterface::parseStrictlyPositiveInt(args, "wIn", &wIn);
+		UserInterface::parseStrictlyPositiveInt(args, "wOut", &wOut);
+		UserInterface::parseStrictlyPositiveInt(args, "wCount", &wCount);
+		UserInterface::parseBoolean(args, "computeSticky", &computeSticky);
+		UserInterface::parseInt(args, "countType", &countType);
+		return new LZOCShifterSticky(target, wIn, wOut, wCount, computeSticky, countType);
+	}
+
+
+	
+	void LZOCShifterSticky::registerFactory(){
+		UserInterface::add("LZOCShifterSticky", // name
+											 "A classical barrel shifter. The output size is computed.",
+											 "ShiftersLZOCs",  // category
+											 "", // see also
+											 "wIn(int): input size in bits;\
+                        wOut(int): output size in bits;\
+                        wCount(int): size in bits of the count output;\
+                        computeSticky(bool)=0: Should the operator compute a sticky bit out of the shifted-out bits;\
+                        countType(int)=-1:  0 to count zeroes, 1 to count ones, -1 to have a dynamic OZb input that tells what to count", // This string will be parsed
+											 "", // no particular extra doc needed
+											 LZOCShifterSticky::parseArguments
+											 ) ;
+		
+	}
+
+
 }

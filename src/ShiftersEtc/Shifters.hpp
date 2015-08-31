@@ -38,10 +38,6 @@ namespace flopoco{
 		~Shifter();
 
 
-		/** 
-		 * Sets the default name of this operator
-		 */
-		void setOperatorName(); 
 
 		/**
 		 * Emulate a correctly rounded division using MPFR.

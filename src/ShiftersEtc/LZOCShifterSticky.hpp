@@ -28,9 +28,11 @@ namespace flopoco{
 		 * @param[in] target the target device for this operator
 		 * @param[in] wIn the width of the mantissa input
 		 * @param[in] wOut the width of the mantissa output
-		 * @param[in] countSize the numbers of bits to count, often equal to wIn but sometimes less (see FPLog)
+		 * @param[in] wCount the numbers of bits to count, often equal to wIn but sometimes less (see FPLog)
+		 * @param[in] computeSticky Should the operator compute a sticky bit out of the shifted-out bits?
+		 * @param[in] countType 0: count zeroes, 1: count ones; -1: have a dynamic OZb input that tells what to count 
 		 */
-		LZOCShifterSticky(Target* target, int wIn, int wOut, int wCount, bool compute_sticky, const int countType=-1, map<string, double> inputDelays = emptyDelayMap);
+		LZOCShifterSticky(Target* target, int wIn, int wOut, int wCount, bool compute_sticky=false, const int countType=-1, map<string, double> inputDelays = emptyDelayMap);
 	
 		/** The LZOCShifterSticky destructor */
 		~LZOCShifterSticky();
@@ -54,6 +56,13 @@ namespace flopoco{
 		double compDelay(int n);
 
 		double muxDelay(int selFanout);
+
+
+				/** Factory method that parses arguments and calls the constructor */
+		static OperatorPtr parseArguments(Target *target , vector<string> &args);
+
+		/** Factory register method */ 
+		static void registerFactory();
 
 	private:
 	

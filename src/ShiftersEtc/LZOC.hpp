@@ -26,10 +26,6 @@ namespace flopoco{
 		~LZOC();
 
 
-		/** 
-		 * Sets the default name of this operator
-		 */
-		void setOperatorName();
 
 
 		/**
@@ -44,6 +40,12 @@ namespace flopoco{
 		int wOut_;   /**< The width of the output */
 		int p2wOut_; /**< The value of 2^wOut, which is computed as 1<<wOut */
 
+	public:
+		/** Factory method that parses arguments and calls the constructor */
+		static OperatorPtr parseArguments(Target *target , vector<string> &args);
+
+		/** Factory register method */ 
+		static void registerFactory();
 	};
 
 }

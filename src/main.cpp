@@ -40,6 +40,8 @@ int main(int argc, char* argv[] )
 {
 	try {
 		Shifter::registerFactory();
+		LZOC::registerFactory();
+		LZOCShifterSticky::registerFactory();
 		FPAdd::registerFactory();
 		FPExp::registerFactory();
 		BasicPolyApprox::registerFactory();
