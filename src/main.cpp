@@ -42,6 +42,26 @@ int main(int argc, char* argv[] )
 		Shifter::registerFactory();
 		LZOC::registerFactory();
 		LZOCShifterSticky::registerFactory();
+
+		IntAdder::registerFactory();
+#if 0 // Plug them for debug purpose only
+		IntAdderClassical::registerFactory();
+		IntAdderAlternative::registerFactory();
+		IntAdderShortLatency::registerFactory();
+		IntAdderSpecific::registerFactory();
+		LongIntAdderAddAddMuxGen1::registerFactory();
+		LongIntAdderAddAddMuxGen2::registerFactory();
+		LongIntAdderCmpAddIncGen1::registerFactory();
+		LongIntAdderCmpAddIncGen2::registerFactory();
+		LongIntAdderCmpCmpAddGen1::registerFactory();
+		LongIntAdderCmpCmpAddGen2::registerFactory();
+		LongIntAdderMuxNetwork::registerFactory();
+		IntComparatorSpecific::registerFactory();
+#endif
+		IntComparator::registerFactory();
+		IntDualSub::registerFactory();
+		IntMultiplier::registerFactory();
+
 		FPAdd::registerFactory();
 		FPExp::registerFactory();
 		BasicPolyApprox::registerFactory();
@@ -66,21 +86,6 @@ int main(int argc, char* argv[] )
 		FPSquare::registerFactory();
 		IterativeLog::registerFactory();
 		FPPow::registerFactory();
-		IntAdder::registerFactory();
-		IntAdderClassical::registerFactory();
-		IntAdderAlternative::registerFactory();
-		IntAdderShortLatency::registerFactory();
-		IntAdderSpecific::registerFactory();
-		IntComparator::registerFactory();
-		IntComparatorSpecific::registerFactory();
-		IntDualSub::registerFactory();
-		LongIntAdderAddAddMuxGen1::registerFactory();
-		LongIntAdderAddAddMuxGen2::registerFactory();
-		LongIntAdderCmpAddIncGen1::registerFactory();
-		LongIntAdderCmpAddIncGen2::registerFactory();
-		LongIntAdderCmpCmpAddGen1::registerFactory();
-		LongIntAdderCmpCmpAddGen2::registerFactory();
-		LongIntAdderMuxNetwork::registerFactory();
 		//FixedComplexAdder::registerFactory();
 		FixFIR::registerFactory();
 		FixSOPC::registerFactory();

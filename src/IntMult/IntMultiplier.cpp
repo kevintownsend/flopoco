@@ -230,6 +230,13 @@ namespace flopoco {
 		//commented-out because the addition operators need the ieee_std_signed/unsigned libraries
 		useNumericStd();
 
+		if(wOut<0)
+		{
+			THROWERROR("IntMultiplier: in stand-alone constructor: ERROR: negative wOut");
+		}
+		if(wOut==0)
+			wOut=wX+wY;
+
 		// set the name of the multiplier operator
 		{
 			ostringstream name;
@@ -238,16 +245,12 @@ namespace flopoco {
 				name << "_UsingDSP_";
 			else
 				name << "_LogicOnly_";
-			name << wXdecl << "_" << wYdecl <<"_" << wOut << "_" << (signedIO?"signed":"unsigned") << "_uid"<<Operator::getNewUId();
-			setName ( name.str() );
+			name << wXdecl << "_" << wYdecl <<"_" << wOut << "_" << (signedIO?"signed":"unsigned");
+			setNameWithFreqAndUID ( name.str() );
 			REPORT(DEBUG, "Building " << name.str() );
 		}
 
-		if(wOut<0)
-		{
-			THROWERROR("IntMultiplier: in stand-alone constructor: ERROR: negative wOut");
-		}
-
+		
 		parentOp=this;
 		multiplierUid=parentOp->getNewUId();
 		xname="X";
@@ -2118,4 +2121,34 @@ namespace flopoco {
 		ts -> counter++;
 	}
 
+
+
+
+	
+	OperatorPtr IntMultiplier::parseArguments(Target *target, std::vector<std::string> &args) {
+		int wX,wY, wOut ;
+		bool signedIO;
+		UserInterface::parseStrictlyPositiveInt(args, "wX", &wX);
+		UserInterface::parseStrictlyPositiveInt(args, "wY", &wY);
+		UserInterface::parsePositiveInt(args, "wOut", &wOut);
+		UserInterface::parseBoolean(args, "signedIO", &signedIO);
+		return new IntMultiplier(target, wX, wY, wOut, signedIO);
+	}
+
+
+	
+	void IntMultiplier::registerFactory(){
+		UserInterface::add("IntMultiplier", // name
+											 "A pipelined integer multiplier.",
+											 "BasicInteger", // category
+											 "", // see also
+											 "wX(int): size of input X; wY(int): size of input Y;\
+                        wOut(int)=0: size of the output if you want a truncated multiplier. 0 for full multiplier;\
+                        signedIO(bool)=false: inputs and outputs can be signed or unsigned", // This string will be parsed
+											 "", // no particular extra doc needed
+											 IntMultiplier::parseArguments
+											 ) ;
+	}
+
+	
 }

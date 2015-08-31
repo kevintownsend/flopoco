@@ -194,10 +194,17 @@ namespace flopoco {
 		tc->addExpectedOutput ( "R", svR );
 	}
 
+	
 	OperatorPtr IntAdder::parseArguments(Target *target, vector<string> &args) {
 		int wIn;
+		int arch;
+		int optObjective;
+		bool srl;
 		UserInterface::parseStrictlyPositiveInt(args, "wIn", &wIn, false);
-		return new IntAdder(target, wIn);
+		UserInterface::parseInt(args, "arch", &arch, false);
+		UserInterface::parseInt(args, "optObjective", &optObjective, false);
+		UserInterface::parseBoolean(args, "srl", &srl, false);
+		return new IntAdder(target, wIn,emptyDelayMap,optObjective,srl,arch);
 	}
 
 	void IntAdder::registerFactory(){
@@ -205,7 +212,10 @@ namespace flopoco {
 											 "Integer adder. In modern VHDL, integer addition is expressed by a + and one usually needn't define an entity for it. However, this operator will be pipelined if the addition is too large to be performed at the target frequency.",
 											 "BasicInteger", // category
 											 "",
-											 "wE(int): exponent size in bits; ",
+											 "wE(int): exponent size in bits;\
+                        arch(int)=-1: -1 for automatic, 0 for classical, 1 for alternative, 2 for short latency;\
+                        optObjective(int)=2: 0 to optimize for logic, 1 to optimize for register, 2 to optimize for slice/ALM count;\
+                        SRL(bool)=true: optimize for shift registers",
 											 "",
 											 IntAdder::parseArguments
 											 ) ;

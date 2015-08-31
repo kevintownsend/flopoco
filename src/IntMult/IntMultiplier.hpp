@@ -131,9 +131,16 @@ namespace flopoco {
 		void emulate ( TestCase* tc );
 
 		void buildStandardTestCases(TestCaseList* tcl);
-
+		
 		// Static method used for tests on the Operator
 		static void nextTest ( TestState * ts );
+
+
+		/** Factory method that parses arguments and calls the constructor */
+		static OperatorPtr parseArguments(Target *target , vector<string> &args);
+
+		/** Factory register method */ 
+		static void registerFactory();
 
 
 
@@ -200,7 +207,6 @@ namespace flopoco {
 		 * checks how many DSPs will be used in case of a tiling
 		 */
 		int checkTiling(int wxDSP, int wyDSP, int& horDSP, int& verDSP);
-
 
 
 
