@@ -1074,6 +1074,7 @@ namespace flopoco
 		// Parse the parameter description
 		// The internet says: this will remove newlines
 		parameters.erase (remove (parameters.begin(), parameters.end(), '\n'), parameters.end());
+
 		start=0;
 		while(start<(int)parameters.size()){
 			int end=parameters.find(';', start);
@@ -1085,7 +1086,7 @@ namespace flopoco
 			if(part.size()!=0) {
 				int nameEnd = part.find('(', 0);
 				string name=part.substr(0, nameEnd);
-				//cout << "Found parameter: {" << name<<"}";
+				// cout << "Found parameter: {" << name<<"}";
 				m_paramNames.push_back(name);
 
 				int typeEnd = part.find(')', 0);
@@ -1115,14 +1116,15 @@ namespace flopoco
 					while (part[j]==' ' || part[j]=='\t') j++; // remove leading spaces and tabs
 					string description = part.substr(j, -1);
 					m_paramDoc[name] = description;
-					//cout << " :  {" << description <<"}" << endl;
+					// cout << " :  {" << description <<"}" << endl;
 				}
 				else throw("OperatorFactory: Error parsing parameter description");
 			}
 			if(end==-1)
 				break;
+			// else prepare to parse next parameter
 			start=end+1;
-			while (parameters[start]==' ') start++;
+			while (parameters[start]==' ' || parameters[start]=='\t') start++;
 		}
 	}
 
