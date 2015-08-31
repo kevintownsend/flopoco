@@ -36,15 +36,15 @@ namespace flopoco{
 		// -------- Parameter set up -----------------
 		setEntityType( (countType_==-1?gen:spec) );
 		srcFileName = "LZOCShifterSticky";
+		setCopyrightString("Florent de Dinechin, Bogdan Pasca (2007)");
 		
 		REPORT( INFO, "wIn="<<wIn << " wOut="<<wOut << " wCount="<<wCount << " computeSticky=" << computeSticky  << " countType=" << countType); 
 
 		ostringstream name; 
 		name << "L" << (countType_<0?"ZO":((countType_>0)?"O":"Z")) << "CShifter"
-			  << (computeSticky_?"Sticky":"") << "_" << wIn_ << "_to_"<<wOut_<<"_counting_"<<(1<<wCount_)<<"_uid"<<Operator::getNewUId();;
-		setName(name.str());
+			  << (computeSticky_?"Sticky":"") << "_" << wIn_ << "_to_"<<wOut_<<"_counting_"<<(1<<wCount_);
+		setNameWithFreqAndUID(name.str());
 
-		setCopyrightString("Florent de Dinechin, Bogdan Pasca (2007)");
 
 	
 		// -------- Parameter set up -----------------
@@ -274,7 +274,7 @@ namespace flopoco{
 	
 	void LZOCShifterSticky::registerFactory(){
 		UserInterface::add("LZOCShifterSticky", // name
-											 "A classical barrel shifter. The output size is computed.",
+											 "A combined leading zero/one counter and shifter, useful for floating-point normalization.",
 											 "ShiftersLZOCs",  // category
 											 "", // see also
 											 "wIn(int): input size in bits;\

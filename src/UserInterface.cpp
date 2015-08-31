@@ -581,7 +581,7 @@ namespace flopoco
 		if (techno==outputToHTML)
 			o = "<code class=\"parametername\">" + s + "</code>";
 		else 	if (techno==outputToConsole)
-			o = (optional?COLOR_BOLD_RED_NORMAL:COLOR_BOLD) + s + COLOR_NORMAL;
+			o = (optional?COLOR_BOLD_BLUE_NORMAL:COLOR_BOLD) + s + COLOR_NORMAL;
 		return o;
 	}
 #endif
@@ -949,10 +949,10 @@ namespace flopoco
 
 	string OperatorFactory::getFullDoc(){
 		ostringstream s;
-		s <<COLOR_BOLD_BLUE_NORMAL << name() << COLOR_NORMAL <<": " << m_description << endl;
+		s <<COLOR_BOLD_RED_NORMAL << name() << COLOR_NORMAL <<": " << m_description << endl;
 		for (unsigned i=0; i<m_paramNames.size(); i++) {
 			string pname = m_paramNames[i];
-			s << "  " << ("" != m_paramDefault[pname]?COLOR_BOLD_RED_NORMAL:COLOR_BOLD) << pname <<COLOR_NORMAL<< " (" << m_paramType[pname] << "): " << m_paramDoc[pname] << "  ";
+			s << "  " << ("" != m_paramDefault[pname]?COLOR_BOLD_BLUE_NORMAL:COLOR_BOLD) << pname <<COLOR_NORMAL<< " (" << m_paramType[pname] << "): " << m_paramDoc[pname] << "  ";
 			if("" != m_paramDefault[pname])
 				s << COLOR_RED_NORMAL << "  (optional, default value is " << m_paramDefault[pname] <<")"<< COLOR_NORMAL;
 			s<< endl;			
