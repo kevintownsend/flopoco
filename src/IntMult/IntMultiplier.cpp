@@ -234,8 +234,10 @@ namespace flopoco {
 		{
 			THROWERROR("IntMultiplier: in stand-alone constructor: ERROR: negative wOut");
 		}
-		if(wOut==0)
-			wOut=wX+wY;
+		if(wOut==0) {
+			wOut=wXdecl+wYdecl;
+			REPORT(DETAILED, "wOut set to " << wOut);
+		}
 
 		// set the name of the multiplier operator
 		{
@@ -2127,12 +2129,13 @@ namespace flopoco {
 	
 	OperatorPtr IntMultiplier::parseArguments(Target *target, std::vector<std::string> &args) {
 		int wX,wY, wOut ;
-		bool signedIO;
+		bool signedIO,superTile;
 		UserInterface::parseStrictlyPositiveInt(args, "wX", &wX);
 		UserInterface::parseStrictlyPositiveInt(args, "wY", &wY);
 		UserInterface::parsePositiveInt(args, "wOut", &wOut);
 		UserInterface::parseBoolean(args, "signedIO", &signedIO);
-		return new IntMultiplier(target, wX, wY, wOut, signedIO);
+		UserInterface::parseBoolean(args, "superTile", &superTile);
+		return new IntMultiplier(target, wX, wY, wOut, signedIO, emptyDelayMap, superTile);
 	}
 
 
@@ -2144,7 +2147,8 @@ namespace flopoco {
 											 "", // see also
 											 "wX(int): size of input X; wY(int): size of input Y;\
                         wOut(int)=0: size of the output if you want a truncated multiplier. 0 for full multiplier;\
-                        signedIO(bool)=false: inputs and outputs can be signed or unsigned", // This string will be parsed
+                        signedIO(bool)=false: inputs and outputs can be signed or unsigned;\
+                        superTile(bool)=false: if true, attempts to use the DSP adders to chain sub-multipliers. This may entail lower logic consumption, but higher latency.", // This string will be parsed
 											 "", // no particular extra doc needed
 											 IntMultiplier::parseArguments
 											 ) ;
