@@ -455,29 +455,23 @@ namespace flopoco {
 		vector<string> inputa;
 		string in;
 		UserInterface::parseString(args, "coeffa", &in);
-		unsigned int deb = in.find("=");
-		unsigned int fin = in.find(":");
-		while(fin != string::npos)
-		{
-			inputa.push_back(in.substr(deb+1, fin-deb-1));
-			deb = fin;
-
-			fin = in.find(":", deb+1);
-		}
-		inputa.push_back(in.substr(deb+1));
+		// tokenize a string, thanks Stack Overflow
+		stringstream ss(in);
+		while( ss.good() )	{
+				string substr;
+				getline( ss, substr, ':' );
+				inputa.push_back( substr );
+			}
 
 		vector<string> inputb;
 		UserInterface::parseString(args, "coeffb", &in);
-		deb = in.find("=");
-		fin = in.find(":");
-		while(fin != string::npos)
-		{
-			inputb.push_back(in.substr(deb+1, fin-deb-1));
-			deb = fin;
-
-			fin = in.find(":", deb+1);
-		}
-		inputb.push_back(in.substr(deb+1));
+		stringstream ssb(in);
+		while( ssb.good() )	{
+				string substr;
+				getline( ssb, substr, ':' );
+				inputb.push_back( substr );
+			}
+		
 		return new FixIIR(target, msbOut, lsbOut, h, inputb, inputa);
 	}
 
@@ -488,10 +482,10 @@ namespace flopoco {
 											 "FiltersEtc", // categories
 											 "",
 											 "msbOut(int): output's most significant bit;\
-lsbOut(int): output's least significant bit;\
-h(int): ;\
-coeffa(int): to enter several coeff, use ':' as separator (ex:coeff=1:2:3:4:5). Coefficients are considered as real numbers and can be put as 0.1564565756768 or sin(3*pi/8).;\
-coeffb(int): to enter several coeff, use ':' as separator (ex:coeff=1:2:3:4:5). Coefficients are considered as real numbers and can be put as 0.1564565756768 or sin(3*pi/8).;",
+                        lsbOut(int): output's least significant bit;\
+                        h(real): worst-case peak gain;\
+                        coeffa(string): colon-separated list of real coefficients using Sollya syntax. Example: coeff=1.234567890123:sin(3*pi/8);\
+                        coeffb(string): colon-separated list of real coefficients using Sollya syntax. Example: coeff=1.234567890123:sin(3*pi/8);",
 											 "",
 											 FixIIR::parseArguments
 											 ) ;

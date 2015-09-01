@@ -197,16 +197,13 @@ namespace flopoco {
 		vector<string> input;
 		string in;
 		UserInterface::parseString(args, "coeff", &in);
-		unsigned int deb = in.find("=");
-		unsigned int fin = in.find(":");
-		while(fin != string::npos)
-		{
-			input.push_back(in.substr(deb+1, fin-deb-1));
-			deb = fin;
-
-			fin = in.find(":", deb+1);
-		}
-		input.push_back(in.substr(deb+1));
+		// tokenize a string, thanks Stack Overflow
+		stringstream ss(in);
+		while( ss.good() )	{
+				string substr;
+				getline( ss, substr, ':' );
+				input.push_back( substr );
+			}
 
 		return new FixFIR(target, lsbInOut, input, rescale);
 	}
@@ -217,9 +214,9 @@ namespace flopoco {
 											 "FiltersEtc", // categories
 											 "",
 											 "lsbInOut(int): integer size in bits;\
-rescale(bool)=false: If true, divides all coefficient by 1/sum(|coeff|);\
-coeff(int): to enter several coeff, use ':' as separator (ex:coeff=1:2:3:4:5). Coefficients are considered as real numbers and can be put as 0.1564565756768 or sin(3*pi/8).;",
-											 "",
+                        rescale(bool)=false: If true, divides all coefficient by 1/sum(|coeff|);\
+                        coeff(string): colon-separated list of real coefficients using Sollya syntax. Example: coeff=1.234567890123:sin(3*pi/8)",
+											 "For more details, see <a href=\"bib/flopoco.html#DinIstoMas2014-SOPCJR\">this article</a>.",
 											 FixFIR::parseArguments
 											 ) ;
 	}
