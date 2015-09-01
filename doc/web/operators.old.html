@@ -56,8 +56,6 @@ are flushed to zero.
 
 	<h4><i> Floating-Point Adders </i></h4>
 <dl>
-	<dt><code style="color: blue;">FPAdd wE wF</code></dt>
-    <dd>A floating-point adder with a new, more compact single-path architecture.</dd>
     <dt><code style="color: blue;">FPSub wE wF</code></dt>
     <dd>A floating-point subtracter.</dd>
   <dt><code style="color: blue;">FPAddDualPath wE wF</code></dt>
@@ -70,12 +68,6 @@ are flushed to zero.
 
 	<h4><i> Floating-Point Multipliers And Squarers </i></h4>
 <dl>
-	<dt><code style="color: blue;">FPMult wE wF_in wF_out</code></dt>
-    <dd>A floating-point multiplier. The actual FloPoCo
-      component supports different input and output sizes, but this is
-      not available from the command line.</dd>
-    <dt><code style="color: blue;">FPMultFaithful wE wF_in wF_out</code></dt>
-    <dd>A resource-saving faithful floating-point multiplier.</dd>
     <dt><code style="color: blue;">FPMultExpert wE wFX wFY wFR CorrectRounding DSPThreshold</code></dt>
     <dd>A fully flexible floating-point multiplier.</dd>
     <dt><code style="color: blue;">FPSquare wE wFin wFout</code></dt>
