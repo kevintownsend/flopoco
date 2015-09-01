@@ -36,6 +36,12 @@ namespace flopoco{
 		void emulate(TestCase * tc);
 		void buildStandardTestCases(TestCaseList* tcl);
 
+		/** Factory method that parses arguments and calls the constructor */
+		static OperatorPtr parseArguments(Target *target , vector<string> &args);
+
+		/** Factory register method */ 
+		static void registerFactory();
+
 	private:
 		/** The width of the exponent for the input X */
 		int wEI;

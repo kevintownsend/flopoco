@@ -180,5 +180,32 @@ namespace flopoco{
 		mpfr_clears(x, r, NULL);
 	}
 
+
+	
+	OperatorPtr OutputIEEE::parseArguments(Target *target, vector<string> &args) {
+		int wEIn, wFIn, wEOut, wFOut;
+		bool onlyPositiveZeroes;
+		UserInterface::parseStrictlyPositiveInt(args, "wEIn", &wEIn); 
+		UserInterface::parseStrictlyPositiveInt(args, "wFIn", &wFIn);
+		UserInterface::parseStrictlyPositiveInt(args, "wEOut", &wEOut); 
+		UserInterface::parseStrictlyPositiveInt(args, "wFOut", &wFOut);
+		UserInterface::parseBoolean(args, "onlyPositiveZeroes", &onlyPositiveZeroes);
+		return new OutputIEEE(target, wEIn, wFIn, wEOut, wFOut, onlyPositiveZeroes);
+	}
+
+	void OutputIEEE::registerFactory(){
+		UserInterface::add("OutputIEEE", // name
+											 "Conversion from FloPoCo to IEEE-754-like floating-point formats.",
+											 "Conversions",
+											 "", // seeAlso
+											 "wEIn(int): input exponent size in bits; \
+                        wFIn(int): input mantissa size in bits;\
+                        wEOut(int): output exponent size in bits; \
+                        wFOut(int): output mantissa size in bits;\
+                        onlyPositiveZeroes(bool)=false: when true, normalize +0 and -0 to +0",
+											 "", // htmldoc
+											 OutputIEEE::parseArguments
+											 ) ;
+	}
 }
 

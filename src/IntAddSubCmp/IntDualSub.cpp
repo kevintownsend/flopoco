@@ -234,7 +234,7 @@ namespace flopoco{
 
 	void IntDualSub::registerFactory(){
 		UserInterface::add("IntDualSub", // name
-											 "An integer comparator for experimentation.",
+											 "Pipelined dual adder/subtractor",
 											 "BasicInteger", // category
 											 "",
 											 "wIn(int): input size in bits;\

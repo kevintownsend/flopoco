@@ -39,6 +39,12 @@ using namespace flopoco;
 int main(int argc, char* argv[] )
 {
 	try {
+
+		Fix2FP::registerFactory();
+		FP2Fix::registerFactory();
+		InputIEEE::registerFactory();
+		OutputIEEE::registerFactory();
+
 		Shifter::registerFactory();
 		LZOC::registerFactory();
 		LZOCShifterSticky::registerFactory();
@@ -92,13 +98,19 @@ int main(int argc, char* argv[] )
 		FixSOPC::registerFactory();
 		FixIIR::registerFactory();
 	}
-	catch (std::string s) {
-		cerr << "Error while registering factories: " << s <<endl;
+	catch (const std::exception &e) {
+		cerr << "Error while registering factories: " << e.what() <<endl;
 		exit(EXIT_FAILURE);
 	}
 	// cout << UserInterface::getFactoryCount() << " factories registered " << endl ;
 
-	UserInterface::main(argc, argv);
+	try {
+		UserInterface::main(argc, argv);
+	}
+	catch (const std::exception &e) {
+		cerr << "Error in main: " << e.what() <<endl;
+		exit(EXIT_FAILURE);
+	}
 
 	return 0;
 }

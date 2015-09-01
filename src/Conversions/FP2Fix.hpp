@@ -19,10 +19,10 @@ namespace flopoco{
 		/**
 		 * @brief The  constructor
 		 * @param[in]		target		the target device
-		 * @param[in]		MSB			the MSB of the output number for the convertion result
-		 * @param[in]		LSB			the LSB of the output number for the convertion result
-		 * @param[in]		wER			the with of the exponent in input
-		 * @param[in]		wFR			the with of the fraction in input
+		 * @param[in]		MSB			the MSB of the output number for the conversion result
+		 * @param[in]		LSB			the LSB of the output number for the conversion result
+		 * @param[in]		wEI			the with of the exponent in input
+		 * @param[in]		wFI			the with of the fraction in input
 		 * @param[in]		trunc_p			the output is not rounded when trunc_p is true
 		 */
 		 FP2Fix(Target* target, bool SignedO, int MSBO, int LSBO,  int wEI, int wFI, bool trunc_p);
@@ -38,6 +38,12 @@ namespace flopoco{
 	  /* Overloading the Operator method to limit testing of negative numbers when Signed is 0*/
 	  TestCase* buildRandomTestCase(int i);
 
+		/** Factory method that parses arguments and calls the constructor */
+		static OperatorPtr parseArguments(Target *target , vector<string> &args);
+
+		/** Factory register method */ 
+		static void registerFactory();
+
    private:
 
 	  /** The width of the exponent for the input */
@@ -46,12 +52,12 @@ namespace flopoco{
 	  int wFI;
 	  /** are all numbers positive or not */
 	  bool Signed;
-	  /** The LSB for the output */
-	  int LSBO;
 	  /** The MSB for the output */
 	  int MSBO;
-	  /** when true the output is not rounded */
+	  /** The LSB for the output */
+	  int LSBO;
 	  bool trunc_p;
+	  /** when true the output is not rounded */
 
 
    };
