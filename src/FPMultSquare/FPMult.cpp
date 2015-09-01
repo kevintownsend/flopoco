@@ -314,14 +314,18 @@ namespace flopoco{
 		int wE;
 		UserInterface::parseStrictlyPositiveInt(args, "wE", &wE);
 		int wF_in;
-		UserInterface::parseStrictlyPositiveInt(args, "wF_in", &wF_in);
+		UserInterface::parseStrictlyPositiveInt(args, "wF", &wF_in);
 		int wF_out;
-		UserInterface::parseStrictlyPositiveInt(args, "wF_out", &wF_out);
+		UserInterface::parsePositiveInt(args, "wFout", &wF_out);
+#if 0 // These are really for internal use
 		bool norm;
 		UserInterface::parseBoolean(args, "norm", &norm);
 		bool correctRounding;
 		UserInterface::parseBoolean(args, "correctRounding", &correctRounding);
-		return new FPMult(target, wE, wF_in, wE, wF_in, wE, wF_out, norm, correctRounding);
+#endif
+		if(wF_out==0)
+			wF_out=wF_in;
+		return new FPMult(target, wE, wF_in, wE, wF_in, wE, wF_out);
 	}
 
 	void FPMult::registerFactory(){
@@ -330,10 +334,8 @@ namespace flopoco{
 											 "BasicFloatingPoint", // categories
 											 "",
 											 "wE(int): exponent size in bits; \
-                        wF_in(int): input's mantissa size in bits;  \
-                        wF_out(int): output's mantissa size in bits; \
-                        norm(bool): do you want to normalize the result;\
-                        correctRounding(bool): correct or faithful rounding",
+                        wF(int): input's mantissa size in bits;  \
+                        wFout(int)=0: output's mantissa size in bits (if 0 or ommitted, will be equal to wFIn)",
 											 "",
 											 FPMult::parseArguments
 											 ) ;

@@ -280,7 +280,7 @@ namespace flopoco{
 											 "wIn(int): input size in bits;\
                         wOut(int): output size in bits;\
                         wCount(int): size in bits of the count output;\
-                        computeSticky(bool)=0: Should the operator compute a sticky bit out of the shifted-out bits;\
+                        computeSticky(bool)=false: if false the shifted-out bits are discarded, if true they are ORed into a sticky bit which is output;\
                         countType(int)=-1:  0 to count zeroes, 1 to count ones, -1 to have a dynamic OZb input that tells what to count", // This string will be parsed
 											 "", // no particular extra doc needed
 											 LZOCShifterSticky::parseArguments
