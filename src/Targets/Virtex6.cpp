@@ -45,6 +45,7 @@ namespace flopoco{
 	};
 	
 	double Virtex6::localWireDelay(int fanout){
+		// TODO the 50 below is a perfectly random value
 		return  elemWireDelay_*(1+double(fanout)/50.0); 
 	};
 	
