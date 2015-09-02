@@ -268,7 +268,6 @@ namespace flopoco
 		pipeline=true;
 		useHardMult=true;
 		unusedHardMultThreshold=0.7;
-		// build the vector of categories
 		
 	}
 

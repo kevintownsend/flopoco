@@ -45,7 +45,7 @@ namespace flopoco{
 	};
 	
 	double Virtex6::localWireDelay(int fanout){
-		return  elemWireDelay_*(1+double(fanout)/20.0);
+		return  elemWireDelay_*(1+double(fanout)/50.0); 
 	};
 	
 	double Virtex6::distantWireDelay(int n){

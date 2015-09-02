@@ -38,7 +38,6 @@ namespace flopoco{
 	
 		srcFileName = "Shifters";
 		setCopyrightString ( "Bogdan Pasca, Florent de Dinechin (2008-2011)" );	
-		
 		ostringstream name;
 		if(direction_==Left) name <<"LeftShifter_";
 		else                 name <<"RightShifter_";
@@ -60,12 +59,13 @@ namespace flopoco{
 		vhdl << tab << declare("level0",wIn_  ) << "<= X;" <<endl;
 		vhdl << tab << declare("ps", wShiftIn_) << "<= S;" <<endl;
 	
+		
+#if 0 // Can't understand the following
 		// local variables
 		int    lastRegLevel = -1;
 		int    unregisteredLevels = 0;
 		int    dep = 0;
 		setCriticalPath( getMaxInputDelays( inputDelays) );
-
 		for (int currentLevel=0; currentLevel<wShiftIn_; currentLevel++){
 			//compute current level delay
 			unregisteredLevels = currentLevel - lastRegLevel;
@@ -76,32 +76,44 @@ namespace flopoco{
 						
 			double wireD = target->localWireDelay(2*wIn);//the delay is unusually high
 			REPORT(DEBUG, " wire delay is " << wireD << " and unregisteredLevels="<<unregisteredLevels);
-			if (manageCriticalPath( intlog( mpz_class(target->lutInputs()/2), mpz_class(dep)) * target->lutDelay() + (intlog( mpz_class(target->lutInputs()/2), mpz_class(dep))-1)*target->localWireDelay()+ wireD)){
+			if (manageCriticalPath(
+														 intlog( mpz_class(target->lutInputs()/2),
+																			mpz_class(dep)) * target->lutDelay()
+														 + (intlog( mpz_class(target->lutInputs()/2),
+																				mpz_class(dep))-1) * target->localWireDelay()+ wireD)){
 				lastRegLevel = currentLevel;
 				REPORT(DEBUG, tab << "REG LEVEL current delay is:" << getCriticalPath());
 			}
 //			vhdl << "--Estimated delay is:" << getCriticalPath() << endl;
 			if (currentLevel<wShiftIn_-1)	
 				setCriticalPath(0.0);
+#endif
 
-			ostringstream currentLevelName, nextLevelName;
-			currentLevelName << "level"<<currentLevel;
-			nextLevelName << "level"<<currentLevel+1;
-			if (direction==Right){
-				vhdl << tab << declare(nextLevelName.str(),wIn+intpow2(currentLevel+1)-1 ) 
-					  <<"<=  ("<<intpow2(currentLevel)-1 <<" downto 0 => '0') & "<<currentLevelName.str()<<" when ps";
-				if (wShiftIn_ > 1) 
-					vhdl << "(" << currentLevel << ")";
-				vhdl << " = '1' else "
-					  << tab << currentLevelName.str() <<" & ("<<intpow2(currentLevel)-1<<" downto 0 => '0');"<<endl;
-			}else{
-				vhdl << tab << declare(nextLevelName.str(),wIn+intpow2(currentLevel+1)-1 )
-					  << "<= " << currentLevelName.str() << " & ("<<intpow2(currentLevel)-1 <<" downto 0 => '0') when ps";
-				if (wShiftIn_>1) 
-					vhdl << "(" << currentLevel<< ")";
-				vhdl << "= '1' else "
-					  << tab <<" ("<<intpow2(currentLevel)-1<<" downto 0 => '0') & "<< currentLevelName.str() <<";"<<endl;
-			}
+			if(true || target->lutInputs()<6) { // levels are not grouped
+				for (int currentLevel=0; currentLevel<wShiftIn_; currentLevel++){
+					int stageWidth= wIn+intpow2(currentLevel+1)-1;
+					double delay = target->localWireDelay(stageWidth) // diffusion of the selection signal
+						+ target->lutDelay() ;   // the mux
+					manageCriticalPath(delay);
+					ostringstream currentLevelName, nextLevelName;
+					currentLevelName << "level"<<currentLevel;
+					nextLevelName << "level"<<currentLevel+1;
+					if (direction==Right){
+						vhdl << tab << declare(nextLevelName.str(),  stageWidth ) 
+								 <<"<=  ("<<intpow2(currentLevel)-1 <<" downto 0 => '0') & "<<currentLevelName.str()<<" when ps";
+						if (wShiftIn_ > 1) 
+							vhdl << "(" << currentLevel << ")";
+						vhdl << " = '1' else "
+								 << tab << currentLevelName.str() <<" & ("<<intpow2(currentLevel)-1<<" downto 0 => '0');"<<endl;
+					}else{
+						vhdl << tab << declare(nextLevelName.str(),  stageWidth )
+								 << "<= " << currentLevelName.str() << " & ("<<intpow2(currentLevel)-1 <<" downto 0 => '0') when ps";
+						if (wShiftIn_>1) 
+							vhdl << "(" << currentLevel<< ")";
+						vhdl << "= '1' else "
+								 << tab <<" ("<<intpow2(currentLevel)-1<<" downto 0 => '0') & "<< currentLevelName.str() <<";"<<endl;
+					}
+				}
 			
 		}
 		//update the output slack
