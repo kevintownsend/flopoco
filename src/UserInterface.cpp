@@ -86,34 +86,31 @@ namespace flopoco
 				vector<option_t> v;	
 				vector<string> values;
 
-				//free option
+				// Boolean options
+				values.clear();
+				values.push_back(std::to_string(0));
+				values.push_back(std::to_string(1));
+				v.push_back(option_t("pipeline", values));
+				v.push_back(option_t("plainVHDL", values));
+				v.push_back(option_t("generateFigures", values));
+				v.push_back(option_t("useHardMults", values));
+
+				//free options, using an empty vector of values 
+				values.clear();
 				v.push_back(option_t("name", values));
 				v.push_back(option_t("outputFile", values));
 				v.push_back(option_t("hardMultThreshold", values));
 				v.push_back(option_t("frequency", values));
 				
 				//verbosity level
+				values.clear();
 				for(unsigned int i = 0 ; i < 3 ; ++i) {
 					values.push_back(std::to_string(i));
 				}
 				v.push_back(option_t("verbose", values));
 
-				// Boolean options
-				values.clear();
-				values.push_back(std::to_string(0));
-				values.push_back(std::to_string(1));
-				//Pipeline
-				v.push_back(option_t("pipeline", values));
-
-				//plainVHDL
-				v.push_back(option_t("plainVHDL", values));
-
-				//generateFigures
-				v.push_back(option_t("generateFigures", values));
-
-				//target
+				//target option
 				v.push_back(option_t("target", known_fpgas));
-
 				return v;
 			}();		
 		
@@ -268,6 +265,7 @@ namespace flopoco
 		outputFileName="flopoco.vhdl";
 		targetFPGA=defaultFPGA;
 		targetFrequencyMHz=400;
+		pipeline=true;
 		useHardMult=true;
 		unusedHardMultThreshold=0.7;
 		// build the vector of categories

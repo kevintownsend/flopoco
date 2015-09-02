@@ -183,9 +183,6 @@ namespace flopoco {
 
 		multiplierUid=parentOp->getNewUId();
 		srcFileName="IntMultiplier";
-		useDSP = parentOp->getTarget()->useHardMultipliers();
-		// TODO remove the following to switch DSP back on
-		useDSP=false;
 
 		xname = x->getName();
 		yname = y->getName();
@@ -194,7 +191,7 @@ namespace flopoco {
 
 		ostringstream name;
 		name <<"VirtualIntMultiplier";
-		if(useDSP)
+		if(parentOp->getTarget()->useHardMultipliers())
 			name << "UsingDSP_";
 		else
 			name << "LogicOnly_";
@@ -224,8 +221,7 @@ namespace flopoco {
 		srcFileName="IntMultiplier";
 		setCopyrightString ( "Florent de Dinechin, Kinga Illyes, Bogdan Popa, Bogdan Pasca, 2012" );
 
-		// useDSP or not?
-		useDSP = target_->useHardMultipliers();
+		cout << "*  ***************** gettarget()->useHardMultipliers() =" << getTarget()->useHardMultipliers() << endl;
 
 		//commented-out because the addition operators need the ieee_std_signed/unsigned libraries
 		useNumericStd();
@@ -243,7 +239,7 @@ namespace flopoco {
 		{
 			ostringstream name;
 			name <<"IntMultiplier";
-			if(useDSP)
+			if(parentOp->getTarget()->useHardMultipliers())
 				name << "_UsingDSP_";
 			else
 				name << "_LogicOnly_";
@@ -773,7 +769,7 @@ namespace flopoco {
 		}
 #endif
 
-		if(useDSP){
+		if(parentOp->getTarget()->useHardMultipliers()){
 			REPORT(DETAILED,"in fillBitHeap(): using DSP blocks for multiplier implementation");
 			parentOp->getTarget()->getDSPWidths(wxDSP, wyDSP, signedIO);
 			REPORT(DETAILED,"in fillBitHeap(): starting tiling with DSPs");

@@ -223,7 +223,6 @@ namespace flopoco {
 	private:
 		void initialize();     			/**< initialization stuff common to both constructors*/
 
-		bool useDSP;
 		int wxDSP, wyDSP;               /**< the width on X/Y in DSP(s)*/
 		Operator* parentOp;  			/**< For a virtual multiplier, adding bits to some external BitHeap,
 												this is a pointer to the Operator that will provide the actual vhdl stream etc. */
