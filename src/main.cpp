@@ -69,6 +69,11 @@ int main(int argc, char* argv[] )
 		IntMultiplier::registerFactory();
 		IntSquarer::registerFactory();
 
+		FPConstMult::registerFactory();
+		FPRealKCM::registerFactory();
+		IntConstDiv::registerFactory();
+		FPConstDiv::registerFactory();
+		
 		FPAdd::registerFactory();
 		FPExp::registerFactory();
 		BasicPolyApprox::registerFactory();
@@ -87,8 +92,6 @@ int main(int argc, char* argv[] )
 		FPAdd3Input::registerFactory();
 		FPAddSinglePath::registerFactory();
 		FPMult::registerFactory();
-		FPConstMult::registerFactory();
-		FPRealKCM::registerFactory();
 		//FPMultKaratsuba::registerFactory();
 		FPSquare::registerFactory();
 		IterativeLog::registerFactory();

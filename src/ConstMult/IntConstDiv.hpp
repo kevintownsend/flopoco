@@ -60,9 +60,19 @@ namespace flopoco{
 		// Static method used for tests on the Operator
 		static void nextTest ( TestState * ts );
 
+		/** Factory method that parses arguments and calls the constructor */
+		static OperatorPtr parseArgumentsDiv(Target *target , vector<string> &args);
+		/** Factory method that parses arguments and calls the constructor */
+		static OperatorPtr parseArgumentsRem(Target *target , vector<string> &args);
+
+		/** Factory register method */ 
+		static void registerFactory();
+
 	public:
 		int quotientSize();   /**< Size in bits of the quotient output */
 		int remainderSize();  /**< Size in bits of a remainder; gamma=ceil(log2(d-1)) */
+
+
 
 	private:
 		int d; /**<  Divisor*/

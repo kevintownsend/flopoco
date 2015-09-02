@@ -139,11 +139,6 @@ Current FloPoCo release is proud to offer in <i>early alpha</i> version:
   <dt><code style="color: blue;"> IntIntKCM w c signedInput</code></dt>
     <dd>Integer constant multiplier using KCM: w is input size, c is the constant.</dd>
 
-  <dt><code style="color: blue;"> FixRealKCM signedInput msbIn lsbIn lsbOut constant useBitheap</code></dt>
-    <dd>Faithful multiplier of a fixed-point input by a real constant. 
-			The fixed-point format of the input is provided as two integers lsbIn and msbIn which give the weights of the least significand bit and the weight of the most significand bit. The input may be signed, or not.
-      The constant is provided as a Sollya expression, e.g "log(2)". This operator is briefly described  in III.A.  of  <a href="https://hal-ens-lyon.archives-ouvertes.fr/ensl-00506125/dpcument">this article</a></dd>
-
   <dt><code style="color: blue;">FPConstMult wE_in wF_in wE_out wF_out wC constant_exponent
   cst_int_sig</code></dt>
     <dd>Floating-point constant multiplier using the shift-and-add approach. 
@@ -156,31 +151,10 @@ Current FloPoCo release is proud to offer in <i>early alpha</i> version:
 			This is basically the same as the previous, with a nicer interface:
       last argument is a Sollya expression between double quotes,e.g."exp(pi/2)".</dd>
 
-  <dt><code style="color: blue;">FPRealKCM wE wF constantExpression</code></dt>
-    <dd>
-      Same as the previous but using the KCM algorithm.
-		</dd>
-		
 
   <dt><code style="color: blue;">FPConstMultRational wE_in wF_in wE_out wF_out a b</code></dt>
     <dd>
       Floating-point constant multiplier for a rational constant a/b. It uses the periodic representation of the constant to implement an optimal shift-and-add tree for it. This works well mostly for small a and b (scaled by whatever positive or negative power of two). This operator returns a correctly rounded result, therefore using it to multiply by 1/3 is bit-for-bit equivalent to using an IEEE-compliant division by 3.0. This operator is described in <a href="http://hal-ens-lyon.archives-ouvertes.fr/ensl-00610328">this article</a>. For division by b, you should also try FPConstDiv and compare the two obtained operators.</dd>
-</dl>
-
-<h3>Divider by a small integer constant</h3>
-These operators are described in <a href="http://hal-ens-lyon.archives-ouvertes.fr/ensl-00642145/">this article</a>. 
-<dl>
-  <dt><code style="color: blue;">IntConstDiv n d alpha</code></dt>
-    <dd> Euclidean division of input of size w by the small odd integer d. 
-      Algorithm uses radix 2^alpha,   alpha=-1 means a sensible default.</dd>
-</dl>
-<dl>
-  <dt><code style="color: blue;">FPConstDiv wE wF d</code></dt>
-    <dd> Correctly rounded floating-point division by the small integer d. This works well for small, odd values of d.</dd>
-</dl>
-<dl>
-  <dt><code style="color: blue;">FPConstDivExpert wE wF d e alpha</code></dt>
-    <dd> Correctly rounded floating-point division by d.2^e, where d is a small odd integer. alpha=-1 means a sensible default.</dd>
 </dl>
 
 

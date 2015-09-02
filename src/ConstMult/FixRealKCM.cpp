@@ -783,18 +783,15 @@ namespace flopoco{
 		UserInterface::add(
 				"FixRealKCM",
 				"Table based real multiplier. Output size is computed",
-				"BasicFixPoint",
+				"ConstMultDiv",
 				"",
 				"signedInput(bool): 0=unsigned, 1=signed; \
-msbIn(int): weight associated to most significant bit (including \
-sign bit);\
-lsbIn(int): weight associated to least significant bit;\
-lsbOut(int): weight associated to output least significant bit; \
-constant(string): constant expressed in sollya formalism; \
-targetUlpError(real)=1.0: required precision on last bit. Should be strictly greater than 0.5 and lesser than 1;",
-				"For constants like 0 or powers of two, the KCM will \
-				automatically use a more efficient computation based on shiffts \
-				 and padd/truncate.",
+         msbIn(int): weight associated to most significant bit (including sign bit);\
+         lsbIn(int): weight associated to least significant bit;\
+         lsbOut(int): weight associated to output least significant bit; \
+         constant(string): constant given in arbitrary-precision decimal, or as a Sollya expression, e.g \"log(2)\"; \
+         targetUlpError(real)=1.0: required precision on last bit. Should be strictly greater than 0.5 and lesser than 1;",
+				"This variant of Ken Chapman's Multiplier is briefly described in <a href=\"bib/flopoco.html#DinIstoMas2014-SOPCJR\">this article</a>.<br> Special constants, such as 0 or powers of two, are handled efficiently.",
 				FixRealKCM::parseArguments		
 			);
 	}

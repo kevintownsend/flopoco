@@ -183,13 +183,13 @@ namespace flopoco{
 	{
 		UserInterface::add(
 					"FPRealKCM",
-					"Table based real multiplier for floating points input. Output size is computed",
-					"BasicFloatingPoint",
+					"Table based real multiplier for floating points input. ",
+					"ConstMultDiv",
 					"",
 					"wE(int): exponent width;"
 					"wF(int): significand width;"
-					"constant(string): constant expressed in sollya formalism",
-					"",
+					"constant(string): constant given in arbitrary-precision decimal, or as a Sollya expression, e.g \"log(2)\"",
+					"KCM is a table-based method well suited to LUT-based FPGAs. It is due to Ken Chapman who published it in 1994.",
 					FPRealKCM::parser
 				);
 	}

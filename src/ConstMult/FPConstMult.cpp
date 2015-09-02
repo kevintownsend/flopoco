@@ -706,22 +706,16 @@ namespace flopoco{
 		UserInterface::add(
 					"FPConstMult", 
 					"Floating-point constant multiplier using the shift-and-add approach. The constant is provided as sign, integral significand and integral exponent",
-					"BasicFloatingPoint",
-					"https://hal-ens-lyon.archives-ouvertes.fr/ensl-00269219/document",
+					"ConstMultDiv",
+					"",
 					"wE_in(int): input exponent width;"
 					"wF_in(int): input significand part width;"
 					"wE_out(int): output exponent width;"
 					"wF_out(int): output significand width;"
 					"constant(string): constant in sollya formalism (e.g. \"cos(3*pi/2)\");"
 					"cst_width(int)=0:constant precision. If set to zero, the actual width will be computed in order to get a faithful result.",
-					"",
+					"An early version of the technique used is described in  <a href=\"bib/flopoco.html#BrisebarreMullerDinechin2008:ASAP\">this article</a>.",
 					parse
 				);
 	}
 }
-
-#if 0
-
-
-
-#endif

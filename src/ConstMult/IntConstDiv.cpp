@@ -207,4 +207,46 @@ namespace flopoco{
 		ts -> counter++;
 	}
 
+
+
+	OperatorPtr IntConstDiv::parseArgumentsDiv(Target *target, vector<string> &args) {
+		int wIn, d, alpha;
+		UserInterface::parseStrictlyPositiveInt(args, "wIn", &wIn); 
+		UserInterface::parseStrictlyPositiveInt(args, "d", &d);
+		UserInterface::parseInt(args, "alpha", &alpha);
+		return new IntConstDiv(target, wIn, d, alpha, false);
+	}
+	OperatorPtr IntConstDiv::parseArgumentsRem(Target *target, vector<string> &args) {
+		int wIn, d, alpha;
+		UserInterface::parseStrictlyPositiveInt(args, "wIn", &wIn); 
+		UserInterface::parseStrictlyPositiveInt(args, "d", &d);
+		UserInterface::parseInt(args, "alpha", &alpha);
+		return new IntConstDiv(target, wIn, d, alpha, true);
+	}
+
+	void IntConstDiv::registerFactory(){
+		UserInterface::add("IntConstDiv", // name
+											 "Integer divider by a small constant.",
+											 "ConstMultDiv",
+											 "", // seeAlso
+											 "wIn(int): input size in bits; \
+                        d(int): small integer to divide by;  \
+                        alpha(int)=-1: Algorithm uses radix 2^alpha. -1 choses a sensible default.",
+											 "This operator is described in <a href=\"bib/flopoco.html#dedinechin:2012:ensl-00642145:1\">this article</a>.",
+											 IntConstDiv::parseArgumentsDiv
+											 ) ;
+		UserInterface::add("IntConstRem", // name
+											 "Remainder of the division by a small constant.",
+											 "ConstMultDiv",
+											 "", // seeAlso
+											 "wIn(int): input size in bits; \
+                        d(int): small integer to divide by;  \
+                        alpha(int)=-1: Algorithm uses radix 2^alpha. -1 choses a sensible default.",
+											 "This operator is described in <a href=\"bib/flopoco.html#dedinechin:2012:ensl-00642145:1\">this article</a>.",
+											 IntConstDiv::parseArgumentsRem
+											 ) ;
+		
+	}
+
+	
 }

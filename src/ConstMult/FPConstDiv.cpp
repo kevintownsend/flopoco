@@ -34,13 +34,17 @@ namespace flopoco{
 
 	// The expert version 
 
-	FPConstDiv::FPConstDiv(Target* target, int wE_in_, int wF_in_, int wE_out_, int wF_out_, int d_, int dExp_, int alpha_):
+	FPConstDiv::FPConstDiv(Target* target, int wEIn_, int wFIn_, int wEOut_, int wFOut_, int d_, int dExp_, int alpha_):
 		Operator(target), 
-		wE_in(wE_in_), wF_in(wF_in_), wE_out(wE_out_), wF_out(wF_out_), d(d_), dExp(dExp_), alpha(alpha_)
+		wEIn(wEIn_), wFIn(wFIn_), wEOut(wEOut_), wFOut(wFOut_), d(d_), dExp(dExp_), alpha(alpha_)
 	{
+		if(wEOut==0)
+			wEOut=wEIn;
+		if(wFOut==0)
+			wFOut=wFIn;
 		srcFileName="FPConstDiv";
 		ostringstream name;
-		name <<"FPConstDiv_"<<wE_in<<"_"<<wF_in<<"_"<<wE_out<<"_"<<wF_out<<"_"<<d<<"_";
+		name <<"FPConstDiv_"<<wEIn<<"_"<<wFIn<<"_"<<wEOut<<"_"<<wFOut<<"_"<<d<<"_";
 		if(dExp>=0)
 			name<<dExp<<"_";
 		else
@@ -53,7 +57,7 @@ namespace flopoco{
 		
 		uniqueName_=name.str();
 
-		if(wE_in<3 || wE_out <3){
+		if(wEIn<3 || wEOut <3){
 			ostringstream error;
 			error << srcFileName << " (" << uniqueName_ << "): exponent size must be at least 3" <<endl;
 			throw error.str();
@@ -85,23 +89,23 @@ namespace flopoco{
 
 
 		// Set up the IO signals
-		addFPInput("X", wE_in, wF_in);
-		addFPOutput("R", wE_out, wF_out);
+		addFPInput("X", wEIn, wFIn);
+		addFPOutput("R", wEOut, wFOut);
 
 		setCopyrightString("Florent de Dinechin (2007-2011)");
 
 		int gamma = intlog2(d);
 		int s = gamma-1;
 		int h = d>>1; 
-		int intDivSize = wF_in+1 + s+1;
+		int intDivSize = wFIn+1 + s+1;
 
-		vhdl << tab << declare("x_exn",2) << " <=  X("<<wE_in<<"+"<<wF_in<<"+2 downto "<<wE_in<<"+"<<wF_in<<"+1);"<<endl;
-		vhdl << tab << declare("x_sgn") << " <=  X("<<wE_in<<"+"<<wF_in<<");"<<endl;
-		vhdl << tab << declare("x_exp", wE_in) << " <=  X("<<wE_in<<"+"<<wF_in<<"-1 downto "<<wF_in<<");"<<endl;
-		vhdl << tab << declare("x_sig", wF_in+1) << " <= '1' & X("<<wF_in-1 <<" downto 0);"<<endl;
+		vhdl << tab << declare("x_exn",2) << " <=  X("<<wEIn<<"+"<<wFIn<<"+2 downto "<<wEIn<<"+"<<wFIn<<"+1);"<<endl;
+		vhdl << tab << declare("x_sgn") << " <=  X("<<wEIn<<"+"<<wFIn<<");"<<endl;
+		vhdl << tab << declare("x_exp", wEIn) << " <=  X("<<wEIn<<"+"<<wFIn<<"-1 downto "<<wFIn<<");"<<endl;
+		vhdl << tab << declare("x_sig", wFIn+1) << " <= '1' & X("<<wFIn-1 <<" downto 0);"<<endl;
 
 		manageCriticalPath(target->localWireDelay() + target->adderDelay(gamma+1));
-		vhdl << tab << declare("Diffmd", gamma+1) << " <=  ('0' & x_sig" << range(wF_in, wF_in-gamma+1)<< ") - ('0' & CONV_STD_LOGIC_VECTOR(" << d << ", " << gamma <<")) ;" << endl;
+		vhdl << tab << declare("Diffmd", gamma+1) << " <=  ('0' & x_sig" << range(wFIn, wFIn-gamma+1)<< ") - ('0' & CONV_STD_LOGIC_VECTOR(" << d << ", " << gamma <<")) ;" << endl;
 		vhdl << tab << declare("mltd") << " <=   Diffmd("<< gamma<<");" << endl;
 
 		int mltdCycle=getCurrentCycle();
@@ -110,11 +114,11 @@ namespace flopoco{
 		if(d*intpow2(dExp) >1.0) { // only underflow possible
 			vhdl <<endl << tab << "-- exponent processing. For this d we may only have underflow" << endl;
 			
-			manageCriticalPath(target->localWireDelay() + target->adderDelay(wE_out+1));
-			vhdl << tab << declare("r_exp0", wE_out+1) << " <=  ('0' & x_exp) - ( CONV_STD_LOGIC_VECTOR(" << s+1+dExp << ", " << wE_out+1 <<")) + (not mltd);" << endl;
+			manageCriticalPath(target->localWireDelay() + target->adderDelay(wEOut+1));
+			vhdl << tab << declare("r_exp0", wEOut+1) << " <=  ('0' & x_exp) - ( CONV_STD_LOGIC_VECTOR(" << s+1+dExp << ", " << wEOut+1 <<")) + (not mltd);" << endl;
 			
-			vhdl << tab << declare("underflow") << " <=  r_exp0(" << wE_out << ");" << endl;
-			vhdl << tab << declare("r_exp", wE_out) << " <=  r_exp0" << range(wE_out-1, 0) << ";" << endl;
+			vhdl << tab << declare("underflow") << " <=  r_exp0(" << wEOut << ");" << endl;
+			vhdl << tab << declare("r_exp", wEOut) << " <=  r_exp0" << range(wEOut-1, 0) << ";" << endl;
 			
 			vhdl <<endl << tab << "-- exception flag processing"<<endl; 
 			vhdl << tab << declare("r_exn", 2) << " <=  \"00\" when  x_exn=\"01\" and underflow='1' else x_exn" << ";" << endl;
@@ -123,11 +127,11 @@ namespace flopoco{
 			{
 			vhdl <<endl << tab << "-- exponent processing. For this d we may only have overflow" << endl;
 			
-			manageCriticalPath(target->localWireDelay() + target->adderDelay(wE_out+1));
-			vhdl << tab << declare("r_exp0", wE_out+1) << " <=  ('0' & x_exp) + ( CONV_STD_LOGIC_VECTOR(" << -(s+1+dExp) << ", " << wE_out+1 <<")) + (not mltd);" << endl;
+			manageCriticalPath(target->localWireDelay() + target->adderDelay(wEOut+1));
+			vhdl << tab << declare("r_exp0", wEOut+1) << " <=  ('0' & x_exp) + ( CONV_STD_LOGIC_VECTOR(" << -(s+1+dExp) << ", " << wEOut+1 <<")) + (not mltd);" << endl;
 			
-			vhdl << tab << declare("overflow") << " <=  r_exp0(" << wE_out << ");" << endl;
-			vhdl << tab << declare("r_exp", wE_out) << " <=  r_exp0" << range(wE_out-1, 0) << ";" << endl;
+			vhdl << tab << declare("overflow") << " <=  r_exp0(" << wEOut << ");" << endl;
+			vhdl << tab << declare("r_exp", wEOut) << " <=  r_exp0" << range(wEOut-1, 0) << ";" << endl;
 			
 			vhdl <<endl << tab << "-- exception flag processing"<<endl; 
 			vhdl << tab << declare("r_exn", 2) << " <=  \"10\" when  x_exn=\"01\" and overflow='1' else x_exn" << ";" << endl;
@@ -138,11 +142,11 @@ namespace flopoco{
 		setCriticalPath(mltdCP);
 		vhdl <<endl << tab << "-- significand processing"<<endl;
 		if(mantissaIsOne) {
-			vhdl << tab << declare("r_frac", wF_out) << " <= x_sig;"<<endl;
+			vhdl << tab << declare("r_frac", wFOut) << " <= x_sig;"<<endl;
 		}
 		else {// Actual division
 			// mux = diffusion of the control signal + 1 LUT
-			manageCriticalPath(target->localWireDelay(wF_in) + target->lutDelay());
+			manageCriticalPath(target->localWireDelay(wFIn) + target->lutDelay());
 			vhdl << tab << declare("divIn0", intDivSize) << " <= '0' & x_sig & CONV_STD_LOGIC_VECTOR(" << h << ", " << s <<");" << endl;
 			vhdl << tab << declare("divIn1", intDivSize) << " <= x_sig & '0' & CONV_STD_LOGIC_VECTOR(" << h << ", " << s <<");" << endl;
 			vhdl << tab << declare("divIn", intDivSize) << " <= divIn1 when mltd='1' else divIn0;" << endl;
@@ -158,7 +162,7 @@ namespace flopoco{
 			setCycleFromSignal("remainder"); 
 			setCriticalPath(icd->getOutputDelay("R"));
 			
-			vhdl << tab << declare("r_frac", wF_out) << " <= quotient" << range(wF_out-1, 0) << ";"<<endl;
+			vhdl << tab << declare("r_frac", wFOut) << " <= quotient" << range(wFOut-1, 0) << ";"<<endl;
 			
 		}
 			vhdl << tab << "R <=  r_exn & x_sgn & r_exp & r_frac" << ";" << endl;
@@ -182,17 +186,17 @@ namespace flopoco{
 		mpz_class svX = tc->getInputValue("X");
 
 		/* Compute correct value */
-		FPNumber fpx(wE_in, wF_in);
+		FPNumber fpx(wEIn, wFIn);
 		fpx = svX;
 		mpfr_t x, mpd, r;
-		mpfr_init2(x, 1+wF_in);
-		mpfr_init2(r, 1+wF_out); 
+		mpfr_init2(x, 1+wFIn);
+		mpfr_init2(r, 1+wFOut); 
 		mpfr_init(mpd); // Should be enough for everybody 
 		mpfr_set_d(mpd, dd, GMP_RNDN);
 		fpx.getMPFR(x);
 		mpfr_div(r, x, mpd, GMP_RNDN);		
 		// Set outputs 
-		FPNumber  fpr(wE_out, wF_out, r);
+		FPNumber  fpr(wEOut, wFOut, r);
 		mpz_class svRN = fpr.getSignalValue();
 		tc->addExpectedOutput("R", svRN);
 		// clean up
@@ -268,5 +272,39 @@ namespace flopoco{
 		// increase the counter of the treated operator indicating how many tests have been done on it
 		ts -> counter++;
 	}
+
+
+	OperatorPtr FPConstDiv::parseArguments(Target *target, vector<string> &args) {
+		int wE,wF, d, dExp, alpha;
+		UserInterface::parseStrictlyPositiveInt(args, "wE", &wE); 
+		UserInterface::parseStrictlyPositiveInt(args, "wF", &wF);
+		UserInterface::parseStrictlyPositiveInt(args, "d", &d);
+		UserInterface::parseInt(args, "dExp", &dExp);
+		UserInterface::parseInt(args, "alpha", &alpha);
+		return new FPConstDiv(target, wE, wF,  wE,  wF, d,  dExp, alpha);
+	}
+
+	void FPConstDiv::registerFactory(){
+		UserInterface::add("FPConstDiv", // name
+											 "Correctly rounded floating-point divider by a small constant.",
+											 "ConstMultDiv",
+											 "", // seeAlso
+											 "wE(int): exponent size in bits; \
+                        wF(int): mantissa size in bits;  \
+                        d(int): small integer to divide by;  \
+                        dExp(int)=0: binary exponent of d (the operator will divide by d.2^dExp);  \
+                        alpha(int)=-1: Algorithm uses radix 2^alpha. -1 choses a sensible default.",
+											 "Correct rounding to the nearest (if you want other rounding modes contact us). This operator is described in <a href=\"bib/flopoco.html#dedinechin:2012:ensl-00642145:1\">this article</a>.",
+											 FPConstDiv::parseArguments
+											 ) ;
+		
+		/* Cut because it doesn't simulate properly
+                        wEOut(int)=0: output exponent size in bits. If 0, will be equal to wE.; \
+                        wFOut(int)=0: output mantissa size in bits. If 0, will be equal to wF.; \
+		*/
+
+	}
+
+
 }
 

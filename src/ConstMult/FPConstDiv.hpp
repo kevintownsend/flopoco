@@ -14,15 +14,15 @@ namespace flopoco{
 	{
 	public:
 		/** @brief The generic constructor */
-		FPConstDiv(Target* target, int wE_in, int wF_in, int wE_out, int wF_out, int d, int dExp=0, int alpha=-1);
+		FPConstDiv(Target* target, int wEIn, int wFIn, int wEOut, int wFOut, int d, int dExp=0, int alpha=-1);
 
 
 		~FPConstDiv();
 
-		int wE_in;
-		int wF_in;
-		int wE_out;
-		int wF_out;
+		int wEIn;
+		int wFIn;
+		int wEOut;
+		int wFOut;
 
 
 
@@ -30,12 +30,19 @@ namespace flopoco{
 		void emulate(TestCase *tc);
 		void buildStandardTestCases(TestCaseList* tcl);
 
+
+		/** Factory method that parses arguments and calls the constructor */
+		static OperatorPtr parseArguments(Target *target , vector<string> &args);
+
+		/** Factory register method */ 
+		static void registerFactory();
+
 		/** @brief Static method used for tests on the Operator */
 		static void nextTest ( TestState * ts );
 
 	private:
-		int d;
-		int dExp;
+		int d; /**< The operator divides by d.2^dExp */
+		int dExp;  /**< The operator divides by d.2^dExp */
 		int alpha;
 		IntConstDiv *icd;
 		bool mantissaIsOne;
