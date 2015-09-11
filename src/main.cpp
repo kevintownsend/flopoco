@@ -96,6 +96,8 @@ int main(int argc, char* argv[] )
 		FPSquare::registerFactory();
 		IterativeLog::registerFactory();
 		FPPow::registerFactory();
+		FixSinCos::registerFactory();
+		CordicSinCos::registerFactory();
 		//FixedComplexAdder::registerFactory();
 		FixFIR::registerFactory();
 		FixSOPC::registerFactory();

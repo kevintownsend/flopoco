@@ -33,6 +33,12 @@ namespace flopoco{
 
 		
 		mpz_class fp2fix(mpfr_t x, int wI, int wF);
+		
+		/** Factory method that parses arguments and calls the constructor */
+		static OperatorPtr parseArguments(Target *target , vector<string> &args);
+
+		/** Factory register method */ 
+		static void registerFactory();
 
 	private:
 		int wIn;                   /**< input precision, input being in [-1,1) (includes a sign bit of weight 2^0) */
