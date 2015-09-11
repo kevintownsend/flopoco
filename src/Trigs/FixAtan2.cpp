@@ -26,6 +26,9 @@
 #include "FixAtan2.hpp"
 #include "ShiftersEtc/LZOC.hpp"
 #include "ShiftersEtc/Shifters.hpp"
+#include "FixAtan2ByRecipMultAtan.hpp"
+#include "FixAtan2ByCORDIC.hpp"
+#include "FixAtan2ByBivariateApprox.hpp"
 
 using namespace std;
 
@@ -315,6 +318,35 @@ namespace flopoco {
 
 	}
 
+	OperatorPtr FixAtan2::parseArguments(Target *target, vector<string> &args) {		
+		int lsb, method;
+		UserInterface::parseInt(args, "lsb", &lsb);
+		UserInterface::parsePositiveInt(args, "method", &method);
+		//select the method
+		if(method < 8){	
+			return new FixAtan2ByRecipMultAtan(target, -lsb,-lsb, method);
+		}
+		else if(method<10) {
+			return new FixAtan2ByCORDIC(target, -lsb,-lsb);
+		}
+		else {
+			return new FixAtan2ByBivariateApprox(target, -lsb, -lsb, method-10);
+		}
+			
+	}
+
+	void FixAtan2::registerFactory(){
+		UserInterface::add("FixAtan2", // name
+											 "Computes atan(x/y) as a=(angle in radian)/pi so a in [-1,1[.",
+											 "ElementaryFunctions",
+											 "", // seeAlso
+											 "lsb(int): weight of the LSB of both inputs and outputs; \
+                        method(int): parameter select between: InvMultAtan with approximations of the corresponding degree (0..7), plain CORDIC (8), CORDIC with scaling (9), a method using surface approximation (10), Taylor approximation of order 1 (11) and 2 (12)",
+											 "For more details, see <a href=\"bib/flopoco.html#DinIsto2015\">this article</a>.",
+											 FixAtan2::parseArguments
+											 ) ;
+		
+	}
 
 
 

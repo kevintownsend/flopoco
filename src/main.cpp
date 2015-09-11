@@ -98,6 +98,7 @@ int main(int argc, char* argv[] )
 		FPPow::registerFactory();
 		FixSinCos::registerFactory();
 		CordicSinCos::registerFactory();
+		FixAtan2::registerFactory();
 		//FixedComplexAdder::registerFactory();
 		FixFIR::registerFactory();
 		FixSOPC::registerFactory();

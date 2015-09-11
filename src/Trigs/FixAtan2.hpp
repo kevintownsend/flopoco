@@ -62,6 +62,12 @@ namespace flopoco {
 		 * The buildStandardTestCases function from Operator
 		 */
 		void buildStandardTestCases(TestCaseList * tcl) ;
+		
+		/** Factory method that parses arguments and calls the constructor */
+		static OperatorPtr parseArguments(Target *target , vector<string> &args);
+
+		/** Factory register method */ 
+		static void registerFactory();
 
 	protected:
 
