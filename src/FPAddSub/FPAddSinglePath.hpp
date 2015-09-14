@@ -23,8 +23,8 @@ namespace flopoco{
 		/**
 		 * The FPAddSinglePath constructor
 		 * @param[in]		target		the target device
-		 * @param[in]		wE			the the with of the exponent 
-		 * @param[in]		wF			the the with of the fraction 
+		 * @param[in]		wE			the the with of the exponent
+		 * @param[in]		wF			the the with of the fraction
 		 */
 		FPAddSinglePath(Target* target, int wE, int wF, bool sub=false, map<string, double> inputDelays = emptyDelayMap);
 
@@ -38,31 +38,36 @@ namespace flopoco{
 		void buildStandardTestCases(TestCaseList* tcl);
 		TestCase* buildRandomTestCase(int i);
 
+		// User-interface stuff
+		/** Factory method */
+		static OperatorPtr parseArguments(Target *target , vector<string> &args);
+
+		static void registerFactory();
 
 
 	private:
 		/** The width of the exponent */
-		int wE; 
+		int wE;
 		/** The width of the fraction */
 		int wF;
 		/** Is this an FPAdd or an FPSub? */
 		bool sub;
 
 		/** The combined leading zero counter and shifter for the close path */
-		LZOCShifterSticky* lzocs; 
+		LZOCShifterSticky* lzocs;
 		/** The integer adder object for subtraction in the close path */
-		IntAdder *fracSubClose; 
+		IntAdder *fracSubClose;
 		/** The dual subtractor for the close path */
 		IntDualSub *dualSubClose;
 		/** The fraction adder for the far path */
-		IntAdder *fracAddFar; 
+		IntAdder *fracAddFar;
 		/** The adder that does the final rounding */
-		IntAdder *finalRoundAdd; 
+		IntAdder *finalRoundAdd;
 		/** The right shifter for the far path */
-		Shifter* rightShifter;	
+		Shifter* rightShifter;
 
 		int sizeRightShift;
-	
+
 	};
 
 }

@@ -966,3 +966,21 @@ void FixSinCos::buildStandardTestCases(TestCaseList * tcl)
 
 }
 
+OperatorPtr FixSinCos::parseArguments(Target *target, vector<string> &args) {
+	int lsb;
+	UserInterface::parseInt(args, "lsb", &lsb); 
+	return new FixSinCos(target, -lsb); // TODO we want to expose the constructor parameters in the new  interface, so this "-" is a bug
+}
+
+void FixSinCos::registerFactory(){
+	UserInterface::add("FixSinCos", // name
+										 "Computes (1-2^(-w)) sin(pi*x) and (1-2^(-w)) cos(pi*x) for x in -[1,1[, using tables and multipliers.",
+										 "ElementaryFunctions",
+										 "", // seeAlso
+										 "lsb(int): weight of the LSB of the input and outputs",
+										 "For a fixed-point 2's complement input x in [-1,1[, calculates (1-2^(lsbIn))*{sin,cos}(pi*x) using a table- and multiplier-based technique. <br>For more details, see <a href=\"bib/flopoco.html#DinIstSer2013-HEART-SinCos\">this article</a>.",
+										 FixSinCos::parseArguments
+										 ) ;
+	
+}
+

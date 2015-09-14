@@ -10,6 +10,7 @@
 #endif
 
 #include "Operator.hpp"
+#include "UserInterface.hpp"
 #include "FlopocoStream.hpp"
 
 /* operator pipeline work* ------------------------------------ */
@@ -86,6 +87,7 @@
 
 
 /* Floating-point adder variants ----------------------------- */
+#include "FPAddSub/FPAdd.hpp"
 #include "FPAddSub/FPAddDualPath.hpp"
 #include "FPAddSub/FPAddSinglePath.hpp"
 #include "FPAddSub/FPAdd3Input.hpp"
@@ -128,8 +130,9 @@
 #include "FixFunctions/FixFunctionBySimplePoly.hpp"
 #include "FixFunctions/FixFunctionByPiecewisePoly.hpp"
 
-#include "FixFunctions/BipartiteTable.hpp"
 #include "FixFunctions/GenericTable.hpp"
+#include "FixFunctions/BipartiteTable.hpp"
+#include "FixFunctions/FixFunctionByMultipartiteTable.hpp"
 
 /*  Various elementary functions in fixed or floating point*/
 #include "Trigs/FixSinCos.hpp"
@@ -157,10 +160,11 @@
 
 
 
+/* Complex arithmetic */
+#include "Complex/FixComplexKCM.hpp"
 
 #if 0
 // Old stuff removed from older versions, some of which to bring back to life
-/* Complex arithmetic */
 #include "Complex/FixedComplexAdder.hpp"
 #include "Complex/FixedComplexMultiplier.hpp"
 

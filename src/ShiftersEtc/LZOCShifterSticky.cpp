@@ -36,15 +36,15 @@ namespace flopoco{
 		// -------- Parameter set up -----------------
 		setEntityType( (countType_==-1?gen:spec) );
 		srcFileName = "LZOCShifterSticky";
+		setCopyrightString("Florent de Dinechin, Bogdan Pasca (2007)");
 		
 		REPORT( INFO, "wIn="<<wIn << " wOut="<<wOut << " wCount="<<wCount << " computeSticky=" << computeSticky  << " countType=" << countType); 
 
 		ostringstream name; 
 		name << "L" << (countType_<0?"ZO":((countType_>0)?"O":"Z")) << "CShifter"
-			  << (computeSticky_?"Sticky":"") << "_" << wIn_ << "_to_"<<wOut_<<"_counting_"<<(1<<wCount_)<<"_uid"<<Operator::getNewUId();;
-		setName(name.str());
+			  << (computeSticky_?"Sticky":"") << "_" << wIn_ << "_to_"<<wOut_<<"_counting_"<<(1<<wCount_);
+		setNameWithFreqAndUID(name.str());
 
-		setCopyrightString("Florent de Dinechin, Bogdan Pasca (2007)");
 
 	
 		// -------- Parameter set up -----------------
@@ -256,6 +256,36 @@ namespace flopoco{
 				
 		if (computeSticky_)
 			tc->addExpectedOutput("Sticky",sticky);
+	}
+
+
+	OperatorPtr LZOCShifterSticky::parseArguments(Target *target, std::vector<std::string> &args) {
+		int wIn, wOut, wCount, countType;
+		bool computeSticky;
+		UserInterface::parseStrictlyPositiveInt(args, "wIn", &wIn);
+		UserInterface::parseStrictlyPositiveInt(args, "wOut", &wOut);
+		UserInterface::parseStrictlyPositiveInt(args, "wCount", &wCount);
+		UserInterface::parseBoolean(args, "computeSticky", &computeSticky);
+		UserInterface::parseInt(args, "countType", &countType);
+		return new LZOCShifterSticky(target, wIn, wOut, wCount, computeSticky, countType);
+	}
+
+
+	
+	void LZOCShifterSticky::registerFactory(){
+		UserInterface::add("LZOCShifterSticky", // name
+											 "A combined leading zero/one counter and shifter, useful for floating-point normalization.",
+											 "ShiftersLZOCs",  // category
+											 "", // see also
+											 "wIn(int): input size in bits;\
+                        wOut(int): output size in bits;\
+                        wCount(int): size in bits of the count output;\
+                        computeSticky(bool)=false: if false the shifted-out bits are discarded, if true they are ORed into a sticky bit which is output;\
+                        countType(int)=-1:  0 to count zeroes, 1 to count ones, -1 to have a dynamic OZb input that tells what to count", // This string will be parsed
+											 "", // no particular extra doc needed
+											 LZOCShifterSticky::parseArguments
+											 ) ;
+		
 	}
 
 

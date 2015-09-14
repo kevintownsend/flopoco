@@ -198,7 +198,7 @@ namespace flopoco{
 			
 			bool tempPipelineStatus = target->isPipelined();
 			bool tempDSPStatus = target->hasHardMultipliers();
-			target->setNotPipelined();
+			target->setPipelined(false);
 			target->setUseHardMultipliers(false);
 			
 			if (tempPipelineStatus) 
@@ -289,6 +289,26 @@ namespace flopoco{
 		mpz_class svX = tc->getInputValue("X");
 		mpz_class svR = svX * svX ;
 		tc->addExpectedOutput("R", svR);
+	}
+
+	
+	OperatorPtr IntSquarer::parseArguments(Target *target, std::vector<std::string> &args) {
+		int wIn;
+		UserInterface::parseStrictlyPositiveInt(args, "wIn", &wIn);
+		return new IntSquarer(target, wIn);
+	}
+
+
+	
+	void IntSquarer::registerFactory(){
+		UserInterface::add("IntSquarer", // name
+											 "A pipelined integer squarer.",
+											 "BasicInteger", // category
+											 "", // see also
+											 "wIn(int): size of input in bits", // This string will be parsed
+											 "", // no particular extra doc needed
+											 IntSquarer::parseArguments
+											 ) ;
 	}
 
 

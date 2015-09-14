@@ -13,22 +13,14 @@ namespace flopoco {
 // or eliminated completely in favor of using directly std::auto_ptr
 template<typename T> class Option {
 	public:
-		Option (T x)
-			:empty(false),value(new T(x))
-		{
-		}
-		Option ()
-			:empty(true),value((T*) 0)
-		{
-		}
-		bool is_empty () const {
-			return empty;
-		}
-		T const& get_value () const {
-			if (empty)
-				throw "Option object is empty";
-			return *value;
-		}
+		Option (T x);
+
+		Option ();
+
+		bool is_empty () const ;
+
+		T const& get_value () const;
+
 	protected:
 		bool empty;
 		std::tr1::shared_ptr<T> value;

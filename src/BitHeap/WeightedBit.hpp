@@ -47,37 +47,28 @@ namespace flopoco{
 
 
 
-			/** standard constructor   */
+			/** @brief standard constructor   */
 			WeightedBit(int bitHeapId, int uid, int weight, int type, int cycle,  double criticalPath);
 
 
-			/** This clone constructor is used by the copies in snapshots made by Plotter*/
+			/** @brief This clone constructor is used by the copies in snapshots made by Plotter*/
 			WeightedBit(WeightedBit* bit);
 
 
-			/** Constructor for bits that go to history */
+			/** @brief Constructor for bits that go to history */
 			WeightedBit(WeightedBit* bit, int deathCycle,  double DeathCP, string killerCompressor);
 
 
-			/** destructor */
-			~WeightedBit(){};
-
-
-			/** return the cycle at which this bit is defined */
+			/** @brief return the cycle at which this bit is defined */
 			int getCycle();
 
-			/** return the critical path of this bit */
+			/** @brief return the critical path of this bit */
 			double getCriticalPath(int atCycle);
 
-			/** returns the stage when this bit should be compressed */
+			/** @brief returns the stage when this bit should be compressed */
 			int computeStage(int stagesPerCycle, double elementaryTime);
 
-
-
-
-
-
-			/** return the VHDL signal name of this bit */
+			/** @brief return the VHDL signal name of this bit */
 			string getName();
 
 			int getWeight();

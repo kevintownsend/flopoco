@@ -61,7 +61,7 @@ namespace flopoco{
 		// There are three exponent cases to consider:
 		// wEI==wEO is the easiest case, with one subtelty:  
 		//    we have two more exponent values than IEEE (field 0...0, value -(1<<wEI)+1, and field 11..11, value 1<<wEI),
-		//    we may thus convert into normal numbers input values whose mantissa field begins with a 1
+		//    we may thus convert into normal numbers subnormal input values whose mantissa field begins with a 1
 		//    Other subnormals are flushed to zero
 		// wEI > wEO (range downgrading) is probably the most useful, as we want to minimize the precision of the FPGA computation
 		//    with respect to a software implementation 
@@ -417,9 +417,32 @@ namespace flopoco{
 		tc->addInput("X", x);
 		emulate(tc);
 		tcl->add(tc);
-
-
 	}
 
+	
+	OperatorPtr InputIEEE::parseArguments(Target *target, vector<string> &args) {
+		int wEIn, wFIn, wEOut, wFOut;
+		 bool flushToZero=true;
+		UserInterface::parseStrictlyPositiveInt(args, "wEIn", &wEIn); 
+		UserInterface::parseStrictlyPositiveInt(args, "wFIn", &wFIn);
+		UserInterface::parseStrictlyPositiveInt(args, "wEOut", &wEOut); 
+		UserInterface::parseStrictlyPositiveInt(args, "wFOut", &wFOut);
+		//UserInterface::parseBoolean(args, "flushToZero", &flushToZero);
+		return new InputIEEE(target, wEIn, wFIn, wEOut, wFOut, flushToZero);
+	}
 
+	
+	void InputIEEE::registerFactory(){
+		UserInterface::add("InputIEEE", // name
+											 "Conversion from IEEE-754-like to FloPoCo floating-point formats. Subnormals are all flushed to zero at the moment.",
+											 "Conversions",
+											 "", // seeAlso
+											 "wEIn(int): input exponent size in bits;\
+                        wFIn(int): input mantissa size in bits;\
+                        wEOut(int): output exponent size in bits;\
+                        wFOut(int): output mantissa size in bits",
+											 "", // htmldoc
+											 InputIEEE::parseArguments
+											 ) ;
+	}
 }

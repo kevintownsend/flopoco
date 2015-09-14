@@ -21,12 +21,12 @@ namespace flopoco {
 
 	/*
 			Corner cases that one has to understand and support:
-		 
+
 			related to g, so stand-alone only: in general, g>0 when wOut<wX+wY.
 			However, one situation where g=0 and wOut!=wX+wY is the tabulation of a small rounded multiplier.
 			To manage this case, 1/ neededGuardBits should anticipate it and 2/ the rounding should always be at the bit 0 of the bit heap.
 
-			
+
 
 			Final rounding: to do only in case of a stand-alone operator. Therefore, it shouldn't be in fillBitHeap()
 
@@ -36,9 +36,9 @@ namespace flopoco {
 			inputs wOut, computes g out of it, computes lsbWeightInBitHeap, instantiates a bit heap, and throws bits in it.
 			In case of truncation, needs to add a round bit
 
-			VIRTUAL: 
+			VIRTUAL:
 			inputs lsbWeightInBitHeap (which may have been computed by parentOp after calls to neededGuardBits) lsbFullMultWeightInBitheap
-			and throws bits in it. No notion of guard bit: this belongs to parentOp. 
+			and throws bits in it. No notion of guard bit: this belongs to parentOp.
 			No addition of rounding bits: this is the responsibility of parentOp
 
 		As a consequence, attributes of IntMultiplier:
@@ -82,17 +82,17 @@ namespace flopoco {
 		 * @param[in] bitHeap       the BitHeap to which bits will be added
 		 * @param[in] x            a Signal from which the x input should be taken
 		 * @param[in] y            a Signal from which the y input should be taken
-		 * @param[in] lsbWeightInBitHeap     the weight, within this BitHeap, corresponding to the LSB of the multiplier output. 
+		 * @param[in] lsbWeightInBitHeap     the weight, within this BitHeap, corresponding to the LSB of the multiplier output.
 		 *                          Note that there should be enough bits below for guard bits in case of truncation.
 		 *                          The method neededGuardBits() provides this information.
 		 *                          For a stand-alone multiplier lsbWeightInBitHeap=g, otherwise lsbWeightInBitHeap>=g
-		 * @param[in] negate     if true, the multiplier result is subtracted from the bit heap 
+		 * @param[in] negate     if true, the multiplier result is subtracted from the bit heap
 		 * @param[in] signedIO     false=unsigned, true=signed
 		 **/
 		// FIXME: for now, lsbFullMultWeightInBitheap so as no to break compatibility with the rest of the code
-		IntMultiplier (Operator* parentOp, BitHeap* bitHeap,  Signal* x, Signal* y, 
+		IntMultiplier (Operator* parentOp, BitHeap* bitHeap,  Signal* x, Signal* y,
 									 int lsbWeightInBitHeap,
-									 bool negate, bool signedIO, 
+									 bool negate, bool signedIO,
 									 int lsbFullMultWeightInBitheap = 0);
 
 		/** How many guard bits will a truncated multiplier need? Needed to set up the BitHeap of an operator using the virtual constructor */
@@ -104,9 +104,9 @@ namespace flopoco {
 		/** A constructor for fix-point use
 		 * Generates a component, and produces VHDL code for the instance inside an operator.
 		 * The inputs signal names (x|y)SignalName are names of existing signals of the FloPoCo fixed-point types.
-		 * This method reads the fixed-point parameters from them. 
+		 * This method reads the fixed-point parameters from them.
 		 * It then declares two new signals: rSignalName as a numeric_std (parameters isSigned, rMSB, rLSB),
-		 * and rSignalName+"_slv" is the equivalent standard_logic_vector 
+		 * and rSignalName+"_slv" is the equivalent standard_logic_vector
 		 */
 		static IntMultiplier* newComponentAndInstance(
 														 Operator* op,
@@ -131,9 +131,16 @@ namespace flopoco {
 		void emulate ( TestCase* tc );
 
 		void buildStandardTestCases(TestCaseList* tcl);
-
+		
 		// Static method used for tests on the Operator
 		static void nextTest ( TestState * ts );
+
+
+		/** Factory method that parses arguments and calls the constructor */
+		static OperatorPtr parseArguments(Target *target , vector<string> &args);
+
+		/** Factory register method */ 
+		static void registerFactory();
 
 
 
@@ -163,14 +170,14 @@ namespace flopoco {
 
 
 
-		/**	builds the logic block ( smallMultTables) 
-		 *@param lsbX, lsbY -top right coordinates 
-		 *@param msbX, msbY -bottom left coordinates 
+		/**	builds the logic block ( smallMultTables)
+		 *@param lsbX, lsbY -top right coordinates
+		 *@param msbX, msbY -bottom left coordinates
 		 *@param uid is just a number which helps to form the signal names (for multiple calling of the method
 		 )	*/
 		void buildHeapLogicOnly(int lsbX, int lsbY, int msbX, int msbY, int uid=-1);
 
-		/**	builds the heap using DSP blocks) 
+		/**	builds the heap using DSP blocks)
 		 */
 		void buildXilinxTiling();
 
@@ -203,7 +210,6 @@ namespace flopoco {
 
 
 
-
 		int wXdecl;                     /**< the width for X as declared*/
 		int wYdecl;                     /**< the width for Y  as declared*/
 		int wX;                         /**< the width for X after possible swap such that wX>wY */
@@ -217,15 +223,14 @@ namespace flopoco {
 	private:
 		void initialize();     			/**< initialization stuff common to both constructors*/
 
-		bool useDSP;
 		int wxDSP, wyDSP;               /**< the width on X/Y in DSP(s)*/
-		Operator* parentOp;  			/**< For a virtual multiplier, adding bits to some external BitHeap, 
+		Operator* parentOp;  			/**< For a virtual multiplier, adding bits to some external BitHeap,
 												this is a pointer to the Operator that will provide the actual vhdl stream etc. */
 		BitHeap* bitHeap;    			/**< The heap of weighted bits that will be used to do the additions */
 		//Plotter* plotter;
 		// TODO the three following variable pairs seem ugly redundant
 		Signal* x;
-		Signal* y; 
+		Signal* y;
 		string xname;
 		string yname;
 		string inputName1;
@@ -235,12 +240,10 @@ namespace flopoco {
 		bool enableSuperTiles;     		/**< if true, supertiles are built (fewer resources, longer latency */
 		int multiplierUid;
 
-		vector<MultiplierBlock*> localSplitVector;	
-		vector<int> multWidths;	
+		vector<MultiplierBlock*> localSplitVector;
+		vector<int> multWidths;
 		//vector<DSP*> dsps;
 		//ofstream fig;
-
-		Target* target;
 
 	};
 

@@ -478,6 +478,30 @@ namespace flopoco{
 		return h;
 	}
 
+
+	// TODO There should be only one factory for the cordicsincos and fixsincos... On the model of FixAtan2
+	OperatorPtr CordicSinCos::parseArguments(Target *target, vector<string> &args) {
+		int lsb;
+		//int lsbOut;
+		bool reducedIterations;
+		UserInterface::parseBoolean(args, "reducedIterations", &reducedIterations); 
+		// 		UserInterface::parseInt(args, "lsbOut", &lsbOut);
+		UserInterface::parseInt(args, "lsb", &lsb);
+		return new CordicSinCos(target, -lsb, -lsb, reducedIterations);  // TODO we want to expose the constructor parameters in the new  interface, so these "-" are a bug
+	}
+
+	void CordicSinCos::registerFactory(){
+		UserInterface::add("CordicSinCos", // name
+											 "Computes (1-2^(-w)) sin(pi*x) and (1-2^(-w)) cos(pi*x) for x in -[1,1[, using CORDIC algorithm",
+											 "ElementaryFunctions",
+											 "", // seeAlso
+											 "lsb(int): weight of the LSB of the input and outputs; \
+                        reducedIterations(int)=0: If 1, number of iterations will be reduced at the cost of two multiplications. ",
+											 "This is a classical CORDIC, implemented the FloPoCo way: it is last-bit accurate, hopefully at the minimum cost. <br>For more details, see <a href=\"bib/flopoco.html#DinIstSer2013-HEART-SinCos\">this article</a>.",
+											 CordicSinCos::parseArguments
+											 ) ;
+		
+	}
 }
 
 

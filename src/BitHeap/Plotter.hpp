@@ -7,7 +7,7 @@
 Author : Florent de Dinechin, Kinga Illyes, Bogdan Popa
 
 Initial software.
-Copyright © ENS-Lyon, INRIA, CNRS, UCBL,  
+Copyright © ENS-Lyon, INRIA, CNRS, UCBL,
 2012.
 All rights reserved.
 
@@ -33,15 +33,14 @@ namespace flopoco
 	{
 
 	public:
-	
+
 		class Snapshot
 		{
 			public:
 
-				Snapshot(vector<list<WeightedBit*> > bitheap, int minWeight_, int maxWeight_, unsigned maxHeight,  
+				Snapshot(vector<list<WeightedBit*> > bitheap, int minWeight_, int maxWeight_, unsigned maxHeight,
 						bool didCompress_,  int cycle, double cp);
 
-				~Snapshot(){};
 
 				/** ordering by availability time */
 				friend bool operator< (Snapshot& b1, Snapshot& b2);
@@ -62,34 +61,34 @@ namespace flopoco
 				int maxWeight;
 				int minWeight;
 				unsigned maxHeight;
-				bool didCompress; 
+				bool didCompress;
 				int cycle;
 				double cp;
 				string srcFileName;
 		};
-		
-		/** 
-		 * constructor 
+
+		/**
+		 * @brief constructor
 		 */
 		Plotter(BitHeap* bh_);
 
-		/** 
-		 * destructor 
+		/**
+		 * @brief destructor
 		 */
 		~Plotter();
 
-		/** 
-		 * takes a snapshot of the bitheap's current state 
+		/**
+		 * @brief takes a snapshot of the bitheap's current state
 		 */
 		void heapSnapshot(bool compress, int cycle, double cp);
 
-		/** 
-		 * plots all the bitheap's stages 
+		/**
+		 * @brief plots all the bitheap's stages
 		 */
 		void plotBitHeap();
 
-		/** 
-		 * plots multiplier area and sheared views 
+		/**
+		 * @brief plots multiplier area and sheared views
 		 */
 		void plotMultiplierConfiguration(string name, vector<MultiplierBlock*> mulBlocks, int wX, int wY, int wOut, int g);
 
@@ -102,44 +101,44 @@ namespace flopoco
 
 
 	private:
-	
-		/** 
-		 * draws the initial bitheap 
+
+		/**
+		 * @brief draws the initial bitheap
 		 */
 		void drawInitialHeap();
 
-		/** 
-		 * draws the stages of the heap compression 
+		/**
+		 * @brief draws the stages of the heap compression
 		 */
 		void drawCompressionHeap();
 
-		/** 
-		 * draws the area view of the DSP configuration 
+		/**
+		 * @brief draws the area view of the DSP configuration
 		 */
 		void drawAreaView(string name, vector<MultiplierBlock*> mulBlocks, int wX, int wY, int wOut, int g);
 
-		/** 
-		 * draws the sheared view of the DSP configuration 
+		/**
+		 * draws the sheared view of the DSP configuration
 		 */
 		void drawLozengeView(string name, vector<MultiplierBlock*> mulBlocks, int wX, int wY, int wOut, int g);
 
-		/** 
-		 * draws a line between the specified coordinates 
+		/**
+		 * @brief draws a line between the specified coordinates
 		 */
 		void drawLine(int wX, int wY, int wRez, int offsetX, int offsetY, int scalingFactor, bool isRectangle, std::string toolTip = "");
 
-		/** 
-		 * draws a DSP block 
+		/**
+		 * @brief draws a DSP block
 		 */
 		void drawDSP(int wXY,  int wY, int i, int xT, int yT, int xB, int yB, int offsetX, int offsetY, int scalingFactor,  bool isRectangle);
 
-		/** 
-		 * draws the target rectangle or lozenge 
+		/**
+		 * @brief draws the target rectangle or lozenge
 		 */
 		void drawTargetFigure(int wX, int wY, int offsetX, int offsetY, int scalingFactor, bool isRectangle);
 
-		/** 
-		 * draws a small multiplier table 
+		/**
+		 * @brief draws a small multiplier table
 		 */
 		void drawSmallMult(int wX, int wY, int xT, int yT, int xB, int yB, int offsetX, int offsetY, int scalingFactor,  bool isRectangle);
 
@@ -147,11 +146,11 @@ namespace flopoco
 
 		void drawInitialConfiguration( vector<list<WeightedBit*> > bits, int maxWeight, int offsetY, int turnaroundX);
 
-		void drawConfiguration(vector<list<WeightedBit*> > bits, unsigned nr, int cycle, double cp, 
+		void drawConfiguration(vector<list<WeightedBit*> > bits, unsigned nr, int cycle, double cp,
 				int maxWeight, int offsetY, int turnaroundX, bool timeCondition);
 
-		/** 
-		 * draws a single bit 
+		/**
+		 * @brief draws a single bit
 		 */
 		void drawBit(int cnt, int w, int turnaroundX, int offsetY, int color, int cycle, int cp, string name);
 

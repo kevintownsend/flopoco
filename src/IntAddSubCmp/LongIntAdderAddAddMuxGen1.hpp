@@ -10,7 +10,7 @@
 
 namespace flopoco{
 
-	/** The LongIntAdderAddAddMuxGen1 class for experimenting with adders. 
+	/** The LongIntAdderAddAddMuxGen1 class for experimenting with adders.
 	 */
 	class LongIntAdderAddAddMuxGen1 : public Operator
 	{
@@ -24,7 +24,7 @@ namespace flopoco{
 		LongIntAdderAddAddMuxGen1(Target* target, int wIn, map<string, double> inputDelays = emptyDelayMap);
 		/*LongIntAdderAddAddMuxGen1(Target* target, int wIn);
 		  void cmn(Target* target, int wIn, map<string, double> inputDelays);*/
-	
+
 		/**
 		 *  Destructor
 		 */
@@ -32,6 +32,11 @@ namespace flopoco{
 
 
 		void emulate(TestCase* tc);
+		// User-interface stuff
+		/** Factory method */
+		static OperatorPtr parseArguments(Target *target , vector<string> &args);
+		static void registerFactory();
+
 
 	protected:
 		int wIn_;                         /**< the width for X, Y and R*/

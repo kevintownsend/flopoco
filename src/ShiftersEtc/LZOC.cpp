@@ -32,12 +32,17 @@ namespace flopoco{
 		Operator(target, inputDelays), wIn_(wIn) {
 		ostringstream currLevel, currDigit, nextLevel;
 	
+		srcFileName = "LZOC";
+		setCopyrightString("Florent de Dinechin, Bogdan Pasca (2007)");
+
+		ostringstream name; 
+		name <<"LZOC_"<<wIn;
+		setNameWithFreqAndUID(name.str());
 	
 		// -------- Parameter set up -----------------
 		wOut_ = intlog2(wIn);
 		p2wOut_ = 1<<wOut_; // no need for GMP here
 
-		setOperatorName();
 
 		addInput ("I", wIn_);
 		addInput ("OZB");  
@@ -87,11 +92,6 @@ namespace flopoco{
 
 	LZOC::~LZOC() {}
 
-	void LZOC::setOperatorName(){
-		ostringstream name; 
-		name <<"LZOC_"<<wIn_<<"_"<<wOut_<<"_uid"<<Operator::getNewUId();;
-		uniqueName_ = name.str();
-	}
 
 
 	void LZOC::emulate(TestCase* tc)
@@ -112,4 +112,24 @@ namespace flopoco{
 		tc->addExpectedOutput("O", so);
 	}
 
+
+	OperatorPtr LZOC::parseArguments(Target *target, std::vector<std::string> &args) {
+		int wIn;
+		UserInterface::parseStrictlyPositiveInt(args, "wIn", &wIn);
+		return new LZOC(target, wIn);
+	}
+
+
+	
+	void LZOC::registerFactory(){
+		UserInterface::add("LZOC", // name
+											 "A classical barrel shifter. The output size is computed.",
+											 "ShiftersLZOCs", // category
+											 "",
+											 "wIn(int): input size in bits", // This string will be parsed
+											 "", // no particular extra doc needed
+											 LZOC::parseArguments
+											 ) ;
+		
+	}
 }

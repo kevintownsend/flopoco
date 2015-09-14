@@ -20,16 +20,16 @@ the last place of R2.  The pure FloPoCo version (which is a lot
 smaller and faster) is more accurate, with a grey area smaller than 1
 ulp of R2.
 
- 
+
   Author : Florent de Dinechin
- 
+
   This file is part of the FloPoCo project developed by the Arenaire
   team at Ecole Normale Superieure de Lyon.
 
   Initial software.
   Copyright © ENS-Lyon, INRIA, CNRS, UCBL, 2008-2010.
   All right reserved.
- 
+
 */
 #ifndef __COLLISION_HPP
 #define __COLLISION_HPP
@@ -51,11 +51,27 @@ namespace flopoco{
 	class Collision : public Operator
 	{
 	public:
+		/** \todo explicit description of function and parameters
+		 * @brief Collision
+		 * @param target
+		 * @param wE
+		 * @param wF
+		 * @param optimize
+		 */
 		Collision(Target* target, int wE, int wF, int optimize);
 		~Collision();
 
+		/** \todo explicit description of function and parameters
+		 * @brief emulate
+		 * @param tc
+		 */
 		void emulate(TestCase * tc);
 
+		/** \todo explicit description of function and parameters
+		 * @brief buildRandomTestCases
+		 * @param tcl
+		 * @param n
+		 */
 		void buildRandomTestCases(TestCaseList* tcl, int n);
 
 		int wE, wF;

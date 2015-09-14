@@ -37,19 +37,37 @@ namespace flopoco{
 			 @param    degree  degree of the polynomial
 			 @param    msbCoeff vector (of size degree+1) holding the MSB of the polynomial coefficients
 			 @param    lsbCoeff vector (of size degree+1) holding the LSB of the polynomial coefficients
+			 @param    roundingErrorBudget The rounding error budget, excluding final rounding. If -1, will be set to 2^(lsbOut-2) 
 			 @param    signedXandCoeffs  true if the coefficients are signed numbers (usually true)
 			 @param   finalRounding: if false, the operator outputs its guard bits as well, saving the half-ulp rounding error. 
 			                 This makes sense in situations that further process the result with further guard bits.
 
      */
 
+																				
     FixHornerEvaluator(Target* target, 
 											 int lsbIn,
 											 int msbOut,
 											 int lsbOut,
 											 int degree, 
 											 vector<int> msbCoeff, 
-											 int lsbCoeff, 
+											 int lsbCoeff,
+											 double roundingErrorBudget=-1,
+											 bool signedXandCoeffs=true, 
+											 bool finalRounding=true,
+											 map<string, double> inputDelays = emptyDelayMap);
+
+		
+		/** An optimized constructor if the caller has been able to compute the signs and MSBs of the sigma terms */
+    FixHornerEvaluator(Target* target, 
+											 int lsbIn,
+											 int msbOut,
+											 int lsbOut,
+											 int degree, 
+											 vector<int> msbCoeff, 
+											 int lsbCoeff,
+											 vector<int> sigmaSign, vector<int> sigmaMSB,
+											 double roundingErrorBudget=-1,
 											 bool signedXandCoeffs=true, 
 											 bool finalRounding=true,
 											 map<string, double> inputDelays = emptyDelayMap);
@@ -64,11 +82,24 @@ namespace flopoco{
 		int lsbOut;                        /** LSB of output */
     vector<int> msbCoeff;             /**< vector of MSB weights for each coefficient */
     int lsbCoeff;                     /**< LSB weight shared by each coefficient */
+		double roundingErrorBudget;
     bool signedXandCoeffs;                /**< if false, all the coeffs are unsigned and the operator may use unsigned arithmetc. 
 																				 Usually true unless known Taylor etc */
 		bool finalRounding;               /** If true, the operator returns a rounded result (i.e. add the half-ulp then truncate)
 																					If false, the operator returns the full, unrounded results including guard bits */
-    vector<int> coeffSize;            /**< vector of the sizes of the coefficients, computed out of MSB and LSB. See FixConstant.hpp for the constant format */
+		vector<int> coeffSize;            /**< vector of the sizes of the coefficients, computed out of MSB and LSB. See FixConstant.hpp for the constant format */
+
+		// internal architectural parameters; max degree = 1000 should be enough for anybody
+		vector <int> signSigma;
+		vector<int> msbSigma;
+		vector <int>  msbP;
+		vector <int> lsbSigma;
+		vector <int> lsbP;
+		vector <int> lsbXTrunc;
+
+		void computeLSBs(); /**< error analysis that ensures the rounding budget is met */ 
+		void initialize(); /**< initialization factored out between various constructors */ 
+		void generateVHDL(); /**< generation of the VHDL once all the parameters have been computed */ 
 
   };
 

@@ -7,6 +7,7 @@
 
 #include <vector>
 #include <map>
+#include <memory>
 #include <gmpxx.h>
 #include "Target.hpp"
 #include "Signal.hpp"
@@ -22,11 +23,14 @@
 
 using namespace std;
 
-// variables set by the command-line interface in main.cpp
+namespace flopoco {
+	class Operator;
+ 	typedef Operator* OperatorPtr;
+}
 
+#include "UserInterface.hpp"
 
 namespace flopoco {
-
 	// global const variables
 	static const map<string, double> emptyDelayMap;
 	const std::string tab = "   ";
@@ -41,7 +45,7 @@ namespace flopoco {
 #define INNER_SEPARATOR "................................................................................"
 #define DEBUG_SEPARATOR "________________________________________________________________________________"
 #define OUTER_SEPARATOR "################################################################################"
-#define REPORT(level, stream) {if ((level)<=(verbose)){ cerr << "> " << srcFileName << ": " << stream << endl;}else{}} 
+#define REPORT(level, stream) {if ((level)<=(UserInterface::verbose)){ cerr << "> " << srcFileName << ": " << stream << endl;}else{}} 
 #define THROWERROR(stream) {{ostringstream o; o << " ERROR in " << uniqueName_ << " (" << srcFileName << "): " << stream << endl; throw o.str();}} 
 
 
@@ -73,28 +77,11 @@ class Operator
 public:
 
 	/** add a sub-operator to this operator */
-	void addSubComponent(Operator* op);
+	void addSubComponent(OperatorPtr op);
 
 
-	/** add this operator to the global (first-level) list, which is stored in its Target (not really its place, sorry).
-	This method should be called by 
-	1/ the main / top-level, or  
-	2/ for sub-components that are really basic operators, 
-	expected to be used several times, *in a way that is independent of the context/timing*.
-	Typical example is a table designed to fit in a LUT or parallel row of LUTs
- */
-	void addToGlobalOpList();
 
-
-	/** generates the code for a list of operators and all their subcomponents */
-	static void outputVHDLToFile(vector<Operator*> &oplist, ofstream& file);
-
-
-#if 1
-	/** generates the code for this operator and all its subcomponents */
-	void outputVHDLToFile(ofstream& file);
-#endif
-
+	
 	/** Operator Constructor.
 	 * Creates an operator instance with an instantiated target for deployment.
 	 * @param target_ The deployment target of the operator.
@@ -153,7 +140,8 @@ public:
 	// Test:
 	// One option is that fixed-point I/Os should always be plain std_logic_vectors.
 	// It just makes the framework simpler, and anyway typing is managed internally
-	// FP I/O need to be typed to manage the testbenches, e.g. FP equality does not resume to equality on the bit vectors.
+	// FP I/O need to be typed to manage the testbenches, e.g. FP equality does
+	// not resume to equality on the bit vectors.  
 	// This is not the case for fixed-point
 	// (comment by F de Dinechin)
 
@@ -249,6 +237,11 @@ public:
 	*/
 	void setNameWithFreq(std::string operatorName = "UnknownOperator");
 
+	/** Sets Operator name to given name, with either the frequency appended, or "comb" for combinatorial, and a unique identifier for good measure.
+	 * @param operatorName new name of the operator
+	*/
+	void setNameWithFreqAndUID(std::string operatorName = "UnknownOperator");
+
 	/** Sets Operator name to givenName.
 	 * Sets the name of the operator to operatorName.
 	 * @param operatorName new name of the operator
@@ -292,7 +285,8 @@ public:
 
 
 	/* Functions related to pipeline management */
-	// TODO We should introduce a notion of pipetime, which is (cycle, critical path) in lexicographic order.
+	// TODO We should introduce a notion of pipetime, which is 
+	// (cycle, critical path) in lexicographic order.
 
 	/** Define the current cycle, and resets the critical path 
 	 * @param the new value of the current cycle */
@@ -316,7 +310,8 @@ public:
 	/** Set or reset the critical path of the current cycle  */
 	void setCriticalPath(double delay) ;
 
-	/** Adds to the critical path of the current stage, and insert a pipeline stage if needed
+	/** Adds to the critical path of the current stage, and insert a pipeline 
+	 *  stage if needed
 	 * @param the delay to add to the critical path of current pipeline stage */
 	void addToCriticalPath(double delay) ;
 
@@ -327,24 +322,26 @@ public:
 	 * @param the name of the output */
 	double getOutputDelay(string s); 
 
-	/** Set the current cycle to that of a signal and reset the critical path. It may increase or decrease current cycle. 
+	/** Set the current cycle to that of a signal and reset the critical path. 
+	 * It may increase or decrease current cycle. 
 	 * @param name is the signal name. It must have been defined before 
 	 * @param report is a boolean, if true it will report the cycle 
 	 */
 	void setCycleFromSignal(string name, bool report=true) ;
 
-	/** Set the current cycle and the critical path. It may increase or decrease current cycle. 
+	/** Set the current cycle and the critical path. It may increase or 
+	 *  decrease current cycle. 
 	 * @param name is the signal name. It must have been defined before. 
-	 * @param criticalPath is the critical path delay associated to this signal: typically getDelay(name)
+	 * @param criticalPath is the critical path delay associated to this 
+	 * 		  signal: typically getDelay(name)
 	 * @param report is a boolean, if true it will report the cycle 
 	 */
 	void setCycleFromSignal(string name, double criticalPath, bool report=true) ;
 	// TODO: FIXME  
-	// param criticalPath is the critical path delay associated to this signal: typically getDelay(name)
+	// param criticalPath is the critical path delay associated to this signal:
+	// typically getDelay(name)
 	// Shouldn't this be the default behaviour?
 	// Check current use and fix.
-
-
 
 	int getCycleFromSignal(string name, bool report = false);
 		
@@ -364,15 +361,16 @@ public:
 
 		 We have three cases:
 		 1/ currentCycle > name.cycle, then do nothing
-		 2/ currentCycle < name.cycle, then advance currentCycle to name.cycle, and set the current critical path to criticalPath
+		 2/ currentCycle < name.cycle, then advance currentCycle to name.cycle, 
+		 and set the current critical path to criticalPath
 		 3/ currentCycle = name.cycle: set critical path to the max of the two critical paths.
 		 */
 	bool syncCycleFromSignal(string name, double criticalPath, bool report=true) ;
 
 
 	/** sets the delay of the signal with name given by first argument 
-		@param name the name of the signal
-		@param delay the delay to be associated with the name	
+	*	@param name the name of the signal
+	*   @param delay the delay to be associated with the name	
 	**/
 	void setSignalDelay(string name, double delay);
 
@@ -386,16 +384,21 @@ public:
 	/** Declares a signal appearing on the Left Hand Side of a VHDL assignment
 	 * @param name is the name of the signal
 	 * @param width is the width of the signal (optional, default 1)
-	 * @param isbus: a signal of width 1 is declared as std_logic when false, as std_logic_vector when true (optional, default false)
-	 * @param regType: the registring type of this signal. See also the Signal Class for more info
+	 * @param isbus: a signal of width 1 is declared as std_logic when false, 
+	 * 				 as std_logic_vector when true (optional, default false)
+	 * @param regType: the registring type of this signal. See also the Signal 
+	 * 				   Class for more info
 	 * @return name
 	 */
 	string declare(string name, const int width, bool isbus=true, Signal::SignalType regType = Signal::wire );
 
-	/** Declares a signal of length 1 as in the previous declare() function, but as std_logic by default
+	/** Declares a signal of length 1 as in the previous declare() function, 
+	 * 	but as std_logic by default
 	 * @param name is the name of the signal
-	 * @param isbus: if true, declares the signal as std_logic_vector; else declares the signal as std_logic
-	 * @param regType: the registring type of this signal. See also the Signal Class for mor info
+	 * @param isbus: if true, declares the signal as std_logic_vector; 
+	 * 				 else declares the signal as std_logic
+	 * @param regType: the registring type of this signal. See also the Signal 
+	 * 				   Class for mor info
 	 * @return name
 	 */
 	string declare(string name, Signal::SignalType regType = Signal::wire );
@@ -408,8 +411,9 @@ public:
 	string declareFixPoint(string name, const bool isSigned, const int MSB, const int LSB, Signal::SignalType regType = Signal::wire );
 
 	/** Resizes a fixed-point signal and assigns it to a new declared signal.
-			May zero-extend, sign-extend, or truncate.
-			Warns at debug level when truncating LSBs, and warns a bit louder when truncating MSBs.  
+	 *		May zero-extend, sign-extend, or truncate.
+	 *		Warns at debug level when truncating LSBs, and warns a bit louder 
+	 *		when truncating MSBs.  
 	 * @param lhsName is the name of the new (resized) signal
 	 * @param rhsName is the name of the old (to be resized) signal
 	 * @return name
@@ -460,17 +464,15 @@ public:
 	 */
 	string instance(Operator* op, string instanceName);
 
-
-
-
-	/** adds attributes to the generated VHDL so that the tools use embedded RAM blocks for an instance
+	/** adds attributes to the generated VHDL so that the tools use embedded 
+	 *  RAM blocks for an instance
 	 * @ param t a pointer to this instance
 	 */
 	void useHardRAM(Operator* t); 
 	void useSoftRAM(Operator* t); 
 
 	/** define architecture name for this operator (by default : arch)
-	 *	@param[in] 	architectureName		- new name for the operator architecture
+	 *	@param[in] 	architectureName - new name for the operator architecture
 	 **/
 	void setArchitectureName(string architectureName);
 
@@ -601,10 +603,6 @@ public:
 	 */	
 	void outputVHDL(std::ostream& o);   // calls the previous with name = uniqueName
 
-
-
-
-
 	/** True if the operator needs a clock signal; 
 	 * It will also get a rst but doesn't need to use it.
 	 */	
@@ -628,8 +626,6 @@ public:
 	 */	
 	void setCombinatorial();
 
-
-
 	/** Set the operator to need a recirculation signal in order to 
 			trigger the pipeline work
 	*/
@@ -640,15 +636,10 @@ public:
 		*/
 	void setHasDelay1Feedbacks();
 
-
 	/** Indicates that it is not a warning if there is feedback of one cycle, but it
 		is an error if a feedback of more than one cycle happens.
 		*/
 	bool hasDelay1Feedbacks();
-	
-
-
-
 	
 	
 
@@ -778,7 +769,7 @@ public:
 	 * reports the pipeline depth, but feel free to overload if you have any
 	 * thing useful to tell to the end user
 	*/
-	virtual void outputFinalReport(int level);	
+	virtual void outputFinalReport(ostream& s, int level);	
 	
 	
 	/** Gets the pipeline depth of this operator 
@@ -902,12 +893,9 @@ public:
 
 	void setIndirectOperator(Operator* op);
 	
-	vector<Operator*> getOpList(){
-		return oplist;
-	}
 
 
-	vector<Operator*>& getOpListR(){
+	vector<OperatorPtr>& getOpList(){
 		return oplist;
 	}
 
@@ -1231,7 +1219,8 @@ public:
 	 * 		- count registers added due to pipelining framework
 	 * 		- count input/output ports
 	 * 		- count resources in subcomponents
-	 * Should not be used together with the manual estimation functions addWireCount, addPortCount, addComponentResourceCount!
+	 * Should not be used together with the manual estimation functions 
+	 * addWireCount, addPortCount, addComponentResourceCount!
 	 * @return the string describing the performed operation
 	 */
 	void addAutomaticResourceEstimations();
@@ -1397,7 +1386,7 @@ protected:
 	map<string, int>    declareTable;     					/**< Table containing the name and declaration cycle of the signal */
 	int                 myuid;              				/**<unique id>*/
 	int                 cost;             					/**< the cost of the operator depending on different metrics */
-	vector<Operator*>   oplist;                     /**< A list of all the sub-operators */
+	vector<OperatorPtr>   oplist;                     /**< A list of all the sub-operators */
 	
 
 private:    
@@ -1422,15 +1411,13 @@ private:
 	double                 criticalPath_;               	/**< The current delay of the current pipeline stage */
 	bool                   needRecirculationSignal_;    	/**< True if the operator has registers having a recirculation signal  */
 	bool                   hasClockEnable_;    	          /**< True if the operator has a clock enable signal  */
-	int					    hasDelay1Feedbacks_;		/**< True if this operator has feedbacks of one cyle, and no more than one cycle (i.e. an error if the distance is more). False gives warnings */
+	int					           hasDelay1Feedbacks_;		/**< True if this operator has feedbacks of one cyle, and no more than one cycle (i.e. an error if the distance is more). False gives warnings */
 	Operator*              indirectOperator_;              /**< NULL if this operator is just an interface operator to several possible implementations, otherwise points to the instance*/
 
 };
 
-	// global variables used through most of FloPoCo,
-	// to be encapsulated in something, someday?
-	
-	extern int verbose;
 
 } //namespace
+
+
 #endif

@@ -37,11 +37,15 @@ namespace flopoco{
 			useHardMultipliers_= true;
 			unusedHardMultThreshold_=0.5;
 		}
-
-
-	vector<Operator*> *  Target::getGlobalOpListRef(){
-		return & globalOpList;
+	
+	Target::~Target()
+	{
+		//VIDE
 	}
+
+	// vector<Operator*> *  Target::getGlobalOpListRef(){
+	// 	return & globalOpList;
+	// }
 
 	string Target::getID(){
 		return id_;
@@ -52,13 +56,10 @@ namespace flopoco{
 		}
 
 
-	void Target::setPipelined() {
-		pipeline_=true;
+	void Target::setPipelined(bool v) {
+		pipeline_=v;
 	}
 
-	void Target::setNotPipelined() {
-		pipeline_=false;
-	}
 
 	bool Target::isPipelined() {
 		return pipeline_;

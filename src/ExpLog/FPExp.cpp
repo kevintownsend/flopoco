@@ -157,14 +157,25 @@ namespace flopoco{
 
 
 
-	FPExp::FPExp(Target* target, int wE_, int wF_, int k_, int d_, int guardBits, bool fullInput,  map<string, double> inputDelays)
-		: Operator(target), wE(wE_), wF(wF_), k(k_), d(d_), g(guardBits)
+	FPExp::FPExp(
+			Target* target, 
+			int wE_, 
+			int wF_,
+			int k_,
+			int d_,  
+			int guardBits, 
+			bool fullInput,   
+			map<string, double> inputDelays 
+		): 	Operator(target), 
+			wE(wE_), 
+			wF(wF_), 
+			k(k_), 
+			d(d_), 
+			g(guardBits)
 	{
-
-
 		// Paperwork
 
-		std::ostringstream name;
+		ostringstream name;
 		name << "FPExp_" << wE << "_" << wF ;
 		setNameWithFreq(name.str());
 
@@ -174,16 +185,18 @@ namespace flopoco{
 
 		/*  We have the following cases. 
 
-		     wF is really small. Then Y is small enough that e^Y is can be tabulated in a blockram.
-		     In this case g=2.
+			 wF is really small. Then Y is small enough that e^Y is can be
+			 tabulated in a blockram.  In this case g=2.
 		    
-		     10/11 < sizeY < ?? Y is still split into A and Z, but e^Z is simply tabulated 
+			 10/11 < sizeY < ?? Y is still split into A and Z, but e^Z is simply
+			 tabulated 
 
-		     ?? < sizeY <= 26 Y  is small enough that we can use the magic table + 1-DSP reconstruction
-		    3/
-*/
+			 ?? < sizeY <= 26 Y  is small enough that we can use the magic table
+			 + 1-DSP reconstruction 3/
+		*/
 		
-		// Various architecture parameter to be determined before attempting to build the architecture
+		// Various architecture parameter to be determined before attempting to
+		// build the architecture
 		bool expYTabulated=false;
 		bool useMagicTableExpZm1=false;
 		bool useMagicTableExpZmZm1=false;
@@ -200,7 +213,7 @@ namespace flopoco{
  		int blockRAMSize=target->sizeOfMemoryBlock();
 
 
-		// ************The following lines decide the architecture out of the size of wF***********************
+		//* The following lines decide the architecture out of the size of wF *
 
 		// First check if wF is small enough to tabulate e^Y in a block RAM
 		g=2;
@@ -306,7 +319,7 @@ namespace flopoco{
 
 
 
-		//***************** Building a few MPFR constants, useful or obsolete ******** 
+		//********* Building a few MPFR constants, useful or obsolete *********
 		mpz_class mpzLog2, mpzInvLog2;
 	
 		mpfr_t mp2, mp1, mplog2, mpinvlog2;
@@ -351,7 +364,7 @@ namespace flopoco{
 
 
 
-		//***************** Input unpacking and shifting to fixed-point ******** 
+		//******** Input unpacking and shifting to fixed-point ********
 
 		setCriticalPath( getMaxInputDelays(inputDelays) + target->localWireDelay());
 		vhdl << tab  << declare("Xexn", 2) << " <= X(wE+wFIn+2 downto wE+wFIn+1);" << endl;
@@ -418,11 +431,15 @@ namespace flopoco{
 		int sizeXfix = wE+wF+g; // still unsigned; msb=wE-1; lsb = -wF-g
 		manageCriticalPath( target->localWireDelay(sizeXfix) + target->lutDelay());
 
-		vhdl << tab << declare("fixX", sizeXfix) << " <= " << " fixX0" << range(wE-1 + wF+g + wFIn+1 -1, wFIn) << "when resultWillBeOne='0' else " << zg(sizeXfix) <<  ";" << endl;		
+		vhdl << tab << declare("fixX", sizeXfix) << " <= " << " fixX0" << 
+			range(wE-1 + wF+g + wFIn+1 -1, wFIn) << 
+			"when resultWillBeOne='0' else " << zg(sizeXfix) <<  ";" << endl;		
 
 		int lsbXforFirstMult=-3; 
 		int sizeXMulIn = wE-2 - lsbXforFirstMult +1; // msb=wE-2, lsb=-3
-		vhdl << tab <<	declare("xMulIn", sizeXMulIn) << " <=  fixX" << range(sizeXfix-2, sizeXfix - sizeXMulIn-1  ) << "; -- truncation, error 2^-3" << endl;
+		vhdl << tab <<	declare("xMulIn", sizeXMulIn) << " <=  fixX" << 
+			range(sizeXfix-2, sizeXfix - sizeXMulIn-1  ) << 
+			"; -- truncation, error 2^-3" << endl;
 
 		//***************** Multiplication by 1/log2 to get approximate result ******** 
 		// FixRealKCM does the rounding to the proper place with the proper error
@@ -434,7 +451,6 @@ namespace flopoco{
 		                                         "1/log(2)", //  constant
 		                                         0.5 + 0.09, // error: we have 0.125 on X, and target is 0.5+0.22 
 		                                         inDelayMap( "X", target->localWireDelay(2) + getCriticalPath())
-																						 
 		                                         );
 		addSubComponent(mulInvLog2);
 		outPortMap(mulInvLog2, "R", "absK");
@@ -448,12 +464,14 @@ namespace flopoco{
 		// First compute K
 		manageCriticalPath(target->localWireDelay() + target->adderDelay(wE+1));
 		vhdl << tab << declare("minusAbsK",wE+1) << " <= " << rangeAssign(wE, 0, "'0'")<< " - ('0' & absK);"<<endl;
-		// The synthesizer should be able to merge the addition and this mux, so the next line is commented
+		// The synthesizer should be able to merge the addition and this mux, so
+		// the next line is commented
 		// manageCriticalPath(target->localWireDelay() + target->lutDelay());
 		vhdl << tab << declare("K",wE+1) << " <= minusAbsK when  XSign='1'   else ('0' & absK);"<<endl;
 
 		// get back to the cycle+critical path at the output of the first multiplier
-		// We kind of forget the critical path at the end of the compute K block, because mulLog2 will be much larger.
+		// We kind of forget the critical path at the end of the compute K
+		// block, because mulLog2 will be much larger.
 		setCycleFromSignal("absK", mulInvLog2->getOutputDelay("R") );
 
 		FixRealKCM *mulLog2 = new FixRealKCM(target, 
@@ -498,13 +516,7 @@ namespace flopoco{
 		vhdl << instance(yPaddedAdder, "theYAdder") << endl;
 		syncCycleFromSignal("Y", yPaddedAdder->getOutputDelay("R"));
 
-
 		vhdl << tab << "-- Now compute the exp of this fixed-point value" <<endl;
-
-
-
-		
-
 
 		if(expYTabulated) {
 			ExpYTable* table;
@@ -600,6 +612,7 @@ namespace flopoco{
 																						-wF-g+2*k-1, // lsbOut // was -wF-g 
 																						d, // degree
 																						true, // finalRounding
+																						0.25, // approxErrorBudget, default
 																						inDelayMap("X", target->localWireDelay() + getCriticalPath()) );
 				addSubComponent(fe);
 				inPortMap(fe, "X", "Zhigh");
@@ -613,15 +626,22 @@ namespace flopoco{
 			if(!useMagicTableExpZm1) {
 				// here we have in expZmZm1 e^Z-Z-1
 				// Alignment of expZmZm10:  MSB has weight -2*k, LSB has weight -(wF+g).
-				//		vhdl << tab << declare("ShouldBeZero2", (sizeExpY- sizeExpZmZm1)) << " <= expZmZm1_0" << range(sizeExpY-1, sizeExpZmZm1)  << "; -- for debug to check it is always 0" <<endl;
+				//		vhdl << tab << declare("ShouldBeZero2", (sizeExpY-
+				//		sizeExpZmZm1)) << " <= expZmZm1_0" << range(sizeExpY-1,
+				//		sizeExpZmZm1)  << "; -- for debug to check it is always
+				//		0" <<endl;
 				
 				vhdl << tab << "-- Computing Z + (exp(Z)-1-Z)" << endl;
 			
 				addexpZminus1 = new IntAdder( target, sizeExpZm1, inDelayMap( "X", target->localWireDelay() + getCriticalPath() ) );
 				addSubComponent(addexpZminus1);
 				
-				vhdl << tab << declare( "expZminus1X", sizeExpZm1) << " <= '0' & Z;"<<endl;
-				vhdl << tab << declare( "expZminus1Y", sizeExpZm1) << " <= " << rangeAssign(sizeZ, sizeZ-k+1, "'0'") << " & expZmZm1 ;" << endl;
+				vhdl << tab << declare( "expZminus1X", sizeExpZm1) << 
+						" <= '0' & Z;"<<endl;
+
+				vhdl << tab << declare( "expZminus1Y", sizeExpZm1) << " <= " <<
+						rangeAssign(sizeZ, sizeZ-k+1, "'0'") << 
+						" & expZmZm1 ;" << endl;
 				
 				inPortMap(addexpZminus1, "X", "expZminus1X");
 				inPortMap(addexpZminus1, "Y", "expZminus1Y");
@@ -869,9 +889,6 @@ namespace flopoco{
 		emulate(tc);
 		tcl->add(tc);
 
-
-
-
 		tc = new TestCase(this); 
 		tc->addComment("The largest number whose exp is finite");
 		fx = new FPNumber(wE, wF, FPNumber::largestPositive);
@@ -926,9 +943,6 @@ namespace flopoco{
 		emulate(tc);
 		tcl->add(tc);
 		delete(fy);
-
-
-
 	
 		mpfr_clears(x, y, NULL);
 	}
@@ -966,4 +980,39 @@ namespace flopoco{
 	}
 
 
+
+
+	OperatorPtr FPExp::parseArguments(Target *target, vector<string> &args) {
+		int wE, wF, k, d, g;
+		UserInterface::parseStrictlyPositiveInt(args, "wE", &wE); 
+		UserInterface::parseStrictlyPositiveInt(args, "wF", &wF);
+		UserInterface::parsePositiveInt(args, "k", &k);
+		UserInterface::parsePositiveInt(args, "d", &d);
+		UserInterface::parseInt(args, "g", &g);
+		return new FPExp(target, wE, wF, k, d, g);
+	}
+
+	void FPExp::registerFactory(){
+		UserInterface::add("FPExp", // name
+											 "A faithful floating-point exponential function.",
+											 "ElementaryFunctions",
+											 "", // seeAlso
+											 "wE(int): exponent size in bits; \
+                        wF(int): mantissa size in bits;  \
+                        d(int)=0: degree of the polynomial; \
+                        k(int)=0: input size to the range reduction table, should be between 5 and 15. 0 choses a sensible default.;\
+                        g(int)=-1: number of guard bits",
+											 "Parameter d and k control the DSP/RamBlock tradeoff. In both cases, a value of 0 choses a sensible default. Parameter g is mostly for internal use.<br> For all the details, see <a href=\"bib/flopoco.html#DinechinPasca2010-FPT\">this article</a>.",
+											 FPExp::parseArguments
+											 ) ;
+		
+	}
+
+
+
 }
+
+
+
+
+

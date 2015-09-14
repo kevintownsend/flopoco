@@ -1,13 +1,13 @@
 /*
   An FP power function for FloPoCo
- 
+
   Author : Florent de Dinechin, Pedro Echevarria
- 
+
   This file is part of the FloPoCo project
   developed by the Arenaire team at Ecole Normale Superieure de Lyon
-  
+
   Initial software.
-  Copyright © ENS-Lyon, INRIA, CNRS, UCBL,  
+  Copyright © ENS-Lyon, INRIA, CNRS, UCBL,
   2008-2010.
   All rights reserved.
 
@@ -55,7 +55,7 @@ namespace flopoco{
 		fpMaxFloat.getMPFR(maxExpIn);
 		mpfr_log(maxExpIn, maxExpIn, GMP_RNDU);
 		mpfr_mul(r,r,maxExpIn, GMP_RNDN);
-		if(verbose) mpfr_out_str (stderr, 10, 30, maxExpIn, GMP_RNDN); cerr << " ";
+		if(UserInterface::verbose) mpfr_out_str (stderr, 10, 30, maxExpIn, GMP_RNDN); cerr << " ";
 
 		// then take the exp
 		mpfr_exp(r,r, GMP_RNDN);
@@ -76,14 +76,14 @@ namespace flopoco{
 	FPPow::FPPow(Target* target, int wE, int wF, int type, int logTableSize, int expTableSize, int expDegree)
 		: Operator(target), wE(wE), wF(wF), type(type)
 	{
-		
+
 		setCopyrightString("F. de Dinechin, C. Klein  (2008)");
 		srcFileName="FPPow";
 
 		ostringstream o;
 
 		o << (type?"FPPowr_":"FPPow_") << wE << "_" << wF << "_";
-		if(target->isPipelined()) 
+		if(target->isPipelined())
 			o << target->frequencyMHz() ;
 		else
 			o << "comb";
@@ -95,7 +95,7 @@ namespace flopoco{
 
 		addConstant("wE", "positive", wE);
 		addConstant("wF", "positive", wF);
-		
+
 		int expG;
 
 		// TODO get rid of the following somehow
@@ -134,12 +134,12 @@ namespace flopoco{
 		vhdl<<tab<<declare("infX") << " <= '1' when flagsX=\"10\" else '0';"<<endl;
 		vhdl<<tab<<declare("infY") << " <= '1' when flagsY=\"10\" else '0';"<<endl;
 		vhdl<<"-- NaN inputs  --"<<endl;
-		vhdl<<tab<<declare("s_nan_in") << " <= '1' when flagsX=\"11\" or flagsY=\"11\" else '0';"<<endl;		
-		
+		vhdl<<tab<<declare("s_nan_in") << " <= '1' when flagsX=\"11\" or flagsY=\"11\" else '0';"<<endl;
+
 		vhdl<<"-- Comparison of X to 1   --"<<endl;
 		vhdl << tab  << declare("OneExpFrac", wE+wF) << " <=  \"0\" & " << rangeAssign(wE-2, 0, "'1'") << " & " << rangeAssign(wF-1, 0, "'0'") << ";" << endl;
 		IntAdder *cmpOneAdder = new IntAdder(target, wE+wF+1);
-		oplist.push_back(cmpOneAdder);		
+		oplist.push_back(cmpOneAdder);
 		vhdl << tab << declare("ExpFracX",wE+wF+1) << "<= \"0\" & expFieldX & fracX;"<<endl;
 		vhdl << tab << declare("OneExpFracCompl",wE+wF+1) << "<=  \"1\" & (not OneExpFrac);"<<endl;
 		inPortMap(cmpOneAdder, "X", "ExpFracX");
@@ -154,8 +154,8 @@ namespace flopoco{
 		vhdl << tab  << declare("absXgtOneAndNormal") << " <= normalX and (not XisOneAndNormal) and (not cmpXOneRes("<<wE+wF<<"));" << endl;
 		vhdl << tab  << declare("absXltOneAndNormal") << " <= normalX and cmpXOneRes("<<wE+wF<<");" << endl;
 
-		
-		
+
+
 
 
 
@@ -176,7 +176,7 @@ namespace flopoco{
 			LZOC* right1counter = new LZOC(target, wF);
 			oplist.push_back(right1counter);
 			inPortMap(right1counter, "I", "fracYreverted");
-			inPortMapCst(right1counter, "OZB", "\'0\'");  
+			inPortMapCst(right1counter, "OZB", "\'0\'");
 			outPortMap(right1counter, "O", "Z_rightY");
 			vhdl << instance(right1counter, "right1counter");
 			// Synchronize the datapaths of this LZOC and of the comparator to one
@@ -187,7 +187,7 @@ namespace flopoco{
 			vhdl<<"-- compute the weight of the less significant one of the mantissa"<<endl;
 			vhdl << tab  << declare("WeightLSBYpre", wE+1)<<" <= ('0' & expFieldY)- CONV_STD_LOGIC_VECTOR("<< (1<<(wE-1))-1 + wF <<","<<wE+1<<");"<<endl;
 			vhdl << tab  << declare("WeightLSBY", wE+1)<<" <= WeightLSBYpre + Z_rightY;"<<endl;
-			// No problem tooverpipeline 
+			// No problem tooverpipeline
 			nextCycle();
 
 			vhdl << tab  << declare("oddIntY") <<" <= normalY when WeightLSBY = CONV_STD_LOGIC_VECTOR(0, "<<wE+1<<") else '0'; -- LSB has null weight"<<endl;
@@ -215,7 +215,7 @@ namespace flopoco{
 
 			vhdl << tab  << declare("RisOne") << " <= " << endl
 			     << tab << tab << "   zeroY                                          -- x^0 = 1 without exception"<<endl
-			     << tab << tab << "or (XisOneAndNormal and signX and infY)           -- (-1) ^ (-/-inf)"<<endl          
+			     << tab << tab << "or (XisOneAndNormal and signX and infY)           -- (-1) ^ (-/-inf)"<<endl
 			     << tab << tab << "or (XisOneAndNormal  and not signX);              -- (+1) ^ (whatever)" << endl ;
 
 			vhdl << tab  << declare("RisNaN") << " <= (s_nan_in and not zeroY) or (normalX and signX and notIntNormalY);"<<endl;
@@ -223,7 +223,7 @@ namespace flopoco{
 			vhdl << tab  << declare("signR") << " <= signX and (oddIntY);" << endl;
 		}
 		else{
-		
+
 			vhdl<<"-- Powr Exceptions  --"<<endl;
 			vhdl << tab  << declare("RisInfSpecialCase") << "  <= " << endl
 			     << tab << tab << "   (zeroX  and  normalY and signY)                 -- (+/- 0) ^  (negative finite y)"<<endl
@@ -253,38 +253,38 @@ namespace flopoco{
 #if 0
 			vhdl << tab  << "-- x^(+/-0)=1" << endl;
 			vhdl << tab  << declare("case_x_to_0") << " <= '1' when (normalX='1' and zeroY='1') else '0';" << endl;
-		
+
 			vhdl << tab  << "-- -+-0^^-inf=+inf" << endl;
 			vhdl << tab  << declare("case_0_to_neginf") << " <= '1' when (zeroX='1' and infY='1' and signY='1')  else '0';" << endl;
-		
+
 			vhdl << tab  << "--  -0^^+inf= 0 (p) NaN (pr)" << endl;
 			vhdl << tab  << declare("case_neg0_to_posinf") << " <= '1' when (zeroX='1' and signY='1' and infY='1' and signY='0')  else '0';" << endl;
-		
+
 			vhdl << tab  << "-- 0^^+inf=0" << endl;
 			vhdl << tab  << declare("case_pos0_to_posinf") << " <= '1' when (zeroX='1' and signY='0' and infY='1' and signY='0')  else '0';" << endl;
-		
+
 			vhdl << tab  << "--  +-0^+-0= 1 (p) NaN (pr)" << endl;
 			vhdl << tab  << declare("case_0_to_0") << " <= zeroX and zeroY;" << endl;
 
 			vhdl << tab  << "--  +inf^+-0= 1 (p) NaN (pr)" << endl;
 			vhdl << tab  << declare("case_posinf_to_0") << " <=  '1' when (infX='1' and signX='0' and zeroY='1') else '0';" << endl;
 
-			
+
 			vhdl << tab  << "-- +-0^^negative =+inf" << endl;
 			vhdl << tab  << declare("powr_case_0_to_yn") << " <= '1' when (zeroX='1' and normalY='1' and signY='1')  else '0';" << endl;
-			
+
 			vhdl << tab  << "-- +-0^^positive =+0" << endl;
 			vhdl << tab  << declare("powr_case_0_to_yp") << " <= '1' when (zeroX='1' and normalY='1' and signY='0')  else '0';" << endl;
-			
+
 			vhdl << tab  << "--  1^+-inf= NaN (pr)" << endl;
 			vhdl << tab  << declare("powr_case_pos1_to_inf") << " <= '1' when (XisOne='1'  and signX='0' and infY='1') else '0';" << endl;
-			
+
 			vhdl << tab  << "-- 1^+-fin=1" << endl;
 			vhdl << tab  << declare("powr_case_1_to_finite") << " <= '1' when (XisOne='1' and normalY='1') else '0';" << endl;
-			
+
 			vhdl << tab  << "-- 1^+-inf=NaN" << endl;
 			vhdl << tab  << declare("powr_case_1_to_infinite") << " <= '1' when (XisOne='1' and infY='1') else '0';" << endl;
-			
+
 			vhdl << tab  << declare("RisNaN") << " <= s_nan_in or (signX and normalX) or case_neg0_to_posinf or powr_case_1_to_infinite;"<<endl;
 			vhdl << tab  << declare("RisInf") << " <= powr_case_0_to_yn or case_0_to_neginf;"<<endl;
 			vhdl << tab  << declare("RisZero") << " <= powr_case_0_to_yp or case_pos0_to_posinf;"<<endl;
@@ -294,12 +294,12 @@ namespace flopoco{
 		}
 
 
-		// Now the part that takes 99% of the size: computing exp(y*logx). 
+		// Now the part that takes 99% of the size: computing exp(y*logx).
 
 		setCycle(0);
 		setCriticalPath(0);
 		// For the input to the log, take |X| as the case X<0 is managed separately
-		vhdl << tab << declare("logIn", 3+wE + logwF) << " <= flagsX & \"0\" & expFieldX & fracX & " << rangeAssign(logwF-wF-1, 0, "'0'") << " ;" << endl; 
+		vhdl << tab << declare("logIn", 3+wE + logwF) << " <= flagsX & \"0\" & expFieldX & fracX & " << rangeAssign(logwF-wF-1, 0, "'0'") << " ;" << endl;
 
 		IterativeLog* log = new IterativeLog(target,  wE,  logwF, logTableSize );
 		oplist.push_back(log);
@@ -312,13 +312,13 @@ namespace flopoco{
 
 #if 0
 		// TODO: the following mult could be  truncated
-		FPMult* mult = new FPMult(target,   /*X:*/ wE, logwF,   /*Y:*/ wE, wF,  /*R: */  wE,  wF+wE+expG, 
-		                                      1 /* norm*/); 
+		FPMult* mult = new FPMult(target,   /*X:*/ wE, logwF,   /*Y:*/ wE, wF,  /*R: */  wE,  wF+wE+expG,
+		                                      1 /* norm*/);
 #else
 		// truncated
-		FPMult* mult = new FPMult(target,   /*X:*/ wE, logwF,   /*Y:*/ wE, wF,  /*R: */  wE,  wF+wE+expG, 
-		                                      1, /* norm*/ 
-		                                      0 /* faithful only*/); 
+		FPMult* mult = new FPMult(target,   /*X:*/ wE, logwF,   /*Y:*/ wE, wF,  /*R: */  wE,  wF+wE+expG,
+		                                      1, /* norm*/
+		                                      0 /* faithful only*/);
 #endif
 		oplist.push_back(mult);
 		inPortMap(mult, "Y", "Y");
@@ -332,7 +332,7 @@ namespace flopoco{
 #if 0 // while fine-tuning the pipeline
 		setCriticalPath( mult->getOutputDelay("R") );
 		FPExp* exp = new FPExp(target,  wE,  wF, 0/* means default*/, 0, expG, true, inDelayMap("X", getCriticalPath() + 2*target->localWireDelay()) );
-#else		
+#else
 		nextCycle();
 		FPExp* exp = new FPExp(target,  wE,  wF, 0/* means default*/, 0, expG, true);
 #endif
@@ -360,12 +360,12 @@ namespace flopoco{
 		     << tab  << tab << "else \"01\";" << endl;
 
 		vhdl << tab << declare("R_expfrac", wE+wF) << " <= CONV_STD_LOGIC_VECTOR("<< (1<<(wE-1))-1<<","<<wE<<") &  CONV_STD_LOGIC_VECTOR(0, "<< wF << ") when RisOne='1'"
-		     << endl << tab << tab << " else E" << range(wE+wF-1, 0) << ";" << endl; 
-		vhdl << tab << "R <= flagR & signR & R_expfrac;" << endl; 
+		     << endl << tab << tab << " else E" << range(wE+wF-1, 0) << ";" << endl;
+		vhdl << tab << "R <= flagR & signR & R_expfrac;" << endl;
 
 
 
-	}	
+	}
 
 	FPPow::~FPPow()
 	{
@@ -382,7 +382,7 @@ namespace flopoco{
 		/* Get I/O values */
 		mpz_class svX = tc->getInputValue("X");
 		mpz_class svY = tc->getInputValue("Y");
-		
+
 		/* Compute correct value */
 		FPNumber fpx(wE, wF, svX);
 		FPNumber fpy(wE, wF, svY);
@@ -390,7 +390,7 @@ namespace flopoco{
 		mpfr_init2(x,  1+wF);
 		mpfr_init2(y,  1+wF);
 		mpfr_init2(ru, 1+wF);
-		mpfr_init2(rd, 1+wF); 
+		mpfr_init2(rd, 1+wF);
 		mpfr_init2(l,  1+10*wF);
 		mpfr_init2(p,  1+10*wF);
 		fpx.getMPFR(x);
@@ -404,8 +404,8 @@ namespace flopoco{
 		}
 		else {
 			// powr is not in mpfr. Fortunately it is defined by exp(y*ln(x)), so let's emulate it this way
-			// We should use infinite precision but we don't have it, so we approximate it with 10wF. 
-			// Statistical arguments tell that 2wF should be enough, so we are a bit on the safe side. 
+			// We should use infinite precision but we don't have it, so we approximate it with 10wF.
+			// Statistical arguments tell that 2wF should be enough, so we are a bit on the safe side.
 			// Still, we have no proof 10wF is enough, but then it's the occasion to find a counterexample, isn't t?
 			mpfr_log(l, x, GMP_RNDN);
 			mpfr_mul(p, l, y, GMP_RNDN);
@@ -428,8 +428,8 @@ namespace flopoco{
 		}
 		else {
 			// powr is not in mpfr. Fortunately it is defined by exp(y*ln(x)), so let's emulate it this way
-			// We should use infinite precision but we don't have it, so we approximate it with 10wF. 
-			// Statistical arguments tell that 2wF should be enough, so we are a bit on the safe side. 
+			// We should use infinite precision but we don't have it, so we approximate it with 10wF.
+			// Statistical arguments tell that 2wF should be enough, so we are a bit on the safe side.
 			// Still, we have no proof 10wF is enough, but then it's the occasion to find a counterexample, isn't t?
 			mpfr_log(l, x, GMP_RNDN);
 			mpfr_mul(p, l, y, GMP_RNDN);
@@ -443,7 +443,7 @@ namespace flopoco{
 #endif
 		mpfr_clears(x, y, l, p, ru, rd, NULL);
 	}
- 
+
 
 	// TEST FUNCTIONS
 
@@ -453,83 +453,83 @@ namespace flopoco{
 
 		// Random testing quickly gets the 2^(3+3) combinations of (exn,sign)
 		// I'm not sure it gets all the cases with an integer y
-		// Anyway, much TODO here.  
-		tc = new TestCase(this); 
+		// Anyway, much TODO here.
+		tc = new TestCase(this);
 		tc->addFPInput("X", FPNumber::plusInfty);
 		tc->addFPInput("Y", FPNumber::minusDirtyZero);
 		emulate(tc);
 		tcl->add(tc);
 
-		tc = new TestCase(this); 
+		tc = new TestCase(this);
 		tc->addFPInput("X", FPNumber::minusInfty);
 		tc->addFPInput("Y", 3.95);
 		emulate(tc);
 		tcl->add(tc);
 
-		tc = new TestCase(this); 
+		tc = new TestCase(this);
 		tc->addFPInput("X", 3.0);
 		tc->addFPInput("Y", 2.0);
 		emulate(tc);
 		tcl->add(tc);
 
-		tc = new TestCase(this); 
+		tc = new TestCase(this);
 		tc->addFPInput("X", 9.0);
 		tc->addFPInput("Y", 0.5);
 		emulate(tc);
 		tcl->add(tc);
 
-		tc = new TestCase(this); 
+		tc = new TestCase(this);
 		tc->addFPInput("X", 2.0);
 		tc->addFPInput("Y", 0.5);
 		emulate(tc);
 		tcl->add(tc);
 
-		tc = new TestCase(this); 
+		tc = new TestCase(this);
 		tc->addFPInput("X", 3423.0);
 		tc->addFPInput("Y", 0.125234);
 		emulate(tc);
 		tcl->add(tc);
 
-		tc = new TestCase(this); 
+		tc = new TestCase(this);
 		tc->addFPInput("X", .23432);
 		tc->addFPInput("Y", 0.5342);
 		emulate(tc);
 		tcl->add(tc);
 
 		//The cases with negative input and integer exponent
-		tc = new TestCase(this); 
+		tc = new TestCase(this);
 		tc->addFPInput("X", FPNumber::minusDirtyZero);
-		tc->addFPInput("Y", -17); 
-		tc->addComment("negative odd integer exponent"); 
+		tc->addFPInput("Y", -17);
+		tc->addComment("negative odd integer exponent");
 		emulate(tc);
 		tcl->add(tc);
 
-		tc = new TestCase(this); 
+		tc = new TestCase(this);
 		tc->addFPInput("X", FPNumber::minusDirtyZero);
-		tc->addFPInput("Y", -42); 
-		tc->addComment("negative even integer exponent"); 
+		tc->addFPInput("Y", -42);
+		tc->addComment("negative even integer exponent");
 		emulate(tc);
 		tcl->add(tc);
 
-		tc = new TestCase(this); 
+		tc = new TestCase(this);
 		tc->addFPInput("X", FPNumber::minusInfty);
-		tc->addFPInput("Y", -17); 
-		tc->addComment("negative odd integer exponent"); 
+		tc->addFPInput("Y", -17);
+		tc->addComment("negative odd integer exponent");
 		emulate(tc);
 		tcl->add(tc);
 
-		tc = new TestCase(this); 
+		tc = new TestCase(this);
 		tc->addFPInput("X", FPNumber::minusInfty);
-		tc->addFPInput("Y", -42); 
-		tc->addComment("negative even integer exponent"); 
+		tc->addFPInput("Y", -42);
+		tc->addComment("negative even integer exponent");
 		emulate(tc);
 		tcl->add(tc);
 
 #if 0 // keep for cut and paste
-		tc = new TestCase(this); 
+		tc = new TestCase(this);
 		tc->addFPInput("X", );
 		tc->addFPInput("Y", );
-		tc->addComment(""); 
+		tc->addComment("");
 		emulate(tc);
 		tcl->add(tc);
 #endif
@@ -538,10 +538,10 @@ namespace flopoco{
 
 
 
- 
+
 	TestCase* FPPow::buildRandomTestCase(int i){
 		TestCase *tc;
-		tc = new TestCase(this); 
+		tc = new TestCase(this);
 		mpz_class x,y,r;
 		mpz_class normalExn = mpz_class(1)<<(wE+wF+1);
 		mpz_class expOfOne = (((mpz_class(1))<<(wE-1))-1)<<wF;
@@ -582,7 +582,7 @@ namespace flopoco{
 			x  = getLargeRandom(wF)  + expOfOne +  normalExn;
 			int max = 5;
 			r  = getLargeRandom(wF) +  (((getLargeRandom(max)-(1<<(max-1))) + (((mpz_class(1))<<(wE-1))-1) )<<wF)+  normalExn;
-			// Now all we want is to set y=exp(log(r)/x) 
+			// Now all we want is to set y=exp(log(r)/x)
 			// first convert x and r to mpfr_t
 			FPNumber fpx(wE, wF, x);
 			FPNumber fpr(wE, wF, r);
@@ -607,5 +607,32 @@ namespace flopoco{
 		emulate(tc);
 		return tc;
 	}
+
+	OperatorPtr FPPow::parseArguments(Target *target, vector<string> &args) {
+		int wE;
+		UserInterface::parseStrictlyPositiveInt(args, "wE", &wE);
+		int wF;
+		UserInterface::parseStrictlyPositiveInt(args, "wF", &wF);
+		int inTableSize;
+		UserInterface::parseStrictlyPositiveInt(args, "inTableSize", &inTableSize);
+		return new IterativeLog(target, wE, wF, inTableSize);
+	}
+
+	void FPPow::registerFactory(){
+		UserInterface::add("FPPow", // name
+											 "A floating-point power function.",
+											 "ElementaryFunctions", // categories
+											 "",
+											 "wE(int): exponent size in bits for both inputs; \
+wF(int): mantissa size in bits for both inputs; \
+logSizeTable(int)=0: The table size for the log in bits; \
+expTableSize(int)=0: The table size for the exponent in bit; \
+expDegree(int)=0:",
+											 "",
+											 FPPow::parseArguments
+											 ) ;
+
+	}
+
 
 }

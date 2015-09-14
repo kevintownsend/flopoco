@@ -16,7 +16,7 @@ namespace flopoco{
 	class FPSquare : public Operator
 	{
 	public:
-	
+
 		/**
 		 * The FPMutliplier constructor
 		 * @param[in]		target		the target device
@@ -33,22 +33,28 @@ namespace flopoco{
 
 		/**
 		 * Emulate the operator using MPFR.
-		 * @param tc a TestCase partially filled with input values 
+		 * @param tc a TestCase partially filled with input values
 		 */
 		void emulate(TestCase * tc);
 
 		// Static method used for tests on the Operator
 		static void nextTest ( TestState * ts );
 
+		// User-interface stuff
+		/** Factory method */
+		static OperatorPtr parseArguments(Target *target , vector<string> &args);
+
+		static void registerFactory();
+
 	protected:
-	
+
 		int  wE_;                  /**< The width of the exponent for the input X */
 		int  wFX_;                  /**< The width of the fraction for the input X */
 		int  wFR_;                  /**< The width of the fraction for the output R */
 
 
 	private:
- 
+
 	};
 
 }

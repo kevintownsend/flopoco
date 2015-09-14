@@ -7,7 +7,8 @@
 #include <sollya.h>
 #include <gmpxx.h>
 
-#include "Operator.hpp" // mostly for reporting
+#include "../Operator.hpp" // mostly for reporting
+#include "../UserInterface.hpp"
 #include "FixFunction.hpp"
 #include "FixConstant.hpp"
 
@@ -15,11 +16,11 @@ using namespace std;
 
 /* Stylistic convention here: all the sollya_obj_t have names that end with a capital S */
 namespace flopoco{
-	
+
 	/** The BasicPolyApprox object builds and maintains a machine-efficient polynomial approximation to a fixed-point function over [0,1]
 			Fixed point, hence only absolute errors/accuracy targets.
 
-			There are two families of constructors: 
+			There are two families of constructors:
 			one that inputs target accuracy and computes degree and approximation error (calling the buildApproxFromTargetAccuracy method)
 			one that inputs degree and computes approximation error (calling the buildApproxFromDegreeAndLSBs method).
 
@@ -29,18 +30,18 @@ namespace flopoco{
 			Sketch of te algo for  buildApproxFromTargetAccuracy:
 		  guessDegree gives a tentative degree.
 			target_accuracy defines the best-case LSB of the constant part of the polynomial.
-			if  addGuardBitsToConstant, we add g=ceil(log2(degree+1)) bits to the LSB of the constant: 
+			if  addGuardBitsToConstant, we add g=ceil(log2(degree+1)) bits to the LSB of the constant:
 			this provides a bit of freedom to fpminimax, for free in terms of evaluation.
 			And we call fpminimax with that, and check what it provided.
 			Since x is in [0,1], the MSB of coefficient i is then exactly the MSB of a_i.x^i
 			For the same reason, all the coefficients should have the same target LSB
-			
+
 			No domain splitting or other range reduction here: these should be managed in different classes
-			No good handling of functions with zero coefficients for now. 
-			- a function with zero constant should be transformed into a "proper" one outside this class. 
+			No good handling of functions with zero coefficients for now.
+			- a function with zero constant should be transformed into a "proper" one outside this class.
 			   Example: sin, log(1+x)
 		  - a function with odd or even Taylor should be transformed as per the Muller book.
-			
+
 			To implement a generic approximator we will need to lift these restrictions, but it is unclear that it needs to be in this class.
 			A short term TODO is to detect such cases.
 	*/
@@ -51,14 +52,14 @@ namespace flopoco{
 
 		/** A minimal constructor inputting target accuracy.
 				@param f: defines the function and if the input interval is [0,1] or [-1,1]
-				@param addGuardBits: 
+				@param addGuardBits:
 				if >=0, add this number of bits to the LSB of each coeff
 				if -1, add to each coeff a number of LSB bits that corresponds to the bits needed for a faithful Horner evaluation based on faithful (truncated) multipliers
 		 */
 		BasicPolyApprox(FixFunction* f, double targetAccuracy, int addGuardBits=-1);
 
 		/** A minimal constructor that inputs a sollya_obj_t function, inputting target accuracy
-				@param addGuardBits: 
+				@param addGuardBits:
 				if >=0, add this number of bits to the LSB of each coeff
 				if -1, add to each coeff a number of LSB bits that corresponds to the bits needed for a faithful Horner evaluation based on faithful (truncated) multipliers
 				@param signedx:  if true, we consider an approximation on [-1,1]. If false, it will be on [0,1]
@@ -67,14 +68,14 @@ namespace flopoco{
 
 
 		/** A minimal constructor that inputs a sollya_obj_t function, a degree and the weight of the LSBs.
-				This one is mostly for "internal" use by classes that compute degree separately, e.g. PiecewisePolyApprox  
+				This one is mostly for "internal" use by classes that compute degree separately, e.g. PiecewisePolyApprox
 				@param signedx:  if true, we consider an approximation on [-1,1]. If false, it will be on [0,1]
 
 		 */
 		BasicPolyApprox(sollya_obj_t fS, int degree, int LSB, bool signedInput =false);
 
 		/** A minimal constructor that parses a sollya string, inputting target accuracy
-				@param addGuardBits: 
+				@param addGuardBits:
 				if >=0, add this number of bits to the LSB of each coeff
 				if -1, add to each coeff a number of LSB bits that corresponds to the bits needed for a faithful Horner evaluation based on faithful (truncated) multipliers
 				@param signedx:  if true, we consider an approximation on [-1,1]. If false, it will be on [0,1]
@@ -98,8 +99,14 @@ namespace flopoco{
 		/** A wrapper for Sollya guessdegree */
 		static	void guessDegree(sollya_obj_t fS, sollya_obj_t rangeS, double targetAccuracy, int* degreeInfP, int* degreeSupP);
 
-	private:
+		static OperatorPtr parseArguments(Target *target, vector<string> &args);
+
+		static void registerFactory();
+
+
 		FixFunction *f;                   /**< The function to be approximated */
+
+	private:
 		sollya_obj_t polynomialS;         /**< The polynomial approximating it */
 
 

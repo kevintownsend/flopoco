@@ -1,16 +1,16 @@
 /*
   An integer adder for FloPoCo using vendor primitives
- 
+
   It may be pipelined to arbitrary frequency.
   Also useful to derive the carry-propagate delays for the subclasses of Target
- 
+
   Author: Bogdan Pasca
 
   This file is part of the FloPoCo project
   developed by the Arenaire team at Ecole Normale Superieure de Lyon
-  
+
   Initial software.
-  Copyright © ENS-Lyon, INRIA, CNRS, UCBL,  
+  Copyright © ENS-Lyon, INRIA, CNRS, UCBL,
   2008-2011.
   All rights reserved.
  */
@@ -32,10 +32,10 @@ namespace flopoco{
 
 	CarryGenerationCircuit::CarryGenerationCircuit(Target* target, int wIn, map<string, double> inputDelays):
 		Operator(target,inputDelays), wIn_(wIn), inputDelays_(inputDelays)
-	{	
+	{
 		srcFileName="CarryGenerationCircuit";
 		setName(join("CarryGenerationCircuit_", wIn_));
-		
+
 		// Set up the IO signals
 		addInput ( "X", wIn_,true);
 		addInput ( "Y", wIn_,true);
@@ -89,9 +89,9 @@ namespace flopoco{
 				}
 			}
 		}else{
-		//ALTERA 
+		//ALTERA
 			declare("s",wIn,true);
-		
+
 			vhdl << tab << "LPM_ADD_SUB_component : LPM_ADD_SUB"<<endl;
 			vhdl << tab << "GENERIC MAP ("<<endl;
 			vhdl << tab << "	lpm_direction => \"ADD\","<<endl;
@@ -106,15 +106,15 @@ namespace flopoco{
 			vhdl << tab << "	dataa => X,"<<endl;
 			vhdl << tab << "	result => s"<<endl;
 			vhdl << tab << ");"<<endl;
-			
+
 			vhdl << tab << "R <= X or (not(s) and Y);" << endl;
-		}	
+		}
 	}
 
 	CarryGenerationCircuit::~CarryGenerationCircuit() {
 	}
 
-	
+
 	void CarryGenerationCircuit::outputVHDL(std::ostream& o, std::string name) {
 		ostringstream signame;
 		licence(o);
@@ -131,7 +131,7 @@ namespace flopoco{
 			o << "USE lpm.all;"<<endl;
 		}else{
 			cerr << "Target Error !" << endl;
-			exit(-1);	
+			exit(-1);
 		}
 		outputVHDLEntity(o);
 		newArchitecture(o,name);
@@ -150,17 +150,17 @@ namespace flopoco{
 			o << "			dataa	: IN STD_LOGIC_VECTOR ("<<wIn_-1<<" DOWNTO 0);"<<endl;
 			o << "			result	: OUT STD_LOGIC_VECTOR ("<<wIn_-1<<" DOWNTO 0)"<<endl;
 			o << "	);"<<endl;
-			o << "	END COMPONENT;"<<endl;			
+			o << "	END COMPONENT;"<<endl;
 		}
-		o << buildVHDLComponentDeclarations();	
+		o << buildVHDLComponentDeclarations();
 		o << buildVHDLSignalDeclarations();
-		beginArchitecture(o);		
+		beginArchitecture(o);
 		o<<buildVHDLRegisters();
 		o << vhdl.str();
 		endArchitecture(o);
 	}
 
-	
+
 	void CarryGenerationCircuit::emulate(TestCase* tc)
 	{
 		mpz_class svX= tc->getInputValue("X");
@@ -168,11 +168,28 @@ namespace flopoco{
 		mpz_class svC =  tc->getInputValue("Cin");
 
 		mpz_class sR = svX + svY + svC;
-		
+
 		mpz_class svR = sR % (1<<wIn_);
 		mpz_class cout = sR >> wIn_;
-		
+
 		tc->addExpectedOutput("R", svR);
 		tc->addExpectedOutput("Cout",cout);
+	}
+
+	OperatorPtr CarryGenerationCircuit::parseArguments(Target *target, vector<string> &args) {
+		int wIn;
+		UserInterface::parseStrictlyPositiveInt(args, "wIn", &wIn);
+		return new CarryGenerationCircuit(target, wIn);
+	}
+
+	void CarryGenerationCircuit::registerFactory(){
+		UserInterface::add("CarryGenerationCircuit", // name
+											 "",
+											 "BasicInteger", // categories
+											 "",
+											 "wIn(int): input size in bits;",
+											 "",
+											 CarryGenerationCircuit::parseArguments
+											 ) ;
 	}
 }

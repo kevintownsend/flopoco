@@ -15,3 +15,8 @@ h2                               { background: #FFFF73; font-style: italic; }
 h2 a:link, h2 a:visited          { color: #000073; }
 
 kbd {background: #CCFFFF; font-size:120%;}
+dt.operatorname                { color: #0000FF; font-weight: bold;}
+dd.parametername               { font-weight: bold;}
+code.parametertype               { color: red;}
+dd.operatordescription           { color: black;}
+span.optionalparam               {color: #555555;}

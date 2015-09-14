@@ -13,43 +13,39 @@
 namespace flopoco{
 
 
-	/** The FunctionEvaluator class */
+	/** @brief The FunctionEvaluator class */
 	class FunctionEvaluator : public Operator
 	{
 	public:
 		/**
-		 * The FunctionEvaluator constructor
+		 * @brief The FunctionEvaluator constructor
 		 */
 		FunctionEvaluator(Target* target, string func, int wInX, int lsbOut, int n, bool finalRounding = true, map<string, double> inputDelays = emptyDelayMap);
 
 		/**
-		 * FunctionEvaluator destructor
+		 * @brief FunctionEvaluator destructor
 		 */
 		~FunctionEvaluator();
-		
+
 		void emulate(TestCase * tc);
 
 		PiecewiseFunction *pf;
 		PolyCoeffTable *tg;
 		PolynomialEvaluator *pe;
-		
-		int getRWidth(){
-			return wR;
-		}
-			
-		int getRWeight(){
-			return weightR;
-		}
+
+		int getRWidth();
+
+		int getRWeight();
 
 		protected:
-		
+
 		unsigned wR;
 		int weightR;
 
-		int wInX_;   
+		int wInX_;
 		int lsbOut_;
 		bool finalRounding_;
-		
+
 	};
 
 }

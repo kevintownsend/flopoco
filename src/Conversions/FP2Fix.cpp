@@ -40,7 +40,7 @@ namespace flopoco{
 
 
    FP2Fix::FP2Fix(Target* target, bool _Signed, int _MSBO, int _LSBO, int _wEI, int _wFI, bool _trunc_p) :
-         Operator(target), wEI(_wEI), wFI(_wFI), Signed(_Signed), LSBO(_LSBO), MSBO(_MSBO), trunc_p(_trunc_p) {
+         Operator(target), wEI(_wEI), wFI(_wFI), Signed(_Signed), MSBO(_MSBO), LSBO(_LSBO),  trunc_p(_trunc_p) {
 
       int MSB=MSBO;
       int LSB=LSBO;
@@ -274,5 +274,35 @@ namespace flopoco{
 	   // please fill me with regression tests or corner case tests!
 
    }
+
+
+		
+	OperatorPtr FP2Fix::parseArguments(Target *target, vector<string> &args) {
+		int wE, wF, MSB, LSB;
+		bool signedO, trunc;
+		UserInterface::parseStrictlyPositiveInt(args, "wE", &wE); 
+		UserInterface::parseStrictlyPositiveInt(args, "wF", &wF);
+		UserInterface::parseBoolean(args, "signed", &signedO);
+		UserInterface::parseInt(args, "MSB", &MSB); 
+		UserInterface::parseInt(args, "LSB", &LSB); 
+		UserInterface::parseBoolean(args, "trunc", &trunc);
+		return new FP2Fix(target,  signedO, MSB, LSB, wE, wF, trunc);
+	}
+
+	void FP2Fix::registerFactory(){
+		UserInterface::add("FP2Fix", // name
+											 "Conversion from FloPoCo floating-point to fixed-point.",
+											 "Conversions",
+											 "", // seeAlso
+											 "wE(int): input exponent size in bits;\
+                        wF(int): input mantissa size in bits;\
+                        signed(bool)=true: can be false if all numbers will be positive;\
+                        MSB(int): weight of the MSB of the output;\
+                        LSB(int): weight of LSB of the output;\
+                        trunc(bool)=true: true means truncated (cheaper), false means rounded",
+											 "", // htmldoc
+											 FP2Fix::parseArguments
+											 ) ;
+	}
 
 }

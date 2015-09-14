@@ -1,13 +1,13 @@
 /*
   An integer comparator unit
- 
+
   Author: Bogdan Pasca
 
   This file is part of the FloPoCo project
   developed by the Arenaire team at Ecole Normale Superieure de Lyon
-  
+
   Initial software.
-  Copyright © ENS-Lyon, INRIA, CNRS, UCBL,  
+  Copyright © ENS-Lyon, INRIA, CNRS, UCBL,
   2008-2011.
   All rights reserved.
 
@@ -32,12 +32,12 @@ namespace flopoco{
 
 	IntComparator::IntComparator(Target* target, int wIn, int criteria, bool constant, int constValue, map<string, double> inputDelays) :
 		Operator(target, inputDelays), wIn_(wIn), criteria_(criteria) {
-	
+
 		// -------- Parameter set up -----------------
 		srcFileName = "IntComaprator";
 		if (criteria<-2 && criteria>2)
 			criteria_=0;
-		
+
 		ostringstream name;
 		switch(criteria){
 			case -2: name << "IntComparator_"<< wIn<<"_"<<"less";   break;
@@ -47,19 +47,19 @@ namespace flopoco{
 			case  2: name << "IntComparator_"<< wIn<<"_"<<"greater";break;
 			default: name << "IntComparator_"<< wIn<<"_"<<"eq";
 		}
-		
+
 		name << "_uid"<<getNewUId();
 		setName(name.str());
 		setCopyrightString("Bogdan Pasca (2010)");
 
 		addInput ("X", wIn_,true);
 		addInput ("Y", wIn_,true);
-		addOutput("R",true); 
+		addOutput("R",true);
 
 		switch(criteria){
 			case -2: vhdl << tab << "R <= '1' when (X <  Y) else '0';"<<endl; break;
 			case -1: vhdl << tab << "R <= '1' when (X <= Y) else '0';"<<endl; break;
-			case  0:{ 
+			case  0:{
 
 				//determine chunk size
 				int cs;
@@ -69,7 +69,7 @@ namespace flopoco{
 					nextCycle();
 					setCriticalPath(0.0);
 					target->suggestSlackSubcomparatorSize(cs, wIn, target->localWireDelay() + getTarget()->ffDelay(), constant);
-				}	
+				}
 				REPORT(INFO, "The suggested chunk size for the first splitting was:"<<cs);
 				//number of chunks
 				int k = ( wIn % cs ==0? wIn/cs : wIn/cs + 1);
@@ -79,7 +79,7 @@ namespace flopoco{
 					REPORT(INFO, "comp delay = " << target->eqComparatorDelay(cs));
 					manageCriticalPath( target->eqComparatorDelay(cs) );
 					REPORT(INFO, "Cp after"<< getCriticalPath());
-					
+
 					for (int i=0; i<k; i++){
 						vhdl <<tab << declare(join("b",i,"l",0))<<" <= '1' when X"<<range(min((i+1)*cs-1,wIn-1),i*cs);
 						if (!constant)
@@ -95,7 +95,7 @@ namespace flopoco{
 						nextCycle();
 						setCriticalPath(0.0);
 						target->suggestSlackSubcomparatorSize(cs, ibits, target->localWireDelay() + getTarget()->ffDelay(), true);
-					}	
+					}
 					REPORT(INFO, "The number of ibits is "<<ibits<<" cs="<<cs);
 					k = ( ibits % cs ==0? ibits/cs : ibits/cs + 1);
 					while (ibits>1){
@@ -107,13 +107,13 @@ namespace flopoco{
 								vhdl << join("b",i,"l",l-1) << ";"<<endl;
 							else
 								vhdl << join("b",i,"l",l-1) << " & ";
-						}	
+						}
 						manageCriticalPath(target->eqConstComparatorDelay(ibits));
 						for (int i=0; i<k; i++){
 							vhdl <<tab << declare(join("b",i,"l",l))<<" <= '1' when lev"<<l<<range(min((i+1)*cs-1,ibits-1),i*cs)
 							<<"="<< og(  min((i+1)*cs-1,ibits-1)+1 -i*cs ,0 )<<" else '0';"<<endl;
 						}
-						
+
 						if (!target->suggestSlackSubcomparatorSize(cs, k, getCriticalPath() + target->localWireDelay() + getTarget()->ffDelay() , true)){
 							nextCycle();
 							setCriticalPath(0.0);
@@ -125,7 +125,7 @@ namespace flopoco{
 					//assign R
 					vhdl << tab << "R <= " <<join("b",0,"l",l)<<";"<<endl;
 					outDelayMap["R"] = getCriticalPath();
-					
+
 				}else{
 					//if we can do it all in one cycle
 					if (!constant)
@@ -138,30 +138,55 @@ namespace flopoco{
 			case  2: vhdl << tab << "R <= '1' when (X > Y) else '0';"<<endl; break;
 			default:;
 		}
-		
-		
+
+
 		}
 
 	IntComparator::~IntComparator() {
 	}
-	
+
 	void IntComparator::emulate(TestCase* tc){
 		mpz_class svX = tc->getInputValue ( "X" );
 		mpz_class svY = tc->getInputValue ( "Y" );
-		
+
 		mpz_class svR;
-		
+
 		switch(criteria_){
 			case -2: if ( svX <  svY ) svR = 1; else svR = 0; break;
 			case -1: if ( svX <= svY ) svR = 1; else svR = 0; break;
 			case  0: if ( svX == svY ) svR = 1; else svR = 0; break;
 			case  1: if ( svX >= svY ) svR = 1; else svR = 0; break;
 			case  2: if ( svX > svY  ) svR = 1; else svR = 0; break;
-			default:; 
+			default:;
 		}
-		
+
 		tc->addExpectedOutput ( "R", svR );
 	}
 
+	OperatorPtr IntComparator::parseArguments(Target *target, vector<string> &args) {
+		int wIn;
+		UserInterface::parseStrictlyPositiveInt(args, "wIn", &wIn);
+		int criteria;
+		UserInterface::parseStrictlyPositiveInt(args, "criteria", &criteria);
+		bool constant;
+		UserInterface::parseBoolean(args, "constant", &constant);
+		int constValue;
+		UserInterface::parseStrictlyPositiveInt(args, "constValue", &constValue);
+		return new IntComparator(target, wIn, criteria, constant, constValue);
+	}
 
+	void IntComparator::registerFactory(){
+		UserInterface::add("IntComparator", // name
+											 "An integer comparator.",
+											 "BasicInteger", // category
+											 "",
+											 "wIn(int): input size in bits;\
+criteria(int): -2=lesser than, -1=lesser or equal, 0=equal, 1=greater or equal, 2=greater;\
+constant(bool): ;\
+constValue(int): the value to compare to;",
+											 "",
+											 IntComparator::parseArguments
+											 ) ;
+
+	}
 }

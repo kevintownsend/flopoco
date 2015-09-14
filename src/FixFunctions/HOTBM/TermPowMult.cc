@@ -7,10 +7,10 @@
 
   This file is part of the FloPoCo project
   developed by the Arenaire team at Ecole Normale Superieure de Lyon
-  
+
   Initial software.
   Copyright © ENS-Lyon, INRIA, CNRS, UCBL,
-  2005-2011  
+  2005-2011
 
   All rights reserved.
 
@@ -22,6 +22,10 @@
 #include "TermPowMult.hh"
 #include "Operator.hpp"
 
+
+flopoco::Operator* TermPowMult::toComponent(flopoco::Target* t, std::string name) {
+	return new Component (t, *this, name);
+}
 
 
 TermPowMult::TermPowMult(int d_, double *k_, Param &p_)
@@ -70,7 +74,7 @@ void TermPowMult::roundTables(int g, bool full, double *kAdjust)
 {
 	p.g = g;
 
-	if (full) { 
+	if (full) {
 		if (table) {
 			for (int i = 0; i < tp.mM+tp.mT; i++)
 				delete[] table[i];
@@ -195,7 +199,7 @@ double TermPowMult::eval(long long int a, long long int b) const
 
 		double r_ = kList[i][ai] * (s+.5) * E(-d*(p.alpha+1)+1-tp.rhos[i]-tp.sigmas[i]);
 		r_ = !signS ? r_ : -r_;
-		r += (!(d % 2) || !sign) ? r_ : -r_; 
+		r += (!(d % 2) || !sign) ? r_ : -r_;
 	}
 
 	mpz_clear(mpS);

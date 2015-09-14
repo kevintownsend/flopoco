@@ -3,7 +3,7 @@
 
   This file is part of the FloPoCo project developed by the Arenaire
   team at Ecole Normale Superieure de Lyon
-  
+
   Author : Fabrizio Ferrandi ferrandi@elet.polimi.it
 
   Initial software.
@@ -29,7 +29,7 @@ namespace flopoco{
 	{
 	public:
 		/**
-		 * The OutputIEEE constructor
+		 * @brief The OutputIEEE constructor
 		 * @param[in]		target		the target device
 		 * @param[in]		wEI			the the with of the exponent for the input floating point number encoded according FloPoCo format
 		 * @param[in]		wFI			the the with of the fraction for the input floating point number encoded according FloPoCo format
@@ -40,26 +40,32 @@ namespace flopoco{
 		OutputIEEE(Target* target, int wEI, int wFI, int wEO, int wFO, bool onlyPositiveZeroes=false);
 
 		/**
-		 * OutputIEEE destructor
+		 * @brief OutputIEEE destructor
 		 */
 		~OutputIEEE();
 
 
 
 		/**
-		 * Emulate the operator. This function overload the method from Operator.
-		 * @param tc a TestCase partially filled with input values 
+		 * @brief Emulate the operator. This function overload the method from Operator.
+		 * @param tc a TestCase partially filled with input values
 		 */
 		void emulate(TestCase * tc);
 
-	
+		/** Factory method that parses arguments and calls the constructor */
+		static OperatorPtr parseArguments(Target *target , vector<string> &args);
+
+		/** Factory register method */ 
+		static void registerFactory();
+
+
 	private:
 		/** The width of the exponent for the input X */
-		int wEI; 
+		int wEI;
 		/** The width of the fraction for the input X */
-		int wFI; 
+		int wFI;
 		/** The width of the exponent for the output R */
-		int wEO; 
+		int wEO;
 		/** The width of the fraction for the output R */
 		int wFO;
 		/** when true normalize +0 and -0 to +0 */

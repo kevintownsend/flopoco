@@ -38,10 +38,6 @@ namespace flopoco{
 		~Shifter();
 
 
-		/** 
-		 * Sets the default name of this operator
-		 */
-		void setOperatorName(); 
 
 		/**
 		 * Emulate a correctly rounded division using MPFR.
@@ -55,6 +51,14 @@ namespace flopoco{
 		int getShiftInWidth(){
 			return wShiftIn_;
 		}
+
+
+		/** Factory method that parses arguments and calls the constructor */
+		static OperatorPtr parseArguments(Target *target , vector<string> &args);
+
+		/** Factory register method */ 
+		static void registerFactory();
+
 	protected:
 		int wIn_;          /**< the width of the input*/
 		int maxShift_;     /**< the maximum shift amount*/
@@ -64,7 +68,14 @@ namespace flopoco{
 	private:
 		ShiftDirection direction_;  /**< determines the shift direction. can be Left or Right */
 		double maxInputDelay_;      /**< the maximum delay found in the input map */
+
 	};
+
+
+
+
 }
+
+
 
 #endif

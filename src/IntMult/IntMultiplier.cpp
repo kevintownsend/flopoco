@@ -178,15 +178,11 @@ namespace flopoco {
 		parentOp(parentOp_),
 		bitHeap(bitHeap_),
 		negate(negate_),
-		signedIO(signedIO_),
-		target(parentOp_->getTarget())
+		signedIO(signedIO_)
 	{
 
 		multiplierUid=parentOp->getNewUId();
 		srcFileName="IntMultiplier";
-		useDSP = parentOp->getTarget()->useHardMultipliers();
-		// TODO remove the following to switch DSP back on
-		useDSP=false;
 
 		xname = x->getName();
 		yname = y->getName();
@@ -195,7 +191,7 @@ namespace flopoco {
 
 		ostringstream name;
 		name <<"VirtualIntMultiplier";
-		if(useDSP)
+		if(parentOp->getTarget()->useHardMultipliers())
 			name << "UsingDSP_";
 		else
 			name << "LogicOnly_";
@@ -220,35 +216,39 @@ namespace flopoco {
 	IntMultiplier::IntMultiplier (Target* target_, int wX_, int wY_, int wOut_, bool signedIO_, map<string, double> inputDelays_, bool enableSuperTiles_):
 		Operator ( target_, inputDelays_ ),
 		wXdecl(wX_), wYdecl(wY_), wOut(wOut_),
-		negate(false), signedIO(signedIO_),enableSuperTiles(enableSuperTiles_), target(target_)
+		negate(false), signedIO(signedIO_),enableSuperTiles(enableSuperTiles_)
 	{
 		srcFileName="IntMultiplier";
 		setCopyrightString ( "Florent de Dinechin, Kinga Illyes, Bogdan Popa, Bogdan Pasca, 2012" );
 
-		// useDSP or not?
-		useDSP = target->useHardMultipliers();
+		cout << "*  ***************** gettarget()->useHardMultipliers() =" << getTarget()->useHardMultipliers() << endl;
 
 		//commented-out because the addition operators need the ieee_std_signed/unsigned libraries
 		useNumericStd();
-
-		// set the name of the multiplier operator
-		{
-			ostringstream name;
-			name <<"IntMultiplier";
-			if(useDSP)
-				name << "_UsingDSP_";
-			else
-				name << "_LogicOnly_";
-			name << wXdecl << "_" << wYdecl <<"_" << wOut << "_" << (signedIO?"signed":"unsigned") << "_uid"<<Operator::getNewUId();
-			setName ( name.str() );
-			REPORT(DEBUG, "Building " << name.str() );
-		}
 
 		if(wOut<0)
 		{
 			THROWERROR("IntMultiplier: in stand-alone constructor: ERROR: negative wOut");
 		}
+		if(wOut==0) {
+			wOut=wXdecl+wYdecl;
+			REPORT(DETAILED, "wOut set to " << wOut);
+		}
 
+		// set the name of the multiplier operator
+		{
+			ostringstream name;
+			name <<"IntMultiplier";
+			if(parentOp->getTarget()->useHardMultipliers())
+				name << "_UsingDSP_";
+			else
+				name << "_LogicOnly_";
+			name << wXdecl << "_" << wYdecl <<"_" << wOut << "_" << (signedIO?"signed":"unsigned");
+			setNameWithFreqAndUID ( name.str() );
+			REPORT(DEBUG, "Building " << name.str() );
+		}
+
+		
 		parentOp=this;
 		multiplierUid=parentOp->getNewUId();
 		xname="X";
@@ -277,7 +277,7 @@ namespace flopoco {
 		addInput ( yname  , wYdecl, true );
 		addOutput ( "R"  , wOut, 2 , true );
 
-		if(target->plainVHDL()) {
+		if(target_->plainVHDL()) {
 			vhdl << tab << declareFixPoint("XX",signedIO,-1, -wXdecl) << " <= " << (signedIO?"signed":"unsigned") << "(" << xname <<");" << endl;
 			vhdl << tab << declareFixPoint("YY",signedIO,-1, -wYdecl) << " <= " << (signedIO?"signed":"unsigned") << "(" << yname <<");" << endl;
 			vhdl << tab << declareFixPoint("RR",signedIO,-1, -wXdecl-wYdecl) << " <= XX*YY;" << endl;
@@ -301,7 +301,7 @@ namespace flopoco {
 			// For a stand-alone operator, we add the rounding-by-truncation bit,
 			// The following turns truncation into rounding, except that the overhead is large for small multipliers.
 			// No rounding needed for a tabulated multiplier.
-			if(lsbWeightInBitHeap<0 && !tabulatedMultiplierP(target, wX, wY))
+			if(lsbWeightInBitHeap<0 && !tabulatedMultiplierP(target_, wX, wY))
 				{
 					//int weight = -lsbWeightInBitHeap-1;
 					int weight = g-1;
@@ -392,7 +392,7 @@ namespace flopoco {
 			vhdl << tab << "-- Ne pouvant me fier a mon raisonnement, j'ai appris par coeur le résultat de toutes les multiplications possibles" << endl;
 
 			SmallMultTable *t = new SmallMultTable(parentOp->getTarget(), wX, wY, wOut, negate, signedIO, signedIO);
-			t->addToGlobalOpList();
+			UserInterface::addToGlobalOpList(t);
 
 			//This table is either exact, or correctly rounded if wOut<wX+wY
 			// FIXME the offset is probably wrong -- possible fix for now
@@ -769,7 +769,7 @@ namespace flopoco {
 		}
 #endif
 
-		if(useDSP){
+		if(parentOp->getTarget()->useHardMultipliers()){
 			REPORT(DETAILED,"in fillBitHeap(): using DSP blocks for multiplier implementation");
 			parentOp->getTarget()->getDSPWidths(wxDSP, wyDSP, signedIO);
 			REPORT(DETAILED,"in fillBitHeap(): starting tiling with DSPs");
@@ -987,20 +987,20 @@ namespace flopoco {
 
 			// In the negate case we will negate the bits coming out of this table
 			tUU = new SmallMultTable( target, dx, dy, dx+dy, false /*negate*/, false /*signx*/, false/*signy*/);
-			tUU->addToGlobalOpList();
+			UserInterface::addToGlobalOpList(tUU);
 
 			if(signedIO)
 			{ // need for 4 different tables
 
 				tSU = new SmallMultTable( target, dx, dy, dx+dy, false, true, false );
-				tSU->addToGlobalOpList();
+				UserInterface::addToGlobalOpList(tSU);
 
 				tUS = new SmallMultTable( target, dx, dy, dx+dy, false, false, true );
-				tUS->addToGlobalOpList();
+				UserInterface::addToGlobalOpList(tUS);
 
 
 				tSS = new SmallMultTable( target, dx, dy, dx+dy, false, true, true );
-				tSS->addToGlobalOpList();
+				UserInterface::addToGlobalOpList(tSS);
 
 			}
 
@@ -1261,6 +1261,7 @@ namespace flopoco {
 	bool IntMultiplier::worthUsingOneDSP(int topX, int topY, int botX, int botY, int wxDSP, int wyDSP)
 	{
 #if 1
+		Target* target = parentOp->getTarget();
 		REPORT(DEBUG, "in worthUsingOneDSP at coordinates: topX=" << topX << " topY=" << topY << " botX=" << botX << " botY" << botY
 				<< " with DSP size wxDSP=" << wxDSP << " wyDSP=" << wyDSP);
 
@@ -2118,4 +2119,36 @@ namespace flopoco {
 		ts -> counter++;
 	}
 
+
+
+
+	
+	OperatorPtr IntMultiplier::parseArguments(Target *target, std::vector<std::string> &args) {
+		int wX,wY, wOut ;
+		bool signedIO,superTile;
+		UserInterface::parseStrictlyPositiveInt(args, "wX", &wX);
+		UserInterface::parseStrictlyPositiveInt(args, "wY", &wY);
+		UserInterface::parsePositiveInt(args, "wOut", &wOut);
+		UserInterface::parseBoolean(args, "signedIO", &signedIO);
+		UserInterface::parseBoolean(args, "superTile", &superTile);
+		return new IntMultiplier(target, wX, wY, wOut, signedIO, emptyDelayMap, superTile);
+	}
+
+
+	
+	void IntMultiplier::registerFactory(){
+		UserInterface::add("IntMultiplier", // name
+											 "A pipelined integer multiplier.",
+											 "BasicInteger", // category
+											 "", // see also
+											 "wX(int): size of input X; wY(int): size of input Y;\
+                        wOut(int)=0: size of the output if you want a truncated multiplier. 0 for full multiplier;\
+                        signedIO(bool)=false: inputs and outputs can be signed or unsigned;\
+                        superTile(bool)=false: if true, attempts to use the DSP adders to chain sub-multipliers. This may entail lower logic consumption, but higher latency.", // This string will be parsed
+											 "", // no particular extra doc needed
+											 IntMultiplier::parseArguments
+											 ) ;
+	}
+
+	
 }

@@ -32,7 +32,8 @@
    Each bit in the bit heap is flagged with the cycle at which it is produced.
    Compression works as follows:
 
-   First check if there are DSP blocks, chain them into supertiles, generate the corresponding VHDL, and add the result to the bit heap
+   First check if there are DSP blocks, chain them into supertiles, generate 
+   the corresponding VHDL, and add the result to the bit heap
    Then, compress the bit heap
 
 
@@ -46,7 +47,8 @@
    and feed them to an adder.
    compress the others bits greedily,
    adding more bits, flagged with the current cycle,
-   setting the cycle of the consumed bits to -1 so they won't be considered in subsequent iterations
+   setting the cycle of the consumed bits to -1 so they won't be considered in
+   subsequent iterations
 
 */
 
@@ -62,128 +64,154 @@ namespace flopoco{
 
 	public:
 
-		/** The constructor
-		    @param op                the operator in which this bit heap is beeing built
-		    @param maxWeight         the maximum weight of the heap (it should be known statically, shouldn't it?)
-		    @param enableSuperTiles  if true, the bit heap compression will try and supertile DSP blocks
-		    @param name              a description of the heap that will be integrated into its unique name
-		    @param compressionType	 the type of compression applied to the bit heap:
-										0 = using only compressors (default),
-										1 = using only an adder tree,
-										2 = using a mix of the two, with an addition tree at the end of the compression
-		*/
+		/**
+		 * @brief The constructor
+		 * @param op                the operator in which this bit heap is 
+		 * 							beeing built
+		 * @param maxWeight         the maximum weight of the heap (it should 
+		 * 							be known statically, shouldn't it?)
+		 * @param enableSuperTiles  if true, the bit heap compression will try 
+		 * 							and supertile DSP blocks
+		 * @param name              a description of the heap that will be 
+		 * 							integrated into its unique name
+		 * @param compressionType	the type of compression applied to the bit heap:
+		 *								0 = using only compressors (default),
+		 *								1 = using only an adder tree,
+		 *								2 = using a mix of the two, with an 
+		 *									addition tree at the end of the 
+		 *									compression
+		 */
 		BitHeap(Operator* op, int maxWeight, bool enableSuperTiles = true, string name = "", int compressionType = COMPRESSION_TYPE);
 		~BitHeap();
 
-		/** add a bit to the bit heap. The bit will be added at the cycle op->currentCycle() with critical path op->getCriticalPath().
-		    @param weight   the weight of the bit to be added. It should be positive.
-		    @param rhs      the right-hand VHDL side defining this bit.
-		    @param comment  a VHDL comment for this bit
-		    @param type     shows the origin(type) of the bit:
-		    0 - compression
-		    1 - external
-		    2 - constant */
+		/** @brief add a bit to the bit heap. The bit will be added at the cycle op->currentCycle() with critical path op->getCriticalPath().
+			@param weight   the weight of the bit to be added. It should be positive.
+			@param rhs      the right-hand VHDL side defining this bit.
+			@param comment  a VHDL comment for this bit
+			@param type     shows the origin(type) of the bit:
+			0 - compression
+			1 - external
+			2 - constant */
 		void addBit(int weight, string rhs, string comment="", int type=1);
 
-		/** add a constant 1 to the bit heap. All the constant bits are added to the constantBits mpz, so we don't generate hardware to compress constants....
-		    @param weight   the weight of the 1 to be added */
+		/**
+		 * @brief add a constant 1 to the bit heap. All the constant bits are added to the constantBits mpz, so we don't generate hardware to compress constants....
+		 * @param weight   the weight of the 1 to be added
+		 */
+
 		void addConstantOneBit(int weight);
 
 		/** "remove" a constant 1 from the bit heap.
-		    @param weight   the weight of the 1 to be added */
+		 * @param weight   the weight of the 1 to be added
+		 */
 		void subConstantOneBit(int weight);
 
-		/** add a constant to the bit heap. It will be added to the constantBits mpz, so we don't generate hardware to compress constants....
-		    @param weight   the weight of the LSB of c (or, where c should be added)
-		    @param c        the value to be added */
+		/**
+		 * add a constant to the bit heap. It will be added to the constantBits mpz, so we don't generate hardware to compress constants....
+		 * @param weight   the weight of the LSB of c (or, where c should be added)
+		 * @param c        the value to be added
+		 */
 		void addConstant(int weight, mpz_class c);
 
 		/**
-		 * add to the bit heap the value held by a signal, considered as an unsigned integer
+		 * @brief add to the bit heap the value held by a signal, considered as an unsigned integer
 		 */
 		void addUnsignedBitVector(int weight, string x, unsigned size);
 
 		/**
-		 * add to the bit heap the value held by a signal, considered as an unsigned integer
+		 * @brief add to the bit heap the value held by a signal, considered as an unsigned integer
 		 * only add the bits between indices msb and lsb, including
 		 */
-		void addUnsignedBitVector(int weight, string x, unsigned size, int msb, int lsb, bool negativeWeight=false);
+		void addUnsignedBitVector(
+				int weight, 
+				string x, 
+				unsigned size, 
+				int msb, 
+				int lsb, 
+				bool negativeWeight=false
+			);
 
 		/**
-		 * add to the bit heap the opposite of the value held by a signal, considered as an unsigned integer
+		 * @brief add to the bit heap the opposite of the value held by a signal, considered as an unsigned integer
 		 */
 		void subtractUnsignedBitVector(int weight, string x, unsigned size);
 
 		/**
-		 * add to the bit heap the opposite of the value held by a signal, considered as an unsigned integer
+		 * @brief add to the bit heap the opposite of the value held by a signal, considered as an unsigned integer
 		 * only subtract the bits between indices msb and lsb, including
 		 */
 		void subtractUnsignedBitVector(int weight, string x, unsigned size, int msb, int lsb, bool negativeWeight=false);
 
 		/**
-		 * add to the bit heap the value held by a signal, considered as a signed integer. size includes the sign bit
+		 * @brief add to the bit heap the value held by a signal, considered as a signed integer. size includes the sign bit
 		 */
 		void addSignedBitVector(int weight, string x, unsigned size);
 
 		/**
-		 * add to the bit heap the value held by a signal, considered as a signed integer. size includes the sign bit
+		 * @brief add to the bit heap the value held by a signal, considered as a signed integer. size includes the sign bit
 		 * only add bits of weight at least lsb
 		 */
 		void addSignedBitVector(int weight, string x, unsigned size, int lsb, bool negativeWeight=false);
 
 		/**
-		 * add to the bit heap the opposite of the value held by a signal, considered as a signed integer. size includes the sign bit
+		 * @brief add to the bit heap the opposite of the value held by a signal, considered as a signed integer. size includes the sign bit
 		 */
 		void subtractSignedBitVector(int weight, string x, unsigned size);
 
 		/**
-		 * add to the bit heap the opposite of the value held by a signal, considered as a signed integer. size includes the sign bit
+		 * @brief add to the bit heap the opposite of the value held by a signal, considered as a signed integer. size includes the sign bit
 		 * only subtract bits of weight at least lsb
 		 */
 		void subtractSignedBitVector(int weight, string x, unsigned size, int lsb, bool negativeWeight=false);
 
 
-		/** generate the VHDL for the bit heap. To be called last by operators using BitHeap.*/
+		/** @brief generate the VHDL for the bit heap. To be called last by operators using BitHeap.*/
 		void generateCompressorVHDL();
 
-		/** returns the name of the compressed sum */
+		/**
+		 * @brief returns the name of the compressed sum
+		 */
 		string getSumName();
 
-		/** returns the name of the compressed sum, with the range (msb, lsb)
-		 *  @param msb the msb for the range
-		 *  @param lsb the lsb for the range
+		/**
+		 * @brief returns the name of the compressed sum, with the range (msb, lsb)
+		 * @param msb the msb for the range
+		 * @param lsb the lsb for the range
 		 */
 		string getSumName(int msb, int lsb);
 
-		/** returns the current stage of the bitheap, given the global cycle and CP */
+		/**
+		 * @brief returns the current stage of the bitheap, given the global cycle and CP
+		 */
 		int computeStage();
 
 
-		/** adds a new MultiplierBlock */
+		/** @brief adds a new MultiplierBlock */
 		void  addMultiplierBlock(MultiplierBlock* m);
 
 
 
-		/** search for the possible chainings and build supertiles*/
+		/** @brief search for the possible chainings and build supertiles*/
 		void buildSupertiles();
 
-		/**  generates the VHDL code for the supertiles*/
+		/** @brief generates the VHDL code for the supertiles*/
 		void generateSupertileVHDL();
 
 		/**
-		 * Generate the code VHDL for the process which implements the supertile,
+		 * @brief Generate the code VHDL for the process which implements the supertile,
 		 * in order to have the addition inferred inside the DSP block for Altera
 		 * architectures.
 		 */
 		void generateAlteraSupertileVHDL(MultiplierBlock* x, MultiplierBlock* y, string resultName);
 
 
-		/** returns the maximum weight of the bit heap */
+		/** @brief returns the maximum weight of the bit heap */
 		unsigned getMaxWeight();
 
+		/** @brief returns the minimum weight of the bit heap */
 		unsigned getMinWeight();
 
-		/** returns the maximum height of the bit heap*/
+		/** @brief returns the maximum height of the bit heap*/
 		unsigned getMaxHeight();
 
 		int getStagesPerCycle();
@@ -194,10 +222,10 @@ namespace flopoco{
 
 		Operator* getOp();
 
-		/** return the UID of the bit heap*/
+		/** @brief return the UID of the bit heap*/
 		int getGUid();
 
-		/** return the UID of the bit heap*/
+		/** @brief return the UID of the bit heap*/
 		string getName();
 
 
@@ -216,64 +244,63 @@ namespace flopoco{
 		void applyAdder(int col0, int col1, bool hasCin=true);
 
 		/**
-		 * compress the remaining columns using adders
+		 * @brief compress the remaining columns using adders
 		 */
 		void applyAdderTreeCompression();
 
-		/** returns a pointer to the  latest bit from the inputs to a compressor applied to the bottom of a bit heap
-		  w is the weight, c0 and c1 are the input heights of the compressor, e.g. 3,0 for a full adder */
+		/**
+		 * @brief returns a pointer to the  latest bit from the inputs to a compressor applied to the bottom of a bit heap
+		 * w is the weight, c0 and c1 are the input heights of the compressor, e.g. 3,0 for a full adder
+		 */
 		WeightedBit* latestInputBitToCompressor(unsigned w, int c0, int c1);
 
 		/**
-		 * computes the latest bit from the bitheap, in order to manage the cycle before the final adding
+		 * @brief computes the latest bit from the bitheap, in order to manage the cycle before the final adding
 		 */
 		WeightedBit* getLatestBit(int lsbColumn, int msbColumn);
 
 		WeightedBit* getFirstSoonestBit();
 
-		/** remove a bit from the bitheap.
-		    @param weight  the weight of the bit to be removed
-		    @param dir if dir==0 the bit will be removed from the begining of the list
-		    if dir==1 the bit will be removed from the end of the list
+		/**
+		 * @brief remove a bit from the bitheap.
+		 * @param weight  the weight of the bit to be removed
+		 * @param dir if dir==0 the bit will be removed from the begining of the list
+					  if dir==1 the bit will be removed from the end of the list
 		*/
 		void removeBit(unsigned weight, int dir);
 
 		/** get the parent operator */
 
-
-
-		/** generate the final adder for the bit heap (when the columns height is maximum 2*/
+		/** @brief generate the final adder for the bit heap (when the columns height is maximum 2*/
 		void generateFinalAddVHDL(bool isXilinx);
 
-
-
 		/**
-		 * Compress the bitheap using compressors
+		 * @brief Compress the bitheap using compressors
 		 * @param stage: the compression stage
 		 **/
 		void compress(int stage);
 
-		/** return the current height a column (bits not yet compressed) */
+		/** @brief return the current height a column (bits not yet compressed) */
 		unsigned currentHeight(unsigned w);
 
-		/** return a fresh uid for a bit of weight w*/
+		/** @brief return a fresh uid for a bit of weight w*/
 		int newUid(unsigned w);
 
 
 
 
-		/** counts the bits not processed yet in wb */
+		/** @brief counts the bits not processed yet in wb */
 		int count(list<WeightedBit*> wb, int cycle);
 
 		void printColumnInfo(int w);
 
 		void generatePossibleCompressors();
 
-		/** remove the compressed bits */
+		/** @brief remove the compressed bits */
 		void removeCompressedBits(int c, int red);
 
 
-		/** generate the VHDL code for 1 dsp */
+		/** @brief generate the VHDL code for 1 dsp */
 		void generateVHDLforDSP(MultiplierBlock* m, int uid,int i);
 
 		void initializeDrawing();

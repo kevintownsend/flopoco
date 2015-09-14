@@ -56,8 +56,7 @@ namespace flopoco{
 
 	Table::Table(Target* target_, int _wIn, int _wOut, int _minIn, int _maxIn, int _logicTable, map<string, double> inputDelays) :
 		Operator(target_),
-		wIn(_wIn), wOut(_wOut), minIn(_minIn), maxIn(_maxIn),
-		target(target_)
+		wIn(_wIn), wOut(_wOut), minIn(_minIn), maxIn(_maxIn)
 	{
 		srcFileName = "Table";
 		if(wIn<0){
@@ -94,7 +93,7 @@ namespace flopoco{
 		else if (_logicTable==-1)
 			logicTable=false;
 		else { // the constructor should decide
-			logicTable = (wIn <= target->lutInputs())  ||  (wOut * (mpz_class(1) << wIn) < 0.5*target->sizeOfMemoryBlock());
+			logicTable = (wIn <= getTarget()->lutInputs())  ||  (wOut * (mpz_class(1) << wIn) < 0.5*getTarget()->sizeOfMemoryBlock());
 			if(!logicTable)
 				REPORT(DETAILED, "This table will be implemented in memory blocks");
 		}
@@ -110,18 +109,18 @@ namespace flopoco{
 
 		if (logicTable)  {
 			// Delay is that of broadcasting the input bits to wOut LUTs, plus the LUT delay itself
-			if(wIn <= target->lutInputs())
-				addToCriticalPath(target->localWireDelay(wOut) + target->lutDelay());
+			if(wIn <= getTarget()->lutInputs())
+				addToCriticalPath(getTarget()->localWireDelay(wOut) + getTarget()->lutDelay());
 			else{
-				int lutsPerBit=1<<(wIn-target->lutInputs());
+				int lutsPerBit=1<<(wIn-getTarget()->lutInputs());
 				REPORT(DETAILED, "Building a logic table that uses " << lutsPerBit << " LUTs per output bit");
 				// TODO this doesn't take into account the F5 muxes etc: there should be a logicTableDelay() in Target
 				// The following is enough for practical sizes, but it is an overestimation.
-				addToCriticalPath(target->localWireDelay(wOut*lutsPerBit) + target->lutDelay() + target->localWireDelay() + target->lutDelay());
+				addToCriticalPath(getTarget()->localWireDelay(wOut*lutsPerBit) + getTarget()->lutDelay() + getTarget()->localWireDelay() + getTarget()->lutDelay());
 			}
 		}
 		else{
-			manageCriticalPath(target->LogicToRAMWireDelay() + target->RAMToLogicWireDelay() + target->RAMDelay()); // will hopefully insert the extra register when needed
+			manageCriticalPath(getTarget()->LogicToRAMWireDelay() + getTarget()->RAMToLogicWireDelay() + getTarget()->RAMDelay()); // will hopefully insert the extra register when needed
 		}
 
 		getSignalByName("TableOut") -> updateLifeSpan(getCurrentCycle());
@@ -192,7 +191,7 @@ namespace flopoco{
 		o << "library work;" << endl;
 		outputVHDLEntity(o);
 		newArchitecture(o,name);
-		if (logicTable==1 || wIn <= target->lutInputs()){
+		if (logicTable==1 || wIn <= getTarget()->lutInputs()){
 			int i,x;
 			mpz_class y;
 			beginArchitecture(o);

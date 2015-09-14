@@ -177,6 +177,7 @@ ADD_LIBRARY(FloPoCoLib STATIC
 
  src/FloPoCo.hpp
  src/Operator
+ src/UserInterface
  src/Signal
  src/utils
  src/FlopocoStream
@@ -293,10 +294,12 @@ src/Conversions/Fix2FP
  src/IntMult/IntSquarer
 
 # Complex numbers ---------------------------------------------------
+src/Complex/FixComplexKCM
 # TODO for Matei
-
+#src/Complex/FixedComplexAdder
 
 # Floating-point adders and subtracters -----------------------------
+ src/FPAddSub/FPAdd
  src/FPAddSub/FPAddDualPath
  src/FPAddSub/FPAddSinglePath
  src/FPAddSub/FPAdd3Input
@@ -308,8 +311,10 @@ src/Conversions/Fix2FP
  src/FPMultSquare/FPSquare
 
 # Floating-point dividers and square roots
+src/FPDivSqrt/SelFunctionTable
 src/FPDivSqrt/FPDiv
 src/FPDivSqrt/FPSqrt
+src/FPDivSqrt/Tools/NbBitsMin
 # src/FPDivSqrt/FPSqrtPoly # Resurrect some day?
 
 
@@ -323,7 +328,9 @@ src/FPComposite/FP2DNorm
 # Generic fixed-point function evaluators ---------------------------
  src/Table 
  src/DualTable 
- 
+
+ src/FixConstant
+
  src/FixFunctions/FixFunction
  src/FixFunctions/FixFunctionByTable
  src/FixFunctions/BasicPolyApprox
@@ -331,10 +338,12 @@ src/FPComposite/FP2DNorm
  src/FixFunctions/FixHornerEvaluator
  src/FixFunctions/FixFunctionBySimplePoly
  src/FixFunctions/FixFunctionByPiecewisePoly
- src/FixConstant
 
- src/FixFunctions/BipartiteTable
  src/FixFunctions/GenericTable
+ src/FixFunctions/BipartiteTable
+ src/FixFunctions/Multipartite
+ src/FixFunctions/FixFunctionByMultipartiteTable
+# src/FixFunctions/QuineMcCluskey
 
 # Trigonometric functions ------------------------------------------
 src/Trigs/ConstDiv3ForSinPoly
@@ -386,13 +395,14 @@ TARGET_LINK_LIBRARIES(
 	${FLOPOCO_LIB}
   )
 
-ADD_EXECUTABLE(flopoco_soaktest
- src/main_soaktest
-)
-TARGET_LINK_LIBRARIES(
-  flopoco_soaktest  
-	${FLOPOCO_LIB}
-)
+# unplugged for now to speed up compilation, to revive some day
+#ADD_EXECUTABLE(flopoco_soaktest
+# src/main_soaktest
+#)
+#TARGET_LINK_LIBRARIES(
+#  flopoco_soaktest  
+#	${FLOPOCO_LIB}
+#)
 
 
 

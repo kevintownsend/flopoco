@@ -1,13 +1,13 @@
 /*
-  A FIXME for FloPoCo. 
- 
+  A FIXME for FloPoCo.
+
    Author: Bogdan Pasca
 
   This file is part of the FloPoCo project
   developed by the Arenaire team at Ecole Normale Superieure de Lyon
-  
+
   Initial software.
-  Copyright © ENS-Lyon, INRIA, CNRS, UCBL,  
+  Copyright © ENS-Lyon, INRIA, CNRS, UCBL,
   2008-2011.
   All rights reserved.
  */
@@ -25,17 +25,17 @@
 #include "LongIntAdderCmpAddIncGen2.hpp"
 #include "IntAdder.hpp"
 #include "IntComparator.hpp"
-	
+
 
 using namespace std;
 namespace flopoco{
 
 	LongIntAdderCmpAddIncGen2::LongIntAdderCmpAddIncGen2(Target* target, int wIn, map<string, double> inputDelays):
-		Operator(target), wIn_(wIn), inputDelays_(inputDelays) 
+		Operator(target), wIn_(wIn), inputDelays_(inputDelays)
 	{
 		srcFileName="LongIntAdderCmpAddIncGen2";
 		setName(join("LongIntAdderCmpAddIncGen2_", wIn_));
-		
+
 		// Set up the IO signals
 		addInput ( "X" , wIn_);
 		addInput ( "Y" , wIn_);
@@ -45,7 +45,7 @@ namespace flopoco{
 
 		//compute the maximum input delay
 		maxInputDelay = getMaxInputDelays(inputDelays);
-			
+
 		double xordelay;
 		double dcarry;
 		double muxcystoo;
@@ -66,30 +66,30 @@ namespace flopoco{
 			muxcystoo = 0.278e-9;
 			muxcytolacal = 0.273e-9;
 		}
-			
+
 		int ll;
 		int l1;
 		int l0;
 		int maxAdderSize;
 		double z = getMaxInputDelays(inputDelays);
-			
+
 #ifdef MAXSIZE
 for (int aa=25; aa<=400; aa+=25){
 	target->setFrequency(double(aa)*1000000.0);
 
 #endif
-		double t = 1.0 / target->frequency();				
+		double t = 1.0 / target->frequency();
 
 		if (target->getVendor()=="Xilinx"){
-			ll = (1.0/2.0)* ((t - 
+			ll = (1.0/2.0)* ((t -
 							  z - //the register c->q delay + net delay from register
-							  2*(target->lutDelay() + muxcystoo + muxcytolacal) - 
-							  (target->lutDelay() + muxcystoo + xordelay) - 
+							  2*(target->lutDelay() + muxcystoo + muxcytolacal) -
+							  (target->lutDelay() + muxcystoo + xordelay) -
 							  2*target->localWireDelay())/dcarry + 2);
 			if (ll<=1){
 				cerr << "WARNING: The adder does not seem to meet the required frequency constraints"<<endl;
 				ll = 2;
-			}	
+			}
 		}else if (target->getVendor()=="Altera"){
 			ll = 1;
 			bool sol1 = false, sol2 = false;
@@ -97,13 +97,13 @@ for (int aa=25; aa<=400; aa+=25){
 				double ed = target->localWireDelay() + target->adderDelay(ll) + target->localWireDelay() + target->lutDelay() + target->adderDelay(ll);
 				if ((ed<t) && (!sol1))
 					sol1 = true;
-				if ((sol1) && (ed>=t))	
+				if ((sol1) && (ed>=t))
 					sol2 = true;
-				ll++;	
+				ll++;
 			}
 		}else{
 			cerr << "ERROR: Check your target FPGA" << endl;
-			exit(-1);	
+			exit(-1);
 		}
 		l1 = ll-1;
 		target->suggestSlackSubaddSize(l0, wIn, t - (target->lutDelay()+ target->adderDelay(l1)) );
@@ -116,18 +116,18 @@ for (int aa=25; aa<=400; aa+=25){
 		cout << " Frequency="<< aa <<" Width="<<maxAdderSize<<endl;
 }
 exit(-1);
-#endif			
+#endif
 
 		cSize = new int[1000];
 		cSize[0]=l0; cSize[1]=l1; cSize[2]=ll;
 		nbOfChunks = 3;
 		bool solution = false;
-		
+
 		if (l0 + l1 + ll > wIn){
 			/* these chunks are too big for this small addition*/
 			int turn =0;
 			while (!solution){
-				if (cSize[turn]>1) 
+				if (cSize[turn]>1)
 					cSize[turn]--;
 				turn = (turn==2?0:turn+1);
 				if ((cSize[0]==1)&&(cSize[1]==1)&&(cSize[2]==1)){
@@ -139,7 +139,7 @@ exit(-1);
 					solution = true;
 			}
 		}
-		
+
 		if (wIn>maxAdderSize){
 			cerr << "WARNING: the "<<wIn<<"-bit adder is too large for frequency " << target->frequencyMHz() << endl;
 		}
@@ -157,14 +157,14 @@ exit(-1);
 		}
 		for (int i=0; i<nbOfChunks; i++)
 			REPORT(INFO, "cSize["<<i<<"]="<<cSize[i]);
-			
+
 //#define test512
-#ifdef test512				
+#ifdef test512
 		nbOfChunks = 16;
 		for (int i=1;i<=16;i++)
 			cSize[i-1]=32;
-#endif		
-		/////////////////////////////////////////////////////////////		
+#endif
+		/////////////////////////////////////////////////////////////
 		//split the inputs ( this should be reusable )
 		vhdl << tab << "--split the inputs into chunks of bits depending on the frequency" << endl;
 		for (int i=0;i<2;i++){
@@ -176,24 +176,24 @@ exit(-1);
 				for (int k=0;k<=j-1;k++) low+=cSize[k];
 				vhdl << tab << declare (name.str(),cSize[j],true) << " <= "<<(i?"Y":"X")<<range(high-1,low)<<";"<<endl;
 			}
-		}	
-		
+		}
+
 		int l=1;
 		for (int j=0; j<nbOfChunks; j++){
 			if (j>0){ //for all chunks greater than zero we perform this comparissons
 				IntAdderSpecific *acsz = new IntAdderSpecific(target, cSize[j]);
 				oplist.push_back(acsz);
-				
+
 				inPortMap(acsz, "X", join("sX",j,"_0_l",l-1));
 				inPortMap(acsz, "Y", join("sX",j,"_1_l",l-1));
 				inPortMapCst(acsz, "Cin", "'0'");
 				outPortMap(acsz, "R", join("sX",j,"_0_l",l,"_Zero"));
 				outPortMap(acsz, "Cout", join("coutX",j,"_0_l",l,"_Zero"));
 				vhdl << tab << instance(acsz, join("addercz",j));
-				
+
 				IntComparatorSpecific *icso = new IntComparatorSpecific(target, cSize[j],1);
 				oplist.push_back(icso);
-				
+
 				inPortMap(icso, "X", join("sX",j,"_0_l",l-1));
 				inPortMap(icso, "Y", join("sX",j,"_1_l",l-1));
 				outPortMap(icso, "R", join("coutX",j,"_0_l",l,"_One"));
@@ -214,16 +214,16 @@ exit(-1);
 		}
 		//////////////////////////////////////////////////////
 		vhdl << tab <<"--form the two carry string"<<endl;
-		vhdl << tab << declare("carryStringZero",nbOfChunks-2,true) << " <= "; 
+		vhdl << tab << declare("carryStringZero",nbOfChunks-2,true) << " <= ";
 		for (int i=nbOfChunks-3; i>=0; i--) {
 			vhdl << "coutX"<<i+1<<"_0_l"<<l<<"_Zero" << (i>0?" & ":" & \"\";") ;
 		} vhdl << endl;
-		
-		vhdl << tab << declare("carryStringOne",  nbOfChunks-2,true) << "  <= "; 
+
+		vhdl << tab << declare("carryStringOne",  nbOfChunks-2,true) << "  <= ";
 		for (int i=nbOfChunks-3; i>=0; i--) {
 			vhdl << "coutX"<<i+1<<"_0_l"<<l<<"_One" << (i>0?" & ":"& \"\";");
 		} vhdl << endl;
-		
+
 		vhdl << tab << "--perform the short carry additions" << endl;
 
 		//////////////////////////////////////////////////////
@@ -257,7 +257,7 @@ exit(-1);
 					vhdl << tab << "          I3 => '0',"<<endl;
 					vhdl << tab << "          I4 => '0',"<<endl;
 					vhdl << tab << "          I5 => '1');"<<endl; //fixed value
-				
+
 					vhdl << tab << "l"<<getNewUId()<<": MUXCY port map ("<<endl;
 					vhdl << tab << "          O  => rawCarrySum2("<<j-2<<"), -- Carry local output signal"<<endl;
 					vhdl << tab << "          CI => '1',  -- Carry input signal"<<endl;
@@ -265,7 +265,7 @@ exit(-1);
 					vhdl << tab << "          S  => p("<<j-2<<")   -- MUX select, tie to '1' or LUT4 out"<<endl;
 					vhdl << tab << ");"<<endl;
 				}
-			}				
+			}
 			IntAdderSpecific *adder = new IntAdderSpecific(target, cSize[j]);
 			oplist.push_back(adder);
 
@@ -283,14 +283,14 @@ exit(-1);
 			outPortMap(adder, "Cout", join("coutX",j,"_0_l",l+1) ); //this one will get discarded
 			vhdl << instance(adder, join("adder",j) );
 		}
-			
+
 		vhdl << tab <<"--get the final pipe results"<<endl;
 		for ( int i=0; i<nbOfChunks; i++){
 			if (i==0) vhdl << tab << declare(join("res",i),cSize[i],true) << " <= sX0_0_l1_Cin;" << endl;
 			else      vhdl << tab << declare(join("res",i),cSize[i],true) << " <= " << join("sX",i,"_0_l",l+1) << ";" << endl;
 		}
 
-		/////////////////////////////////////////////////////////		
+		/////////////////////////////////////////////////////////
 		vhdl << tab << "R <= ";
 		for (int i=nbOfChunks-1, k=0; i>=0; i--){
 			vhdl << use(join("res",i));
@@ -336,12 +336,12 @@ exit(-1);
 			o << "			dataa	: IN STD_LOGIC_VECTOR ("<<wIn_-1<<" DOWNTO 0);"<<endl;
 			o << "			result	: OUT STD_LOGIC_VECTOR ("<<wIn_-1<<" DOWNTO 0)"<<endl;
 			o << "	);"<<endl;
-			o << "	END COMPONENT;"<<endl;			
+			o << "	END COMPONENT;"<<endl;
 		}
 
-		o << buildVHDLComponentDeclarations();	
+		o << buildVHDLComponentDeclarations();
 		o << buildVHDLSignalDeclarations();
-		beginArchitecture(o);		
+		beginArchitecture(o);
 		o<<buildVHDLRegisters();
 		o << vhdl.str();
 		endArchitecture(o);
@@ -357,7 +357,25 @@ exit(-1);
 		mpz_class svC =  tc->getInputValue("Cin");
 
 		mpz_class svR = svX[0] + svX[1] + svC;
-		mpz_clrbit(svR.get_mpz_t(),wIn_); 
+		mpz_clrbit(svR.get_mpz_t(),wIn_);
 		tc->addExpectedOutput("R", svR);
+	}
+
+	OperatorPtr LongIntAdderCmpAddIncGen2::parseArguments(Target *target, vector<string> &args) {
+		int wIn;
+		UserInterface::parseStrictlyPositiveInt(args, "wIn", &wIn);
+		return new LongIntAdderCmpAddIncGen2(target, wIn);
+	}
+
+	void LongIntAdderCmpAddIncGen2::registerFactory(){
+		UserInterface::add("LongIntAdderCmpAddIncGen2", // name
+											 "An long integer comparator for experimentation.",
+											 "BasicInteger", // categories
+											 "",
+											 "wIn(int): input size in bits;",
+											 "",
+											 LongIntAdderCmpAddIncGen2::parseArguments
+											 ) ;
+
 	}
 }

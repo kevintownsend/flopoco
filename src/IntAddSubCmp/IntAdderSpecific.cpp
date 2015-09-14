@@ -1,16 +1,16 @@
 /*
   An integer adder for FloPoCo using vendor primitives
- 
+
   It may be pipelined to arbitrary frequency.
   Also useful to derive the carry-propagate delays for the subclasses of Target
- 
+
   Author: Bogdan Pasca
 
   This file is part of the FloPoCo project
   developed by the Arenaire team at Ecole Normale Superieure de Lyon
-  
+
   Initial software.
-  Copyright © ENS-Lyon, INRIA, CNRS, UCBL,  
+  Copyright © ENS-Lyon, INRIA, CNRS, UCBL,
   2008-2011.
   All rights reserved.
  */
@@ -32,10 +32,10 @@ namespace flopoco{
 
 	IntAdderSpecific::IntAdderSpecific(Target* target, int wIn, map<string, double> inputDelays):
 		Operator(target,inputDelays), wIn_(wIn), inputDelays_(inputDelays)
-	{	
+	{
 		srcFileName="IntAdderSpecific";
 		setName(join("IntAdderSpecific_", wIn_,"_",getNewUId()));
-		
+
 		// Set up the IO signals
 		addInput ( "X", wIn_,true);
 		addInput ( "Y", wIn_,true);
@@ -68,12 +68,12 @@ namespace flopoco{
 				vhdl << tab << "      O => R("<<i<<"),   -- XOR output signal"<<endl;
 				if (i==0)
 					vhdl << tab << "      CI => Cin, -- Carry input signal"<<endl;
-				else 
+				else
 					vhdl << tab << "      CI => c("<<i-1<<"), -- Carry input signal"<<endl;
 				vhdl << tab << "      LI => p("<<i<<")  -- LUT4 input signal"<<endl;
 				vhdl << tab << ");"<<endl;
 			}
-		}else{ //ALTERA 
+		}else{ //ALTERA
 			vhdl << tab << "LPM_ADD_SUB_component : LPM_ADD_SUB"<<endl;
 			vhdl << tab << "GENERIC MAP ("<<endl;
 			vhdl << tab << "	lpm_direction => \"ADD\","<<endl;
@@ -91,13 +91,13 @@ namespace flopoco{
 			vhdl << tab << "    cout => Cout,"<<endl;
 			vhdl << tab << "	result => R"<<endl;
 			vhdl << tab << ");"<<endl;
-		}	
+		}
 	}
 
 	IntAdderSpecific::~IntAdderSpecific() {
 	}
 
-	
+
 	void IntAdderSpecific::outputVHDL(std::ostream& o, std::string name) {
 		ostringstream signame;
 		licence(o);
@@ -131,18 +131,18 @@ namespace flopoco{
 			o << "			dataa	: IN STD_LOGIC_VECTOR ("<<wIn_-1<<" DOWNTO 0);"<<endl;
 			o << "			result	: OUT STD_LOGIC_VECTOR ("<<wIn_-1<<" DOWNTO 0)"<<endl;
 			o << "	);"<<endl;
-			o << "	END COMPONENT;"<<endl;			
+			o << "	END COMPONENT;"<<endl;
 		}
 
-		o << buildVHDLComponentDeclarations();	
+		o << buildVHDLComponentDeclarations();
 		o << buildVHDLSignalDeclarations();
-		beginArchitecture(o);		
+		beginArchitecture(o);
 		o<<buildVHDLRegisters();
 		o << vhdl.str();
 		endArchitecture(o);
 	}
 
-	
+
 	void IntAdderSpecific::emulate(TestCase* tc)
 	{
 		mpz_class svX= tc->getInputValue("X");
@@ -150,11 +150,29 @@ namespace flopoco{
 		mpz_class svC =  tc->getInputValue("Cin");
 
 		mpz_class sR = svX + svY + svC;
-		
+
 		mpz_class svR = sR % (1<<wIn_);
 		mpz_class cout = sR >> wIn_;
-		
+
 		tc->addExpectedOutput("R", svR);
 		tc->addExpectedOutput("Cout",cout);
+	}
+
+	OperatorPtr IntAdderSpecific::parseArguments(Target *target, vector<string> &args) {
+		int wIn;
+		UserInterface::parseStrictlyPositiveInt(args, "wIn", &wIn);
+		return new IntAdderSpecific(target, wIn);
+	}
+
+	void IntAdderSpecific::registerFactory(){
+		UserInterface::add("IntAdderSpecific", // name
+											 "A specific integer adder for experimentation.",
+											 "BasicInteger", // categories
+											 "",
+											 "wIn(int): input size in bits; ",
+											 "",
+											 IntAdderSpecific::parseArguments
+											 ) ;
+
 	}
 }

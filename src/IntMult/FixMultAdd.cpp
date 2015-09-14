@@ -46,7 +46,7 @@ namespace flopoco {
 		setCopyrightString ( "Florent de Dinechin, Matei Istoan, 2012-2014" );
 
 		// Set up the VHDL library style
-		//useNumericStd();
+		useNumericStd();
 
 		wX = x->MSB() - x->LSB() +1;
 		wY = y->MSB() - y->LSB() +1;

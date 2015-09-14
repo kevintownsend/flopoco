@@ -56,6 +56,7 @@ namespace flopoco{
 		void emulate(TestCase * tc,	bool correctlyRounded=false /**< if true, correctly rounded RN; if false, faithful function */);
 
 		// All the following public, not good practice I know, but life is complicated enough
+		string sollyaString;
 		int lsbIn;   
 		int wIn;   
 		int msbOut;

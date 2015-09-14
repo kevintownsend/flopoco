@@ -150,6 +150,7 @@ namespace flopoco{
 	 */
 	double intpow2(int power);
 
+
 	/** 2 to the power function.
 	 * @param power the power at which 2 is raised
 	 * @return 2^power

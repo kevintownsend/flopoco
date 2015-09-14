@@ -31,6 +31,10 @@ namespace flopoco{
 		PiecewisePolyApprox(string sollyaString, double targetAccuracy, int degree);
 
 		virtual ~PiecewisePolyApprox();
+		
+		static OperatorPtr parseArguments(Target *target, vector<string> &args);
+
+		static void registerFactory();
 
 		/** get the bits of coeff of degree d of polynomial number i */
 		mpz_class getCoeff(int i, int d); 
@@ -43,7 +47,7 @@ namespace flopoco{
 		int LSB;                          /**< common weight of the LSBs of the polynomial approximations */
 		vector<int> MSB;                   /**< vector of MSB weights for each coefficient */
 		double approxErrorBound;           /**< guaranteed upper bound on the approx error of each approximation provided. Should be smaller than targetAccuracy */
-
+		vector<int> coeffSigns;            /**< If all the coeffs of a given degree i are strictly positive (resp. strictly negative), then coeffSigns[i]=+1 (resp. -1). Otherwise 0 */
 	private:
 		FixFunction *f;                   /**< The function to be approximated */
 		double targetAccuracy;            /**< please build an approximation at least as accurate as that */
@@ -51,8 +55,6 @@ namespace flopoco{
 		string srcFileName; /**< useful only to enable same kind of reporting as for FloPoCo operators. */
 		string uniqueName_; /**< useful only to enable same kind of reporting as for FloPoCo operators. */
 		bool needToFreeF;   /**< in an ideal world, this should not be needed */
-
-
 
 	};
 

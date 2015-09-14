@@ -14,9 +14,9 @@
 #define TWIDDLENEGREADDIM 	3
 
 namespace flopoco{
-	
+
 	/**
-	 * Multiplier by a constant twiddle factor
+	 * @brief Multiplier by a constant twiddle factor
 	 * Depending on the value of hasLessMultiplications, the multiplication
 	 * (a+jb)*(c+jd) can be either
 	 * 		Re(z)=a*c+b*d
@@ -29,7 +29,7 @@ namespace flopoco{
 	 * 		Im(z)=m1+m3, with 3 multiplications by a constant and 3 additions
 	 * where
 	 * 		c and d are constants
-	 * 		consequntly, multiplications by c and d are multiplications 
+	 * 		consequntly, multiplications by c and d are multiplications
 	 * 		by constants
 	 * 		d+c and d-c are constants also
 	 */
@@ -38,36 +38,36 @@ namespace flopoco{
 	public:
 		IntTwiddleMultiplier(Target* target, int wI, int wF, int twiddleExponent, int n, bool signedOperator = true, bool reducedMultiplications = false, int multiplierMode = 0);
 		~IntTwiddleMultiplier();
-		
+
 		void emulate(TestCase * tc);
-		
+
 		//user defined class-specific functions
 		/**
-		 * Compute the real or imaginary parts of the twiddle factor, or
-		 * the sum, or the difference of the two. The values of the 
-		 * exponent and the size of the FFT are taken from the class 
+		 * @brief Compute the real or imaginary parts of the twiddle factor, or
+		 * the sum, or the difference of the two. The values of the
+		 * exponent and the size of the FFT are taken from the class
 		 * variables.
-		 * @param constantType decide what to compute (real/imaginary 
+		 * @param constantType decide what to compute (real/imaginary
 		 * parts, or the sum/difference of the two)
-		 * @return the real/imaginary part of the twiddle factor, or 
+		 * @return the real/imaginary part of the twiddle factor, or
 		 * the sum/difference of the two, as a number
 		 */
 		mpz_class getTwiddleConstant(int constantType);
-		
+
 		/**
-		 * Compute the real or imaginary parts of the twiddle factor, or
-		 * the sum, or the difference of the two. The values of the 
-		 * exponent and the size of the FFT are taken from the class 
+		 * @brief Compute the real or imaginary parts of the twiddle factor, or
+		 * the sum, or the difference of the two. The values of the
+		 * exponent and the size of the FFT are taken from the class
 		 * variables.
-		 * @param constantType decide what to compute (real/imaginary 
+		 * @param constantType decide what to compute (real/imaginary
 		 * parts, or the sum/difference of the two)
-		 * @return the real/imaginary part of the twiddle factor, or 
+		 * @return the real/imaginary part of the twiddle factor, or
 		 * the sum/difference of the two, as a string
 		 */
 		std::string getTwiddleConstantString(int constantType);
-		
+
 		/**
-		 * Compute the greatest common divisor of two numbers
+		 * @brief Compute the greatest common divisor of two numbers
 		 * @param x the first number
 		 * @param y the second number
 		 * @return the gcd

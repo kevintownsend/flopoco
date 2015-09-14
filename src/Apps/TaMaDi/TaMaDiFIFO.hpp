@@ -18,29 +18,29 @@ namespace flopoco{
 	public:
 
 		/**
-		 * The TaMaDiFIFO constructor
+		 * @brief			The TaMaDiFIFO constructor
 		 * @param[in]		target  the target device
-		 * @param[in]		n		number of outputs      
-		 **/ 
+		 * @param[in]		n		number of outputs
+		 **/
 		TaMaDiFIFO(Target* target, int w, int n, int moreThan = 0);
 
 		/**
-		 * TaMaDiFIFO destructor
+		 * @brief			TaMaDiFIFO destructor
 		 */
 		~TaMaDiFIFO();
-	
+
 		/**
-		 * Method belonging to the Operator class overloaded by the IntSquarer class
+		 * @brief				Method belonging to the Operator class overloaded by the IntSquarer class
 		 * @param[in,out] o     the stream where the current architecture will be outputed to
 		 * @param[in]     name  the name of the entity corresponding to the architecture generated in this method
 		 **/
 		void outputVHDL(std::ostream& o, std::string name);
-	
+
 	protected:
 		int _n;
 		int	_w;
 		int _moreThan;
-		
+
 	private:
 	};
 }

@@ -1,16 +1,16 @@
 /*
   An integer comparator for FloPoCo using vendor primitives
- 
+
   It may be pipelined to arbitrary frequency.
   Also useful to derive the carry-propagate delays for the subclasses of Target
- 
+
   Author: Bogdan Pasca
 
   This file is part of the FloPoCo project
   developed by the Arenaire team at Ecole Normale Superieure de Lyon
-  
+
   Initial software.
-  Copyright © ENS-Lyon, INRIA, CNRS, UCBL,  
+  Copyright © ENS-Lyon, INRIA, CNRS, UCBL,
   2008-2011.
   All rights reserved.
  */
@@ -32,23 +32,23 @@ namespace flopoco{
 
 	IntComparatorSpecific::IntComparatorSpecific(Target* target, int wIn, int type, map<string, double> inputDelays):
 		Operator(target,inputDelays), wIn_(wIn), type_(type), inputDelays_(inputDelays)
-	{	
-	
+	{
+
 //		type 1 // X ge not(y)
 		srcFileName="IntComparatorSpecific";
 		setName(join("IntComparatorSpecific_", wIn_,"_",getNewUId()));
-		
+
 		// Set up the IO signals
 		addInput ( "X", wIn_,true);
 		addInput ( "Y", wIn_,true);
 		addOutput( "R", 1, false);
-		
+
 		int evenwIn = (wIn%2==0?wIn:wIn+1);
 		bool extwIn = (evenwIn==wIn?false:true);
 		vhdl << tab << declare("sX", evenwIn) << " <= "<<(extwIn?"\"0\" &":"") << " X;"<<endl;
 		vhdl << tab << declare("sY", evenwIn) << " <= "<<(extwIn?"\"1\" &":"") << " Y;"<<endl;
 
-		
+
 		/*unpipelined IntAdder architecture FPGA specific primitives*/
 		if (target->getVendor() == "Xilinx"){
 			declare("p",evenwIn/2,true);
@@ -69,7 +69,7 @@ namespace flopoco{
 					vhdl << tab << "          O  => R, -- Carry local output signal"<<endl;
 				else
 					vhdl << tab << "          O  => c("<<i/2<<"), -- Carry local output signal"<<endl;
-				if (i==0)		
+				if (i==0)
 					if (type == 1)
 						vhdl << tab << "          CI => '1',  -- Carry input signal"<<endl;
 					else
@@ -80,8 +80,8 @@ namespace flopoco{
 				vhdl << tab << "          S  => p("<<i/2<<")   -- MUX select, tie to '1' or LUT4 out"<<endl;
 				vhdl << tab << ");"<<endl;
 			}
-		}else{ 
-		//ALTERA 
+		}else{
+		//ALTERA
 			vhdl << tab << "LPM_ADD_SUB_component : LPM_ADD_SUB"<<endl;
 			vhdl << tab << "GENERIC MAP ("<<endl;
 			vhdl << tab << "	lpm_direction => \"ADD\","<<endl;
@@ -95,18 +95,18 @@ namespace flopoco{
 			vhdl << tab << "	cin => '0',"<<endl;
 			else
 			vhdl << tab << "	cin => '1',"<<endl;
-			
+
 			vhdl << tab << "	datab => Y,"<<endl;
 			vhdl << tab << "	dataa => X,"<<endl;
 			vhdl << tab << "    cout => R"<<endl;
 			vhdl << tab << ");"<<endl;
-		}	
+		}
 	}
 
 	IntComparatorSpecific::~IntComparatorSpecific() {
 	}
 
-	
+
 	void IntComparatorSpecific::outputVHDL(std::ostream& o, std::string name) {
 		ostringstream signame;
 		licence(o);
@@ -139,18 +139,18 @@ namespace flopoco{
 			o << "			cout	: OUT STD_LOGIC ;"<<endl;
 			o << "			dataa	: IN STD_LOGIC_VECTOR ("<<wIn_-1<<" DOWNTO 0)"<<endl;
 			o << "	);"<<endl;
-			o << "	END COMPONENT;"<<endl;			
+			o << "	END COMPONENT;"<<endl;
 		}
 
-		o << buildVHDLComponentDeclarations();	
+		o << buildVHDLComponentDeclarations();
 		o << buildVHDLSignalDeclarations();
-		beginArchitecture(o);		
+		beginArchitecture(o);
 		o<<buildVHDLRegisters();
 		o << vhdl.str();
 		endArchitecture(o);
 	}
 
-	
+
 	void IntComparatorSpecific::emulate(TestCase* tc)
 	{
 		mpz_class svX= tc->getInputValue("X");
@@ -162,5 +162,26 @@ namespace flopoco{
 		}
 		svR = (svR>>wIn_);
 		tc->addExpectedOutput("R", svR);
+	}
+
+	OperatorPtr IntComparatorSpecific::parseArguments(Target *target, vector<string> &args) {
+		int wIn;
+		UserInterface::parseStrictlyPositiveInt(args, "wIn", &wIn);
+		int type;
+		UserInterface::parseStrictlyPositiveInt(args, "type", &type);
+		return new IntComparatorSpecific(target, wIn, type);
+	}
+
+	void IntComparatorSpecific::registerFactory(){
+		UserInterface::add("IntComparatorSpecific", // name
+											 "An integer comparator for experimentation.",
+											 "BasicInteger", // categories
+											 "",
+											 "wIn(int): input size in bits;\
+type(int): ;",
+											 "",
+											 IntComparatorSpecific::parseArguments
+											 ) ;
+
 	}
 }

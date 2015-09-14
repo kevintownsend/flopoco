@@ -17,7 +17,7 @@ namespace flopoco{
 	class FPMult : public Operator
 	{
 	public:
-	
+
 		/**
 		 * The FPMutliplier constructor
 		 * @param[in]		target		the target device
@@ -28,7 +28,7 @@ namespace flopoco{
 		 * @param[in]		wER			the the with of the exponent for the multiplication result
 		 * @param[in]		wFR			the the with of the fraction for the multiplication result
 		 **/
-		FPMult(Target* target, int wEX, int wFX, int wEY, int wFY, int wER, int wFR, 
+		FPMult(Target* target, int wEX, int wFX, int wEY, int wFY, int wER, int wFR,
 		             bool norm = true, bool correctlyRounded=true, double ratio=1, map<string, double> inputDelays = emptyDelayMap);
 
 		/**
@@ -38,15 +38,21 @@ namespace flopoco{
 
 		/**
 		 * Emulate the operator using MPFR.
-		 * @param tc a TestCase partially filled with input values 
+		 * @param tc a TestCase partially filled with input values
 		 */
 		void emulate(TestCase * tc);
 
 		// Static method used for tests on the Operator
 		static void nextTest ( TestState * ts );
 
+		// User-interface stuff
+		/** Factory method */
+		static OperatorPtr parseArguments(Target *target , vector<string> &args);
+
+		static void registerFactory();
+
 	protected:
-	
+
 		int  wEX_;                  /**< The width of the exponent for the input X */
 		int  wFX_;                  /**< The width of the fraction for the input X */
 		int  wEY_;                  /**< The width of the exponent for the input Y */
@@ -56,7 +62,7 @@ namespace flopoco{
 		bool normalized_;	          /**< Signal if the output of the operator is to be or not normalized*/
 		bool correctlyRounded_;	    /**< true: operator computes correct rounding; false: operator computes faithful rounding */
 
- 
+
 	};
 }
 

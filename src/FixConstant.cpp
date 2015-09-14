@@ -92,7 +92,7 @@ namespace flopoco{
 		mpfr_get_z(h.get_mpz_t(), x,  GMP_RNDN); // rounding could take place here, but should not
 		if(h<0){
 			if(isSigned) {
-				h += (mpz_class(1)) << (width+1);
+				h += (mpz_class(1)) << (width);
 			}
 			else {
 				THROWERROR("In getBitVectorAsMPZ, negative constant " << printMPFR(fpValue) << " cannot be represented as a signed constant");

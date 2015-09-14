@@ -1,19 +1,19 @@
 /*
   Floating Point Square Root for FloPoCo
- 
-  Authors : 
+
+  Authors :
   Jeremie Detrey, Florent de Dinechin (digit-recurrence version)
 
   This file is part of the FloPoCo project
   developed by the Arenaire team at Ecole Normale Superieure de Lyon
-  
+
   Initial software.
-  Copyright © ENS-Lyon, INRIA, CNRS, UCBL,  
+  Copyright © ENS-Lyon, INRIA, CNRS, UCBL,
   2008-2010.
   All rights reserved.
 
  */
- 
+
 
 
 #include <iostream>
@@ -44,7 +44,7 @@ namespace flopoco{
 
 		name<<"FPSqrt_"<<wE<<"_"<<wF;
 
-		uniqueName_ = name.str(); 
+		uniqueName_ = name.str();
 
 		// -------- Parameter set up -----------------
 
@@ -54,7 +54,7 @@ namespace flopoco{
 
 		// Digit-recurrence implementation recycled from FPLibrary
 		//cout << "   DDDD" <<  target->adderDelay(10) << "  " <<  target->localWireDelay() << "  " << target->lutDelay();
-		vhdl << tab << declare("fracX", wF) << " <= X" << range(wF-1, 0) << "; -- fraction"  << endl; 
+		vhdl << tab << declare("fracX", wF) << " <= X" << range(wF-1, 0) << "; -- fraction"  << endl;
 		vhdl << tab << declare("eRn0", wE) << " <= \"0\" & X" << range(wE+wF-1, wF+1) << "; -- exponent" << endl;
 		vhdl << tab << declare("xsX", 3) << " <= X"<< range(wE+wF+2, wE+wF) << "; -- exception and sign" << endl;
 
@@ -67,7 +67,7 @@ namespace flopoco{
 
 		double delay= target->lutDelay() + target->localWireDelay() + target->ffDelay(); // estimated delay so far (one mux)
 		for(int step=1; step<=wF+2; step++) {
-		  int i = wF+3-step; // to have the same indices as FPLibrary 
+		  int i = wF+3-step; // to have the same indices as FPLibrary
 		  vhdl << tab << "-- Step " << i << endl;
 		  string di = join("d", i);
 		  string xi = join("x", i);
@@ -90,20 +90,20 @@ namespace flopoco{
 		       << tab << tab <<  declare(wh, step+3) << " <= " << xh << " - " << ds << " when '0'," << endl
 		       << tab << tab << "      " << xh << " + " << ds << " when others;" << endl;
 		  vhdl << tab << declare(wi, wF+4) << " <= " << wh << range(step+1,0);
-		  if(step <= wF+1) 
-		    vhdl << " & " << xi << range(wF+1-step, 0) << ";" << endl;  
+		  if(step <= wF+1)
+		    vhdl << " & " << xi << range(wF+1-step, 0) << ";" << endl;
 		  else
-		    vhdl << ";" << endl; 
+		    vhdl << ";" << endl;
 		  vhdl << tab << declare(si, step) << " <= ";
 		  if(step==1)
-		    vhdl << "\"\" & (not " << di << ") ;"<< endl; 
+		    vhdl << "\"\" & (not " << di << ") ;"<< endl;
 		  else
-		    vhdl << sip /*<< range(step-1,1)*/ << " & not " << di << ";"<< endl; 
-				
+		    vhdl << sip /*<< range(step-1,1)*/ << " & not " << di << ";"<< endl;
+
 		  // Pipeline management
 		  double stageDelay= target->adderDelay(step) + target->localWireDelay() + 2*target->lutDelay();
 		  delay += stageDelay;
-		  if (verbose>=2) {
+		  if (UserInterface::verbose>=2) {
 		    cout << "estimated delay for stage "<< step << " is " << stageDelay << "s" << endl;
 		    cout << "   cumulated delay would be " << delay << "s,   target is " << 1/target->frequency()<< endl;
 		  }
@@ -111,7 +111,7 @@ namespace flopoco{
 		    // insert a pipeline register and reset the cumulated delay
 		    nextCycle();
 		    delay= target->ffDelay() + stageDelay;
-		    if (verbose>=2) 
+		    if (UserInterface::verbose>=2)
 		      cout << "----inserted a register level" << endl;
 		  }
 		}
@@ -126,10 +126,10 @@ namespace flopoco{
 		vhdl << tab << declare("round") << " <= fRn1(1) and (fRn1(2) or fRn1(0)) ; -- round  and (lsb or sticky) : that's RN, tie to even" << endl;
 
 		nextCycle();
-		
+
 		vhdl << tab << declare("fRn2", wF) << " <= fRn1" << range(wF+1, 2) <<" + (" << rangeAssign(wF-1, 1, "'0'") << " & round); -- rounding sqrt never changes exponents " << endl;
 		vhdl << tab << declare("Rn2", wE+wF) << " <= eRn1 & fRn2;" << endl;
-		
+
 		vhdl << tab << "-- sign and exception processing" << endl;
 		vhdl << tab <<  "with xsX select" << endl
 		     << tab << tab << declare("xsR", 3) << " <= \"010\"  when \"010\",  -- normal case" << endl
@@ -137,10 +137,10 @@ namespace flopoco{
 		     << tab << tab <<  "       \"000\"  when \"000\",  -- +0" << endl
 		     << tab << tab <<  "       \"001\"  when \"001\",  -- the infamous sqrt(-0)=-0" << endl
 		     << tab << tab <<  "       \"110\"  when others; -- return NaN" << endl;
-			
-		vhdl << tab << "R <= xsR & Rn2; " << endl; 
+
+		vhdl << tab << "R <= xsR & Rn2; " << endl;
 	}
-  
+
   FPSqrt::~FPSqrt() {
   }
 
@@ -159,7 +159,7 @@ namespace flopoco{
 			fpx = svX;
 			mpfr_t x, r;
 			mpfr_init2(x, 1+wF);
-			mpfr_init2(r, 1+wF); 
+			mpfr_init2(r, 1+wF);
 			fpx.getMPFR(x);
 
 			if(correctRounding) {
@@ -169,7 +169,7 @@ namespace flopoco{
 				mpz_class svr= fpr.getSignalValue();
 				tc->addExpectedOutput("R", svr);
 			}
-			else { // faithful rounding 
+			else { // faithful rounding
 				mpfr_sqrt(r, x, GMP_RNDU);
 				FPNumber  fpru(wE, wF, r);
 				mpz_class svru = fpru.getSignalValue();
@@ -195,7 +195,7 @@ namespace flopoco{
 			TestCase *tc;
 			mpz_class a;
 
-			tc = new TestCase(this); 
+			tc = new TestCase(this);
 			/* Fill inputs */
 			if ((i & 3) == 0)
 				a = getLargeRandom(wE+wF+3);
@@ -207,5 +207,26 @@ namespace flopoco{
 			emulate(tc);
 
 			return tc;
+		}
+
+		OperatorPtr FPSqrt::parseArguments(Target *target, vector<string> &args) {
+			int wE;
+			UserInterface::parseStrictlyPositiveInt(args, "wE", &wE);
+			int wF;
+			UserInterface::parseStrictlyPositiveInt(args, "wF", &wF);
+			return new FPSqrt(target, wE, wF);
+		}
+
+		void FPSqrt::registerFactory(){
+			UserInterface::add("FPSqrt", // name
+												 "A correctly rounded floating-point square root function.",
+												 "BasicFloatingPoint", // categories
+												 "",
+												 "wE(int): exponent size in bits; \
+wF(int): mantissa size in bits",
+												 "",
+												 FPSqrt::parseArguments
+												 ) ;
+
 		}
 	}

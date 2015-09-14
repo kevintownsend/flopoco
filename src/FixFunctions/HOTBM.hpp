@@ -26,9 +26,9 @@ namespace flopoco{
 
 		// Overloading the virtual functions of Operator
 		void emulate(TestCase* tc);
-	
-		int wIn() const { return wI; }
-		int wOut() const { return wO + 1; }
+
+		int wIn() const ;
+		int wOut() const ;
 
 		// defined in HOTBMInstance.cc
 		void genVHDL();

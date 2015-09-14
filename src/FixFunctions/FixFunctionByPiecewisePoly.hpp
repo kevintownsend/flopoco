@@ -45,7 +45,7 @@ namespace flopoco{
 			 This would require quite a lot of work for non-trivial functions (isolating roots of the derivative etc).
 			 So this is currently left to the user.
 		 */
-		FixFunctionByPiecewisePoly(Target* target, string func, int lsbIn, int msbOut, int lsbOut, int degree, bool finalRounding = true,  map<string, double> inputDelays = emptyDelayMap);
+		FixFunctionByPiecewisePoly(Target* target, string func, int lsbIn, int msbOut, int lsbOut, int degree, bool finalRounding = true,  double approxErrorBudget=0.25, map<string, double> inputDelays = emptyDelayMap);
 
 		/**
 		 * FixFunctionByPiecewisePoly destructor
@@ -56,11 +56,23 @@ namespace flopoco{
 
 		void buildStandardTestCases(TestCaseList* tcl);
 
+		/** Factory method that parses arguments and calls the constructor */
+		static OperatorPtr parseArguments(Target *target , vector<string> &args);
+
+		/** Factory register method */ 
+		static void registerFactory();
+
 	private:
 		int degree;
 		PiecewisePolyApprox *polyApprox;
 		FixFunction *f; 
 		bool finalRounding;
+		double approxErrorBudget;
+		vector <int> sigmaSign; /** +1 if sigma is always positive, -1 if sigma is always negative, O if sigma needs to be signed */
+		vector<int> sigmaMSB;   /**< vector of MSB weights for each sigma term. Note that these MSB consider that sigma is signed: one may remove 1 if sigmaSign is +1 or -1  */
+
+		/** Compute the MSBs of the intermediate terms sigma_i in an Horner evaluation scheme */
+		void computeSigmaSignsAndMSBs();
 	};
 
 }

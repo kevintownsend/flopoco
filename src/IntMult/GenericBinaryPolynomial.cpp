@@ -16,6 +16,27 @@
 
 using namespace flopoco;
 
+Option::Option(T x)
+	:empty(false),value(new T(x))
+{
+}
+
+Option::Option()
+	:empty(true),value((T*) 0)
+{
+}
+
+
+bool Option::is_empty () const {
+	return empty;
+}
+
+T const& get_value () const {
+	if (empty)
+		throw "Option object is empty";
+	return *value;
+}
+
 static string vhdl_string_of_monomial_option
 	(const Option<MonomialOfBits>& o)
 {
@@ -60,22 +81,22 @@ GenericBinaryPolynomial::GenericBinaryPolynomial(Target* target,
 		return;
 	}
 
-#if 1 // The new Bit Heap 
+#if 1 // The new Bit Heap
 	//	shared_ptr<BitHeap> bh(new BitHeap(this, ));
 	// The bit heap
 	BitHeap * bitHeap = new BitHeap(this, p.data.size());
-	
- 		
+
+
 	for (unsigned i = 0; i < p.data.size(); i++) { // i is a weight
 		list<MonomialOfBits>::const_iterator it = p.data[i].data.begin();
 		for (; it != p.data[i].data.end(); it++) {
 			ostringstream rhs;
 			rhs << vhdl_string_of_monomial_option (Option<MonomialOfBits>(*it));
-			bitHeap -> addBit(i, rhs.str()); 
+			bitHeap -> addBit(i, rhs.str());
 		}
 	}
 
-		bitHeap -> generateCompressorVHDL();			
+		bitHeap -> generateCompressorVHDL();
 		vhdl << tab << "R" << " <= " << bitHeap-> getSumName() << range(p.data.size()-1, 0) << ";" << endl;
 
 
@@ -111,14 +132,14 @@ GenericBinaryPolynomial::GenericBinaryPolynomial(Target* target,
 	}
 	vhdl << instance (nct, "final_adder");
 	if(nct->wOut < p.data.size())
-		vhdl << "R <= " << zg(p.data.size() - nct->wOut) << "& R_ima;" << endl; 
+		vhdl << "R <= " << zg(p.data.size() - nct->wOut) << "& R_ima;" << endl;
 	else
-		vhdl << "R <= R_ima" << range(p.data.size()-1, 0) << ";" << endl; 
+		vhdl << "R <= R_ima" << range(p.data.size()-1, 0) << ";" << endl;
 #endif
 
 };
 
-	
+
 void GenericBinaryPolynomial::emulate(TestCase * tc) {
 }
 
