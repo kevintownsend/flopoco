@@ -73,12 +73,12 @@ int main(int argc, char* argv[] )
 		FPRealKCM::registerFactory();
 		IntConstDiv::registerFactory();
 		FPConstDiv::registerFactory();
-		BasicPolyApprox::registerFactory();
-		PiecewisePolyApprox::registerFactory();
+		FixFunctionByTable::registerFactory();
 		FixFunctionBySimplePoly::registerFactory();
 		FixFunctionByPiecewisePoly::registerFactory();
-		FixFunctionByTable::registerFactory();
 		FixFunctionByMultipartiteTable::registerFactory();
+		BasicPolyApprox::registerFactory();
+		PiecewisePolyApprox::registerFactory();
 		FixRealKCM::registerFactory();
 		TestBench::registerFactory();
 		FPAdd::registerFactory();

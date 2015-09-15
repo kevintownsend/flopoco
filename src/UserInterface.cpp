@@ -152,8 +152,8 @@ namespace flopoco
 
 
 	
-	// Global factory lists 
-	map<string,OperatorFactoryPtr> UserInterface::factoriesByName;
+	// Global factory list
+	vector<pair<string,OperatorFactoryPtr>> UserInterface::factoryList;
 
 	vector<OperatorPtr>  UserInterface::globalOpList;  /**< Level-0 operators. Each of these can have sub-operators */
 
@@ -244,19 +244,23 @@ namespace flopoco
 
 
 	void UserInterface::registerFactory(OperatorFactoryPtr factory)	{
-		if(factoriesByName.find(factory->name())!=factoriesByName.end())
-			throw string("OperatorFactory - Factory with name '"+factory->name()+" has already been registered.");
-		factoriesByName.insert(make_pair(factory->name(), factory));
+		//		if(factoryList.find(factory->name())!=factoryList.end())
+		//			throw string("OperatorFactory - Factory with name '"+factory->name()+" has already been registered.");
+		factoryList.push_back(make_pair(factory->name(), factory));
 	}
 
 	unsigned UserInterface::getFactoryCount() {
-		return factoriesByName.size();
+		return factoryList.size();
 	}
 
 
 	// TODO make this case-insensitive
 	OperatorFactoryPtr UserInterface::getFactoryByName(string operatorName)	{
-		return factoriesByName[operatorName];
+		for(auto it: UserInterface::factoryList) {
+			if (it.first == operatorName)
+				return  it.second;
+		}
+		throw ("No operator factory for " + operatorName); 
 	}
 
 	
@@ -609,7 +613,7 @@ namespace flopoco
 			string cat =  catIt.first;
 			string catDesc =  catIt.second;
 			s <<COLOR_BOLD_MAGENTA_NORMAL << "========"<< catDesc << "========"<< COLOR_NORMAL << endl;
-			for(auto it: UserInterface::factoriesByName) {
+			for(auto it: UserInterface::factoryList) {
 				OperatorFactoryPtr f =  it.second;
 				if(cat == f->m_category)
 					s << f -> getFullDoc();
@@ -636,7 +640,7 @@ namespace flopoco
 			string cat =  catIt.first;
 			string catDesc =  catIt.second;
 			file << "<h3>" << catDesc << "</h3>" << endl;
-			for(auto it: UserInterface::factoriesByName) {
+			for(auto it: UserInterface::factoryList) {
 				OperatorFactoryPtr f =  it.second;
 				if(cat == f->m_category)
 				 file << f -> getHTMLDoc();
@@ -667,13 +671,13 @@ namespace flopoco
 
 		string operatorList;
 		{
-		for(auto it: UserInterface::factoriesByName) {
+		for(auto it: UserInterface::factoryList) {
 			OperatorFactoryPtr f =  it.second;
 
 				file << f->getOperatorFunctions();
 				file << endl;
 				operatorList += f->name();
-				//				if(it + 1 != factoriesByName.end())
+				//				if(it + 1 != factoryList.end())
 				operatorList += " ";
 			}
 		}
