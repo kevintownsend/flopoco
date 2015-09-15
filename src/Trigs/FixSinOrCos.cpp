@@ -236,4 +236,28 @@ namespace flopoco{
 		mpfr_clears (z, NULL);
 	}
 
+	
+	OperatorPtr FixSinOrCos::parseArguments(Target *target, vector<string> &args) {
+		int wE, degree;
+		UserInterface::parseStrictlyPositiveInt(args, "w", &w); 
+		UserInterface::parseInt(args, "degree", &degree);
+		return new FixSinOrCos(target, w, degree);
+	}
+
+	
+	void FixSinOrCos::registerFactory(){
+		UserInterface::add("FixSinOrCos", // name
+											 "Computes (1-2^(-w)) sin(pi*x) or (1-2^(-w)) cos(pi*x) for x in -[1,1[.",
+											 UserInterface::ElementaryFunctions,
+											 "", // seeAlso
+											 "w(int): fixed-point precision of inputs and outputs in bits; \
+                        degree(int): degree of the polynomial-based method (-1 should default to something sensible )",
+											 "",
+											 FixSinOrCos::parseArguments
+											 ) ;
+		
+	}
+
+
+	
 }
