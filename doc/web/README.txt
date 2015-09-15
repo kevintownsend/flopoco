@@ -2,7 +2,9 @@ To produce the tgz of a version:
 first edit VERSION,
 then in bash:
 git archive --prefix=flopoco-$(cat VERSION)/ -o flopoco-$(cat VERSION).tgz HEAD
-Then edit, commit and push index.html, and scp it as below.
+Place it on the forge;
+Then edit  flopoco_installation_manual.html using the path created by the forge.
+commit and push, and scp it as below.
 Finally do a 
 git tag -a flopoco-$(cat VERSION)
 
