@@ -27,8 +27,16 @@
 <em>We would welcome similar installation scripts for other platforms.</em>
 
 Copy this in a dash/bash shell (and enter your password when prompted):
-<h4>Version 3.0, which will be the greatest ever, if it ever gets out of beta</h4>
-<p><kbd>yes | sudo apt-get install g++ libgmp3-dev libmpfr-dev libfplll-dev libxml2-dev bison libmpfi-dev flex cmake libboost-all-dev libgsl0-dev && wget https://gforge.inria.fr/frs/download.php/33151/sollya-4.1.tar.gz && tar xzf sollya-4.1.tar.gz && cd sollya-4.1/ && ./configure && make -j4  && sudo make install && cd .. && wget https://gforge.inria.fr/frs/download.php/file/34732/flopoco-3.0.beta5.tgz && tar xzf flopoco-3.0.beta5.tgz && cd flopoco-3.0.beta5/ && cmake . && make -j4  && ./flopoco</kbd></p>
+
+
+<h4>Version 3, which will be the greatest ever, if it ever gets out of beta</h4>
+
+<p><kbd>yes | sudo apt-get install g++ libgmp3-dev libmpfr-dev libfplll-dev libxml2-dev bison libmpfi-dev flex cmake libboost-all-dev libgsl0-dev && wget https://gforge.inria.fr/frs/download.php/33151/sollya-4.1.tar.gz && tar xzf sollya-4.1.tar.gz && cd sollya-4.1/ && ./configure && make -j4  && sudo make install && cd .. && wget https://gforge.inria.fr/frs/download.php/file/34732/flopoco-3.0.beta5.tgz && tar xzf flopoco-3.0.beta5.tgz && cd flopoco-3.0.beta5/ && cmake . && make -j4  && ./flopoco && ./flopoco BuildHTMLDoc && ./flopoco BuildAutocomplete && mv flopoco_autocomplete ~/.bash_completion.d/flopoco </kbd></p>
+
+<p>Once the above line has installed all the dependencies, you may also live on the edge and compile the git version available from the <a href="https://gforge.inria.fr/scm/?group_id=1030">source code repository</a></p>
+
+<p>In addition, enable bash autocompletion by typing <kbd>./flopoco BuildAutocomplete</kbd> and following the instructions</p>
+
 
 <h4>Version 2.5.0, the last version before the transition to Sollya4 broke everything that bit heaps had not yet broken</h4>
 <p><kbd>yes | sudo apt-get install g++ libgmp3-dev libmpfr-dev libxml2-dev bison libmpfi-dev flex cmake libboost-all-dev libgsl0-dev && wget https://gforge.inria.fr/frs/download.php/file/34429/libfplll-3.0.12.tar.gz && tar xzf libfplll-3.0.12.tar.gz && cd libfplll-3.0.12/ && ./configure && make -j2  && sudo make install && cd .. && wget https://gforge.inria.fr/frs/download.php/28571/sollya-3.0.tar.gz && tar xzf sollya-3.0.tar.gz && cd sollya-3.0/ && ./configure && make -j4  && sudo make install && cd .. && wget https://gforge.inria.fr/frs/download.php/file/32591/flopoco-2.5.0.tgz  && tar xzf flopoco-2.5.0.tgz && cd flopoco-2.5.0/ && cmake . && make -j4  && ./flopoco</kbd></p>
@@ -36,6 +44,7 @@ Copy this in a dash/bash shell (and enter your password when prompted):
 <h4>Version 2.3.1, the last version before the Great Leader embarked the project in the bit heap hazardous adventure</h4>
 <p><kbd>yes | sudo apt-get install g++ libgmp3-dev libmpfr-dev libxml2-dev bison libmpfi-dev flex cmake libboost-all-dev libgsl0-dev && wget https://gforge.inria.fr/frs/download.php/file/34429/libfplll-3.0.12.tar.gz && tar xzf libfplll-3.0.12.tar.gz && cd libfplll-3.0.12/ && ./configure && make -j2  && sudo make install && cd .. && wget https://gforge.inria.fr/frs/download.php/28571/sollya-3.0.tar.gz && tar xzf sollya-3.0.tar.gz && cd sollya-3.0/ && ./configure && make -j4  && sudo make install && cd .. && wget https://gforge.inria.fr/frs/download.php/file/30159/flopoco-2.3.1.tgz  && tar xzf flopoco-2.3.1.tgz && cd flopoco-2.3.1/ && cmake . && make -j4  && ./flopoco</kbd></p>
 
+<h4>Older versions may include operators that have later been deprecated. Look up the <a href="https://gforge.inria.fr/scm/?group_id=1030">source code repository</a></h4>
 
 
 <h3>Generic installation instructions</h3>
@@ -69,8 +78,7 @@ This in turn requires libfpll-3.0, which is no longer available on the author's 
 <p><kbd>make</kbd></p>
 
 
-<p>The adventurous may get the development version of FloPoCo from its <a
-href="https://gforge.inria.fr/scm/?group_id=1030">source code repository</a>.</p>
+<p>The adventurous may get the development version of FloPoCo from its <a href="https://gforge.inria.fr/scm/?group_id=1030">source code repository</a>.</p>
 
 
 <hr/>

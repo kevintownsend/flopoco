@@ -1,3 +1,8 @@
+Version 3.1
+New command-line interface, and the associated framework changes.
+Multipartite tables.
+A lot of janitoring.
+
 ======================================================================
 Version 3.0
 Shifts to Sollya 4.0 library. Polynomial evaluator rewritten in the process.

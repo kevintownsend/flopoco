@@ -1,8 +1,8 @@
 TODO file for FloPoCo
 
-
 * Release-critical (current regressions):
 ** FPPipeline
+** lut_rng
 * Cleaning up
 ** get rid of use() in Operator
 ** Clean up DualTable
@@ -109,34 +109,6 @@ ConstMult:
 General
 
 
-* Tentative roadmap 
-(minor version number count, more or less, the number of working operators. 
-We have left  0.xx for 1.xx when all the basic operators have been backported with working pipeline):
-
-Version 0.1: IntConstMult, FPConstMult, FPCRConstMult
-Version 0.4: FPLargeAccumulator, FPMult
-Version 0.5 : HOTBM integration 
-Version 0.6 : FPLog
-Version 0.7 : FPExp
-Version 0.8 : DotProduct
-Version 0.9 : LNS operators, thanks to Sylvain Collange
-Version 0.11: FPDiv, IntSquarer, new pipeline framework
-Version 1.15: FPSqrt FPSquare InputIEEE Fix2FP 
-Version 2.0 : FunctionEvaluator
-Version 2.2 : FPExp, FPPowr (experimental)
-Version 2.3 : IntConstDiv, FPConstDiv and FPConstDivExpert, FPConstMultRational, TaMaDi architecture
--- we're here (faster than expected)
-Version 2.4   RNGs, BitHeap, revamped multipliers, FPSinCos, CORDIC
-              FPAddSub (for FFT butterfly structure)
-Version ???   Complex operators (in particular division)
-Version ???   FixToFPUniformDist (2008 ASAP paper by Thomas)
-Version ???   FPNorm2D
-Version ???   FPNorm3D -- Almost there, see Collision
-Version ??    FPBoxMuller
-Version ???   Interval operators
-(insert your wishlist here)
-
-
 * If we could start pipeline from scratch
 If we were to redo the pipeline framework from scratch, here is the proper way to do it.
 
@@ -208,38 +180,3 @@ Bad reasons for no:  it requires minor editing of all existing operators
 Winner: YES, but after the transition to sollya4 is complete and we have a satisfiying regression test framework.
 
 
-* If we could redo the CLI from scratch
-Big problem with current implementation:
- The CLI arguments and online help are not defined within the class of the operator, but in main.cpp
- The HTML user documentation is yet another document, which is not auto-generated
- The match between CLI parameters and operator constructor parameters is not guaranteed.
-   Issue for instance to implement soaktesting/regression testing:
-   we want a static method of each operator that walks its parameter space and produce testbenches.
-	 the current implem. by Jean Marchal produces the parameters in C++, but they are consumed by apython script that calls the CLI.
-   This is uselessly complex, and unsafe.
-
-Proposal (WIP):
-CLI is changed so that 
-flopoco FPExp 8 23  FPAdd 8 23 FPAdd 11 52 
-becomes 
-flopoco --io=float:8:23 FPExp FPAdd --io=float:11:52 FPAdd
-All options affect the following operators (just like current -pipeline )
-
-The constructor of any operator takes only a Target, and a parameter map (key, value) where both key and value are strings 
-There is a default map (including the default target etc)
-All main.cpp does is parse the command line to build the parameter map (possibly overriding default) before calling each constructor in turn.
-
-An Operator, e.g. FPExp defines another static possibleParametersMap (key, (type, default value, help string)).
-It may inherit the default Operator map, and add any key it needs for FPExp-specific parameters, for example the k currnently passed to FPExpert.
- 
-The FPExp constructor does the match between its specification map (built by main) and its possibleParametersMap, and sets all the required attribute from there (including defaults)
-
-Hopefully a static method, or a # trick,  that is used to parse the generate the help for this operator.
-
-All main does is register all the Operators in some list, autogenerate the html manual, and prepares the parser loop. 
-This is the part that is tricky in C++, but David Thomas managed it, see random/utils/*factory* in the random branch.
-Or maybe it should be done in Python. 
-
-
-Problems: 
- - before building a subcomponent (new) we would need to build the map.
