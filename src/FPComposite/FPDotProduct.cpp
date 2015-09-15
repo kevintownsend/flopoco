@@ -36,7 +36,7 @@ using namespace std;
 
 namespace flopoco{
 
-	FPDotProduct::FPDotProduct(Target* target, int wE, int wFX, int wFY, int MaxMSBX, int MSBA, int LSBA, double ratio,  map<string, double> inputDelays):
+	FPDotProduct::FPDotProduct(Target* target, int wE, int wFX, int wFY, int MaxMSBX, int MSBA, int LSBA,  map<string, double> inputDelays):
 		Operator(target), wE(wE), wFX(wFX), wFY(wFY), MaxMSBX(MaxMSBX), LSBA(LSBA), MSBA(MSBA)  {
 	
 		ostringstream name;
@@ -332,5 +332,32 @@ namespace flopoco{
 		sum=mpfr_get_d(long_acc, GMP_RNDN);
 		cout << "   FPLargeAcc="<< sum;
 		cout <<endl;
+	}
+	
+	OperatorPtr FPDotProduct::parseArguments(Target *target, vector<string> &args) {
+		int wE, wFX, wFY, MaxMSBX, MSBA, LSBA;
+		UserInterface::parseStrictlyPositiveInt(args, "wE", &wE); 
+		UserInterface::parseStrictlyPositiveInt(args, "wFX", &wFX);
+		UserInterface::parsePositiveInt(args, "wFY", &wFY);
+		UserInterface::parseInt(args, "MaxMSBX", &MaxMSBX);
+		UserInterface::parseInt(args, "MSBA", &MSBA);
+		UserInterface::parseInt(args, "LSBA", &LSBA);
+		return new FPDotProduct(target, wE, wFX, wFY, MaxMSBX, MSBA, LSBA);
+	}
+
+	void FPDotProduct::registerFactory(){
+		UserInterface::add("FPDotProduct", // name
+											 "Floating-point dot product unit based on FPLargeAcc",
+											 "CompositeFloatingPoint",
+											 "", // seeAlso
+											 "wE(int): the width of the exponent for the inputs X and Y; \
+                        wFX(int): the width of the fraction for the input X;  \
+                        wFY(int): the width of the fraction for the input Y;  \
+                        MaxMSBX(int): maximum expected weight of the MSB of the summand;  \
+                        MSBA(int): The weight of the LSB of the accumulator determines the final accuracy of the result;  \
+                        LSBA(int): The weight of the MSB of the accumulator has to greater than that of the maximal expected result",
+											 "Kulisch-like dot product operator. It feeds a long accumulator with the unrounded result of a floating-point multiplier, thus removing rounding errors from the multiplication as well. ",
+											 FPDotProduct::parseArguments
+											 ) ;
 	}
 }

@@ -28,7 +28,7 @@ namespace flopoco{
 		 * @param[in]		LSBA    The weight of the LSB of the accumulator; determines the final accuracy of the result
 		 * @param[in]		MSBA    The weight of the MSB of the accumulator; has to greater than that of the maximal expected result
 		 **/ 
-		FPDotProduct(Target* target, int wE, int wFX, int wFY, int MaxMSBX, int MSBA, int LSBA, double ratio = 0.9, map<string, double> inputDelays = emptyDelayMap);
+		FPDotProduct(Target* target, int wE, int wFX, int wFY, int MaxMSBX, int MSBA, int LSBA, map<string, double> inputDelays = emptyDelayMap);
 
 		/**
 		 * FPDotProduct destructor
@@ -40,6 +40,12 @@ namespace flopoco{
 		 * Tests the operator accuracy and relative error
 		 */
 		void test_precision(int n);
+		
+		/** Factory method that parses arguments and calls the constructor */
+		static OperatorPtr parseArguments(Target *target , vector<string> &args);
+
+		/** Factory register method */ 
+		static void registerFactory();
 	
 	protected:
 		/** The width of the exponent for the inputs X and Y*/

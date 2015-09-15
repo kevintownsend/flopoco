@@ -46,6 +46,12 @@ namespace flopoco{
 		mpz_class mapFP2Acc(FPNumber X);
 	
 		mpz_class sInt2C2(mpz_class X, int width);
+		
+		/** Factory method that parses arguments and calls the constructor */
+		static OperatorPtr parseArguments(Target *target , vector<string> &args);
+
+		/** Factory register method */ 
+		static void registerFactory();
 
 	protected:
 		int wEX_;     /**< the width of the exponent  */

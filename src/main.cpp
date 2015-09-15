@@ -73,9 +73,6 @@ int main(int argc, char* argv[] )
 		FPRealKCM::registerFactory();
 		IntConstDiv::registerFactory();
 		FPConstDiv::registerFactory();
-		
-		FPAdd::registerFactory();
-		FPExp::registerFactory();
 		BasicPolyApprox::registerFactory();
 		PiecewisePolyApprox::registerFactory();
 		FixFunctionBySimplePoly::registerFactory();
@@ -84,9 +81,7 @@ int main(int argc, char* argv[] )
 		FixFunctionByMultipartiteTable::registerFactory();
 		FixRealKCM::registerFactory();
 		TestBench::registerFactory();
-		NbBitsMinRegisterFactory();
-		FPDiv::registerFactory();
-		FPSqrt::registerFactory();
+		FPAdd::registerFactory();
 		FPAddSub::registerFactory();
 		FPAddDualPath::registerFactory();
 		FPAdd3Input::registerFactory();
@@ -94,6 +89,15 @@ int main(int argc, char* argv[] )
 		FPMult::registerFactory();
 		//FPMultKaratsuba::registerFactory();
 		FPSquare::registerFactory();
+		FPDiv::registerFactory();
+		NbBitsMinRegisterFactory();
+		FPSqrt::registerFactory();
+
+		FPLargeAcc::registerFactory();
+		LargeAccToFP::registerFactory();
+		FPDotProduct::registerFactory();
+		
+		FPExp::registerFactory();
 		IterativeLog::registerFactory();
 		FPPow::registerFactory();
 		FixSinCos::registerFactory();
