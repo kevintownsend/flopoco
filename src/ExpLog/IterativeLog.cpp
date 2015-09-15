@@ -1264,14 +1264,14 @@ namespace flopoco{
 	}
 
 	void IterativeLog::registerFactory(){
-		UserInterface::add("IterativeLog", // name
-											 "An iterative method to compute a log.",
+		UserInterface::add("FPLog", // name
+											 "Floating-point logarithm using an iterative method.",
 											 "ElementaryFunctions", // categories
 											 "",
 											 "wE(int): exponent size in bits; \
-wF(int): mantissa size in bits; \
-inTableSize(int)=0: The table size in bits;",
-											 "",
+                        wF(int): mantissa size in bits; \
+                        inTableSize(int)=0: The input size to the tables, in bits, between 6 and 16. 0 choses a a sensible value",
+											 "For details on the technique used, see <a href=\"bib/flopoco.html#DetDinPuj2007:Arith\">this article</a> and <a href=\"bib/flopoco.html#2010-RR-FPLog\">this research report</a>.",
 											 IterativeLog::parseArguments
 											 ) ;
 
