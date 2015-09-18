@@ -49,9 +49,14 @@ documented. The web page of the CMake project is \url{http://www.cmake.org/}.
 
 \subsection{Overview of FloPoCo}
 
-In FloPoCo, everything is an \texttt{Operator}. Operator is a virtual
-class, all FloPoCo operators inherit this class. A good way to design
-a new operator is to imitate a simple one. We suggest
+In FloPoCo, everything is an \texttt{Operator}. 
+Operator is a virtual class from which all FloPoCo operators inherit. 
+
+The FloPoCo source includes a dummy operator, \texttt{UserDefinedOperator}, for you to play with. 
+Feel free to experiment within this one. 
+By default it is compiled but unplugged. To plug it back, just comment the corresponding line in main.cpp.
+
+A good way to design a new operator is to imitate a simple one. We suggest
 %\texttt{IntAdder} or 
 \texttt{Shifter} for simple integer operators, and \texttt{FPAddSinglePath}
 for a complex operator with several sub-components. An example of
@@ -61,23 +66,31 @@ assembling several FP operators in a larger pipeline is
  Meanwhile, browse
 through \texttt{Operator.hpp}. It has become quite bloated, showing
 the history of the project. Try not to use methods flagged as
-deprecated, as they will be removed in the future.  Instead, use the
-automatic pipeline framework is described in Section~\ref{sec:pme}
-below.
+deprecated, as they will be removed in the future. Hopefully.%  Instead, use the
+% automatic pipeline framework is described in Section~\ref{sec:pme}
+% below.
 
 Another important class hierarchy in FloPoCo is \texttt{Target}, which
-defines the architecture of the target FPGA. It currently has several sub-classes 
-including, \texttt{VirtexIV, 5, 6} and \texttt{StratixII, IV}. You may want to
+defines the architecture of the target FPGA. It currently has several sub-classes,
+including \texttt{Virtex} and \texttt{Stratix} targets. You may want to
 add a new target, the best way to do so is by imitation. Please
 consider contributing it to the project.
 
-To understand the command line, go read \texttt{main.cpp}. It is not
-the part we are the most proud of, but it does the job.
+The command-line parser is in \texttt{UserInterface.cpp} but in principle you won't have to edit it.
+It takes information from each operator's documentation strings defined in their \texttt{registerFactory()} methods. 
+Again, we hope that you can design the interface to your operator by imitation of existing ones.
 
-The rest is arithmetic!
+To add a new operator to FloPoCo, you need to 
+\begin{itemize}
+\item write its \texttt{.cpp} and \texttt{.hpp} (we suggest you start with a copy of  \texttt{UserDefinedOperator}, which is almost an empty skeleton).
+\item add it to \texttt{CMakeList.txt}
+\item add the \texttt{.hpp} to \texttt{FloPoCo.hpp}.
+\item add its  \texttt{registerFactory()} method to \texttt{main.cpp}. 
+\end{itemize}
 
-And do not hesitate to contact us: \texttt{Florent.de.Dinechin} or
-\texttt{Bogdan.Pasca}, at \texttt{ens-lyon.fr}
+That should be all. The rest is arithmetic!
+
+And do not hesitate to contact us: \texttt{Florent.de.Dinechin@insa-lyon.fr}.
 
 \begin{center}
 %  \begin{latexonly}
@@ -103,13 +116,15 @@ There should be a Doxygen documentation of FloPoCo.
 
 
 \section{Fixed-point numbers in FloPoCo}
-In FloPoCo, a fixed point format is defined by a boolean true if signed, and two integers: the weights of the MSB and the LSB, which can be positive or negative. For instance the unit bit has weight 0, the point is between weights 0 and -1. 
+In FloPoCo, a fixed point format is defined by a boolean true if signed, and two integers: the weights of the MSB and the LSB, which can be positive or negative. 
+For instance the unit bit has weight 0, the point is between weights 0 and -1. 
 
 These two weights are inclusive: The size of the corresponding bit vector will be MSB-LSB+1.
 This is true for signed as well as unsigned numbers: If the format is signed, then the sign bit is the bit of weight MSB.
 
 
-Now for a more stylistic, but nevertheless useful convention. Whenever an interface (be it to the command line, or to an internal function) includes the MSB and the LSB of the same format, they should appear in this order (MSB then LSB). This order corresponds to the order of the weights in the binary writing (the MSB is to the left of the LSB). When a boolean sign is passed as well, it should be first, for the same reason (the sign bit is the leftmost bit).
+Now for a more stylistic, but nevertheless useful convention. Whenever an interface (be it to the command line, or to an internal function) includes the MSB and the LSB of the same format, they should appear in this order (MSB then LSB). This order corresponds to the order of the weights in the binary writing (the MSB is to the left of the LSB). 
+When a boolean sign is passed as well, it should be first, for the same reason (the sign bit is the leftmost bit).
 
 Examples:
 \begin{itemize}
@@ -123,6 +138,7 @@ Finally, whenever we can live with integers, we should stick with integers and n
 \section{Pipelining made easy: a tutorial \label{sec:pipeline-made-easy}}
 \label{sec:pme}
 
+\textbf{This section is being obsoleted by the current rework of the pipeline framework}.
 
 If you want to experiment with a dummy operator and try the notions
 used in this section, consider reading and modifying the file

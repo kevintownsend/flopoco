@@ -363,6 +363,9 @@ src/Tools/Point
 src/ExpLog/FPExp
 src/ExpLog/IterativeLog
 src/ExpLog/FPPow
+
+# If you want to add your operator, feel free
+src/UserDefinedOperator
 )
 
 IF (SOLLYA_LIB)
