@@ -108,6 +108,7 @@ int main(int argc, char* argv[] )
 		FixSOPC::registerFactory();
 		FixIIR::registerFactory();
 
+		Fix2DNorm::registerFactory();
 		// Uncomment me to play with FloPoCo
 		// UserDefinedOperator::registerFactory();
 	}

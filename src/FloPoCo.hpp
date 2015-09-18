@@ -141,6 +141,7 @@
 #include "Trigs/FixAtan2ByCORDIC.hpp"
 #include "Trigs/FixAtan2ByRecipMultAtan.hpp"
 #include "Trigs/FixAtan2ByBivariateApprox.hpp"
+#include "Trigs/Fix2DNorm.hpp"
 // #include "Trigs/FixSinOrCos.hpp"  Replug when poly eval fixed
 #include "ExpLog/IterativeLog.hpp"
 #include "ExpLog/FPExp.hpp"
