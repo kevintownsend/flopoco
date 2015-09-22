@@ -314,7 +314,7 @@ src/Complex/FixComplexKCM
 src/FPDivSqrt/SelFunctionTable
 src/FPDivSqrt/FPDiv
 src/FPDivSqrt/FPSqrt
-src/FPDivSqrt/Tools/NbBitsMin
+#src/FPDivSqrt/Tools/NbBitsMin
 # src/FPDivSqrt/FPSqrtPoly # Resurrect some day?
 
 

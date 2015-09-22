@@ -43,7 +43,18 @@ namespace flopoco{
 		static OperatorPtr parseArguments(Target *target, vector<string> &args);
 		static void registerFactory();
 
+	private:
+		static void plotPDDiagram(int delta, int t, int radix, int digitSet);
+		static bool checkDistrib(int delta, int t, int radix, int digitSet);
+		static double L(int k, double ro, double d);
+		static double U(int k, double ro, double d);
+		static double estimateCost(int nbBit, int radix, int digitSet);
+		static void computeNbBit(int radix, int digitSet);
+	public:
+		static void NbBitsMinRegisterFactory();
+		static OperatorPtr NbBitsMinParseArguments(Target *target, vector<string> &args);
 
+		
 	private:
 		/** The width of the exponent for the input X */
 		int wE;
@@ -52,6 +63,8 @@ namespace flopoco{
 		/** The number of iterations */
 		int nDigit;
 
+
+		
 	};
 }
 #endif //FPDIV_HPP
