@@ -24,7 +24,6 @@
 #include "utils.hpp"
 #include "Operator.hpp"
 #include "TestBench.hpp"
-#include "FPDivSqrt/FPDiv.hpp"
 
 using namespace std;
 
