@@ -5,7 +5,7 @@
 using namespace std;
 namespace flopoco
 {
-	SelFunctionTable::SelFunctionTable(Target* target, float dmin, float dmax, int nbd, int nbw, int digit, int base, int wIn, int wOut) : Table(target, wIn, wOut),
+	SelFunctionTable::SelFunctionTable(Target* target, double dmin, double dmax, int nbd, int nbw, int digit, int base, int wIn, int wOut) : Table(target, wIn, wOut),
 																														Dmin(dmin),
 																														Dmax(dmax),
 																														nbBitD(nbd),
@@ -19,7 +19,7 @@ namespace flopoco
 		name << "SelFunctionTable_r"<< radix;
 		setName(name.str());
 
-		ro = ((float)digitSet)/(radix-1);
+		ro = ((double)digitSet)/(radix-1);
 }
 
 	SelFunctionTable::~SelFunctionTable() {}
@@ -37,12 +37,12 @@ namespace flopoco
 
 		int decimalResult;
 		int nbBitK = ceil(log2(digitSet)+1); //Nb of bit for the entire part of w
-		float realw = w/pow(2, nbBitW-nbBitK);
+		double realw = w/pow(2, nbBitW-nbBitK);
 
-		float hPitch = pow(2, -nbBitD)*(Dmax-Dmin);
-		float vPitch = pow(2, -nbBitW+nbBitK);
+		double hPitch = pow(2, -nbBitD)*(Dmax-Dmin);
+		double vPitch = pow(2, -nbBitW+nbBitK);
 
-		float uSlope, lSlope;
+		double uSlope, lSlope;
 		int uCorrecter, lCorrecter;
 
 
@@ -54,8 +54,8 @@ namespace flopoco
 			uCorrecter = (uSlope<0 ? 1 : 0);
 			lCorrecter = (lSlope<0 ? 0 : 1);
 
-			float wMax = ((d+uCorrecter)*hPitch + Dmin) * uSlope;
-			float wMin = ((d+lCorrecter)*hPitch + Dmin) * lSlope;
+			double wMax = ((d+uCorrecter)*hPitch + Dmin) * uSlope;
+			double wMin = ((d+lCorrecter)*hPitch + Dmin) * lSlope;
 
 			if((realw+vPitch <= wMax && realw >= wMin) || (k == digitSet && realw >= wMin) || (k == -digitSet && realw+vPitch <= wMax))
 			{

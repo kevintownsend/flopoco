@@ -253,9 +253,10 @@ namespace flopoco{
 			}
 
 
-		else ////////////////////////// Radix 4 version ////////////////////////
+		else ////////////////////////// Radix 4 version  ////////////////////////
 			//TODO : the old version is using 5-input's LUTs, try to fit in 4-input's LUTs (same as above : select qA and qB and make a 2-levels addition)
 		{
+			int alpha=3; // can be 3 or 2. At the moment, 2 doesn't work.
 			// -------- Parameter set up -----------------
 			nDigit = (wF+6) >> 1;
 
@@ -291,7 +292,13 @@ namespace flopoco{
 			double srt4stepdelay =  2*target->lutDelay() + target->localWireDelay() + target->localWireDelay(wF+4) + target->adderDelay(wF+4);
 
 			SelFunctionTable* table;
-			table = new SelFunctionTable(target, 0.5, 1.0, 1, 4, 3, 4, 5, 3);
+			if(alpha==3)
+				table = new SelFunctionTable(target, 0.5, 1.0, 1, 4, 3, 4, 5, 3);
+			else if(alpha==2)
+				//				table = new SelFunctionTable(target, 0.5, 1.0, 3, 7, 2, 4, 10, 3);
+				table = new SelFunctionTable(target, 0.5, 1.0, 3, 6, 2, 4, 9, 3);
+			else THROWERROR("alpha="<< alpha << " is not an option");
+			
 			addSubComponent(table);
 
 			for(i=nDigit-1; i>=1; i--) {
@@ -308,7 +315,7 @@ namespace flopoco{
 				tInstance << "SelFunctionTable" << i;
 
 				/*
-						Detailed algorithm :
+						Detailed algorithm for alpha=3 :
 					*	building seli for the selection function
 						seli = wi (25 downto 22) & fY(22), i.e. the first 4 digits of the remainder and the first useful digit of the divisor
 					*	deducing the value of qi out of seli
@@ -321,45 +328,66 @@ namespace flopoco{
 						wi-1full = wi-qi*D
 					*	left shifting wi-1full to obtain wi-1, next partial remainder to work on
 				*/
-
-				vhdl << tab << declare(seli.str(),5) << " <= " << wi.str() << range( wF+2, wF-1) << " & fY" << of(wF-1)  << ";" << endl;
+				if(alpha==3)
+					vhdl << tab << declare(seli.str(),5) << " <= " << wi.str() << range( wF+2, wF-1) << " & fY" << of(wF-1)  << ";" << endl;
+				else // alpha==2
+					vhdl << tab << declare(seli.str(),9) << " <= " << wi.str() << range( wF+2, wF-3) << " & fY" << range(wF-1,wF-3)  << ";" << endl;
+					//vhdl << tab << declare(seli.str(),10) << " <= " << wi.str() << range( wF+2, wF-4) << " & fY" << range(wF-1,wF-3)  << ";" << endl;
+					
 				inPortMap (table , "X", seli.str());
 				outPortMap(table , "Y", qi.str());
 				vhdl << instance(table , tInstance.str());
 				vhdl << endl;
-				// Two options for radix 4. More experiments are needed 
+
+				if(alpha==3) {
+					// Two options for radix 4. More experiments are needed 
 #if 1  // The following leads to higher frequency and higher resource usage: 
-				// For (8,23) on Virtex6 with ISE this gives 466Mhz, 1083 regs+ 1029 LUTs 
-				vhdl << tab << "with " << qi.str() << " select" << endl;
-				vhdl << tab << tab << declare(qiTimesD.str(),wF+4) << " <= "<< endl ;
-				vhdl << tab << tab << tab << "\"000\" & fY            when \"001\" | \"111\"," << endl;
-				vhdl << tab << tab << tab << "\"00\" & fY & \"0\"       when \"010\" | \"110\"," << endl;
-				vhdl << tab << tab << tab << "\"0\" & fYTimes3        when \"011\" | \"101\"," << endl;
-				vhdl << tab << tab << tab << "(" << wF+3 << " downto 0 => '0')  when others;" << endl;
-				vhdl << endl;
+					// For (8,23) on Virtex6 with ISE this gives 466Mhz, 1083 regs+ 1029 LUTs 
+					vhdl << tab << "with " << qi.str() << " select" << endl;
+					vhdl << tab << tab << declare(qiTimesD.str(),wF+4) << " <= "<< endl ;
+					vhdl << tab << tab << tab << "\"000\" & fY            when \"001\" | \"111\"," << endl;
+					vhdl << tab << tab << tab << "\"00\" & fY & \"0\"       when \"010\" | \"110\"," << endl;
+					vhdl << tab << tab << tab << "\"0\" & fYTimes3        when \"011\" | \"101\"," << endl;
+					vhdl << tab << tab << tab << "(" << wF+3 << " downto 0 => '0')  when others;" << endl;
+					vhdl << endl;
 #else // Recompute 3Y locally to save the registers: the LUT is used anyway
-				// For (8,23) on Virtex6 with ISE this gives 345Mhz, 856 regs+ 1051 LUTs 
-				vhdl << tab << "with " << qi.str() << " select" << endl;
-				vhdl << tab << tab << declare(join("addendA",i),wF+4) << " <= "<< endl ;
-				vhdl << tab << tab << tab << "\"000\" & fY            when \"001\" | \"111\" | \"011\" | \"101\"," << endl;
-				vhdl << tab << tab << tab << "(" << wF+3 << " downto 0 => '0')  when others;" << endl;
+					// For (8,23) on Virtex6 with ISE this gives 345Mhz, 856 regs+ 1051 LUTs 
+					vhdl << tab << "with " << qi.str() << " select" << endl;
+					vhdl << tab << tab << declare(join("addendA",i),wF+4) << " <= "<< endl ;
+					vhdl << tab << tab << tab << "\"000\" & fY            when \"001\" | \"111\" | \"011\" | \"101\"," << endl;
+					vhdl << tab << tab << tab << "(" << wF+3 << " downto 0 => '0')  when others;" << endl;
 
-				vhdl << tab << "with " << qi.str() << " select" << endl;
-				vhdl << tab << tab << declare(join("addendB",i),wF+4) << " <= "<< endl ;
-				vhdl << tab << tab << tab << "\"00\" & fY & \"0\"       when \"010\" | \"110\"| \"011\" | \"101\"," << endl;
-				vhdl << tab << tab << tab << "(" << wF+3 << " downto 0 => '0')  when others;" << endl;
-
-				vhdl << tab << tab << declare(qiTimesD.str(),wF+4) << " <= " << join("addendA",i) << " + " << join("addendB",i) << ";"<< endl ;
-				vhdl << endl;
+					vhdl << tab << "with " << qi.str() << " select" << endl;
+					vhdl << tab << tab << declare(join("addendB",i),wF+4) << " <= "<< endl ;
+					vhdl << tab << tab << tab << "\"00\" & fY & \"0\"       when \"010\" | \"110\"| \"011\" | \"101\"," << endl;
+					vhdl << tab << tab << tab << "(" << wF+3 << " downto 0 => '0')  when others;" << endl;
+					
+					vhdl << tab << tab << declare(qiTimesD.str(),wF+4) << " <= " << join("addendA",i) << " + " << join("addendB",i) << ";"<< endl ;
+					vhdl << endl;
 #endif				
-				vhdl << tab << declare(wipad.str(), wF+4) << " <= " << wi.str() << " & \"0\";" << endl;
-				vhdl << tab << "with " << qi.str() << "(2) select" << endl;
-				vhdl << tab << declare(wim1full.str(), wF+4) << "<= " << wipad.str() << " - " << qiTimesD.str() << " when '0'," << endl;
-				vhdl << tab << "      " << wipad.str() << " + " << qiTimesD.str() << " when others;" << endl;
-				vhdl << endl;
-				vhdl << tab << declare(wim1.str(),wF+3) << " <= " << wim1full.str()<<range(wF+1,0)<<" & \"0\";" << endl;
-			}
+					vhdl << tab << declare(wipad.str(), wF+4) << " <= " << wi.str() << " & \"0\";" << endl;
+					vhdl << tab << "with " << qi.str() << "(2) select" << endl;
+					vhdl << tab << declare(wim1full.str(), wF+4) << "<= " << wipad.str() << " - " << qiTimesD.str() << " when '0'," << endl;
+					vhdl << tab << "      " << wipad.str() << " + " << qiTimesD.str() << " when others;" << endl;
+					vhdl << endl;
+					vhdl << tab << declare(wim1.str(),wF+3) << " <= " << wim1full.str()<<range(wF+1,0)<<" & \"0\";" << endl;
+				} // end if alpha=3
+				else {
+					vhdl << tab << "with " << qi.str() << " select" << endl;
+					vhdl << tab << tab << declare(qiTimesD.str(),wF+4) << " <= "<< endl ;
+					vhdl << tab << tab << tab << "\"000\" & fY            when \"001\" | \"111\"," << endl;
+					vhdl << tab << tab << tab << "\"00\" & fY & \"0\"       when \"010\" | \"110\"," << endl;
+					vhdl << tab << tab << tab << "(" << wF+3 << " downto 0 => '0')  when others;" << endl;
+					vhdl << endl;
+					vhdl << tab << declare(wipad.str(), wF+4) << " <= " << wi.str() << " & \"0\";" << endl;
+					vhdl << tab << "with " << qi.str() << "(2) select" << endl;
+					vhdl << tab << declare(wim1full.str(), wF+4) << "<= " << wipad.str() << " - " << qiTimesD.str() << " when '0'," << endl;
+					vhdl << tab << "      " << wipad.str() << " + " << qiTimesD.str() << " when others;" << endl;
+					vhdl << endl;
+					vhdl << tab << declare(wim1.str(),wF+3) << " <= " << wim1full.str()<<range(wF+1,0)<<" & \"0\";" << endl;
 
+				}
+			} // end loop
 
 			manageCriticalPath(srt4stepdelay);
 
@@ -445,9 +473,9 @@ namespace flopoco{
 	{
 
 		double ro = (double)digitSet/(radix-1);
-		cout<<"Hence your rendundancy coefficiant is "<<ro<<endl<<endl;
+		cout<<"Rendundancy coefficiant is rho="<<ro<<endl<<endl;
 
-
+		// eq. 5.82 p. 293 of Digital Arithmetic
 		double exactDeltaMin = 1-log2((2*ro - 1)/(2*(digitSet-1)));
 
 		int deltaMinMinus = exactDeltaMin;
@@ -459,7 +487,7 @@ namespace flopoco{
 		double nbBitPlus = -log2((2*ro-1)/2 - (digitSet-ro)*pow(2, 0-deltaMinPlus))+deltaMinPlus+log2(radix);
 		int nbBitP = ceil(nbBitPlus);
 
-		cout<<"There're 2 possibilities :"<<endl;
+		cout<<"There are 2 possibilities :"<<endl;
 		cout<<"-Delta = "<<deltaMinPlus<<", nbBits = "<<nbBitP<<endl;
 		cout<<"-Delta = "<<deltaMinMinus<<", nbBits = "<<nbBitM<<endl<<endl;
 
