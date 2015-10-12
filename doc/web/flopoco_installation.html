@@ -41,8 +41,8 @@ Copy this in a dash/bash shell (and enter your password when prompted):
 <h4>Version 2.5.0, the last version before the transition to Sollya4 broke everything that bit heaps had not yet broken</h4>
 <p><kbd>yes | sudo apt-get install g++ libgmp3-dev libmpfr-dev libxml2-dev bison libmpfi-dev flex cmake libboost-all-dev libgsl0-dev && wget https://gforge.inria.fr/frs/download.php/file/34429/libfplll-3.0.12.tar.gz && tar xzf libfplll-3.0.12.tar.gz && cd libfplll-3.0.12/ && ./configure && make -j2  && sudo make install && cd .. && wget https://gforge.inria.fr/frs/download.php/28571/sollya-3.0.tar.gz && tar xzf sollya-3.0.tar.gz && cd sollya-3.0/ && ./configure && make -j4  && sudo make install && cd .. && wget https://gforge.inria.fr/frs/download.php/file/32591/flopoco-2.5.0.tgz  && tar xzf flopoco-2.5.0.tgz && cd flopoco-2.5.0/ && cmake . && make -j4  && ./flopoco</kbd></p>
 
-<h4>Version 2.3.1, the last version before the Great Leader embarked the project in the bit heap hazardous adventure</h4>
-<p><kbd>yes | sudo apt-get install g++ libgmp3-dev libmpfr-dev libxml2-dev bison libmpfi-dev flex cmake libboost-all-dev libgsl0-dev && wget https://gforge.inria.fr/frs/download.php/file/34429/libfplll-3.0.12.tar.gz && tar xzf libfplll-3.0.12.tar.gz && cd libfplll-3.0.12/ && ./configure && make -j2  && sudo make install && cd .. && wget https://gforge.inria.fr/frs/download.php/28571/sollya-3.0.tar.gz && tar xzf sollya-3.0.tar.gz && cd sollya-3.0/ && ./configure && make -j4  && sudo make install && cd .. && wget https://gforge.inria.fr/frs/download.php/file/30159/flopoco-2.3.1.tgz  && tar xzf flopoco-2.3.1.tgz && cd flopoco-2.3.1/ && cmake . && make -j4  && ./flopoco</kbd></p>
+<h4>Version 2.3.2, the last version before the Great Leader embarked the project in the bit heap hazardous adventure</h4>
+<p><kbd>yes | sudo apt-get install g++ libgmp3-dev libmpfr-dev libxml2-dev bison libmpfi-dev flex cmake libboost-all-dev libgsl0-dev && wget https://gforge.inria.fr/frs/download.php/file/34429/libfplll-3.0.12.tar.gz && tar xzf libfplll-3.0.12.tar.gz && cd libfplll-3.0.12/ && ./configure && make -j2  && sudo make install && cd .. && wget https://gforge.inria.fr/frs/download.php/28571/sollya-3.0.tar.gz && tar xzf sollya-3.0.tar.gz && cd sollya-3.0/ && ./configure && make -j4  && sudo make install && cd .. && wget https://gforge.inria.fr/frs/download.php/file/35206/flopoco-2.3.2.tgz  && tar xzf flopoco-2.3.2.tgz && cd flopoco-2.3.2/ && cmake . && make -j4  && ./flopoco</kbd></p>
 
 <h4>Older versions may include operators that have later been deprecated. Look up the <a href="https://gforge.inria.fr/scm/?group_id=1030">source code repository</a></h4>
 
@@ -133,6 +133,7 @@ You will need to install :
 		<li>You can not acess the VM using SSH : open VirtualBox, click right on your Vagrant Machine in the list, and shutdown and restart the VM.</li>
 		<li>During the execution of "vagrant up", the script loops trying to access the Vm using ssh : Don't worry (be happy), Stop the script. And restart your virtual machine directly into VirtualBox.</li>
 		<li>If you have some problems when "vagrant up" and using Linux, try to run the commands as root.</li>
+		<li>The single-line installation script hangs, possibly with a lot of "y" in the terminal: just reboot the virtual machine and start again. It works the second time.</li>
 		<li>If nothing work, just reboot your computer. Reboot solves more or less everything.</li>
 	</ul>
 	If you encountered others problems, give us feedback and if possible solutions so that we can add them to the preceeding list.

@@ -35,6 +35,10 @@ New operators:
     FixSinCos, CordicSinCos, FixSinOrCos: variations on the trigs
 
 ======================================================================
+Version 2.3.2
+This is a maintenance release, it adds a missing header that prevented compilation on recent gcc.
+
+======================================================================
 Version 2.3.1
 This is a bugfix release, mostly fixing a few multiplier bugs.
 
