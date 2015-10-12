@@ -165,10 +165,14 @@ namespace flopoco{
 
 	
 	void FixHornerEvaluator::generateVHDL(){
+
+		// Split the coeff table output into various coefficients
 		for(int i=0; i<=degree; i++) {
 			vhdl << tab << declareFixPoint(join("As", i), signedXandCoeffs, msbCoeff[i], lsbCoeff)
 					 << " <= " << (signedXandCoeffs?"signed":"unsigned") << "(" << join("A",i) << ");" <<endl;
 		}
+
+		// Initialize the Horner recurrence
 		vhdl << tab << declareFixPoint(join("Sigma", degree), true, msbSigma[degree], lsbSigma[degree])
 				 << " <= " << join("As", degree)  << ";" << endl;
 
@@ -176,6 +180,7 @@ namespace flopoco{
 			resizeFixPoint(join("XsTrunc", i), "Xs", 0, lsbXTrunc[i]);
 
 			//  assemble faithful operators (either FixMultAdd, or truncated mult)
+
 			if(getTarget()->plainVHDL()) {	// stupid pipelining here
 				vhdl << tab << declareFixPoint(join("P", i), true, msbP[i],  lsbP[i])
 						 <<  " <= "<< join("XsTrunc", i) <<" * Sigma" << i+1 << ";" << endl;

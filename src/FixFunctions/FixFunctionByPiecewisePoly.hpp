@@ -7,7 +7,7 @@
 #include <gmpxx.h>
 
 #include "../Operator.hpp"
-#include "../Table.hpp"
+#include "GenericTable.hpp"
 #include "FixFunction.hpp"
 #include "PiecewisePolyApprox.hpp"
 
@@ -19,16 +19,7 @@ namespace flopoco{
 	{
 	public:
 
-		/** a subclass to generate a table of coefficients */
-		class CoeffTable: public Table {
-		public:
-			CoeffTable(Target* target, int wIn, int wOut, PiecewisePolyApprox* polyApprox, bool addFinalRoundBit, int finalRoundBitPos);
-			mpz_class function(int x);
-			PiecewisePolyApprox* polyApprox; // don't understand why C++ won't let me use that of FixFunctionByPiecewisePoly
-			bool addFinalRoundBit;
-			int finalRoundBitPos;
-		};
-
+		void buildCoeffTable();
 
 		/**
 		 * The FixFunctionByPiecewisePoly constructor
@@ -64,10 +55,16 @@ namespace flopoco{
 
 	private:
 		int degree;
+		int lsbIn;
+		int msbOut;
+		int lsbOut;
+		int alpha;
 		PiecewisePolyApprox *polyApprox;
-		FixFunction *f; 
+		int polyTableOutputSize;
+		FixFunction *f;
 		bool finalRounding;
 		double approxErrorBudget;
+		vector<mpz_class> coeffTableVector;
 		vector <int> sigmaSign; /** +1 if sigma is always positive, -1 if sigma is always negative, O if sigma needs to be signed */
 		vector<int> sigmaMSB;   /**< vector of MSB weights for each sigma term. Note that these MSB consider that sigma is signed: one may remove 1 if sigmaSign is +1 or -1  */
 
