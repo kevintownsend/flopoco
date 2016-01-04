@@ -632,7 +632,7 @@ namespace flopoco{
 				//		0" <<endl;
 				
 				vhdl << tab << "-- Computing Z + (exp(Z)-1-Z)" << endl;
-			
+
 				addexpZminus1 = new IntAdder( target, sizeExpZm1, inDelayMap( "X", target->localWireDelay() + getCriticalPath() ) );
 				addSubComponent(addexpZminus1);
 				

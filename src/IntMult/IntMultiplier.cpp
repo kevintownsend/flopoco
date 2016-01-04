@@ -221,10 +221,12 @@ namespace flopoco {
 		srcFileName="IntMultiplier";
 		setCopyrightString ( "Florent de Dinechin, Kinga Illyes, Bogdan Popa, Bogdan Pasca, 2012" );
 
-		cout << "*  ***************** gettarget()->useHardMultipliers() =" << getTarget()->useHardMultipliers() << endl;
-
-		//commented-out because the addition operators need the ieee_std_signed/unsigned libraries
+		
+		// the addition operators need the ieee_std_signed/unsigned libraries
 		useNumericStd();
+
+		REPORT(DEBUG, "Entering IntMultiplier standalone constructor for wX_=" <<  wX_  << ", wY_=" << wY_ << ", wOut_=" << wOut_);
+		REPORT(DEBUG, "   gettarget()->useHardMultipliers() =" << getTarget()->useHardMultipliers() );
 
 		if(wOut<0)
 		{
@@ -235,6 +237,7 @@ namespace flopoco {
 			REPORT(DETAILED, "wOut set to " << wOut);
 		}
 
+		parentOp=this;
 		// set the name of the multiplier operator
 		{
 			ostringstream name;
@@ -249,13 +252,11 @@ namespace flopoco {
 		}
 
 		
-		parentOp=this;
 		multiplierUid=parentOp->getNewUId();
 		xname="X";
 		yname="Y";
 
 		initialize();
-
 		int g = neededGuardBits(parentOp->getTarget(), wXdecl, wYdecl, wOut);
 		int possibleOutputs=1;
 		if(g>0)
