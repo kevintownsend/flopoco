@@ -1,10 +1,10 @@
-Version 3.1
+Version 4.0
 New command-line interface, and the associated framework changes.
 Multipartite tables.
 A lot of janitoring.
 
 ======================================================================
-Version 3.0
+Version 3.0 will never get out of beta
 Shifts to Sollya 4.0 library. Polynomial evaluator rewritten in the process.
 Reorganisation of the source code, better naming consistency.
 plainVHDL and unusedHardMultThreshold become framework-wide target options.
