@@ -6,8 +6,9 @@ Place it on the forge;
 Then edit  flopoco_installation_manual.html using the path created by the forge.
 commit and push, and scp it as below.
 Finally do a 
-git tag -a flopoco-$(cat VERSION)
+git tag -a flopoco-$(cat VERSION) -m"Release!"
 
+git push --tags
 
 
 To update the web site from an admin account:
@@ -16,8 +17,11 @@ scp   flopoco_installation.html   scm.gforge.inria.fr:/home/groups/flopoco/htdoc
 scp   flopoco_user_manual.html  scm.gforge.inria.fr:/home/groups/flopoco/htdocs/
 scp   index.html   scm.gforge.inria.fr:/home/groups/flopoco/htdocs/
 scp   operators.html   scm.gforge.inria.fr:/home/groups/flopoco/htdocs/
+scp   ReleaseNotes.txt   scm.gforge.inria.fr:/home/groups/flopoco/htdocs/
 
 (etc)
+
+
 
 
 The operators.html page is generated from flopoco itself:
