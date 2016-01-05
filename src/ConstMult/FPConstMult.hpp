@@ -70,6 +70,7 @@ namespace flopoco{
 		void buildVHDL();
 
 		void emulate(TestCase *tc);
+		void buildStandardTestCases(TestCaseList* tcl);
 
 		/* The value of the constant multiplicand */
 		mpfr_t mpY;
@@ -77,8 +78,9 @@ namespace flopoco{
 		void fillTestCase(mpz_class a[]);
 
 		//Interface stuff
-		static void registerFactory();
+		static void registerFactory(); // registers FPConstMult and FPConstMultRational
 		static OperatorPtr parse(Target* target, vector<string>& args);
+		static OperatorPtr parseRational(Target* target, vector<string>& args);
 	};
 
 }
