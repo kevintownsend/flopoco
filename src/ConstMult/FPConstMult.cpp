@@ -602,6 +602,7 @@ namespace flopoco{
 			vhdl << tab << declare("expfrac_rnd",   wE_out+1+wF_out) << " <= r_exp_br & r_frac;"<<endl;
 		} 
 		else {
+			manageCriticalPath(getTarget()->localWireDelay() + getTarget()->adderDelay(wE_out+1+wF_out+1));
 			vhdl << tab << declare("expfrac_br",   wE_out+1+wF_out+1) << " <= r_exp_br & shifted_frac;"<<endl;
 			// add the rounding bit //TODO: No  round to nearest here. OK for faithful. For CR, does this case ever appear?
 			vhdl << tab << declare("expfrac_rnd1",  wE_out+1+wF_out+1) << " <= (("<<wE_out+1+wF_out <<" downto 1 => '0') & '1') + expfrac_br;"<<endl;
