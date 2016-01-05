@@ -526,35 +526,35 @@ namespace flopoco{
 				unsigned int position=find_best_implementation( tries, 4);
 				switch (position) {
 					case 1: implementation=implem_try_left;
-							REPORT( INFO,"Building "<<n.get_mpz_t()<<" from the left was better amelioration against right-building= "<< costF(implem_try_right,1)-costF(implem_try_left,1) << " amelioration on latency= " << costF(implem_try_right,-1)-costF(implem_try_left,-1) );
+							REPORT( DETAILED,"Building "<<n.get_mpz_t()<<" from the left was better amelioration against right-building= "<< costF(implem_try_right,1)-costF(implem_try_left,1) << " amelioration on latency= " << costF(implem_try_right,-1)-costF(implem_try_left,-1) );
 							delete implem_try_right;
 							delete implem_try_balanced;
 							delete implem_try_euclidean0;
 							delete implem_try_Shifts;
 							break;
 					case 0: implementation=implem_try_right;
-							REPORT( INFO,"Building "<<n.get_mpz_t()<<" from the right was better");
+							REPORT( DETAILED,"Building "<<n.get_mpz_t()<<" from the right was better");
 							delete implem_try_left;
 							delete implem_try_balanced;
 							delete implem_try_euclidean0;
 							delete implem_try_Shifts;
 							break;
 					case 2: implementation=implem_try_balanced;
-							REPORT( INFO,"Building "<<n.get_mpz_t()<<" with balanced method was better amelioration against right-building= "<< costF(implem_try_right,1)-costF(implem_try_balanced,1) << " amelioration on latency= " << costF(implem_try_right,-1)-costF(implem_try_balanced,-1) );
+							REPORT( DETAILED,"Building "<<n.get_mpz_t()<<" with balanced method was better amelioration against right-building= "<< costF(implem_try_right,1)-costF(implem_try_balanced,1) << " amelioration on latency= " << costF(implem_try_right,-1)-costF(implem_try_balanced,-1) );
 							delete implem_try_right;
 							delete implem_try_left;
 							delete implem_try_euclidean0;
 							delete implem_try_Shifts;
 							break;
 					case 3: implementation=implem_try_euclidean0;
-							REPORT( INFO,"Building "<<n.get_mpz_t()<<" with euclide 0 was better amelioration against right-building= "<< costF(implem_try_right,1)-costF(implem_try_euclidean0,1) << " amelioration on latency= " << costF(implem_try_right,-1)-costF(implem_try_euclidean0,-1) );
+							REPORT( DETAILED,"Building "<<n.get_mpz_t()<<" with euclide 0 was better amelioration against right-building= "<< costF(implem_try_right,1)-costF(implem_try_euclidean0,1) << " amelioration on latency= " << costF(implem_try_right,-1)-costF(implem_try_euclidean0,-1) );
 							delete implem_try_right;
 							delete implem_try_left;
 							delete implem_try_balanced;
 							delete implem_try_Shifts;
 							break;
 					case 4: implementation=implem_try_Shifts;
-							REPORT( INFO,"Building "<<n.get_mpz_t()<<" targetting smallest shifts was better amelioration against right-building= "<< costF(implem_try_right,1)-costF(implem_try_Shifts,1) << " amelioration on latency= " << costF(implem_try_right,-1)-costF(implem_try_Shifts,-1) );
+							REPORT( DETAILED,"Building "<<n.get_mpz_t()<<" targetting smallest shifts was better amelioration against right-building= "<< costF(implem_try_right,1)-costF(implem_try_Shifts,1) << " amelioration on latency= " << costF(implem_try_right,-1)-costF(implem_try_Shifts,-1) );
 							delete implem_try_right;
 							delete implem_try_left;
 							delete implem_try_balanced;
@@ -1168,7 +1168,7 @@ namespace flopoco{
 		int nsize = intlog2(n);
 
 		if((mpz_class(1) << (nsize-1)) == n) { // n is a power of two
-			REPORT(INFO, "Power of two");
+			REPORT(DEBUG, "Power of two");
 			result= tree_try->provideShiftAddOp(Shift, tree_try->PX, intlog2(n)-1);
 			globalshift = nsize-1;
 			return 1;
