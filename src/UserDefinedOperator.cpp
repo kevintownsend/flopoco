@@ -125,21 +125,30 @@ namespace flopoco {
 		// please fill me with regression tests or corner case tests!
 	}
 
+
+
+
+
 	OperatorPtr UserDefinedOperator::parseArguments(Target *target, vector<string> &args) {
 		int param0, param1;
 		UserInterface::parseInt(args, "param0", &param0); // param0 has a default value, this method will recover it if it doesnt't find it in args, 
 		UserInterface::parseInt(args, "param1", &param1); 
 		return new UserDefinedOperator(target, param0, param1);
 	}
-
+	
 	void UserDefinedOperator::registerFactory(){
 		UserInterface::add("UserDefinedOperator", // name
-											 "An heavily commented example operator to start with flopoco.", // short description string
-											 "Miscellaneous",  // category, from the ones defined in UserInterface.cpp
-											 "", // seeAlso field 
-											 "param0(int)=16: Size of the inputs in bits; \
-                      param1(int): another number of bits, but it could be anything",  // This string is parsed to generate the documentation. Type can be int, bool or string. Param0 has a default value of 16. 
-											 "More documentation for the HTML pages. If you want to link to your blog, it is here.",
+											 "An heavily commented example operator to start with FloPoCo.", // description, string
+											 "Miscellaneous", // category, from the list defined in UserInterface.cpp
+											 "", //seeAlso
+											 // Now comes the parameter description string.
+											 // Respect its syntax because it will be used to generate the parser and the docs
+											 // Syntax is: a semicolon-separated list of parameterDescription;
+											 // where parameterDescription is parameterName (parameterType)[=defaultValue]: parameterDescriptionString 
+											 "param0(int)=16: A first parameter, here used as the input size; \
+                        param1(int): A second parameter, here used as the output size",
+											 // More documentation for the HTML pages. If you want to link to your blog, it is here.
+											 "Feel free to experiment with its code, it will not break anything in FloPoCo. <br> Also see the developper manual in the doc/ directory of FloPoCo.",
 											 UserDefinedOperator::parseArguments
 											 ) ;
 	}

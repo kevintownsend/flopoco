@@ -105,8 +105,10 @@ int main(int argc, char* argv[] )
 
 		// hidden for now
 		// Fix2DNorm::registerFactory();
-		// Uncomment me to play with FloPoCo
-		// UserDefinedOperator::registerFactory();
+
+
+		// Uncomment me to play within FloPoCo operator development
+	  UserDefinedOperator::registerFactory();
 	}
 	catch (const std::exception &e) {
 		cerr << "Error while registering factories: " << e.what() <<endl;
