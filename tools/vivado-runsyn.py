@@ -63,6 +63,11 @@ if __name__ == '__main__':
     vivado_command = ("vivado -mode batch -source " + tcl_script_name)
     print vivado_command
     os.system(vivado_command)
-    print "Done"
+
+    utililization_report_file = workdir + "/" + project_name + ".runs/impl_1/" + entity + "_utilization_placed.rpt"
+    print("cat " + utililization_report_file)
+    os.system("cat " + utililization_report_file)
+    
+    
     
 #    p = subprocess.Popen(vivado_command, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, close_fds=True)
