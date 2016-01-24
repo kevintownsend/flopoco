@@ -212,7 +212,7 @@ namespace flopoco {
 											 "Integer adder. In modern VHDL, integer addition is expressed by a + and one usually needn't define an entity for it. However, this operator will be pipelined if the addition is too large to be performed at the target frequency.",
 											 "BasicInteger", // category
 											 "",
-											 "wE(int): exponent size in bits;\
+											 "wIn(int): input size in bits;\
                         arch(int)=-1: -1 for automatic, 0 for classical, 1 for alternative, 2 for short latency;\
                         optObjective(int)=2: 0 to optimize for logic, 1 to optimize for register, 2 to optimize for slice/ALM count;\
                         SRL(bool)=true: optimize for shift registers",
