@@ -30,7 +30,7 @@ def get_last_entity(filename):
 if __name__ == '__main__':
     if (len(sys.argv)>3):
         usage()
-        
+
     if (len(sys.argv)==3):
         filename = sys.argv[1] 
         entity = sys.argv[2] 
@@ -49,10 +49,15 @@ if __name__ == '__main__':
     os.mkdir(workdir)
     os.chdir(workdir)
 
+    synthesis_only=True # some day to replace with a command-line switch
+
     # First futile attempt to get a timing report
     xdc_file_name="/tmp/clock.xdc"
     xdc_file=open( xdc_file_name, "w")
-    xdc_file.write("create_clock -name clk -period 10.00")
+    xdc_file.write("create_clock -name clk -period 10.00  [get_ports clk] \n")  # virtual clock see p. 51 of Xilinx vivado constraint guide
+    xdc_file.write("set_input_delay -clock clk 0 [get_ports X]\n")
+    xdc_file.write("set_input_delay -clock clk 0 [get_ports Y]\n")
+    xdc_file.write("set_output_delay -clock clk 0 [get_ports R]\n")
     xdc_file.close()
 
     tclscriptfile = open( tcl_script_name,"w")
@@ -64,15 +69,28 @@ if __name__ == '__main__':
     tclscriptfile.write("read_xdc " + xdc_file_name + "\n")
     tclscriptfile.write("update_compile_order -fileset sources_1\n")
     tclscriptfile.write("update_compile_order -fileset sim_1\n")
-    tclscriptfile.write("launch_runs impl_1\n")
-    tclscriptfile.write("wait_on_run impl_1\n")
+
+    if synthesis_only:
+        result_name = "synth_1"
+    else:
+        result_name = "impl_1"
+        
+    tclscriptfile.write("launch_runs " + result_name + "\n")
+    tclscriptfile.write("wait_on_run " + result_name + "\n")
+    tclscriptfile.write("open_run " + result_name + " -name " + result_name + "\n")
+    tclscriptfile.write("report_timing_summary -delay_type max -report_unconstrained -check_timing_verbose -max_paths 10 -input_pins -file " + os.path.join(workdir, project_name+"_timing_report.txt") + " \n")
+        
     tclscriptfile.close()
 
     vivado_command = ("vivado -mode batch -source " + tcl_script_name)
     print vivado_command
     os.system(vivado_command)
 
-    utililization_report_file = workdir + "/" + project_name + ".runs/impl_1/" + entity + "_utilization_placed.rpt"
+    utililization_report_file = workdir + "/" + project_name + ".runs/" + result_name + "/" + entity + "_utilization_"
+    if synthesis_only:
+        utililization_report_file +="synth.rpt"
+    else:
+        utililization_report_file +="placed.rpt"
     print("cat " + utililization_report_file)
     os.system("cat " + utililization_report_file)
     
