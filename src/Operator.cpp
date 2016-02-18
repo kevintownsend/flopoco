@@ -1532,7 +1532,7 @@ namespace flopoco{
 			if(i->type()==Signal::in)
 				file << "set_input_delay ";
 			else // should be output
-				file << "set_ouput_delay ";
+				file << "set_output_delay ";
 			file <<	"-clock clk 0 [get_ports " << i->getName() << "]" << endl;
 		}
 		file.close();
