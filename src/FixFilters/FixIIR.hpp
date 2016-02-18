@@ -11,7 +11,7 @@ namespace flopoco{
 
 	public:
 		/** @brief Constructor ; you must use bitheap in case of negative coefficient*/
-		FixIIR(Target* target, int msbOut_, int lsbOut_, double H_, vector<string> coeffb_, vector<string> coeffa_, map<string, double> inputDelays = emptyDelayMap);
+		FixIIR(Target* target, int lsbIn, int msbOut, int lsbOut, vector<string> coeffb, vector<string> coeffa, double H=0.0);
 
 		/** @brief Destructor */
 		~FixIIR();
@@ -32,11 +32,13 @@ namespace flopoco{
 		static void registerFactory();
 
 	private:
+		int lsbIn;					/**< weight of the LSB in the input, considered as a signed number in (-1,1) */
 		int msbOut;					/**< weight of the MSB in the result */
 		int lsbOut;					/**< weight of the LSB in the result */
-		double H;						/**< Worst case peak gain */
 		vector<string> coeffb;			/**< the b_i coefficients as strings */
 		vector<string> coeffa;			/**< the a_i coefficients as strings */
+		double H;						/**< Worst case peak gain of this filter */
+		double Heps;						/**< Worst case peak gain of the error filter */
 		int n;							/**< number of taps on the numerator */
 		int m;							/**< number of taps on the denominator */
 
@@ -48,12 +50,14 @@ namespace flopoco{
 
 	private:
 		int hugePrec;
+		// TODO All arrays or all mallocs below,
 
 		mpfr_t mpcoeffb[10000];			/**< the absolute values of the coefficients as MPFR numbers */
 		bool coeffsignb[10000];			/**< the signs of the coefficients */
-
 		mpfr_t mpcoeffa[10000];			/**< the absolute values of the coefficients as MPFR numbers */
 		bool coeffsigna[10000];			/**< the signs of the coefficients */
+		double *coeffb_d;           /**< version of coeffb as C-style arrays of double, because WCPG needs it this way */
+		double *coeffa_d;           /**< version of coeffa as C-style arrays of double, because WCPG needs it this way */
 
 		mpz_class xHistory[10000]; // history of x used by emulate
 		int currentIndexA;

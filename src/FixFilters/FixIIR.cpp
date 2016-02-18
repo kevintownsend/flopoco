@@ -3,6 +3,9 @@
 
 #include "gmp.h"
 #include "mpfr.h"
+#if HAVE_WCPG
+#include "wcpg.h"
+#endif
 
 #include "FixIIR.hpp"
 
@@ -18,8 +21,8 @@ using namespace std;
 
 namespace flopoco {
 
-	FixIIR::FixIIR(Target* target, int msbOut_, int lsbOut_, double H_, vector<string> coeffb_, vector<string> coeffa_, map<string, double> inputDelays) :
-		Operator(target), msbOut(msbOut_), lsbOut(lsbOut_), H(H_), coeffb(coeffb_), coeffa(coeffa_)
+	FixIIR::FixIIR(Target* target, int lsbIn_, int msbOut_, int lsbOut_,  vector<string> coeffb_, vector<string> coeffa_, double H_) :
+		Operator(target), lsbIn(lsbIn_), msbOut(msbOut_), lsbOut(lsbOut_), coeffb(coeffb_), coeffa(coeffa_), H(H_)
 	{
 		srcFileName="FixIIR";
 		setCopyrightString ( "Louis Beseme, Florent de Dinechin (2014)" );
@@ -27,22 +30,79 @@ namespace flopoco {
 
 
 		ostringstream name;
-		name << "FixIIR_"<< msbOut << "_"<< lsbOut << "_uid" << getNewUId();
-		setNameWithFreq( name.str() );
+		name << "FixIIR";
+		setNameWithFreqAndUID( name.str() );
 
 		n = coeffb.size();
 		m = coeffa.size();
 
+		addInput("X", 1-lsbIn, true);
 
 
-		//manage the critical path
-		setCriticalPath(getMaxInputDelays(inputDelays));
+		//Parsing the coefficients, into MPFR (and double for H but it is temporary)
 
-		addInput("X", 1+-lsbOut, true);
+		coeffa_d = (double*)malloc(n * sizeof(double*));
+		coeffb_d = (double*)malloc(m * sizeof(double*));
 
 
+		for (int i=0; i< n; i++)		{
+			// parse the coeffs from the string, with Sollya parsing
+			sollya_obj_t node;
+
+			node = sollya_lib_parse_string(coeffb[i].c_str());
+			if(node == 0)					// If conversion did not succeed (i.e. parse error)
+				THROWERROR("Unable to parse string " << coeffb[i] << " as a numeric constant");
+			
+			mpfr_init2(mpcoeffb[i], 10000);
+			sollya_lib_get_constant(mpcoeffb[i], node);
+			coeffb_d[i] = mpfr_get_d(mpcoeffb[i], GMP_RNDN);
+			if(coeffb_d[i] < 0)
+				coeffsignb[i] = 1;
+			else
+				coeffsignb[i] = 0;
+			mpfr_abs(mpcoeffb[i], mpcoeffb[i], GMP_RNDN);
+		}
+
+		for (int i=0; i< m; i++)		{
+			// parse the coeffs from the string, with Sollya parsing
+			sollya_obj_t node;
+
+			node = sollya_lib_parse_string(coeffa[i].c_str());
+			if(node == 0)					// If conversion did not succeed (i.e. parse error)
+				THROWERROR("Unable to parse string " << coeffb[i] << " as a numeric constant");
+			
+			mpfr_init2(mpcoeffa[i], 10000);
+			sollya_lib_get_constant(mpcoeffa[i], node);
+			coeffa_d[i] = mpfr_get_d(mpcoeffa[i], GMP_RNDN);
+			if(coeffa_d[i] < 0)
+				coeffsigna[i] = 1;
+			else
+				coeffsigna[i] = 0;
+			mpfr_abs(mpcoeffa[i], mpcoeffa[i], GMP_RNDN);
+		}
+
+
+		REPORT(INFO, "H=" << H);
+		
+		// TODO here compute H if it is not provided
+		if(H==0) {
+#if HAVE_WCPG
+
+			REPORT(INFO, "computing worst-case peak gain");
+
+#if 0
+			if (!WCPG_tf(&H, coeffb_d, coeffa_d, n, m))
+				THROWERROR("Could not compute WCPG");
+			REPORT(INFO, "Worst-case peak gain is H=" << H);
+#endif
+			
+#else 
+			THROWERROR("WCPG was not found (see cmake output), cannot compute worst-case peak gain H. Either provide H, or compile FloPoCo with WCPG");
+#endif
+		}
+		
 		// guard bits for a faithful result
-		g= intlog2(2*H*(n+m));
+		g= intlog2(2*H*(n+m)); // see the paper
 		REPORT(INFO, "g=" << g);
 
 		hugePrec = 10*(1+msbOut+-lsbOut+g);
@@ -58,56 +118,6 @@ namespace flopoco {
 		}
 
 
-		for (int i=0; i< n; i++)
-		{
-			// parse the coeffs from the string, with Sollya parsing
-			sollya_obj_t node;
-
-			node = sollya_lib_parse_string(coeffb[i].c_str());
-			// If conversion did not succeed (i.e. parse error)
-			if(node == 0)
-			{
-				ostringstream error;
-				error << srcFileName << ": Unable to parse string " << coeffb[i] << " as a numeric constant" << endl;
-				throw error.str();
-			}
-
-			mpfr_init2(mpcoeffb[i], 10000);
-			sollya_lib_get_constant(mpcoeffb[i], node);
-			if(mpfr_get_d(mpcoeffb[i], GMP_RNDN) < 0)
-				coeffsignb[i] = 1;
-			else
-				coeffsignb[i] = 0;
-
-			mpfr_abs(mpcoeffb[i], mpcoeffb[i], GMP_RNDN);
-
-		}
-
-		for (int i=0; i< m; i++)
-		{
-			// parse the coeffs from the string, with Sollya parsing
-			sollya_obj_t node;
-
-			node = sollya_lib_parse_string(coeffa[i].c_str());
-			// If conversion did not succeed (i.e. parse error)
-			if(node == 0)
-			{
-				ostringstream error;
-				error << srcFileName << ": Unable to parse string " << coeffa[i] << " as a numeric constant" << endl;
-				throw error.str();
-			}
-
-			mpfr_init2(mpcoeffa[i], 10000);
-			sollya_lib_get_constant(mpcoeffa[i], node);
-
-			if(mpfr_get_d(mpcoeffa[i], GMP_RNDN) < 0)
-				coeffsigna[i] = 1;
-			else
-				coeffsigna[i] = 0;
-
-			mpfr_abs(mpcoeffa[i], mpcoeffa[i], GMP_RNDN);
-
-		}
 
 
 		wO = (msbOut - lsbOut) + 1; //1 + sign  ;
@@ -166,7 +176,7 @@ namespace flopoco {
 		REPORT(INFO, "guardBitsKCM part A = "<< guardBitsKCM_A);
 
 		//Shift register for the left part // TODO size
-		ShiftReg *shiftRegB = new ShiftReg(target, 1-lsbOut , n, inputDelays);
+		ShiftReg *shiftRegB = new ShiftReg(target, 1-lsbOut , n);
 
 
 		addSubComponent(shiftRegB);
@@ -182,7 +192,7 @@ namespace flopoco {
 		//Shift register for the right part
 		setCycleFromSignal("X");
 
-		ShiftReg *shiftRegA = new ShiftReg(target, wInKCM_A, m, inputDelays);
+		ShiftReg *shiftRegA = new ShiftReg(target, wInKCM_A, m);
 
 		addSubComponent(shiftRegA);
 		declare("Rtmp", wO+g, false, Signal::registeredWithAsyncReset);
@@ -364,11 +374,20 @@ namespace flopoco {
 
 	};
 
-	FixIIR::~FixIIR(){
 
+
+	FixIIR::~FixIIR(){
+		free(coeffb_d);
+		free(coeffa_d);
+		for (int i=0; i<n; i++)
+				mpfr_clear(mpcoeffb[i]);
+		for (int i=0; i<m; i++)
+				mpfr_clear(mpcoeffa[i]);
 	};
 
 
+
+	
 	void FixIIR::emulate(TestCase * tc){
 
 		mpz_class sx;
@@ -448,6 +467,8 @@ namespace flopoco {
 	OperatorPtr FixIIR::parseArguments(Target *target, vector<string> &args) {
 		int msbOut;
 		UserInterface::parseInt(args, "msbOut", &msbOut);
+		int lsbIn;
+		UserInterface::parseInt(args, "lsbIn", &lsbIn);
 		int lsbOut;
 		UserInterface::parseInt(args, "lsbOut", &lsbOut);
 		double h;
@@ -472,7 +493,7 @@ namespace flopoco {
 				inputb.push_back( substr );
 			}
 		
-		return new FixIIR(target, msbOut, lsbOut, h, inputb, inputa);
+		return new FixIIR(target, lsbIn, msbOut, lsbOut, inputb, inputa, h);
 	}
 
 
@@ -481,9 +502,10 @@ namespace flopoco {
 											 "A fix-point Infinite Impulse Response filter generator.",
 											 "FiltersEtc", // categories
 											 "",
-											 "msbOut(int): output's most significant bit;\
-                        lsbOut(int): output's least significant bit;\
-                        h(real): worst-case peak gain;\
+											 "lsbIn(int): input most significant bit;\
+											  msbOut(int): output most significant bit;\
+                        lsbOut(int): output least significant bit;\
+                        h(real)=0: worst-case peak gain: provide it only if WCPG is not installed;\
                         coeffa(string): colon-separated list of real coefficients using Sollya syntax. Example: coeff=1.234567890123:sin(3*pi/8);\
                         coeffb(string): colon-separated list of real coefficients using Sollya syntax. Example: coeff=1.234567890123:sin(3*pi/8);",
 											 "",

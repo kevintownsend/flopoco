@@ -57,6 +57,40 @@ namespace flopoco{
 			computeMSBOut(false)
 	{
 		n = coeff.size();
+		for(int i=0; i<n; i++)
+			maxAbsX.push_back(intpow2(msbIn[i]));
+		
+		if (g==-1)
+			computeGuardBits=true;
+
+		addFinalRoundBit = (g==0 ? false : true);
+
+		initialize();
+	}
+
+
+	FixSOPC::FixSOPC(
+			Target* target_,
+			vector<double> maxAbsX_,
+			vector<int> lsbIn_,
+			int msbOut_,
+			int lsbOut_,
+			vector<string> coeff_,
+			int g_
+		) :
+			Operator(target_),
+			maxAbsX(maxAbsX_),
+			lsbIn(lsbIn_),
+			msbOut(msbOut_),
+			lsbOut(lsbOut_),
+			coeff(coeff_),
+			g(g_),
+			computeMSBOut(false)
+	{
+		n = coeff.size();
+		for(int i=0; i<n; i++)
+			msbIn.push_back(ceil(log2(maxAbsX[i])));
+		
 		if (g==-1)
 			computeGuardBits=true;
 
@@ -82,8 +116,7 @@ namespace flopoco{
 		name << "FixSOPC_uid" << getNewUId(); 
 		setName(name.str()); 
 	
-		setCopyrightString("Matei Istoan, Louis Besème,"
-				" Florent de Dinechin (2013-2015)");
+		setCopyrightString("Matei Istoan, Louis Besème, Florent de Dinechin (2013-2015)");
 		
 		for (int i=0; i< n; i++)
 		{
