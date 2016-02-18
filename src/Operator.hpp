@@ -603,6 +603,11 @@ public:
 	 */	
 	void outputVHDL(std::ostream& o);   // calls the previous with name = uniqueName
 
+	/** writes a clock.xdc file in /tmp, to be used by vivado_runsyn */
+	void outputClock_xdc();
+
+
+	
 	/** True if the operator needs a clock signal; 
 	 * It will also get a rst but doesn't need to use it.
 	 */	

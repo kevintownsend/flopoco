@@ -52,13 +52,8 @@ if __name__ == '__main__':
     synthesis_only=True # some day to replace with a command-line switch
 
     # First futile attempt to get a timing report
-    xdc_file_name="/tmp/clock.xdc"
-    xdc_file=open( xdc_file_name, "w")
-    xdc_file.write("create_clock -name clk -period 10.00  [get_ports clk] \n")  # virtual clock see p. 51 of Xilinx vivado constraint guide
-    xdc_file.write("set_input_delay -clock clk 0 [get_ports X]\n")
-    xdc_file.write("set_input_delay -clock clk 0 [get_ports Y]\n")
-    xdc_file.write("set_output_delay -clock clk 0 [get_ports R]\n")
-    xdc_file.close()
+
+    xdc_file_name="/tmp/clock.xdc" # created by FloPoCo.
 
     tclscriptfile = open( tcl_script_name,"w")
     tclscriptfile.write("# Synthesis of " + entity + "\n")
