@@ -24,7 +24,19 @@ namespace flopoco{
 		/** The destructor */
 		~Wrapper();
 	
-	
+		// User-interface stuff
+
+		/**
+		 * Factory method that parses arguments and calls the constructor
+		 */
+		static OperatorPtr parseArguments(Target *target, vector<string> &args);
+
+		/**
+		 * Factory register method
+		 */
+		static void registerFactory();
+
+		
 	private:
 		Operator* op_; /**< The operator to wrap */
 	};

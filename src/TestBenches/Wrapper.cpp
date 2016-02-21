@@ -101,5 +101,26 @@ namespace flopoco{
 	Wrapper::~Wrapper() {
 	}
 
+	OperatorPtr Wrapper::parseArguments(Target *target, vector<string> &args) {
+		if(UserInterface::globalOpList.empty()){
+			throw("ERROR: Wrapper has no operator to wrap (it should come after the operator it wraps)");
+		}
+
+		Operator* toWrap = UserInterface::globalOpList.back();
+		UserInterface::globalOpList.pop_back();
+
+		return new Wrapper(target, toWrap);
+	}
+
+	void Wrapper::registerFactory(){
+			UserInterface::add("Wrapper", // name
+								 "Wraps the preceding operator between registers (for frequency testing).",
+								 "TestBenches",
+								 "fixed-point function evaluator; fixed-point", // categories
+								 "",
+								 "",
+								 Wrapper::parseArguments
+								 ) ;
+	}
 
 }

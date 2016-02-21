@@ -76,6 +76,7 @@ int main(int argc, char* argv[] )
 		PiecewisePolyApprox::registerFactory();
 		FixRealKCM::registerFactory();
 		TestBench::registerFactory();
+		Wrapper::registerFactory();
 		FPAdd::registerFactory();
 		FPAddSub::registerFactory();
 		FPAddDualPath::registerFactory();
@@ -106,7 +107,7 @@ int main(int argc, char* argv[] )
 		// hidden for now
 		// Fix2DNorm::registerFactory();
 
-
+		TargetModel::registerFactory();
 		// Uncomment me to play within FloPoCo operator development
 	  UserDefinedOperator::registerFactory();
 	}
