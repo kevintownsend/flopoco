@@ -180,7 +180,7 @@ namespace flopoco{
 		EuclideanDiv3Table* table;
 		table = new EuclideanDiv3Table(target, d, alpha, gamma, nbZeros, false);
 		useSoftRAM(table);
-		oplist.push_back(table);
+		addSubComponent(table);
 		//double tableDelay = table->getOutputDelay("Y");
 
 		string ri, xi, ini, outi, qi;
@@ -227,7 +227,7 @@ namespace flopoco{
 		{
 			table = new EuclideanDiv3Table(target, d, alpha, gamma, nbZeros, true);
 			useSoftRAM(table);
-			oplist.push_back(table);
+			addSubComponent(table);
 			//tableDelay = table->getOutputDelay("Y");
 
 			//manageCriticalPath(tableDelay);

@@ -139,7 +139,7 @@ namespace flopoco{
 		vhdl<<"-- Comparison of X to 1   --"<<endl;
 		vhdl << tab  << declare("OneExpFrac", wE+wF) << " <=  \"0\" & " << rangeAssign(wE-2, 0, "'1'") << " & " << rangeAssign(wF-1, 0, "'0'") << ";" << endl;
 		IntAdder *cmpOneAdder = new IntAdder(target, wE+wF+1);
-		oplist.push_back(cmpOneAdder);
+		addSubComponent(cmpOneAdder);
 		vhdl << tab << declare("ExpFracX",wE+wF+1) << "<= \"0\" & expFieldX & fracX;"<<endl;
 		vhdl << tab << declare("OneExpFracCompl",wE+wF+1) << "<=  \"1\" & (not OneExpFrac);"<<endl;
 		inPortMap(cmpOneAdder, "X", "ExpFracX");
@@ -174,7 +174,7 @@ namespace flopoco{
 			vhdl << ";" <<  endl;
 
 			LZOC* right1counter = new LZOC(target, wF);
-			oplist.push_back(right1counter);
+			addSubComponent(right1counter);
 			inPortMap(right1counter, "I", "fracYreverted");
 			inPortMapCst(right1counter, "OZB", "\'0\'");
 			outPortMap(right1counter, "O", "Z_rightY");
@@ -302,7 +302,7 @@ namespace flopoco{
 		vhdl << tab << declare("logIn", 3+wE + logwF) << " <= flagsX & \"0\" & expFieldX & fracX & " << rangeAssign(logwF-wF-1, 0, "'0'") << " ;" << endl;
 
 		IterativeLog* log = new IterativeLog(target,  wE,  logwF, logTableSize );
-		oplist.push_back(log);
+		addSubComponent(log);
 		inPortMap(log, "X", "logIn");
 		outPortMap(log, "R", "lnX");
 		vhdl << instance(log, "log");
@@ -320,7 +320,7 @@ namespace flopoco{
 		                                      1, /* norm*/
 		                                      0 /* faithful only*/);
 #endif
-		oplist.push_back(mult);
+		addSubComponent(mult);
 		inPortMap(mult, "Y", "Y");
 		inPortMap(mult, "X", "lnX");
 		outPortMap(mult, "R", "P");
@@ -337,7 +337,7 @@ namespace flopoco{
 		FPExp* exp = new FPExp(target,  wE,  wF, 0/* means default*/, 0, expG, true);
 #endif
 
-		oplist.push_back(exp);
+		addSubComponent(exp);
 		inPortMap(exp, "X", "P");
 		outPortMap(exp, "R", "E");
 		vhdl << instance(exp, "exp");

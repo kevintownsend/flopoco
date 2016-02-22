@@ -59,7 +59,7 @@ namespace flopoco{
 
 		//instantiate an IntSquarer
 		IntSquarer *sqr = new IntSquarer(target,wFX_+1);
-		oplist.push_back(sqr);
+		addSubComponent(sqr);
 
 		inPortMap(sqr, "X", "frac");
 		outPortMap(sqr, "R", "sqrFrac");
@@ -114,7 +114,7 @@ namespace flopoco{
 
 			//the rounding phase
 			IntAdder* add = new IntAdder(target, wE+2 + wFR, inDelayMap("X", target->localWireDelay() + getCriticalPath()));
-			oplist.push_back(add);
+			addSubComponent(add);
 
 			vhdl << tab << declare("concatExpFrac", wE+2 + wFR) << " <= extExp & finalFrac;" << endl;
 			vhdl << tab << declare("addCin") << " <= (guard and sticky) or (fracULP and guard and not(sticky));"<<endl;

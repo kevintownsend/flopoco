@@ -212,8 +212,8 @@ target->setPipelined(false);
 IntAdder *addZero = new IntAdder(target, cSize[j]+1);
 IntComparator *compOne = new IntComparator(target, cSize[j], 1, false, 0);
 
-oplist.push_back(addZero);
-oplist.push_back(compOne);
+addSubComponent(addZero);
+addSubComponent(compOne);
 
 if (tp) target->setPipelined();
 

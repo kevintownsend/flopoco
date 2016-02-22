@@ -923,11 +923,10 @@ namespace flopoco{
 	//TODO: add function to add resource count from specified component
 	std::string ResourceEstimationHelper::addComponentResourceCount(){
 		std::ostringstream output;
-		map<string, Operator*> subComponents = parentOp->getSubComponents();
+		vector<OperatorPtr> subComponents = parentOp->getSubComponents();
 
 		output << "Resource count is being compensated for with resource estimations from subcomponents." << endl;
-		for(map<string, Operator*>::iterator it = subComponents.begin(); it != subComponents.end(); it++) {
-			Operator *op = it->second;
+		for(auto op :subComponents) {
 
 			estimatedCountFF 				+= op->reHelper->estimatedCountFF;
 			estimatedCountLUT 				+= op->reHelper->estimatedCountLUT;

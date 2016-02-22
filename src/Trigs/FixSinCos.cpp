@@ -386,7 +386,7 @@ FixSinCos::FixSinCos(Target * target, int w_):Operator(target), w(w_){
 									"pi",     // constant
 									1.0,      // targetUlpError
 									pi_mult_inputDelays);
-		oplist.push_back (pi_mult);
+		addSubComponent (pi_mult);
 		inPortMap (pi_mult, "X", "Y_red");
 		outPortMap (pi_mult, "R", "Z");
 		int wZz=getSignalByName("Z")->width();
@@ -493,7 +493,7 @@ FixSinCos::FixSinCos(Target * target, int w_):Operator(target), w(w_){
 			// we have no truncated squarer as of now
 			/*IntSquarer *sqr_z;
 				sqr_z = new IntSquarer (target, wZ);
-				oplist.push_back (sqr_z);
+				addSubComponent (sqr_z);
 				inPortMap (sqr_z, "X", "Z");
 				outPortMap (sqr_z, "R", "Z2o2_ext");
 				vhdl << instance (sqr_z, "sqr_z");
@@ -509,7 +509,7 @@ FixSinCos::FixSinCos(Target * target, int w_):Operator(target), w(w_){
 			vhdl << tab << "-- First truncate the inputs of the multiplier to the precision of the output" << endl;
 			vhdl << tab << declare("Z_truncToZ2", wZ2o2) << " <= Z" << range(wZ-1, wZ-wZ2o2) << ";" << endl;
 			sqr_z = new IntMultiplier (target, wZ2o2, wZ2o2, wZ2o2, false,  sqr_z_inputDelays);
-			oplist.push_back (sqr_z);
+			addSubComponent (sqr_z);
 			inPortMap (sqr_z, "Y", "Z_truncToZ2");
 			inPortMap (sqr_z, "X", "Z_truncToZ2");
 			outPortMap (sqr_z, "R", "Z2o2");
@@ -534,7 +534,7 @@ FixSinCos::FixSinCos(Target * target, int w_):Operator(target), w(w_){
 																						-3,  //  msbOut
 																						-wZ3o6-2); // lsbOut
 				z3o6Table -> changeName(getName() + "_Z3o6Table");
-				oplist.push_back (z3o6Table);
+				addSubComponent (z3o6Table);
 				inPortMap (z3o6Table, "X", "Z_truncToZ3o6");
 				outPortMap (z3o6Table, "Y", "Z3o6");
 				vhdl << instance (z3o6Table, "z3o6Table");
@@ -554,7 +554,7 @@ FixSinCos::FixSinCos(Target * target, int w_):Operator(target), w(w_){
 																				-wA-1, // msbOut_ = 0,
 																				-w-g, // lsbout
 																				false);
-				oplist.push_back (fsp);
+				addSubComponent (fsp);
 				inPortMap (fsp, "X", "Z");
 				outPortMap(fsp, "R", "SinZ");
 				vhdl << instance (fsp, "ZminusZ3o6");
@@ -597,7 +597,7 @@ FixSinCos::FixSinCos(Target * target, int w_):Operator(target), w(w_){
 			vhdl << tab << declare("CosPiA_truncToZ2o2", wZ2o2) << " <= CosPiA" << range(w+g-1, w+g-wZ2o2) << ";" << endl;
 			IntMultiplier *c_out_2;
 			c_out_2 = new IntMultiplier (target, wZ2o2, wZ2o2, wZ2o2, false);
-			oplist.push_back (c_out_2);
+			addSubComponent (c_out_2);
 			inPortMap (c_out_2, "X", "Z2o2");
 			inPortMap (c_out_2, "Y", "CosPiA_truncToZ2o2");
 			outPortMap (c_out_2, "R", "Z2o2CosPiA");
@@ -627,7 +627,7 @@ FixSinCos::FixSinCos(Target * target, int w_):Operator(target), w(w_){
 			IntMultiplier *c_out_3;
 			
 			c_out_3 = new IntMultiplier (target, wZ, wZ, wZ, false);
-			oplist.push_back (c_out_3);
+			addSubComponent (c_out_3);
 			inPortMap (c_out_3, "Y", "SinPiA_truncToZ");
 			inPortMap (c_out_3, "X", "SinZ");
 			outPortMap (c_out_3, "R", "SinZSinPiA");
@@ -763,7 +763,7 @@ FixSinCos::FixSinCos(Target * target, int w_):Operator(target), w(w_){
 			vhdl << tab << declare("SinPiA_truncToZ2o2", wZ2o2) << " <= SinPiA" << range(w+g-1, w+g-wZ2o2) << ";" << endl;
 			IntMultiplier *s_out_2;
 			s_out_2 = new IntMultiplier (target, wZ2o2, wZ2o2, wZ2o2, false);
-			oplist.push_back (s_out_2);
+			addSubComponent (s_out_2);
 			inPortMap (s_out_2, "X", "Z2o2");
 			inPortMap (s_out_2, "Y", "SinPiA_truncToZ2o2");
 			outPortMap (s_out_2, "R", "Z2o2SinPiA");
@@ -782,7 +782,7 @@ FixSinCos::FixSinCos(Target * target, int w_):Operator(target), w(w_){
 			
 			IntMultiplier *s_out_3;
 			s_out_3 = new IntMultiplier (target, wZ, wZ, wZ, false);
-			oplist.push_back (s_out_3);
+			addSubComponent (s_out_3);
 			inPortMap (s_out_3, "X", "SinZ");
 			inPortMap (s_out_3, "Y", "CosPiA_truncToSinZ");
 			outPortMap (s_out_3, "R", "SinZCosPiA");

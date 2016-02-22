@@ -206,7 +206,7 @@ FPAdd3Input::FPAdd3Input(Target* target, int wE, int wF, map<string, double> inp
 				setCriticalPath( max(getCriticalPath(), shifterSignals) );
 		}
 		Shifter *s0 = new Shifter(target, wF+1, 2*wF, Shifter::Right, inDelayMap("X",target->localWireDelay() + getCriticalPath()));
-		oplist.push_back(s0);
+		addSubComponent(s0);
 
 		inPortMap  (s0, "X", "fX");
 		inPortMap  (s0, "S", "sval0");
@@ -214,7 +214,7 @@ FPAdd3Input::FPAdd3Input(Target* target, int wE, int wF, map<string, double> inp
 		vhdl << instance(s0, "fxShifter");
 
 		Shifter *s1 = new Shifter(target, wF+1, 2*wF, Shifter::Right, inDelayMap("X", target->localWireDelay() + getCriticalPath()));
-		oplist.push_back(s1);
+		addSubComponent(s1);
 
 		inPortMap  (s1, "X", "fY");
 		inPortMap  (s1, "S", "sval1");
@@ -222,7 +222,7 @@ FPAdd3Input::FPAdd3Input(Target* target, int wE, int wF, map<string, double> inp
 		vhdl << instance(s1, "fyShifter");
 
 		Shifter *s2 = new Shifter(target, wF+1, 2*wF, Shifter::Right, inDelayMap("X",target->localWireDelay() + getCriticalPath()));
-		oplist.push_back(s2);
+		addSubComponent(s2);
 		inPortMap  (s2, "X", "fZ");
 		inPortMap  (s2, "S", "sval2");
 		outPortMap (s2, "R","sfZ");
@@ -245,11 +245,11 @@ FPAdd3Input::FPAdd3Input(Target* target, int wE, int wF, map<string, double> inp
 
 		//sign them properly
 		IntAdder *ia0 = new IntAdder(target,3 + 3*wF+1, inDelayMap("X", target->localWireDelay() + getCriticalPath()));
-		oplist.push_back(ia0);
+		addSubComponent(ia0);
 		IntAdder *ia1 = new IntAdder(target,3 + 3*wF+1, inDelayMap("X", target->localWireDelay() + getCriticalPath()));
-		oplist.push_back(ia1);
+		addSubComponent(ia1);
 		IntAdder *ia2 = new IntAdder(target,3 + 3*wF+1, inDelayMap("X", target->localWireDelay() + getCriticalPath()));
-		oplist.push_back(ia2);
+		addSubComponent(ia2);
 
 		inPortMap(ia0, "X", "xsefX");
 		inPortMapCst(ia0, "Y", zg(3 + 3*wF+1) );
@@ -273,7 +273,7 @@ FPAdd3Input::FPAdd3Input(Target* target, int wE, int wF, map<string, double> inp
 
 #if 0
 		IntMultiAdder *ct = new IntMultiAdder(target, 3 + 3*wF+1, 3, inDelayMap("X0", target->localWireDelay() + getCriticalPath()));
-		oplist.push_back(ct);
+		addSubComponent(ct);
 
 		inPortMap( ct, "X0", "sefX");
 		inPortMap( ct, "X1", "sefY");
@@ -299,7 +299,7 @@ FPAdd3Input::FPAdd3Input(Target* target, int wE, int wF, map<string, double> inp
 
 		// get the result back to positive and remove the signals
 		IntAdder *ia3 = new IntAdder(target, 3 + 3*wF, inDelayMap("X", target->localWireDelay() + getCriticalPath()));
-		oplist.push_back(ia3);
+		addSubComponent(ia3);
 
 		inPortMap(ia3, "X", "xposExtF");
 		inPortMapCst(ia3, "Y", zg(3 + 3*wF,0));
@@ -319,7 +319,7 @@ FPAdd3Input::FPAdd3Input(Target* target, int wE, int wF, map<string, double> inp
 
 
 		lzocs = new LZOCShifterSticky(target, 2*wF + 4, 2*wF + 4, intlog2(2*wF + 4), false, 0, inDelayMap("I",target->localWireDelay() + getCriticalPath()));
-		oplist.push_back(lzocs);
+		addSubComponent(lzocs);
 		inPortMap  (lzocs, "I", "posExtFsticky");
 		outPortMap (lzocs, "Count","nZerosNew");
 		outPortMap (lzocs, "O","shiftedFrac");
@@ -340,7 +340,7 @@ FPAdd3Input::FPAdd3Input(Target* target, int wE, int wF, map<string, double> inp
 		vhdl<<tab<<declare("addToRoundBit")<<"<= '0' when (lsb='0' and grd='1' and rnd='0' and stk='0')  else '1';"<<endl;
 
 		IntAdder *ia4 = new IntAdder( target, 1 + wE + wF+1, inDelayMap("X", target->localWireDelay() + getCriticalPath()));
-		oplist.push_back(ia4);
+		addSubComponent(ia4);
 
 		vhdl << tab << declare("xroundedExpFrac", 1 + wE + wF+1) << "<= (\"0\" & eMax & tfracR);"<<endl;
 

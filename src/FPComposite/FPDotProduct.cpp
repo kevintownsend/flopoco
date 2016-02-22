@@ -93,7 +93,7 @@ namespace flopoco{
 		                                         0 /* untruncated*/,  
 		                                         false /*unsigned*/,  
 		                                         inDelayMap("X", target->localWireDelay() + getCriticalPath()));
-		oplist.push_back(mMult); 
+		addSubComponent(mMult); 
 
 		inPortMap ( mMult, "X", "fracX");
 		inPortMap ( mMult, "Y", "fracY");
@@ -140,7 +140,7 @@ namespace flopoco{
 
 		/* now we instantiate the accumulator */
 		FPLargeAcc* la = new FPLargeAcc(target, wE, wFX, MaxMSBX, MSBA, LSBA, inDelayMap("sigX_dprod",target->localWireDelay() + getCriticalPath()),true, wFY);
-		oplist.push_back(la);
+		addSubComponent(la);
 		
 		inPortMap( la, "sigX_dprod", "signP");
 		inPortMap( la, "excX_dprod", "exc");

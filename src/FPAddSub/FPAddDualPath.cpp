@@ -175,7 +175,7 @@ namespace flopoco{
 		REPORT(DETAILED, "Building close path dual mantissa subtraction box");
 		dualSubClose = new 	IntDualSub(target, wF + 3, 0);
 		dualSubClose->changeName(getName()+"_DualSubClose");
-		oplist.push_back(dualSubClose);
+		addSubComponent(dualSubClose);
 
 		inPortMap  (dualSubClose, "X", "fracXClose1");
 		inPortMap  (dualSubClose, "Y", "fracYClose1");
@@ -205,7 +205,7 @@ namespace flopoco{
 		lzocs = new LZOCShifterSticky(target, wF+2, wF+2, intlog2(wF+2), false, 0);
 
 		lzocs->changeName(getName()+"_LZCShifter");
-		oplist.push_back(lzocs);
+		addSubComponent(lzocs);
 
 		inPortMap  (lzocs, "I", "fracRClose1");
 		outPortMap (lzocs, "Count","nZerosNew");
@@ -264,7 +264,7 @@ namespace flopoco{
 		REPORT(DETAILED, "Building far path right shifter");
 		rightShifter = new Shifter(target,wF+1,wF+3, Shifter::Right);
 		rightShifter->changeName(getName()+"_RightShifter");
-		oplist.push_back(rightShifter);
+		addSubComponent(rightShifter);
 		inPortMap  (rightShifter, "X", "fracNewY");
 		inPortMap  (rightShifter, "S", "shiftVal");
 		outPortMap (rightShifter, "R","shiftedFracY");
@@ -297,7 +297,7 @@ namespace flopoco{
 		REPORT(DETAILED, "Building far path adder");
 		fracAddFar = new IntAdder(target,wF+4);
 		fracAddFar->changeName(getName()+"_fracAddFar");
-		oplist.push_back(fracAddFar);
+		addSubComponent(fracAddFar);
 		inPortMap  (fracAddFar, "X", "fracXfar");
 		inPortMap  (fracAddFar, "Y", "fracYfarXorOp");
 		inPortMap  (fracAddFar, "Cin", "cInAddFar");
@@ -390,7 +390,7 @@ namespace flopoco{
 		// finalRoundAdd will add the mantissa concatenated with exponent, two bits reserved for possible under/overflow
 		finalRoundAdd = new IntAdder(target, wE + wF + 2, fraInputDelays);
 		finalRoundAdd->changeName(getName()+"_finalRoundAdd");
-		oplist.push_back(finalRoundAdd);
+		addSubComponent(finalRoundAdd);
 
 		ostringstream zero;
 		zero<<"("<<1+wE+wF<<" downto 0 => '0') ";

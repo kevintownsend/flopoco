@@ -150,7 +150,7 @@ namespace flopoco{
 		vhdl << tab << declare("shiftVal",wEX_+1) << " <= (\"0\" & expX) - CONV_STD_LOGIC_VECTOR("<< exp_offset <<","<<  wEX_+1<<");" << endl;
 
 		shifter_ = new Shifter(target, (forDotProd?wFX_+wFY+2:wFX_+1), maxShift_, Shifter::Left, inDelayMap("X", target->localWireDelay() + getCriticalPath()));
-		oplist.push_back(shifter_);
+		addSubComponent(shifter_);
 
 		inPortMap   (shifter_, "X", "fracX");
 		inPortMapCst(shifter_, "S", "shiftVal"+range(shifter_->getShiftInWidth() - 1,0));

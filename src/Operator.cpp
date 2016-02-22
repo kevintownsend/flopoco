@@ -90,10 +90,19 @@ namespace flopoco{
 
 
 	void Operator::addSubComponent(OperatorPtr op) {
-		oplist.push_back(op);
+		subComponents_.push_back(op);
+		// In newPipeline, we deprecate this function and replace it with the following message.
+		// REPORT(INFO, "addSubComponent() is deprecated, instance() does it automatically. Remove it from the source code to get rid of this annoying message.");
 	}
 
 
+	OperatorPtr Operator::getSubComponent(string name){
+		for (auto op: subComponents_) {
+			if (op->getName()==name)
+				return op;
+		}
+		return NULL;
+	}
 
 
 
@@ -566,17 +575,17 @@ namespace flopoco{
 
 	void Operator::outputFinalReport(ostream&s, int level) {
 		if (getIndirectOperator()!=NULL){ // interface operator
-			if(getOpList().size()!=1){
+			if(getSubComponents().size()!=1){
 				ostringstream o;
-				o << "!?! Operator " << getUniqueName() << " is an interface operator with " << getOpList().size() << "children";
+				o << "!?! Operator " << getUniqueName() << " is an interface operator with " << getSubComponents().size() << "children";
 				throw o.str();
 			}
-			getOpList()[0]->outputFinalReport(s, level);
+			getSubComponents()[0]->outputFinalReport(s, level);
 		}
 
 		else{ // Hard operator
-			if (! getOpList().empty())
-				for (auto i: getOpList())
+			if (! getSubComponents().empty())
+				for (auto i: getSubComponents())
 					i->outputFinalReport(s,level+1);
 
 			ostringstream tabs, ctabs;
@@ -1261,8 +1270,9 @@ namespace flopoco{
 		//--------------------------------------------------------------
 
 
-		// add the operator to the subcomponent list
-		subComponents_[op->getName()]  = op;
+		// add the operator to the subcomponent list: still explicit in origin/master
+		//		
+		// subComponents_.push_back(op);
 		return o.str();
 	}
 
@@ -1330,8 +1340,7 @@ namespace flopoco{
 
 	string Operator::buildVHDLComponentDeclarations() {
 		ostringstream o;
-		for(map<string, Operator*>::iterator it = subComponents_.begin(); it !=subComponents_.end(); it++) {
-			Operator *op = it->second;
+		for(auto op: subComponents_) {
 			op->outputVHDLComponent(o);
 			o<< endl;
 		}
@@ -1726,8 +1735,8 @@ namespace flopoco{
 		//iterate through all the components of op
 		map<string, Operator*>::iterator it;
 
-		for (it = op->subComponents_.begin(); it!= op->subComponents_.end(); it++)
-			cleanup(ol, it->second);
+		for (auto it: subComponents_)
+			cleanup(ol, it);
 
 		for (unsigned j=0; j< (*ol).size(); j++){
 			if ((*ol)[j]->myuid == op->myuid){
@@ -1800,6 +1809,7 @@ namespace flopoco{
 		throw std::string("emulate() not implemented for ") + uniqueName_;
 	}
 
+#if 0
 	bool Operator::hasComponent(string s){
 		map<string, Operator*>::iterator theIterator;
 
@@ -1809,7 +1819,8 @@ namespace flopoco{
 		else
 			return false;
 	}
-
+#endif
+	
 	void Operator::addComment(string comment, string align){
 		vhdl << align << "-- " << comment << endl;
 	}
@@ -1826,22 +1837,6 @@ namespace flopoco{
 
 
 
-#if 0 // Unplugged, this was a static method in disguise
-	
-	void Operator::outputVHDLToFile(ofstream& file){
-		vector<Operator*> oplist;
-
-		REPORT(DEBUG, "Entering outputVHDLToFile");
-
-		//build a copy of the global oplist hidden in Target (if it exists):
-		for (unsigned i=0; i<UserInterface::globalOpList.size(); i++)
-			oplist.push_back(UserInterface::globalOpList[i]);
-		// add self (and all its subcomponents) to this list
-		oplist.push_back(this);
-		// generate the code
-		Operator::outputVHDLToFile(oplist, file);
-	}
-#endif
 
 	/////////////////////////////////////////////////////////////////////////////////////////////////
 	////////////Functions used for resource estimations
@@ -2129,8 +2124,6 @@ namespace flopoco{
 		needRecirculationSignal_    = op->getNeedRecirculationSignal();
 		indirectOperator_           = op->getIndirectOperator();
 		hasDelay1Feedbacks_         = op->hasDelay1Feedbacks();
-
-		oplist                      = op->oplist;
 	}
 
 	/**

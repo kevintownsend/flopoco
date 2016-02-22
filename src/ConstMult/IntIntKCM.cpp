@@ -1,5 +1,5 @@
 /*
- * An constant multiplier for FloPoCo using the KCM method
+ * A constant multiplier for FloPoCo using the KCM method
   This file is part of the FloPoCo project developed by the Arenaire
   team at Ecole Normale Superieure de Lyon
   
@@ -80,7 +80,7 @@ namespace flopoco{
 		{
 			KCMTable  *lastTable=0; 
 			lastTable = new KCMTable(target, wIn_, constantWidth + wIn_, C, signedInput_);
-			oplist.push_back(lastTable);
+			addSubComponent(lastTable);
 			useSoftRAM(lastTable);
 
 			// pipeline depth of a Table, so far, is always 0, but the table is well behaved and updates the critical path.
@@ -101,11 +101,11 @@ namespace flopoco{
 			KCMTable *firstTable=0, *lastTable=0;
 
 			firstTable = new KCMTable(target, lutWidth, constantWidth + lutWidth, C, false);
-			oplist.push_back(firstTable);
+			addSubComponent(firstTable);
 			useSoftRAM(firstTable);
 			
 			lastTable = new KCMTable(target, lastLutWidth, constantWidth + lastLutWidth, C, signedInput_);
-			oplist.push_back(lastTable);
+			addSubComponent(lastTable);
 			useSoftRAM(lastTable);
 
 			// Critical path among the tables is through the last one, which may be larger

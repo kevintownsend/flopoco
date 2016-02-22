@@ -152,7 +152,7 @@ namespace flopoco{
 			vhdl << tab << declare("divIn", intDivSize) << " <= divIn1 when mltd='1' else divIn0;" << endl;
 			
 			icd = new IntConstDiv(target, intDivSize, d,   alpha, false, inDelayMap("X",target->localWireDelay()+getCriticalPath()));
-			oplist.push_back(icd);
+			addSubComponent(icd);
 			
 			inPortMap  (icd, "X", "divIn");
 			outPortMap (icd, "Q","quotient");

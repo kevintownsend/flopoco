@@ -185,18 +185,18 @@ namespace flopoco
 
 
 	/* The recursive method */
-	void UserInterface::outputVHDLToFile(vector<OperatorPtr> &oplist, ofstream& file){
+	void UserInterface::outputVHDLToFile(vector<OperatorPtr> oplist, ofstream& file){
 		string srcFileName = "Operator.cpp"; // for REPORT
 		for(auto i: oplist) {
 			try {
-				REPORT(FULL, "---------------OPERATOR: "<<i->getName() <<"-------------");
+				REPORT(DETAILED, "outputVHDLToFile for  " << i->getName());
 				REPORT(FULL, "  DECLARE LIST" << printMapContent(i->getDeclareTable()));
 				REPORT(FULL, "  USE LIST" << printVectorContent(  (i->getFlopocoVHDLStream())->getUseTable()) );
 
 				// check for subcomponents
-				if (! i->getOpList().empty() ){
+				if (! i->getSubComponents().empty() ){
 					//recursively call to print subcomponent
-					outputVHDLToFile(i->getOpList(), file);
+					outputVHDLToFile(i->getSubComponents(), file);
 				}
 				i->getFlopocoVHDLStream()->flush();
 
@@ -382,8 +382,9 @@ namespace flopoco
 						op->changeName(entityName);
 						entityName="";
 					}
-					//cerr << "Adding operator" << endl;
-					addOperator(op);
+					//cerr << "Adding operator " << op->getName() <<endl;
+					// globalOpList.push_back(op); // makes no difference
+				  addOperator(op);
 				}
 			}
 		}catch(std::string &s){

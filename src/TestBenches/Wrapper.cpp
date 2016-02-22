@@ -107,7 +107,7 @@ namespace flopoco{
 		}
 
 		Operator* toWrap = UserInterface::globalOpList.back();
-		UserInterface::globalOpList.pop_back();
+		//		UserInterface::globalOpList.pop_back();
 
 		return new Wrapper(target, toWrap);
 	}

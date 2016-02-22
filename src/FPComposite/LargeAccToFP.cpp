@@ -65,7 +65,7 @@ namespace flopoco{
 		vhdl << tab << declare("extC", sizeAcc_+1) << " <= signC & C;"<<endl;
 		
 		IntAdder *a = new IntAdder(target, sizeAcc_+1);
-		oplist.push_back(a);
+		addSubComponent(a);
 	
 		inPortMap( a,   "X",   "extA");
 		inPortMap( a,   "Y",   "extC");
@@ -83,7 +83,7 @@ namespace flopoco{
 		the value of the exponent */
 		
 		lzocShifterSticky_ = new LZOCShifterSticky(target, sizeAcc_+1,  wFOut_ + 1, intlog2(sizeAcc_+1), false, -1, inDelayMap("I",target->localWireDelay()+getCriticalPath())); 
-		oplist.push_back(lzocShifterSticky_);
+		addSubComponent(lzocShifterSticky_);
 		countWidth_ = lzocShifterSticky_->getCountWidth();
 	
 		inPortMapCst ( lzocShifterSticky_, "I"    , "acc");
@@ -141,7 +141,7 @@ namespace flopoco{
 
 		//convert fraction in sign-magnitude
 		IntAdder *smFracAdder = new IntAdder(target,wFOut_ + 1, inDelayMap("X", target->localWireDelay() + getCriticalPath()) );
-		oplist.push_back(smFracAdder);
+		addSubComponent(smFracAdder);
 	
 		inPortMap   (smFracAdder, "X",   "notResFrac");
 		inPortMapCst(smFracAdder, "Y",   zg(wFOut+1,0));

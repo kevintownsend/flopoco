@@ -588,7 +588,7 @@ namespace flopoco{
 		setCriticalPath(cpY0);     //set the corresponding delay
 
 		lzoc = new LZOC(target, wF, inDelayMap("I", getCriticalPath()) );
-		oplist.push_back(lzoc);
+		addSubComponent(lzoc);
 
 		inPortMap(lzoc, "I", "Y0h");
 		inPortMap(lzoc, "OZB", "FirstBit");
@@ -616,7 +616,7 @@ namespace flopoco{
 		// ao stands for "almost one"
 		vhdl << tab << "-- The left shifter for the 'small' case" <<endl;
 		ao_lshift = new Shifter(target, wF-pfinal+2,  wF-pfinal+2, Shifter::Left, inDelayMap("X",getCriticalPath()) );
-		oplist.push_back(ao_lshift);
+		addSubComponent(ao_lshift);
 
 		inPortMap(ao_lshift, "X", "absZ0");
 		inPortMap(ao_lshift, "S", "shiftvalinL");
@@ -640,7 +640,7 @@ namespace flopoco{
 		nextCycle(); //buffer input to get synthetized into BRAM: TODO
 		vhdl << tab << "-- First inv table" << endl;
 		FirstInvTable* it0 = new FirstInvTable(target, a[0], a[0]+1);
-		oplist.push_back(it0);
+		addSubComponent(it0);
 		inPortMap       (it0, "X", "A0");
 		outPortMap      (it0, "Y", "InvA0");
 		useHardRAM(it0);
@@ -651,7 +651,7 @@ namespace flopoco{
 		// TODO: unplugged
 		if(false && target->isPipelined() && a[0]+1>=9) {
 			IntMultiplier* p0 = new IntMultiplier(target, a[0]+1, wF+2, 0, false /*unsigned*/);
-			oplist.push_back(p0);
+			addSubComponent(p0);
 			inPortMap  (p0, "X", "InvA0");
 			inPortMap  (p0, "Y", "Y0");
 			outPortMap (p0, "R", "P0");
@@ -687,7 +687,7 @@ namespace flopoco{
 #if 0 // TODO unplugged
 			// TODO experiment with logic-based by setting the ratio to 0
 			IntMultiplier* pi = new IntMultiplier(target, a[i], psize[i], 0, false, 1.0, inDelayMap("X", getCriticalPath()) );
-			oplist.push_back(pi);
+			addSubComponent(pi);
 			inPortMap  (pi, "X", join("A",i));
 			inPortMap  (pi, "Y", join("ZM",i));
 			outPortMap (pi, "R", join("P",i));
@@ -737,7 +737,7 @@ namespace flopoco{
 			}
 
 			IntAdder* addCycleI1 = new IntAdder ( target, s[i+1], inDelayMap("X", getCriticalPath()) );
-			oplist.push_back(addCycleI1);
+			addSubComponent(addCycleI1);
 
 			vhdl << tab << declare( join("addXIter",i), s[i+1] ) << " <= \"0\" & " << join("B",i);
 			if (s[i+1] > 1+(s[i]-a[i]))  // need to padd Bi
@@ -775,7 +775,7 @@ namespace flopoco{
 			IntAdder* addCycleI2 = new IntAdder ( target, s[i+1], inDelayMap("X", getCriticalPath()) );
 #endif
 
-			oplist.push_back(addCycleI2);
+			addSubComponent(addCycleI2);
 
 			inPortMap( addCycleI2, "X" , join("EiYPB",i) );
 			inPortMap( addCycleI2, "Y" , join("Pp", i) );
@@ -818,7 +818,7 @@ namespace flopoco{
 
 		IntSquarer* sq = new IntSquarer(target, squarerInSize, inDelayMap( "X", target->LogicToDSPWireDelay() + getCriticalPath() ) );
 
-		oplist.push_back(sq);
+		addSubComponent(sq);
 		inPortMap  (sq, "X", "squarerIn");
 		outPortMap (sq, "R", "Z2o2_full");
 		vhdl << instance(sq, "squarer");
@@ -832,7 +832,7 @@ namespace flopoco{
 		vhdl << tab << declare("Z2o2_normal", sfinal-pfinal-1) << " <= Z2o2_full_dummy ("<< 2*squarerInSize-1 << "  downto " << 2*squarerInSize - (sfinal-pfinal-1) << ");" << endl;
 
 		IntAdder* addFinalLog1p_normal = new IntAdder( target, sfinal, inDelayMap( "X", target->localWireDelay() + getCriticalPath() ) );
-		oplist.push_back(addFinalLog1p_normal);
+		addSubComponent(addFinalLog1p_normal);
 
 		vhdl << tab << declare( "addFinalLog1pY", sfinal) << " <= (pfinal downto 0  => '1') & not(Z2o2_normal);" <<endl;
 
@@ -876,7 +876,7 @@ namespace flopoco{
 		setCycle(getCurrentCycle() - profilingDepth , true);
 		setCriticalPath(0.0);
 		vhdl << tab << "-- First log table" << endl;
-		oplist.push_back(lt0);
+		addSubComponent(lt0);
 		inPortMap       (lt0, "X", "A0");
 		outPortMap      (lt0, "Y", "L0");
 		vhdl << instance(lt0, "ltO");
@@ -901,7 +901,7 @@ namespace flopoco{
 #endif
 
 			OtherLogTable* lti = new OtherLogTable(target, a[i], target_prec - p[i], i, a[i], p[i]);
-			oplist.push_back(lti);
+			addSubComponent(lti);
 			inPortMap       (lti, "X", join("A", i));
 			outPortMap      (lti, "Y", join("L", i));
 			vhdl << instance(lti, join("lt",i));
@@ -913,7 +913,7 @@ namespace flopoco{
 				nextCycle(); nextCycle();// gets absorbed in the BRams, and reinits the critical paths, and we have plenty of cycles to live in
 			}
 			IntAdder * adderS = new IntAdder( target, lt0->wOut, inDelayMap("X", target->RAMToLogicWireDelay()+  getCriticalPath()));
-			oplist.push_back(adderS);
+			addSubComponent(adderS);
 
 			inPortMap( adderS, "X", join("S",i) );
 			inPortMap( adderS, "Y", join("sopX",i) );
@@ -929,7 +929,7 @@ namespace flopoco{
 		vhdl << tab << declare("almostLog", lt0->wOut) << " <= " << join("S",stages+1) << ";" << endl;
 
 		IntAdder* adderLogF_normal = new IntAdder( target, target_prec, inDelayMap("X", getCriticalPath() ) );
-		oplist.push_back( adderLogF_normal );
+		addSubComponent( adderLogF_normal );
 
 		vhdl << tab << declare( "adderLogF_normalY", target_prec ) << " <= ((targetprec-1 downto sfinal => '0') & Log1p_normal);" << endl;
 
@@ -956,7 +956,7 @@ namespace flopoco{
 
 
 		IntIntKCM* kcm=new IntIntKCM(target, wE, mpz_class(zlog2), false);
-		oplist.push_back(kcm);
+		addSubComponent(kcm);
 		// get back enough cycles to synchronize it with LogF_normal
 		setCycle(getCurrentCycle() - kcm->getPipelineDepth());
 		inPortMap       (kcm, "X", "absE");
@@ -979,7 +979,7 @@ namespace flopoco{
 
 
 		IntAdder* lnadder = new IntAdder( target, wE+target_prec, inDelayMap("X", getCriticalPath()) );
-		oplist.push_back(lnadder);
+		addSubComponent(lnadder);
 
 		inPortMap( lnadder, "X", "lnaddX");
 		inPortMap( lnadder, "Y", "lnaddY");
@@ -991,7 +991,7 @@ namespace flopoco{
 		setCriticalPath( lnadder->getOutputDelay("R") );
 
 		final_norm = new LZOCShifterSticky(target, wE+target_prec, target_prec, intlog2(wE+(wF>>1))+1, false, 0, inDelayMap("I", target->localWireDelay() + getCriticalPath()));
-		oplist.push_back(final_norm);
+		addSubComponent(final_norm);
 		inPortMap(final_norm, "I", "Log_normal");
 		outPortMap(final_norm, "Count", "E_normal");
 		outPortMap(final_norm, "O", "Log_normal_normd");
@@ -1010,7 +1010,7 @@ namespace flopoco{
 		vhdl << tab << declare("Z2o2_small_bs", Z2o2_small_size)  << " <= Z2o2_full_dummy" << range(2*squarerInSize -1, 2*squarerInSize -Z2o2_small_size) << ";" << endl;
 
 		ao_rshift = new Shifter(target, Z2o2_small_size, sfinal-pfinal+1, Shifter::Right, inDelayMap("X", getCriticalPath()) ) ;
-		oplist.push_back(ao_rshift);
+		addSubComponent(ao_rshift);
 		inPortMap(ao_rshift, "X", "Z2o2_small_bs");
 		inPortMap(ao_rshift, "S", "shiftvalinR");
 		outPortMap(ao_rshift, "R", "Z2o2_small_s");
@@ -1034,7 +1034,7 @@ namespace flopoco{
 		vhdl << tab << declare("nsRCin",1, false) << " <= not ( sR );" << endl;
 
 		IntAdder* log_small_adder = new IntAdder(target,wF+gLog+2, inDelayMap( "X", target->localWireDelay() + getCriticalPath()) );
-		oplist.push_back( log_small_adder );
+		addSubComponent( log_small_adder );
 
 		inPortMap( log_small_adder, "X", "Z_small" );
 		inPortMap (log_small_adder, "Y", "Log_smallY");
@@ -1125,7 +1125,7 @@ namespace flopoco{
 		vhdl << tab << declare("fraX", wE+wF) << " <= (ER & Log_g(wF+g-1 downto g)) ; " << endl;
 		vhdl << tab << declare("fraY", wE+wF) << " <= ((wE+wF-1 downto 1 => '0') & round); " << endl;
 		IntAdder* finalRoundAdder = new IntAdder(target, wE+wF, inDelayMap("X", getCriticalPath()));
-		oplist.push_back(finalRoundAdder);
+		addSubComponent(finalRoundAdder);
 		inPortMap(finalRoundAdder, "X", "fraX");
 		inPortMap(finalRoundAdder, "Y", "fraY");
 		inPortMapCst(finalRoundAdder, "Cin", "'0'");

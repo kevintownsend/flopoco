@@ -309,7 +309,7 @@ exit(1);
 				for (int j=0; j<nbOfChunks; j++){
 					//code for adder instantiation to stop ise from "optimizing"
 					IntAdderSpecific *adder = new IntAdderSpecific(target, cSize[j]);
-					oplist.push_back(adder);
+					addSubComponent(adder);
 
 					if (j>0){ //for all chunks greater than zero we perform this additions
 						inPortMap(adder, "X", join("sX",j,"_0_l",l-1) );
@@ -367,7 +367,7 @@ exit(1);
 //					//////////////////////////////////////////////////////
 //					vhdl << tab << "--perform the short carry additions" << endl;
 //					CarryGenerationCircuit *cgc = new CarryGenerationCircuit(target,nbOfChunks-2);
-//					oplist.push_back(cgc);
+//					addSubComponent(cgc);
 //
 //					inPortMap(cgc, "X", "carryStringZero" );
 //					inPortMap(cgc, "Y", "carryStringOne" );
@@ -389,7 +389,7 @@ exit(1);
 //				}else{ //Altera /////////////////////////////////////////////////////////////////////
 //					vhdl << tab << "--perform the short carry additions" << endl;
 //					IntAdderSpecific *cgc = new IntAdderSpecific(target,nbOfChunks-2);
-//					oplist.push_back(cgc);
+//					addSubComponent(cgc);
 //
 //					inPortMap(cgc, "X", "carryStringZero" );
 //					inPortMap(cgc, "Y", "carryStringOne" );

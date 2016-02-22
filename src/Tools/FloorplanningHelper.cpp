@@ -92,7 +92,7 @@ namespace flopoco{
 	std::string FloorplanningHelper::addPlacementConstraint(std::string source, std::string sink, int type){
 		std::ostringstream result;
 		constraintType newConstraint;
-		map<string, Operator*> subComponents = parentOp->subComponents_;
+		vector<OperatorPtr> subComponents = parentOp->subComponents_;
 
 		//check to see if the type of the constraint is valid
 		if(!((type==TO_LEFT_OF) || (type==TO_RIGHT_OF) || (type==ABOVE) || (type==UNDER) ||
@@ -101,6 +101,7 @@ namespace flopoco{
 			exit(1);
 		}
 
+#if 0 // FIXME: checks unplugged by Florent when subComponents became a vector
 		//check if the source is a valid sub-component name
 		if(subComponents.find(source)==subComponents.end()){
 			cerr << "Error: source sub-component " << source << " was not found" << endl;
@@ -112,7 +113,7 @@ namespace flopoco{
 			cerr << "Error: sink sub-component " << sink << " was not found" << endl;
 			exit(1);
 		}
-
+#endif
 		newConstraint.type 		= PLACEMENT;
 		newConstraint.source 	= source;
 		newConstraint.sink 		= sink;
@@ -137,7 +138,7 @@ namespace flopoco{
 	std::string FloorplanningHelper::addConnectivityConstraint(std::string source, std::string sink, int nrWires){
 		std::ostringstream result;
 		constraintType newConstraint;
-		map<string, Operator*> subComponents = parentOp->subComponents_;
+		vector<OperatorPtr> subComponents = parentOp->subComponents_;
 
 		//no non-positive values allowed for the number of wires
 		if(nrWires<1){
@@ -145,6 +146,7 @@ namespace flopoco{
 			exit(1);
 		}
 
+#if 0 // FIXME: checks unplugged by Florent when subXomponents became a vector
 		//check if the source is a valid sub-component name
 		if(subComponents.find(source)==subComponents.end()){
 			cerr << "Error: source sub-component " << source << " was not found" << endl;
@@ -156,7 +158,8 @@ namespace flopoco{
 			cerr << "Error: sink sub-component " << sink << " was not found" << endl;
 			exit(1);
 		}
-
+#endif
+		
 		newConstraint.type 		= CONNECTIVITY;
 		newConstraint.source 	= source;
 		newConstraint.sink 		= sink;
@@ -174,7 +177,7 @@ namespace flopoco{
 	std::string FloorplanningHelper::addAspectConstraint(std::string source, double ratio){
 		std::ostringstream result;
 		constraintType newConstraint;
-		map<string, Operator*> subComponents = parentOp->subComponents_;
+		vector<OperatorPtr> subComponents = parentOp->subComponents_;
 
 		//no non-positive values allowed for the aspect ratio
 		if(ratio<=0){
@@ -182,12 +185,14 @@ namespace flopoco{
 			exit(1);
 		}
 
+#if 0 // FIXME: checks unplugged by Florent when subComponents became a vector
 		//check if the source is a valid sub-component name
 		if(subComponents.find(source)==subComponents.end()){
 			cerr << "Error: source sub-component " << source << " was not found" << endl;
 			exit(1);
 		}
-
+#endif
+		
 		newConstraint.type 		= ASPECT;
 		newConstraint.source 	= source;
 		newConstraint.ratio 	= ratio;
@@ -203,7 +208,7 @@ namespace flopoco{
 	std::string FloorplanningHelper::addContentConstraint(std::string source, int value, int length){
 		std::ostringstream result;
 		constraintType newConstraint;
-		map<string, Operator*> subComponents = parentOp->subComponents_;
+		vector<OperatorPtr> subComponents = parentOp->subComponents_;
 
 		//no non-positive values allowed for the length
 		if(length<=0){
@@ -211,11 +216,13 @@ namespace flopoco{
 			exit(1);
 		}
 
+#if 0 // FIXME: checks unplugged by Florent when subComponents became a vector
 		//check if the source is a valid sub-component name
 		if(subComponents.find(source)==subComponents.end()){
 			cerr << "Error: source sub-component " << source << " was not found" << endl;
 			exit(1);
 		}
+#endif
 
 		newConstraint.type 			= CONTENT;
 		newConstraint.source 		= source;
@@ -642,7 +649,7 @@ namespace flopoco{
 
 	std::string FloorplanningHelper::createPlacementGrid(){
 		ostringstream result;
-		map<string, Operator*> subComponents = parentOp->subComponents_;
+		//vector<OperatorPtr> subComponents = parentOp->subComponents_;
 
 		result << "Created real grid of components" << endl;
 
@@ -692,10 +699,11 @@ namespace flopoco{
 				Operator* tempOperator;
 				coordinateType tempCoordinate = flComponentCordVirtual[flComponentList[i]];
 
-				if(subComponents.find(flComponentList[i]) == subComponents.end())
+				OperatorPtr subOp = parentOp->getSubComponent(flComponentList[i]);
+				if(subOp==NULL)
 					tempOperator = flVirtualComponentList[flComponentList[i]];
 				else
-					tempOperator = subComponents[flComponentList[i]];
+					tempOperator = subOp;
 
 				subcomponentMatrixLines[tempCoordinate.y].push_back(flComponentList[i]);
 				subcomponentMatrixColumns[tempCoordinate.x].push_back(flComponentList[i]);
@@ -758,10 +766,11 @@ namespace flopoco{
 				int multiplierHeightRatio, ramHeightRatio, lutHeightRatio, ffHeightRatio;
 				double ratio = 1.0;
 
-				if(subComponents.find(componentName) == subComponents.end())
+				OperatorPtr subOp = parentOp->getSubComponent(componentName);
+				if(subOp==NULL)
 					tempOperator = flVirtualComponentList[componentName];
 				else
-					tempOperator = subComponents[componentName];
+					tempOperator = subOp;
 
 				for(unsigned int j=0; j<flAspectConstraintList.size(); j++){
 					constraintType tempConstraint = flAspectConstraintList[j];
@@ -867,7 +876,7 @@ namespace flopoco{
 				for(unsigned int j=0; j<matrixLine.size(); j++){
 					int lutWidth, ffWidth, componentWidth;
 					coordinateType componentLocation, componentDimension;
-					Operator* currentComponent = subComponents[matrixLine[j]];
+					Operator* currentComponent = parentOp->getSubComponent(matrixLine[j]);
 
 					lutWidth = (currentComponent->reHelper->estimatedCountLUT/target->lutPerSlice)/maxComponentHeight;		//width in slices
 					ffWidth = (currentComponent->reHelper->estimatedCountFF/target->ffPerSlice)/maxComponentHeight;		//width in slices
@@ -1010,8 +1019,10 @@ namespace flopoco{
 				Operator* tempOperator;
 				int operatorWidth;
 
-				if(subComponents.find(flComponentList[i]) != subComponents.end()){
-					tempOperator = subComponents[flComponentList[i]];
+
+				OperatorPtr subOp = parentOp->getSubComponent(flComponentList[i]);
+				if(subOp!=NULL) {
+					tempOperator = subOp;
 				}else{
 					tempOperator = flVirtualComponentList[flComponentList[i]];
 				}
@@ -1079,8 +1090,8 @@ namespace flopoco{
 					coordinateType componentLocation, componentDimension;
 					Operator* currentComponent;
 
-					if(subComponents.find(matrixLine[j]) != subComponents.end()){
-						currentComponent = subComponents[matrixLine[j]];
+					currentComponent = parentOp->getSubComponent(matrixLine[j]);
+					if(currentComponent != NULL){
 
 						lutWidth = ceil(((double)(currentComponent->reHelper->estimatedCountLUT)/(target->lutPerSlice))/maxComponentHeight);		//width in slices
 						ffWidth = ceil(((double)(currentComponent->reHelper->estimatedCountFF)/(target->ffPerSlice))/maxComponentHeight);		//width in slices
@@ -1144,7 +1155,7 @@ namespace flopoco{
 
 	std::string FloorplanningHelper::createPlacementForComponent(std::string moduleName){
 		ostringstream constraintString;
-		map<string, Operator*> subComponents = parentOp->subComponents_;
+		//vector<OperatorPtr> subComponents = parentOp->subComponents_;
 
 		constraintString << "";
 
@@ -1201,7 +1212,7 @@ namespace flopoco{
 			constraintString << "AREA_GROUP \"pblock_" << instanceName << "\" GROUP=OPEN;" << endl;
 			constraintString << "AREA_GROUP \"pblock_" << instanceName << "\" PLACE=OPEN;" << endl;
 			//add constraints for DSPs
-			if((subComponents[moduleName])->reHelper->estimatedCountMultiplier != 0){
+			if(parentOp->getSubComponent(moduleName)->reHelper->estimatedCountMultiplier != 0){
 				vector<int> dspPositions;
 				int dspInColumn = (flComponentDimension[moduleName]).y/(target->dspHeightInLUT);
 
@@ -1224,7 +1235,7 @@ namespace flopoco{
 				}
 			}
 			//add constraints for RAMs
-			if((subComponents[moduleName])->reHelper->estimatedCountMemory != 0){
+				if(parentOp->getSubComponent(moduleName)->reHelper->estimatedCountMemory != 0){
 				vector<int> ramPositions;
 				int ramInColumn = (flComponentDimension[moduleName]).y/target->dspHeightInLUT;
 

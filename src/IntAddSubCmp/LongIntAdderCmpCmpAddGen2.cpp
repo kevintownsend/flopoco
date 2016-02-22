@@ -183,7 +183,7 @@ exit(-1);
 			for (int j=0; j<nbOfChunks; j++){
 				if (j>0){ //for all chunks greater than zero we perform this comparissons
 					IntComparatorSpecific *icsz = new IntComparatorSpecific(target, cSize[j],0);
-					oplist.push_back(icsz);
+					addSubComponent(icsz);
 
 					inPortMap(icsz, "X", join("sX",j,"_0_l",l-1));
 					inPortMap(icsz, "Y", join("sX",j,"_1_l",l-1));
@@ -191,7 +191,7 @@ exit(-1);
 					vhdl << tab << instance(icsz, join("cz",j));
 
 					IntComparatorSpecific *icso = new IntComparatorSpecific(target, cSize[j],1);
-					oplist.push_back(icso);
+					addSubComponent(icso);
 
 					inPortMap(icso, "X", join("sX",j,"_0_l",l-1));
 					inPortMap(icso, "Y", join("sX",j,"_1_l",l-1));
@@ -201,7 +201,7 @@ exit(-1);
 					//for the zero chunk we directly perform the addition
 					vhdl<<tab<< "-- the carry resulting from the addition of the chunk + Cin is obtained directly" << endl;
 					IntAdderSpecific *fca = new IntAdderSpecific(target,cSize[0]);
-					oplist.push_back(fca);
+					addSubComponent(fca);
 
 					inPortMap(fca, "X", join("sX",j,"_0_l",l-1) );
 					inPortMap(fca, "Y", join("sX",j,"_1_l",l-1) );
@@ -227,7 +227,7 @@ exit(-1);
 			//////////////////////////////////////////////////////
 			vhdl << tab << "--perform the short CGC" << endl;
 			CarryGenerationCircuit *cgc = new CarryGenerationCircuit(target,nbOfChunks-2);
-			oplist.push_back(cgc);
+			addSubComponent(cgc);
 
 			inPortMap(cgc, "X", "carryStringZero" );
 			inPortMap(cgc, "Y", "carryStringOne" );
@@ -266,7 +266,7 @@ exit(-1);
 				}
 
 				IntAdderSpecific *adder = new IntAdderSpecific(target, cSize[j]);
-				oplist.push_back(adder);
+				addSubComponent(adder);
 
 				inPortMap(adder, "X", join("sX",j,"_0_l",l-1) );
 				inPortMap(adder, "Y", join("sX",j,"_1_l",l-1) );

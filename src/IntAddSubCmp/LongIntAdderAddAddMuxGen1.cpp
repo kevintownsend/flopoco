@@ -271,7 +271,7 @@ exit(1);
 					int tp = target->isPipelined();
 					target->setPipelined(false);
 					IntAdder *adder = new IntAdder(target, cSize[j]+1);
-					oplist.push_back(adder);
+					addSubComponent(adder);
 					if (tp) target->setPipelined();
 
 					if (j>0){ //for all chunks greater than zero we perform this additions
@@ -482,17 +482,18 @@ exit(1);
 					vhdl << tab << declare( uname1.str()+"ext", cSize[j]+1 ) << " <= \"0\" & "  <<  use(uname1.str()) << range(cSize[j]-1,0) << ";" << endl;
 					vhdl << tab << declare( uname2.str()+"ext", cSize[j]+1 ) << " <= \"0\" & "  <<  use(uname2.str()) << range(cSize[j]-1,0) << ";" << endl;
 
+					// FIXME Matei: this looks like global operators
 					if (j>0){ //for all chunks greater than zero we perform this additions
 							bool found = false;
-							for(unsigned k=0; k<oplist.size(); k++) {
-								if  ( (oplist[k]->getName()).compare(adder->getName()) ==0 ){
-									REPORT(3, "found in opList ... not adding");
+							for(auto i: getSubComponents()) {
+								if  ((i->getName()).compare(adder->getName()) ==0 ){
+									REPORT(3, "found in SubComponents ... not adding");
 									found = true;
 								}
 							}
 						if (found == false)						{
 							REPORT(3, "Not found in list, adding " << adder->getName());
-							oplist.push_back(adder);
+							addSubComponent(adder);
 						}
 
 						inPortMapCst(adder, "X", uname1.str()+"ext" );

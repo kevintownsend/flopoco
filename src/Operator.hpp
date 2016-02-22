@@ -79,7 +79,8 @@ public:
 	/** add a sub-operator to this operator */
 	void addSubComponent(OperatorPtr op);
 
-
+	/** Retrieve a sub-operator by its name, NULL if not found */
+	OperatorPtr getSubComponent(string name);
 
 	
 	/** Operator Constructor.
@@ -820,7 +821,7 @@ public:
 		return inputDelayMap;
 	}
 	
-	map<string, Operator*> getSubComponents(){
+	vector<OperatorPtr> getSubComponents(){
 		return subComponents_;
 	}
 	
@@ -899,13 +900,7 @@ public:
 	void setIndirectOperator(Operator* op);
 	
 
-
-	vector<OperatorPtr>& getOpList(){
-		return oplist;
-	}
-
-	
-	bool hasComponent(string s);
+	//bool hasComponent(string s);
 	
 	void cleanup(vector<Operator*> *ol, Operator* op);
 	
@@ -1352,7 +1347,7 @@ public:
 	/////////////////////////////////////////////////////////////////////////////////////////////////
 	////////////BEWARE: don't add anything below without adding it to cloneOperator, too
 
-	map<string, Operator*> subComponents_;					/**< The list of sub-components */
+	vector<OperatorPtr> subComponents_;					/**< The list of sub-components */
 	vector<Signal*>     signalList_;      					/**< The list of internal signals of the operator */
 	vector<Signal*>     ioList_;          					/**< The list of I/O signals of the operator */
 
@@ -1391,7 +1386,6 @@ protected:
 	map<string, int>    declareTable;     					/**< Table containing the name and declaration cycle of the signal */
 	int                 myuid;              				/**<unique id>*/
 	int                 cost;             					/**< the cost of the operator depending on different metrics */
-	vector<OperatorPtr>   oplist;                     /**< A list of all the sub-operators */
 	
 
 private:    

@@ -86,7 +86,7 @@ FPAddSub::FPAddSub(Target* target, int wEX, int wFX, int wEY, int wFY, int wER, 
 			vhdl<< tab << declare("swap")       << " <= '0' when excExpFracX >= excExpFracY else '1';"<<endl;
 		}else{
 			IntAdder *cmpAdder = new IntAdder(target, wE+wF+2+1, inDelayMap("X",getCriticalPath()));
-			oplist.push_back(cmpAdder);
+			addSubComponent(cmpAdder);
 
 			vhdl << tab << declare("addCmpOp1",wE+wF+2+1) << "<= " << zg(1,0) << " & excExpFracX;"<<endl;
 			vhdl << tab << declare("addCmpOp2",wE+wF+2+1) << "<= " << og(1,0) << " & not(excExpFracY);"<<endl;
@@ -189,7 +189,7 @@ FPAddSub::FPAddSub(Target* target, int wEX, int wFX, int wEY, int wFY, int wER, 
 		// shift right the significand of new Y with as many positions as the exponent difference suggests (alignment)
 		rightShifter = new Shifter(target,wF+1,wF+3, Shifter::Right, inDelayMap("X",getCriticalPath()));
 		rightShifter->changeName(getName()+"_RightShifter");
-		oplist.push_back(rightShifter);
+		addSubComponent(rightShifter);
 		inPortMap  (rightShifter, "X", "fracY");
 		inPortMap  (rightShifter, "S", "shiftVal");
 		outPortMap (rightShifter, "R","shiftedFracY");
@@ -236,7 +236,7 @@ FPAddSub::FPAddSub(Target* target, int wEX, int wFX, int wEY, int wFY, int wER, 
 
 		//mantisa addition
 		fracAdder = new IntAdder(target,wF+4, inDelayMap("Y", getCriticalPath()));
-		oplist.push_back(fracAdder);
+		addSubComponent(fracAdder);
 		inPortMap  (fracAdder, "X", "fracX");
 		inPortMap  (fracAdder, "Y", "fracYAdd");
 		inPortMapCst  (fracAdder, "Cin", "\'0\'");
@@ -281,7 +281,7 @@ FPAddSub::FPAddSub(Target* target, int wEX, int wFX, int wEY, int wFY, int wER, 
 
 
 		lzocs = new LZOCShifterSticky(target, wF+5, wF+5, intlog2(wF+5), false, 0, inDelayMap("I",getCriticalPath()));
-		oplist.push_back(lzocs);
+		addSubComponent(lzocs);
 		inPortMap  (lzocs, "I", "fracGRSSub");
 		outPortMap (lzocs, "Count","nZerosNew");
 		outPortMap (lzocs, "O","shiftedFracSub");
@@ -332,7 +332,7 @@ FPAddSub::FPAddSub(Target* target, int wEX, int wFX, int wEY, int wFY, int wER, 
 				setCriticalPath(cpexpFrac);
 
 		IntAdder *ra = new IntAdder(target, wE+2+wF+1, inDelayMap("X", getCriticalPath()));
-		oplist.push_back(ra);
+		addSubComponent(ra);
 
 		inPortMap(ra,"X", "expFracSub");
 		inPortMapCst(ra, "Y", zg(wE+2+wF+1,0) );

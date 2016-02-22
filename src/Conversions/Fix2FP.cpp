@@ -113,7 +113,7 @@ namespace flopoco{
 			if(Signed){	
 				lzocs = new LZOCShifterSticky(target,inputWidth-1 , maximalOutputValue, intlog2(inputWidth-1), 0, -1);
 				lzocs->changeName(getName()+"_LZOCS");
-				oplist.push_back(lzocs);
+				addSubComponent(lzocs);
 
 				inPortMap  (lzocs, "I", "input2LZOC");
 				inPortMap  (lzocs,"OZb","signSignal");
@@ -126,7 +126,7 @@ namespace flopoco{
 		
 				lzcs = new LZOCShifterSticky(target, inputWidth , maximalOutputValue, intlog2(inputWidth), 0, 0);
 				lzcs->changeName(getName()+"_LZCS");
-				oplist.push_back(lzcs);
+				addSubComponent(lzcs);
 			
 				inPortMap  (lzcs, "I", "passedInput");
 				outPortMap (lzcs, "Count","temporalExponent");
@@ -154,7 +154,7 @@ namespace flopoco{
 	
 			exponentConversion = new IntAdder(target,wE);
 			exponentConversion->changeName(getName()+"exponentConversion");
-			oplist.push_back(exponentConversion);
+			addSubComponent(exponentConversion);
 			inPortMap  (exponentConversion, "X", "MSB2Signal");
 			inPortMap  (exponentConversion, "Y", "valueExponent");
 			inPortMapCst(exponentConversion, "Cin", "'1'");
@@ -171,7 +171,7 @@ namespace flopoco{
 	
 			exponentFinal = new IntAdder(target,wE+1);
 			exponentFinal->changeName(getName()+"exponentFinal");
-			oplist.push_back(exponentFinal);
+			addSubComponent(exponentFinal);
 			inPortMap  (exponentFinal, "X", "partialConvertedExponentBit");
 			inPortMap  (exponentFinal, "Y", "biassSignalBit");
 			inPortMapCst(exponentFinal, "Cin", "'0'");
@@ -194,7 +194,7 @@ namespace flopoco{
 	
 				zeroD = new IntAdder(target, MSB-LSB );
 				zeroD->changeName(getName()+"zeroD");
-				oplist.push_back(zeroD);
+				addSubComponent(zeroD);
 				inPortMap  (zeroD, "X", "passedInput");
 				inPortMap  (zeroD, "Y", "minusOne4ZD");
 				inPortMapCst(zeroD, "Cin", "'0'");
@@ -210,7 +210,7 @@ namespace flopoco{
 				vhdl << tab << declare("passedInputBit",MSB-LSB+1)<<"<= '0' & passedInput;"<<endl;
 				zeroD = new IntAdder(target, MSB-LSB +1);
 				zeroD->changeName(getName()+"zeroD");
-				oplist.push_back(zeroD);
+				addSubComponent(zeroD);
 				inPortMap  (zeroD, "X", "passedInputBit");
 				inPortMap  (zeroD, "Y", "minusOne4ZD");
 				inPortMapCst(zeroD, "Cin", "'0'");
@@ -236,7 +236,7 @@ namespace flopoco{
 				//Integer adder for obtaining the fraction value
 				fractionConvert = new IntAdder(target,maximalOutputValue+1);
 				fractionConvert->changeName(getName()+"_fractionConvert");
-				oplist.push_back(fractionConvert);
+				addSubComponent(fractionConvert);
 				inPortMap  (fractionConvert, "X", "tempConvert0");
 				inPortMap  (fractionConvert, "Y", "tempAddSign");
 				inPortMapCst(fractionConvert, "Cin", "'0'");
@@ -265,7 +265,7 @@ namespace flopoco{
 			vhdl << tab << declare("fractionRemainder",sizeOfRemainder)<<"<= tempFractionResult"<<range(sizeOfRemainder-1,0)<<";"<<endl;
 			oneSubstracter = new IntAdder(target,sizeOfRemainder);
 			oneSubstracter->changeName(getName()+"_oneSubstracter");
-			oplist.push_back(oneSubstracter);
+			addSubComponent(oneSubstracter);
 			inPortMap  (oneSubstracter, "X", "fractionRemainder");
 			inPortMap  (oneSubstracter, "Y", "minusOne");
 			inPortMapCst(oneSubstracter, "Cin", "'0'");
@@ -297,7 +297,7 @@ namespace flopoco{
 	
 			roundingAdder = new IntAdder(target,wF+wE+1);
 			roundingAdder->changeName(getName()+"roundingAdder");
-			oplist.push_back(roundingAdder);
+			addSubComponent(roundingAdder);
 			inPortMap  (roundingAdder, "X", "concatenationForRounding");
 			inPortMap  (roundingAdder, "Y", "possibleCorrector4Rounding");
 			inPortMap  (roundingAdder, "Cin", "outputOfMux1");
@@ -333,7 +333,7 @@ namespace flopoco{
 	
 					zeroD = new IntAdder(target, MSB-LSB );
 					zeroD->changeName(getName()+"zeroD");
-					oplist.push_back(zeroD);
+					addSubComponent(zeroD);
 					inPortMap  (zeroD, "X", "passedInput");
 					inPortMap  (zeroD, "Y", "minusOne4ZD");
 					inPortMapCst(zeroD, "Cin", "'0'");
@@ -348,7 +348,7 @@ namespace flopoco{
 					vhdl << tab << declare("passedInputBit",MSB-LSB+1)<<"<= '0' & passedInput;"<<endl;
 					zeroD = new IntAdder(target, MSB-LSB +1);
 					zeroD->changeName(getName()+"zeroD");
-					oplist.push_back(zeroD);
+					addSubComponent(zeroD);
 					inPortMap  (zeroD, "X", "passedInputBit");
 					inPortMap  (zeroD, "Y", "minusOne4ZD");
 					inPortMapCst(zeroD, "Cin", "'0'");
@@ -366,7 +366,7 @@ namespace flopoco{
 				if(Signed){
 					lzocs		= new LZOCShifterSticky(target,inputWidth-1 , maximalOutputValue, intlog2(inputWidth-1), 0, -1);
 					lzocs->changeName(getName()+"_LZCS");
-					oplist.push_back(lzocs);
+					addSubComponent(lzocs);
 					inPortMap  (lzocs, "I", "input2LZOC");
 					inPortMap	(lzocs,"OZb","signSignal");
 					outPortMap (lzocs, "Count","temporalExponent");
@@ -377,7 +377,7 @@ namespace flopoco{
 				}else{
 					lzcs = new LZOCShifterSticky(target, inputWidth , maximalOutputValue, intlog2(inputWidth), 0, 0);
 					lzcs->changeName(getName()+"_LZCS");
-					oplist.push_back(lzcs);
+					addSubComponent(lzcs);
 					inPortMap  (lzcs, "I", "passedInput");
 					outPortMap (lzcs, "Count","temporalExponent");
 					outPortMap (lzcs, "O","temporalFraction");
@@ -407,7 +407,7 @@ namespace flopoco{
 	
 					fractionConvert = new IntAdder(target,sizeFractionPlusOne+1);
 					fractionConvert->changeName(getName()+"_fractionConvert");
-					oplist.push_back(fractionConvert);
+					addSubComponent(fractionConvert);
 					inPortMap  (fractionConvert, "X", "tempConvert0");
 					inPortMap  (fractionConvert, "Y", "tempAddSign");
 					inPortMapCst(fractionConvert, "Cin", "'0'"); 
@@ -438,7 +438,7 @@ namespace flopoco{
 	
 				exponentConversion = new IntAdder(target,wE);
 				exponentConversion->changeName(getName()+"exponentConversion");
-				oplist.push_back(exponentConversion);
+				addSubComponent(exponentConversion);
 				inPortMap  (exponentConversion, "X", "MSB2Signal");
 				inPortMap  (exponentConversion, "Y", "valueExponent");
 				inPortMapCst(exponentConversion, "Cin", "'1'");
@@ -456,7 +456,7 @@ namespace flopoco{
 	
 				exponentFinal = new IntAdder(target,wE+1);
 				exponentFinal->changeName(getName()+"exponentFinal");
-				oplist.push_back(exponentFinal);
+				addSubComponent(exponentFinal);
 				inPortMap  (exponentFinal, "X", "partialConvertedExponentBit");
 				inPortMap  (exponentFinal, "Y", "biassSignalBit");
 				inPortMapCst(exponentFinal, "Cin", "'0'");
@@ -480,7 +480,7 @@ namespace flopoco{
 	
 				expCorrect = new IntAdder(target,wE+1);
 				expCorrect->changeName(getName()+"expCorrect");
-				oplist.push_back(expCorrect);
+				addSubComponent(expCorrect);
 				inPortMap  (expCorrect, "X",   "possibleConvertedExponent20");
 				inPortMap  (expCorrect, "Y",   "zeroInput4Exponent");
 				inPortMap  (expCorrect, "Cin", "correctingExponent");

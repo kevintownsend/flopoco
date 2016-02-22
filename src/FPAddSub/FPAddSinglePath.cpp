@@ -91,7 +91,7 @@ namespace flopoco{
 			vhdl<< tab << declare("swap")       << " <= '0' when excExpFracX >= excExpFracY else '1';"<<endl;
 		}else{
 			IntAdder *cmpAdder = new IntAdder(target, wE+wF+2+1);
-			oplist.push_back(cmpAdder);
+			addSubComponent(cmpAdder);
 
 			vhdl << tab << declare("addCmpOp1",wE+wF+2+1) << "<= " << zg(1,0) << " & excExpFracX;"<<endl;
 			vhdl << tab << declare("addCmpOp2",wE+wF+2+1) << "<= " << og(1,0) << " & not(excExpFracY);"<<endl;

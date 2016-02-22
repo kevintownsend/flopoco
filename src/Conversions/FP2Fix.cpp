@@ -94,7 +94,7 @@ namespace flopoco{
 
       Exponent_difference = new IntAdder(target, wEI);
       Exponent_difference->changeName(getName()+"Exponent_difference");
-      oplist.push_back(Exponent_difference);
+      addSubComponent(Exponent_difference);
       inPortMap  (Exponent_difference, "X", "bias");
       inPortMap  (Exponent_difference, "Y", "eA0");
       inPortMapCst(Exponent_difference, "Cin", "'1'");
@@ -114,7 +114,7 @@ namespace flopoco{
 
       //FXP shifter mappings
       FXP_shifter = new Shifter(target, wFI+1, wFO0+2, Shifter::Left);
-      oplist.push_back(FXP_shifter);
+      addSubComponent(FXP_shifter);
 
       inPortMap (FXP_shifter, "X", "fA0");
       inPortMap (FXP_shifter, "S", "shiftedby");
@@ -156,7 +156,7 @@ namespace flopoco{
          vhdl << tab << declare("fA2b",wFO+1) <<  "<= '0' & " << rangeAssign(wFO-1,1,"'0'") << " & round;"<<endl;
          MantSum = new IntAdder(target, wFO+1);
          MantSum->changeName(getName()+"MantSum");
-         oplist.push_back(MantSum);
+         addSubComponent(MantSum);
          inPortMap  (MantSum, "X", "fA2a");
          inPortMap  (MantSum, "Y", "fA2b");
          inPortMapCst(MantSum, "Cin", "'0'");

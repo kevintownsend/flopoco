@@ -127,7 +127,7 @@ namespace flopoco{
 			vhdl << tab << declare("op2",84) << "<= \"0000000000000000\" & x17_33_x34_50 & x0_16_x34_50" << range(16,0)<<" & x0_16_x17_33" << range(16,0)<<";"<<endl;
 			
 			intadder = new IntAdder(target, 84, inDelayMap("X", target->DSPToLogicWireDelay() + getCriticalPath()  ) );
-			oplist.push_back(intadder);
+			addSubComponent(intadder);
 			
 			inPortMap(intadder, "X", "op1");
 			inPortMap(intadder, "Y", "op2");
@@ -176,7 +176,7 @@ namespace flopoco{
 			vhdl << tab << declare("op1",101) << "<= x51_67_sqr & x34_50_sqr" << range(33,0) << " & x17_33_sqr" << range(33,1) <<  ";"<<endl;
 			vhdl << tab << declare("op2",101) << "<="<< zg(101-68,0)<<" & x_17_33_51_67_pshift & x_0_16_51_67_pshift" << range(16,0)<<" & x_0_16_34_50" << range(16,0)<<";"<<endl;
 			intadder = new IntAdder(target, 101, inDelayMap("X", target->DSPToLogicWireDelay() + getCriticalPath() ));
-			oplist.push_back(intadder);
+			addSubComponent(intadder);
 
 			inPortMap(intadder, "X", "op1");
 			inPortMap(intadder, "Y", "op2");
@@ -194,7 +194,7 @@ namespace flopoco{
 			//TODO -> port to new pipeline framework
 			//instantiate a 51bit squarer
 			intsquarer = new IntSquarer(target, 51);
-			oplist.push_back(intsquarer);
+			addSubComponent(intsquarer);
 			
 			bool tempPipelineStatus = target->isPipelined();
 			bool tempDSPStatus = target->hasHardMultipliers();
@@ -207,9 +207,9 @@ namespace flopoco{
 				target->setUseHardMultipliers(true);
 
 			intadder = new IntAdder(target, 54);
-			oplist.push_back(intadder);
+			addSubComponent(intadder);
 			intadd2 = new IntAdder(target, 53);
-			oplist.push_back(intadd2);
+			addSubComponent(intadd2);
 
 			
 			vhdl << tab << declare("sigX",53) << "<= X;"<<endl;
