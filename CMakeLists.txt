@@ -118,9 +118,7 @@ ENDIF ( WCPG_FOUND )
 
 ADD_DEFINITIONS(-DHAVE_LNS)
 
-# Create target for the lexer
- ADD_CUSTOM_TARGET(VHDLLexer echo "Creating VHDLLexer.c VHDLLexer.h")
-
+#
 # Create custom command for flex++/lex (note the outputs)
 FIND_PROGRAM(FLEXPP_EXECUTABLE
 	NAMES flex
@@ -137,13 +135,14 @@ ENDIF(FLEXPP_EXECUTABLE)
 INCLUDE_DIRECTORIES (${CMAKE_CURRENT_BINARY_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/src ${CMAKE_CURRENT_SOURCE_DIR}/src/FPExpressions)
 
 ADD_CUSTOM_COMMAND(
-	OUTPUT VHDLLexer.cpp VHDLLexer.hpp
+	OUTPUT VHDLLexer.cpp
+  DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/src/VHDLLexerRule.l
 	COMMAND ${FLEXPP_EXECUTABLE} 
 	ARGS -o ${CMAKE_CURRENT_BINARY_DIR}/VHDLLexer.cpp 
     ${CMAKE_CURRENT_SOURCE_DIR}/src/VHDLLexerRule.l
-	)
+		)
 
-SET_SOURCE_FILES_PROPERTIES(VHDLLexer GENERATED) 
+#SET_SOURCE_FILES_PROPERTIES(VHDLLexer GENERATED) 
 
 
 # Create custom command for bison/yacc (note the outputs)
@@ -202,7 +201,7 @@ ADD_LIBRARY(FloPoCoLib STATIC
  src/utils
  src/FlopocoStream
  src/TestState
- VHDLLexer
+ VHDLLexer # generated from .l
  
  # Resource Estimation related ---------------------------------------
  src/Tools/ResourceEstimationHelper
