@@ -203,7 +203,7 @@ namespace flopoco {
 		UserInterface::parseStrictlyPositiveInt(args, "wIn", &wIn, false);
 		UserInterface::parseInt(args, "arch", &arch, false);
 		UserInterface::parseInt(args, "optObjective", &optObjective, false);
-		UserInterface::parseBoolean(args, "srl", &srl, false);
+		UserInterface::parseBoolean(args, "SRL", &srl, false);
 		return new IntAdder(target, wIn,emptyDelayMap,optObjective,srl,arch);
 	}
 
